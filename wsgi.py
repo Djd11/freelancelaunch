@@ -3,7 +3,9 @@ import sys
 import os
 import traceback
 
-# Print diagnostics
+# Store startup error globally so fallback can display it
+_startup_error = None
+
 print(f"Python: {sys.version}", flush=True)
 print(f"CWD: {os.getcwd()}", flush=True)
 print(f"Files in CWD: {os.listdir('.')}", flush=True)
@@ -14,15 +16,24 @@ try:
     app = create_app()
     print("✅ App created successfully", flush=True)
 except Exception as e:
+    _startup_error = traceback.format_exc()
     print(f"❌ FATAL: {e}", flush=True)
-    traceback.print_exc(file=sys.stdout)
-    # Create a minimal fallback app
+    print(_startup_error, flush=True)
+    
+    # Create a minimal fallback app that shows the error
     from flask import Flask
-    app = Flask(__name__)
+    fallback_app = Flask(__name__)
     
-    @app.route("/")
-    @app.route("/health")
+    @fallback_app.route("/")
+    @fallback_app.route("/health")
     def error_page():
-        return f"<h1>Startup Error</h1><pre>{traceback.format_exc()}</pre>", 500
+        global _startup_error
+        return f"""<html><body>
+<h1>Startup Error</h1>
+<pre style="background:#fdd;padding:20px;border-radius:8px;overflow:auto;max-height:80vh">
+{_startup_error}
+</pre>
+</body></html>""", 500, {"Content-Type": "text/html"}
     
+    app = fallback_app
     print("⚠️ Using fallback error app", flush=True)
