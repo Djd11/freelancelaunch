@@ -11,7 +11,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
     
-    # ─── Import route blueprints ───────────────────────────────
+# ─── Import route blueprints ───────────────────────────────
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    
     from routes.auth import auth_bp
     from routes.topics import topics_bp
     from routes.dashboard import dashboard_bp
@@ -58,6 +61,10 @@ def create_app():
         if g.user:
             return redirect(url_for("dashboard.home"))
         return render_template("landing.html", topics=CURATED_TOPICS)
+    
+    @app.route("/health")
+    def health():
+        return {"status": "ok", "env_set": bool(app.config.get("SUPABASE_URL"))}
     
     return app
 
