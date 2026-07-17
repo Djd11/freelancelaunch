@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Admin — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-8">🛠️ Admin Dashboard</h1>
+    
+    <!-- STATS -->
+    <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ users_count }}</div>
+            <div class="text-sm text-gray-500 mt-1">Total Users</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 text-center">
+            <div class="text-3xl font-bold text-purple-600">{{ cohorts_count }}</div>
+            <div class="text-sm text-gray-500 mt-1">Cohorts</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 text-center">
+            <div class="text-3xl font-bold text-green-600">{{ paid_count }}</div>
+            <div class="text-sm text-gray-500 mt-1">Paid Users</div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+        <!-- RECENT SIGNUPS -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6">
+            <h2 class="font-bold text-lg mb-4">Recent Signups</h2>
+            <div class="space-y-2">
+                {% for s in recent_signups %}
+                <div class="flex justify-between text-sm py-2 border-b border-gray-100">
+                    <span class="text-gray-600">{{ s.get('source', '?') }} → {{ s.get('landing_topic', 'none') }}</span>
+                    <span class="text-gray-400 text-xs">{{ s.get('signed_up_at', '')[:10] }}</span>
+                </div>
+                {% else %}
+                <p class="text-gray-400 text-sm">No signups yet</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ACTIVE COHORTS -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6">
+            <h2 class="font-bold text-lg mb-4">Active Cohorts</h2>
+            <div class="space-y-3">
+                {% for c in active_cohorts %}
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="font-medium text-sm">{{ c.get('name', '') }}</div>
+                    <div class="text-xs text-gray-500">Day {{ c.get('current_day', 0) }}/{{ c.get('max_days', 30) }}</div>
+                </div>
+                {% else %}
+                <p class="text-gray-400 text-sm">No active cohorts</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LINKS -->
+    <div class="mt-8 flex gap-4">
+        <a href="{{ url_for('admin.users') }}" class="bg-white border border-gray-200 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition">View All Users</a>
+        <a href="{{ url_for('admin.production') }}" class="bg-white border border-gray-200 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition">Production Queue</a>
+    </div>
+</div>
+{% endblock %}

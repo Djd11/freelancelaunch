@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- TOPIC HEADER -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
+        <div class="flex items-start gap-4 mb-6">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl" style="background: {{ topic.color }}15;">
+                {{ topic.icon }}
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-1">
+                    <h1 class="text-3xl font-bold">{{ topic.name }}</h1>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full 
+                        {% if topic.trend == 'growing' %}bg-green-100 text-green-700
+                        {% elif topic.trend == 'stable' %}bg-blue-100 text-blue-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ topic.trend|capitalize }}
+                    </span>
+                </div>
+                <p class="text-gray-500">{{ topic.description }}</p>
+            </div>
+        </div>
+
+        <!-- DEMAND METRICS -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-blue-50 rounded-xl text-center">
+                <div class="text-2xl font-bold text-blue-600">{{ topic.job_count }}</div>
+                <div class="text-xs text-gray-500 mt-1">Open Jobs This Week</div>
+            </div>
+            <div class="p-4 bg-green-50 rounded-xl text-center">
+                <div class="text-2xl font-bold text-green-600">${{ topic.avg_rate }}/hr</div>
+                <div class="text-xs text-gray-500 mt-1">Average Freelance Rate</div>
+            </div>
+            <div class="p-4 bg-purple-50 rounded-xl text-center">
+                <div class="text-2xl font-bold text-purple-600">{{ topic.demand_score }}/100</div>
+                <div class="text-xs text-gray-500 mt-1">Market Demand Score</div>
+            </div>
+        </div>
+
+        <!-- SKILLS -->
+        <div class="mb-6">
+            <h3 class="font-semibold text-sm text-gray-700 mb-2">Skills You'll Learn</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in topic.skills %}
+                <span class="px-3 py-1 rounded-full text-sm font-medium" style="background: {{ topic.color }}15; color: {{ topic.color }};">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- OUTCOMES -->
+        <div class="p-4 bg-amber-50 rounded-xl mb-6">
+            <p class="text-sm font-medium text-amber-800">🎯 {{ topic.outcomes }}</p>
+        </div>
+
+        <!-- DIFFICULTY + TIMELINE -->
+        <div class="flex gap-6 text-sm text-gray-500 mb-6">
+            <span>📚 {{ topic.difficulty }}</span>
+            <span>⏱️ First gig possible in ~{{ topic.weeks_to_first_gig }} weeks</span>
+        </div>
+
+        <!-- ENROLL BUTTON -->
+        {% if user %}
+            {% if pipeline %}
+            <div class="p-4 bg-green-50 rounded-xl">
+                <p class="text-green-700 font-medium">✅ You're enrolled in {{ topic.name }}! 
+                    <a href="{{ url_for('dashboard.home') }}" class="underline">Go to Dashboard →</a>
+                </p>
+            </div>
+            {% else %}
+            <form method="POST" action="{{ url_for('topics.enroll', slug=topic.slug) }}">
+                <button type="submit" class="w-full bg-gradient-primary text-white py-3 rounded-xl font-bold text-lg hover:opacity-90 transition">
+                    Start Learning {{ topic.name }} — Free
+                </button>
+                <p class="text-center text-xs text-gray-400 mt-2">Free tier includes full curriculum. Upgrade for accountability & proposal reviews.</p>
+            </form>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('auth.signup', topic=topic.slug) }}" class="block w-full bg-gradient-primary text-white py-3 rounded-xl font-bold text-lg text-center hover:opacity-90 transition">
+                Get Started Free
+            </a>
+            <p class="text-center text-xs text-gray-400 mt-2">Already have an account? <a href="{{ url_for('auth.login', topic=topic.slug) }}" class="text-blue-600 underline">Login</a></p>
+        {% endif %}
+    </div>
+
+    <!-- CURRICULUM PREVIEW -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-8">
+        <h2 class="text-xl font-bold mb-4">What You'll Learn (30 Days)</h2>
+        <div class="space-y-2">
+            {% for i in range(1, 11) %}
+            <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
+                <div class="w-8 h-8 rounded-full bg-gradient-primary text-white flex items-center justify-center text-xs font-bold">D{{ i }}</div>
+                <div>
+                    <div class="text-sm font-medium">{% if i == 1 %}Introduction & Setup{% elif i == 2 %}Core Concepts{% elif i == 3 %}First Project{% elif i == 4 %}Intermediate Techniques{% elif i == 5 %}Real-World Application{% elif i == 6 %}Advanced Topics{% elif i == 7 %}Tooling & Automation{% elif i == 8 %}Best Practices{% elif i == 9 %}Portfolio Project{% else %}Job Preparation{% endif %}</div>
+                    <div class="text-xs text-gray-400">Day {{ i }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="text-center text-sm text-gray-400 mt-4">Full curriculum unlocks when you enroll</p>
+    </div>
+</div>
+{% endblock %}

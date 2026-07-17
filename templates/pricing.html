@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Pricing — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="bg-gradient-to-b from-blue-50 to-white py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl font-extrabold mb-4">Invest in <span class="gradient-text">Your Future</span></h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Start free. Upgrade when you're ready to accelerate.</p>
+    </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 -mt-8 pb-20">
+    <div class="grid md:grid-cols-3 gap-6">
+        {% for tier_id, tier in tiers.items() %}
+        <div class="bg-white rounded-2xl border-2 {% if tier_id == 'guided' %}border-blue-500 shadow-lg{% else %}border-gray-200{% endif %} p-6 relative">
+            {% if tier_id == 'guided' %}
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-primary text-white text-xs font-bold px-4 py-1 rounded-full">
+                MOST POPULAR
+            </div>
+            {% endif %}
+            
+            <h3 class="text-lg font-bold mb-1">{{ tier.name }}</h3>
+            <div class="text-3xl font-extrabold my-4">
+                {% if tier.price == 0 %}
+                    Free
+                {% else %}
+                    ${{ tier.price }}
+                    <span class="text-sm font-normal text-gray-400">one-time</span>
+                {% endif %}
+            </div>
+            
+            <ul class="space-y-3 mb-6">
+                {% for feature in tier.features %}
+                <li class="text-sm flex items-start gap-2">
+                    <span class="text-green-500 font-bold mt-0.5">✓</span>
+                    {{ feature }}
+                </li>
+                {% endfor %}
+            </ul>
+            
+            {% if tier.price == 0 %}
+                <a href="{{ url_for('auth.signup') }}" class="block w-full py-2.5 rounded-xl font-semibold text-center border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition">
+                    Get Started Free
+                </a>
+            {% else %}
+                {% if user %}
+                <form method="POST" action="{{ url_for('payments.create_checkout') }}">
+                    <input type="hidden" name="tier" value="{{ tier_id }}">
+                    <button type="submit" class="w-full bg-gradient-primary text-white py-2.5 rounded-xl font-semibold hover:opacity-90 transition">
+                        Upgrade to {{ tier.name }}
+                    </button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('auth.signup') }}" class="block w-full bg-gradient-primary text-white py-2.5 rounded-xl font-semibold text-center hover:opacity-90 transition">
+                    Sign Up to Upgrade
+                </a>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

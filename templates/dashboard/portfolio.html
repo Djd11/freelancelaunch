@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My Portfolio — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">📂 My Portfolio</h1>
+        <a href="{{ url_for('deliverables.submit') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">+ Add Item</a>
+    </div>
+
+    {% if deliverables %}
+    <div class="grid md:grid-cols-2 gap-4">
+        {% for d in deliverables %}
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <span class="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ d.get('type', 'other') }}</span>
+                    <h3 class="font-semibold mt-2">{{ d.get('title', 'Untitled') }}</h3>
+                </div>
+                <span class="text-xs text-gray-400">Day {{ d.get('day_number', '?') }}</span>
+            </div>
+            {% if d.get('content') %}
+            <p class="text-sm text-gray-600 line-clamp-3">{{ d['content'][:200] }}{% if d['content']|length > 200 %}...{% endif %}</p>
+            {% endif %}
+            {% if d.get('rating') %}
+            <div class="mt-2 text-sm">⭐ {{ d['rating'] }}/5</div>
+            {% endif %}
+            <div class="text-xs text-gray-400 mt-3">{{ d.get('created_at', '')[:10] }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20">
+        <div class="text-5xl mb-4">📭</div>
+        <h3 class="text-lg font-semibold text-gray-500">No portfolio items yet</h3>
+        <p class="text-sm text-gray-400 mt-1">Submit your daily deliverables to build your portfolio.</p>
+        <a href="{{ url_for('deliverables.submit') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">Submit Your First Piece</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

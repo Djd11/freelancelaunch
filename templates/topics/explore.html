@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Explore Topics — FreelanceLaunch{% endblock %}
+{% block content %}
+<!-- HERO -->
+<div class="bg-gradient-to-b from-blue-50 to-white py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Choose Your <span class="gradient-text">Freelance Path</span></h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Pick a skill with real market demand. Get a 30-day video curriculum. Land your first client.</p>
+    </div>
+</div>
+
+<!-- TOPICS GRID -->
+<div class="max-w-6xl mx-auto px-4 -mt-8 pb-20">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for topic in topics %}
+        <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="block bg-white rounded-2xl border border-gray-200 p-6 card-hover transition-all group">
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: {{ topic.color }}15;">
+                    {{ topic.icon }}
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full 
+                    {% if topic.trend == 'growing' %}bg-green-100 text-green-700
+                    {% elif topic.trend == 'stable' %}bg-blue-100 text-blue-700
+                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    {{ topic.trend|capitalize }}
+                </span>
+            </div>
+            <h3 class="font-bold text-lg mb-1 group-hover:text-blue-600 transition">{{ topic.name }}</h3>
+            <p class="text-sm text-gray-500 mb-4">{{ topic.tagline }}</p>
+            
+            <div class="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                <span><strong class="text-gray-900">{{ topic.job_count }}</strong> jobs</span>
+                <span><strong class="text-gray-900">${{ topic.avg_rate }}</strong>/hr avg</span>
+                <span><strong class="text-gray-900">{{ topic.weeks_to_first_gig }}wk</strong> to first gig</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+                {% for skill in topic.skills[:3] %}
+                <span class="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-600">{{ skill }}</span>
+                {% endfor %}
+                {% if topic.skills|length > 3 %}
+                <span class="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-400">+{{ topic.skills|length - 3 }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- DEMAND SCALE NOTE -->
+    <div class="mt-12 bg-white rounded-2xl border border-gray-200 p-6 text-center">
+        <p class="text-sm text-gray-500">
+            📊 Demand data is updated weekly from Upwork and Fiverr. 
+            Topics with <strong class="text-gray-900">80+ demand score</strong> are verified for freelance viability.
+        </p>
+    </div>
+</div>
+{% endblock %}

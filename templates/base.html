@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FreelanceLaunch{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .flash-success { background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+        .flash-error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+        .flash-info { background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <!-- NAV -->
+    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="/" class="text-xl font-bold">
+                    <span class="gradient-text">FreelanceLaunch</span>
+                </a>
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('topics.explore') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Topics</a>
+                    {% if user %}
+                        <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Dashboard</a>
+                        <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Pipeline</a>
+                        <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Pricing</a>
+                        <div class="relative group">
+                            <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                                <div class="w-8 h-8 rounded-full bg-gradient-primary text-white flex items-center justify-center text-xs font-bold">
+                                    {{ user.get('email', 'U')[:1].upper() }}
+                                </div>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profile</a>
+                                <a href="{{ url_for('deliverables.portfolio') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Portfolio</a>
+                                <hr class="my-1 border-gray-100">
+                                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Login</a>
+                        <a href="{{ url_for('auth.signup') }}" class="text-sm font-medium bg-gradient-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition">Get Started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
+                {% for category, message in messages %}
+                    <div class="flash-{{ category }} px-4 py-3 rounded-lg shadow-lg mb-2 text-sm font-medium animate-bounce">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- MAIN CONTENT -->
+    <main class="pt-16">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-200 bg-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
+            <p class="font-semibold gradient-text">FreelanceLaunch</p>
+            <p class="mt-1">Learn a skill. Land a client. Earn your freedom.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Auto-hide flash messages
+        document.querySelectorAll('[class^="flash-"]').forEach(el => {
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.5s'; }, 3000);
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
