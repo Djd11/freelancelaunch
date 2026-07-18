@@ -71,7 +71,8 @@ Output format:
     }
 
     try:
-        resp = httpx.post(api_url, headers=headers, json=payload, timeout=60)
+        timeout = current_app.config.get("LLM_TIMEOUT", 60)
+        resp = httpx.post(api_url, headers=headers, json=payload, timeout=timeout)
         resp.raise_for_status()
         content = resp.json()["choices"][0]["message"]["content"]
         

@@ -1,0 +1,102 @@
+Feature: Video Script Generation # tests/features/video-script-generation.feature:1
+  As the video pipeline
+  I want to generate voiceover scripts and panel content
+  So that each curriculum day produces a unique educational video
+  Feature: Video Script Generation  # tests/features/video-script-generation.feature:1
+
+  Scenario: Generate a complete voiceover script                          # tests/features/video-script-generation.feature:12
+    Given the LLM API is available                                        # tests/steps/test_video_script.py:9
+    And a topic "Web Scraping with Python"                                # tests/steps/test_video_script.py:31
+    And a day title "Introduction to HTTP Requests"                       # tests/steps/test_video_script.py:36
+    And a day description "Learn how HTTP requests work for web scraping" # tests/steps/test_video_script.py:41
+    When the video script generator creates content                       # tests/steps/test_video_script.py:46
+    Then the script should be a non-empty string                          # tests/steps/test_video_script.py:56
+    And the script should contain words about the topic                   # tests/steps/test_video_script.py:62
+    And the script should be approximately 250 words long                 # tests/steps/test_video_script.py:69
+
+  Scenario: Generate exactly 9 panels                                     # tests/features/video-script-generation.feature:18
+    Given the LLM API is available                                        # tests/steps/test_video_script.py:9
+    And a topic "Web Scraping with Python"                                # tests/steps/test_video_script.py:31
+    And a day title "Introduction to HTTP Requests"                       # tests/steps/test_video_script.py:36
+    And a day description "Learn how HTTP requests work for web scraping" # tests/steps/test_video_script.py:41
+    When the video script generator creates content                       # tests/steps/test_video_script.py:46
+    Then the panels array should have exactly 9 items                     # tests/steps/test_video_script.py:75
+    And each panel should have an id, title, caption, color, and words    # tests/steps/test_video_script.py:80
+    And each panel should have a diagramType and graph configuration      # tests/steps/test_video_script.py:88
+
+  Scenario: Panels match script sections                                           # tests/features/video-script-generation.feature:24
+    Given the LLM API is available                                                 # tests/steps/test_video_script.py:9
+    And a topic "Web Scraping with Python"                                         # tests/steps/test_video_script.py:31
+    And a day title "Introduction to HTTP Requests"                                # tests/steps/test_video_script.py:36
+    And a day description "Learn how HTTP requests work for web scraping"          # tests/steps/test_video_script.py:41
+    When the video script generator creates content                                # tests/steps/test_video_script.py:46
+    Then the total word count across all panels should match the script word count # tests/steps/test_video_script.py:96
+
+  Scenario: Each panel has valid graph data                                          # tests/features/video-script-generation.feature:28
+    Given the LLM API is available                                                   # tests/steps/test_video_script.py:9
+    And a topic "Web Scraping with Python"                                           # tests/steps/test_video_script.py:31
+    And a day title "Introduction to HTTP Requests"                                  # tests/steps/test_video_script.py:36
+    And a day description "Learn how HTTP requests work for web scraping"            # tests/steps/test_video_script.py:41
+    When the video script generator creates content                                  # tests/steps/test_video_script.py:46
+    Then each panel graph should have a valid type (bar, hbar, line, compare, nodes) # tests/steps/test_video_script.py:105
+    And each graph should have labels, data, and unit fields                         # tests/steps/test_video_script.py:113
+    And graph data should be an array of positive numbers                            # tests/steps/test_video_script.py:122
+
+  Scenario: Fallback content when LLM is unavailable                      # tests/features/video-script-generation.feature:34
+    Given the LLM API is available                                        # tests/steps/test_video_script.py:9
+    And a topic "Web Scraping with Python"                                # tests/steps/test_video_script.py:31
+    And a day title "Introduction to HTTP Requests"                       # tests/steps/test_video_script.py:36
+    And a day description "Learn how HTTP requests work for web scraping" # tests/steps/test_video_script.py:41
+    Given the LLM API is unavailable                                      # tests/steps/test_video_script.py:15
+    When the video script generator creates content                       # tests/steps/test_video_script.py:46
+    Then content should still be generated using fallback logic           # tests/steps/test_video_script.py:131
+    And there should be exactly 9 panels                                  # tests/steps/test_video_script.py:25
+
+Feature: PanelContent.js Writer # tests/features/panel-content-writer.feature:1
+  As the video pipeline
+  I want to generate valid PanelContent.js files
+  So that Remotion can render videos from them
+  Feature: PanelContent.js Writer  # tests/features/panel-content-writer.feature:1
+
+  Scenario: Write PanelContent.js to disk                       # tests/features/panel-content-writer.feature:10
+    Given generated panel data with 9 panels                    # tests/steps/test_panel_writer.py:12
+    And a temporary output directory                            # tests/steps/test_panel_writer.py:44
+    When the panel content writer creates the file              # tests/steps/test_panel_writer.py:62
+    Then a PanelContent.js file should exist at the output path # tests/steps/test_panel_writer.py:75
+    And the file should contain JavaScript module exports       # tests/steps/test_panel_writer.py:80
+
+  Scenario: PanelContent.js exports required constants  # tests/features/panel-content-writer.feature:15
+    Given generated panel data with 9 panels            # tests/steps/test_panel_writer.py:12
+    And a temporary output directory                    # tests/steps/test_panel_writer.py:44
+    When the panel content writer creates the file      # tests/steps/test_panel_writer.py:62
+    Then the file should export PANELS array            # tests/steps/test_panel_writer.py:88
+    And the file should export TOTAL_FRAMES constant    # tests/steps/test_panel_writer.py:96
+    And the file should export VIDEO_SECONDS constant   # tests/steps/test_panel_writer.py:103
+    And the file should export PHASE_STARTS array       # tests/steps/test_panel_writer.py:110
+    And the file should export KEYWORDS set             # tests/steps/test_panel_writer.py:117
+
+  Scenario: Timing calculations are valid                                    # tests/features/panel-content-writer.feature:23
+    Given generated panel data with 9 panels                                 # tests/steps/test_panel_writer.py:12
+    And a temporary output directory                                         # tests/steps/test_panel_writer.py:44
+    When the panel content writer creates the file                           # tests/steps/test_panel_writer.py:62
+    Then VIDEO_SECONDS should be a positive number matching ~TOTAL_WORDS/2.5 # tests/steps/test_panel_writer.py:124
+    And GAP_FRAMES should equal (PANELS.length - 1) * 10                     # tests/steps/test_panel_writer.py:139
+    And TOTAL_FRAMES should approximately equal VIDEO_SECONDS * 30           # tests/steps/test_panel_writer.py:148
+    And each DURATIONS entry should be >= 30 frames                          # tests/steps/test_panel_writer.py:170
+
+  Scenario: PANELS array has required structure                                               # tests/features/panel-content-writer.feature:30
+    Given generated panel data with 9 panels                                                  # tests/steps/test_panel_writer.py:12
+    And a temporary output directory                                                          # tests/steps/test_panel_writer.py:44
+    When the panel content writer creates the file                                            # tests/steps/test_panel_writer.py:62
+    Then each panel should have: id, title, caption, color, accent, diagramType, words, graph # tests/steps/test_panel_writer.py:177
+    And the words field should be a non-empty string                                          # tests/steps/test_panel_writer.py:185
+    And the color should be a valid hex color                                                 # tests/steps/test_panel_writer.py:192
+
+  Scenario: Update KEYWORDS in TwoPanelStack.jsx                                 # tests/features/panel-content-writer.feature:36
+    Given generated panel data with 9 panels                                     # tests/steps/test_panel_writer.py:12
+    And a temporary output directory                                             # tests/steps/test_panel_writer.py:44
+    Given a TwoPanelStack.jsx file with default keywords                         # tests/steps/test_panel_writer.py:50
+    When the writer updates keywords with ["Web", "Scraping", "HTTP", "Request"] # tests/steps/test_panel_writer.py:68
+    Then the file should contain the new keywords                                # tests/steps/test_panel_writer.py:200
+    And the file should not contain the old default keywords                     # tests/steps/test_panel_writer.py:207
+
