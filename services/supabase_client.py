@@ -5,10 +5,11 @@ from flask import current_app, g
 from supabase import create_client, Client
 
 def get_supabase() -> Client:
-    """Get or create a Supabase client for the current request context."""
+    """Get or create a Supabase client for the current request context.
+    Uses service_role key to bypass RLS for MVP. Add proper RLS policies later."""
     if "supabase" not in g:
         url = current_app.config["SUPABASE_URL"]
-        key = current_app.config["SUPABASE_KEY"]
+        key = current_app.config["SUPABASE_SERVICE_KEY"] or current_app.config["SUPABASE_KEY"]
         if not url or not key:
             raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set")
         g.supabase = create_client(url, key)
