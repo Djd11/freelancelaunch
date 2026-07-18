@@ -31,6 +31,7 @@ def signup():
         sb.table("user_profiles").insert({
             "user_id": user_id,
             "display_name": name or email.split("@")[0],
+            "avatar_url": email,  # store email here for display
         }).execute()
         
         # Track acquisition

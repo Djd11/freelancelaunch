@@ -36,11 +36,13 @@ with app.app_context():
     if not existing.data:
         sb.table('user_profiles').insert({
             'user_id': admin_id, 'display_name': 'Admin',
+            'avatar_url': 'chinaindiatesting@gmail.com',
             'tier': 'placement', 'onboarding_complete': True
         }).execute()
     else:
         sb.table('user_profiles').update({
-            'tier': 'placement', 'onboarding_complete': True
+            'tier': 'placement', 'onboarding_complete': True,
+            'avatar_url': 'chinaindiatesting@gmail.com'
         }).eq('user_id', admin_id).execute()
     print('OK Profile done')
     

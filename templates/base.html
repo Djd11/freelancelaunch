@@ -94,7 +94,7 @@
                         <div class="relative group">
                             <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition">
                                 <div class="w-8 h-8 rounded-full gradient-primary text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                                    {{ (user.get('email') or 'U')[:1].upper() }}
+                                    {{ (user.get('avatar_url') or user.get('display_name') or 'U')[:1].upper() }}
                                 </div>
                             </button>
                             <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-black/5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1">

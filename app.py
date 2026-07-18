@@ -43,7 +43,7 @@ def create_app():
             if user_id:
                 from services.supabase_client import get_supabase
                 sb = get_supabase()
-                resp = sb.table("user_profiles").select("*, auth.users(email)").eq("user_id", user_id).limit(1).execute()
+                resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
                 if resp.data:
                     g.user = resp.data[0]
                     g.user["id"] = user_id
