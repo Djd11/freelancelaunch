@@ -41,8 +41,8 @@ def create_app():
             g.user = None
             user_id = session.get("user_id")
             if user_id:
-                from services.supabase_client import get_supabase
-                sb = get_supabase()
+                from services.supabase_client import get_supabase_service
+                sb = get_supabase_service()
                 resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
                 if resp.data:
                     g.user = resp.data[0]
