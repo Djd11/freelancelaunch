@@ -9,56 +9,104 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         * { font-family: 'Inter', sans-serif; }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
         .gradient-text {
-            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        .gradient-subtle {
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
         }
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        .card {
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            transition: all 0.2s ease;
         }
-        .progress-ring {
-            transition: stroke-dashoffset 0.5s ease;
+        .card:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         }
-        .flash-success { background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+        .card-active {
+            border-color: #6366f1;
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .flash-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
         .flash-error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
-        .flash-info { background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+        .flash-info { background: #e0f2fe; border: 1px solid #7dd3fc; color: #075985; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.3s ease; }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide { animation: slideUp 0.4s ease; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
+<body class="bg-[#f8fafc] text-[#0f172a] antialiased min-h-screen">
     <!-- NAV -->
-    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 z-50">
+    <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-xl border-b border-gray-100 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <a href="/" class="text-xl font-bold">
+                <a href="/" class="text-xl font-bold tracking-tight">
                     <span class="gradient-text">FreelanceLaunch</span>
                 </a>
-                <div class="flex items-center gap-4">
-                    <a href="{{ url_for('topics.explore') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Topics</a>
+                <div class="flex items-center gap-6">
+                    <a href="{{ url_for('topics.explore') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Topics</a>
                     {% if user %}
-                        <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Dashboard</a>
-                        <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Pipeline</a>
-                        <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Pricing</a>
+                        <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Dashboard</a>
+                        <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Pipeline</a>
+                        <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Pricing</a>
                         <div class="relative group">
-                            <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
-                                <div class="w-8 h-8 rounded-full bg-gradient-primary text-white flex items-center justify-center text-xs font-bold">
-                                    {{ user.get('email', 'U')[:1].upper() }}
+                            <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition">
+                                <div class="w-8 h-8 rounded-full gradient-primary text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                                    {{ (user.get('email') or 'U')[:1].upper() }}
                                 </div>
                             </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profile</a>
-                                <a href="{{ url_for('deliverables.portfolio') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Portfolio</a>
+                            <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg shadow-black/5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1">
+                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition">Profile</a>
+                                <a href="{{ url_for('deliverables.portfolio') }}" class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition">Portfolio</a>
                                 <hr class="my-1 border-gray-100">
-                                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</a>
+                                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition">Sign out</a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900">Login</a>
-                        <a href="{{ url_for('auth.signup') }}" class="text-sm font-medium bg-gradient-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition">Get Started</a>
+                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Sign in</a>
+                        <a href="{{ url_for('auth.signup') }}" class="btn-primary px-5 py-2 rounded-xl text-sm font-semibold">Get Started</a>
                     {% endif %}
                 </div>
             </div>
@@ -68,9 +116,10 @@
     <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
+            <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
                 {% for category, message in messages %}
-                    <div class="flash-{{ category }} px-4 py-3 rounded-lg shadow-lg mb-2 text-sm font-medium animate-bounce">
+                    <div class="flash-{{ category }} px-5 py-3 rounded-xl shadow-lg mb-2 text-sm font-medium animate-fade flex items-center gap-2">
+                        {% if category == 'success' %}✅{% elif category == 'error' %}✕{% else %}ℹ️{% endif %}
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -78,23 +127,32 @@
         {% endif %}
     {% endwith %}
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="pt-16">
         {% block content %}{% endblock %}
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-gray-200 bg-white mt-16">
-        <div class="max-w-7xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
-            <p class="font-semibold gradient-text">FreelanceLaunch</p>
-            <p class="mt-1">Learn a skill. Land a client. Earn your freedom.</p>
+    <footer class="border-t border-gray-100 bg-white mt-24">
+        <div class="max-w-7xl mx-auto px-4 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-center md:text-left">
+                    <p class="font-bold tracking-tight">
+                        <span class="gradient-text">FreelanceLaunch</span>
+                    </p>
+                    <p class="text-sm text-gray-400 mt-1">Learn a skill. Land a client. Earn your freedom.</p>
+                </div>
+                <div class="flex gap-6 text-sm text-gray-400">
+                    <a href="{{ url_for('topics.explore') }}" class="hover:text-gray-600 transition">Topics</a>
+                    <a href="{{ url_for('payments.pricing') }}" class="hover:text-gray-600 transition">Pricing</a>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Auto-hide flash messages
         document.querySelectorAll('[class^="flash-"]').forEach(el => {
-            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.5s'; }, 3000);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.5s'; }, 3500);
         });
     </script>
     {% block scripts %}{% endblock %}

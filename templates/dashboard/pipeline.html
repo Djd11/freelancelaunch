@@ -1,35 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Freelance Pipeline — FreelanceLaunch{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-8">📊 Your Freelance Pipeline</h1>
+<div class="max-w-5xl mx-auto px-4 py-10">
+    <h1 class="text-2xl font-bold tracking-tight mb-8">📊 Your Pipeline</h1>
 
-    <div class="grid lg:grid-cols-3 gap-6 mb-8">
-        <!-- CURRENT PIPELINE -->
-        <div class="lg:col-span-2 space-y-4">
+    <div class="grid lg:grid-cols-3 gap-8 mb-8">
+        <!-- MAIN PIPELINE -->
+        <div class="lg:col-span-2 space-y-6">
             {% if pipelines %}
                 {% for pipe in pipelines %}
-                <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-lg">{{ pipe.get('topic', 'Unknown Topic')|replace('-', ' ')|title }}</h3>
-                        <span class="text-xs font-semibold px-3 py-1 rounded-full 
-                            {% if pipe.get('stage') == 'contracted' or pipe.get('stage') == 'completed' %}bg-green-100 text-green-700
-                            {% elif pipe.get('stage') == 'applying' or pipe.get('stage') == 'interviewing' %}bg-blue-100 text-blue-700
-                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                <div class="card p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-lg">{{ pipe.get('topic', 'Unknown')|replace('-', ' ')|title }}</h3>
+                        <span class="badge 
+                            {% if pipe.get('stage') in ('contracted', 'completed') %}bg-emerald-50 text-emerald-700
+                            {% elif pipe.get('stage') in ('applying', 'interviewing') %}bg-indigo-50 text-indigo-700
+                            {% else %}bg-gray-50 text-gray-600{% endif %}">
                             {{ pipe.get('stage', 'exploring')|capitalize }}
                         </span>
                     </div>
 
-                    <!-- Stage progress -->
-                    <div class="space-y-1 mb-4">
-                        {% set stages = ['exploring', 'learning', 'applying', 'interviewing', 'negotiating', 'contracted', 'delivering', 'completed'] %}
-                        {% set current_index = stages.index(pipe.get('stage', 'exploring')) if pipe.get('stage') in stages else 0 %}
-                        <div class="flex items-center gap-1">
+                    <!-- Stage bar -->
+                    {% set stages = ['exploring', 'learning', 'applying', 'interviewing', 'negotiating', 'contracted', 'delivering', 'completed'] %}
+                    {% set current_index = stages.index(pipe.get('stage', 'exploring')) if pipe.get('stage') in stages else 0 %}
+                    <div class="mb-6">
+                        <div class="flex gap-1 mb-2">
                             {% for s in stages %}
-                            <div class="flex-1 h-2 rounded-full {% if loop.index0 <= current_index %}bg-gradient-primary{% else %}bg-gray-200{% endif %}"></div>
+                            <div class="flex-1 h-2 rounded-full {% if loop.index0 <= current_index %}gradient-primary{% else %}bg-gray-100{% endif %}"></div>
                             {% endfor %}
                         </div>
-                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <div class="flex justify-between text-xs text-gray-400">
                             <span>Start</span>
                             <span>First Contract</span>
                             <span>Paid</span>
@@ -37,111 +37,109 @@
                     </div>
 
                     <!-- Stats -->
-                    <div class="grid grid-cols-4 gap-3 text-center">
-                        <div>
-                            <div class="text-lg font-bold text-blue-600">{{ pipe.get('proposals_sent', 0) }}</div>
-                            <div class="text-xs text-gray-500">Sent</div>
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 bg-indigo-50 rounded-xl text-center">
+                            <div class="text-xl font-bold text-indigo-600">{{ pipe.get('proposals_sent', 0) }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Sent</div>
                         </div>
-                        <div>
-                            <div class="text-lg font-bold text-purple-600">{{ pipe.get('responses_received', 0) }}</div>
-                            <div class="text-xs text-gray-500">Replies</div>
+                        <div class="p-4 bg-purple-50 rounded-xl text-center">
+                            <div class="text-xl font-bold text-purple-600">{{ pipe.get('responses_received', 0) }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Replies</div>
                         </div>
-                        <div>
-                            <div class="text-lg font-bold text-amber-600">{{ pipe.get('interviews_held', 0) }}</div>
-                            <div class="text-xs text-gray-500">Interviews</div>
+                        <div class="p-4 bg-amber-50 rounded-xl text-center">
+                            <div class="text-xl font-bold text-amber-600">{{ pipe.get('interviews_held', 0) }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Interviews</div>
                         </div>
-                        <div>
-                            <div class="text-lg font-bold text-green-600">{{ pipe.get('contracts_won', 0) }}</div>
-                            <div class="text-xs text-gray-500">Contracts</div>
+                        <div class="p-4 bg-emerald-50 rounded-xl text-center">
+                            <div class="text-xl font-bold text-emerald-600">{{ pipe.get('contracts_won', 0) }}</div>
+                            <div class="text-xs text-gray-500 mt-1">Contracts</div>
                         </div>
                     </div>
 
                     {% if pipe.get('total_earned', 0) > 0 %}
-                    <div class="mt-4 p-3 bg-green-50 rounded-lg text-center">
-                        <span class="text-sm font-medium text-green-700">💰 ${{ pipe.get('total_earned', 0) }} earned</span>
+                    <div class="p-4 bg-emerald-50 rounded-xl text-center mb-6">
+                        <span class="text-sm font-medium text-emerald-700">💰 ${{ pipe.get('total_earned', 0) }} earned</span>
                     </div>
                     {% endif %}
 
-                    <!-- Quick update buttons -->
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <!-- Quick actions -->
+                    <div class="flex flex-wrap gap-2">
                         <button hx-post="/freelance/api/update" hx-vals='{"field": "proposals_sent", "value": {{ pipe.get('proposals_sent', 0) + 1 }}}' hx-trigger="click" hx-target="body"
-                                class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                                class="text-xs px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition font-medium text-gray-600">
                             +1 Proposal Sent
                         </button>
                         <button hx-post="/freelance/api/update" hx-vals='{"field": "stage", "value": "applying"}' hx-trigger="click"
-                                class="text-xs px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition">
+                                class="text-xs px-4 py-2 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition font-medium">
                             I'm Applying Now
                         </button>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                <div class="text-5xl mb-4">🎯</div>
+            <div class="card p-12 text-center">
+                <div class="text-5xl mb-5">🎯</div>
                 <h3 class="text-lg font-semibold text-gray-500">No active pipeline</h3>
-                <p class="text-sm text-gray-400 mt-1">Enroll in a topic to start tracking your freelance journey.</p>
-                <a href="{{ url_for('topics.explore') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">Browse Topics</a>
+                <p class="text-sm text-gray-400 mt-1 mb-6">Enroll in a skill to start tracking your freelance journey.</p>
+                <a href="{{ url_for('topics.explore') }}" class="btn-primary px-6 py-2.5 rounded-xl font-medium text-sm inline-block">Browse Skills</a>
             </div>
             {% endif %}
         </div>
 
-        <!-- RIGHT: Add Contract + Tips -->
+        <!-- SIDEBAR -->
         <div class="space-y-6">
-            <!-- ADD CONTRACT -->
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                <h3 class="font-semibold mb-4">🎉 Won a Contract?</h3>
+            <div class="card p-6">
+                <h3 class="font-semibold text-sm text-gray-700 mb-4">🎉 Won a Contract?</h3>
                 <form method="POST" action="{{ url_for('freelance.add_contract') }}" class="space-y-3">
-                    <select name="platform" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <select name="platform" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                         <option value="upwork">Upwork</option>
                         <option value="fiverr">Fiverr</option>
                         <option value="contra">Contra</option>
                         <option value="direct">Direct Client</option>
                     </select>
-                    <input type="text" name="client_name" placeholder="Client name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="text" name="project_title" placeholder="Project title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="number" step="0.01" name="contract_value" placeholder="Contract value ($)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="number" name="hours_worked" placeholder="Hours worked" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg font-medium text-sm hover:bg-green-700 transition">
+                    <input type="text" name="client_name" placeholder="Client name" required class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="text" name="project_title" placeholder="Project title" required class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="number" step="0.01" name="contract_value" placeholder="Contract value ($)" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="number" name="hours_worked" placeholder="Hours worked" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <button type="submit" class="btn-primary w-full py-2.5 rounded-xl font-medium text-sm">
                         + Add Contract
                     </button>
                 </form>
             </div>
 
-            <!-- MOTIVATION -->
-            <div class="bg-gradient-primary rounded-2xl p-6 text-white">
-                <h3 class="font-semibold mb-2">💪 Stay Consistent</h3>
-                <p class="text-sm opacity-90">The average freelancer sends 12 proposals before their first win. Every application is progress.</p>
+            <div class="gradient-primary p-6 rounded-xl text-white">
+                <h3 class="font-semibold mb-2">💪 Stay consistent</h3>
+                <p class="text-sm text-white/80">The average freelancer sends 12 proposals before their first win. Every application is progress.</p>
             </div>
         </div>
     </div>
 
     <!-- CONTRACT HISTORY -->
     {% if contracts %}
-    <div class="bg-white rounded-2xl border border-gray-200 p-6">
-        <h3 class="font-semibold mb-4">📜 Contract History</h3>
+    <div class="card p-8">
+        <h3 class="font-semibold text-lg mb-6">📜 Contract History</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="text-left text-gray-500 border-b border-gray-200">
-                        <th class="pb-3 font-medium">Client</th>
-                        <th class="pb-3 font-medium">Project</th>
-                        <th class="pb-3 font-medium">Platform</th>
-                        <th class="pb-3 font-medium">Value</th>
-                        <th class="pb-3 font-medium">Status</th>
+                    <tr class="text-left text-gray-400 border-b border-gray-100">
+                        <th class="pb-4 font-medium">Client</th>
+                        <th class="pb-4 font-medium">Project</th>
+                        <th class="pb-4 font-medium">Platform</th>
+                        <th class="pb-4 font-medium">Value</th>
+                        <th class="pb-4 font-medium">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for c in contracts %}
-                    <tr class="border-b border-gray-100">
-                        <td class="py-3 font-medium">{{ c.get('client_name', '') }}</td>
-                        <td class="py-3 text-gray-500">{{ c.get('project_title', '') }}</td>
-                        <td class="py-3 text-gray-500">{{ c.get('platform', '') }}</td>
-                        <td class="py-3 font-medium text-green-600">${{ c.get('contract_value', 0) }}</td>
-                        <td class="py-3">
-                            <span class="text-xs px-2 py-1 rounded-full 
-                                {% if c.get('status') == 'completed' %}bg-green-100 text-green-700
-                                {% elif c.get('status') == 'active' %}bg-blue-100 text-blue-700
-                                {% else %}bg-red-100 text-red-700{% endif %}">
+                    <tr class="border-b border-gray-50">
+                        <td class="py-4 font-medium text-[#0f172a]">{{ c.get('client_name', '') }}</td>
+                        <td class="py-4 text-gray-500">{{ c.get('project_title', '') }}</td>
+                        <td class="py-4 text-gray-500">{{ c.get('platform', '') }}</td>
+                        <td class="py-4 font-medium text-emerald-600">${{ c.get('contract_value', 0) }}</td>
+                        <td class="py-4">
+                            <span class="badge 
+                                {% if c.get('status') == 'completed' %}bg-emerald-50 text-emerald-700
+                                {% elif c.get('status') == 'active' %}bg-indigo-50 text-indigo-700
+                                {% else %}bg-red-50 text-red-700{% endif %}">
                                 {{ c.get('status', 'active')|capitalize }}
                             </span>
                         </td>

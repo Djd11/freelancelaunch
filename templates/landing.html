@@ -2,117 +2,143 @@
 {% block title %}FreelanceLaunch — Learn. Build. Earn.{% endblock %}
 {% block content %}
 <!-- HERO -->
-<section class="bg-gradient-to-b from-blue-50 via-white to-white py-24 px-4">
-    <div class="max-w-4xl mx-auto text-center">
-        <div class="inline-block bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
-            🚀 Launching Soon — Join the Waitlist
+<section class="gradient-subtle pt-24 pb-20 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+        <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-8">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            Launching — First cohort opening soon
         </div>
-        <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
-            Pick a Skill.<br>
-            Get a <span class="gradient-text">30-Day Video Curriculum</span>.<br>
-            Land Your First Client.
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
+            Pick a skill.<br>
+            Get a <span class="gradient-text">30-day curriculum</span>.<br>
+            Land your first client.
         </h1>
-        <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-            Not another course platform. We produce a ByteByteGo-style educational video 
-            every day for YOUR chosen topic — published to YouTube, served as your lesson. 
-            You learn. The video earns. Win-win.
+        <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Not another course platform. We produce daily educational videos for your chosen 
+            skill — published to YouTube, served as your lesson. Every day builds your 
+            portfolio and your income.
         </p>
         <div class="flex gap-4 justify-center flex-wrap">
-            <a href="{{ url_for('topics.explore') }}" class="bg-gradient-primary text-white px-8 py-3 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg shadow-blue-200">
-                Explore Topics
+            <a href="{{ url_for('topics.explore') }}" class="btn-primary px-8 py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-indigo-200">
+                Explore Skills
             </a>
-            <a href="{{ url_for('auth.signup') }}" class="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold text-lg hover:border-gray-300 transition">
+            <a href="{{ url_for('auth.signup') }}" class="bg-white border border-gray-200 text-gray-700 px-8 py-3.5 rounded-xl font-bold text-lg hover:border-gray-300 hover:shadow-sm transition-all">
                 Start Free
             </a>
         </div>
-        <div class="flex gap-8 justify-center mt-12 text-sm text-gray-500">
-            <span>🎯 5 curated topics</span>
-            <span>📺 Daily ByteByteGo-style videos</span>
-            <span>📊 Real contract tracking</span>
+        <div class="flex items-center justify-center gap-8 mt-12 text-sm text-gray-400">
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                5 in-demand skills
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Daily video lessons
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Real contract tracking
+            </span>
         </div>
     </div>
 </section>
 
 <!-- HOW IT WORKS -->
-<section class="py-20 px-4">
+<section class="py-24 px-4">
     <div class="max-w-5xl mx-auto">
-        <h2 class="text-3xl font-bold text-center mb-12">How It <span class="gradient-text">Works</span></h2>
-        <div class="grid md:grid-cols-4 gap-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">How it <span class="gradient-text">works</span></h2>
+            <p class="text-gray-500 max-w-md mx-auto">Four steps from zero to your first freelance income.</p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-8">
             <div class="text-center">
-                <div class="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-4 text-2xl">1️⃣</div>
-                <h3 class="font-bold mb-2">Pick a Topic</h3>
-                <p class="text-sm text-gray-500">Choose from 5 market-validated freelance skills</p>
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">1</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">Choose a skill</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Pick from market-validated skills with real freelance demand.</p>
             </div>
             <div class="text-center">
-                <div class="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-4 text-2xl">2️⃣</div>
-                <h3 class="font-bold mb-2">Get a Curriculum</h3>
-                <p class="text-sm text-gray-500">AI generates a 30-day personalized learning plan</p>
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">2</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">Get your curriculum</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">A personalized 30-day plan generated for your chosen skill.</p>
             </div>
             <div class="text-center">
-                <div class="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4 text-2xl">3️⃣</div>
-                <h3 class="font-bold mb-2">Watch Daily Videos</h3>
-                <p class="text-sm text-gray-500">ByteByteGo-style animations + practice exercises</p>
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">3</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">Learn daily</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Watch one video, complete one exercise, track your progress.</p>
             </div>
             <div class="text-center">
-                <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4 text-2xl">4️⃣</div>
-                <h3 class="font-bold mb-2">Earn Money</h3>
-                <p class="text-sm text-gray-500">Track proposals, win contracts, build your income</p>
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">4</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">Earn</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Track proposals, win contracts, build your freelance income.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- TOPICS PREVIEW -->
-<section class="py-20 px-4 bg-gray-50">
+<section class="py-24 px-4 bg-white">
     <div class="max-w-5xl mx-auto">
-        <h2 class="text-3xl font-bold text-center mb-4">Available <span class="gradient-text">Topics</span></h2>
-        <p class="text-center text-gray-500 mb-10">All topics validated against real Upwork and Fiverr demand</p>
-        <div class="grid md:grid-cols-3 gap-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Available <span class="gradient-text">skills</span></h2>
+            <p class="text-gray-500">Each skill is validated against real freelance market demand.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for topic in topics %}
-            <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition flex items-center gap-4">
-                <div class="text-3xl">{{ topic.icon }}</div>
-                <div>
-                    <h3 class="font-semibold">{{ topic.name }}</h3>
-                    <p class="text-xs text-gray-400">{{ topic.job_count }} jobs · ${{ topic.avg_rate }}/hr</p>
+            <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="card p-5 flex items-center gap-4 hover:card-active group">
+                <div class="text-2xl">{{ topic.icon }}</div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-[#0f172a] group-hover:text-indigo-600 transition">{{ topic.name }}</h3>
+                    <div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        <span>{{ topic.job_count }} open contracts</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                        <span>${{ topic.avg_rate }}/hr avg</span>
+                    </div>
                 </div>
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
             {% endfor %}
         </div>
         <div class="text-center mt-8">
-            <a href="{{ url_for('topics.explore') }}" class="text-blue-600 font-medium hover:underline">View all topics →</a>
+            <a href="{{ url_for('topics.explore') }}" class="text-indigo-600 font-medium hover:text-indigo-700 transition text-sm">View details and demand data →</a>
         </div>
     </div>
 </section>
 
 <!-- DUAL REVENUE -->
-<section class="py-20 px-4">
-    <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-3xl font-bold mb-4">Built Different: <span class="gradient-text">Dual Revenue</span></h2>
-        <p class="text-gray-500 max-w-2xl mx-auto mb-8">
-            Every day's lesson is a YouTube-ready educational video. Your curriculum builds 
-            two assets simultaneously — your skill set AND a monetized YouTube channel.
-        </p>
-        <div class="grid md:grid-cols-2 gap-6 text-left">
-            <div class="bg-white border border-gray-200 p-6 rounded-xl">
-                <div class="text-2xl mb-2">🎓</div>
-                <h3 class="font-bold mb-2">You Learn</h3>
-                <p class="text-sm text-gray-500">High-production ByteByteGo-style videos make complex topics easy to understand. Practice exercises cement your skills.</p>
+<section class="py-24 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Built <span class="gradient-text">differently</span></h2>
+            <p class="text-gray-500 max-w-lg mx-auto">Your daily lessons double as YouTube content. Your curriculum builds two assets at once.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="card p-8">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-4 text-xl">🎓</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">You learn</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Structured daily lessons with hands-on exercises. Every concept reinforced by practice.</p>
             </div>
-            <div class="bg-white border border-gray-200 p-6 rounded-xl">
-                <div class="text-2xl mb-2">💰</div>
-                <h3 class="font-bold mb-2">You Earn</h3>
-                <p class="text-sm text-gray-500">Track your freelance pipeline — proposals → interviews → contracts → payments. Every step measured.</p>
+            <div class="card p-8">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-4 text-xl">💰</div>
+                <h3 class="font-bold text-[#0f172a] mb-2">You earn</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Track your full pipeline — proposals, interviews, contracts, and payments. Every step measured.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- CTA -->
-<section class="bg-gradient-primary py-16 px-4 text-white text-center">
-    <h2 class="text-3xl font-bold mb-4">Ready to Start Your Freelance Journey?</h2>
-    <p class="opacity-90 mb-8 max-w-md mx-auto">Free tier includes full curriculum access. Upgrade for accountability and client introductions.</p>
-    <a href="{{ url_for('auth.signup') }}" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg">
-        Get Started Free
-    </a>
+<section class="gradient-primary py-20 px-4">
+    <div class="max-w-2xl mx-auto text-center text-white">
+        <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Ready to start?</h2>
+        <p class="text-white/80 mb-10 max-w-md mx-auto">Free tier includes full curriculum access. Upgrade for accountability and client introductions.</p>
+        <div class="flex gap-4 justify-center flex-wrap">
+            <a href="{{ url_for('auth.signup') }}" class="bg-white text-indigo-600 px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-black/10 transition-all shadow-lg">
+                Get Started Free
+            </a>
+            <a href="{{ url_for('topics.explore') }}" class="text-white/90 hover:text-white px-8 py-3.5 rounded-xl font-bold text-lg border border-white/20 hover:border-white/40 transition-all">
+                Browse Skills
+            </a>
+        </div>
+    </div>
 </section>
 {% endblock %}

@@ -1,116 +1,113 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — FreelanceLaunch{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <!-- TOP SECTION: Cohort info + progress bar -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div class="max-w-6xl mx-auto px-4 py-10">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-            <h1 class="text-2xl font-bold">{{ cohort.get('name', 'Your Cohort') }}</h1>
-            <p class="text-sm text-gray-500">Day {{ current_day }} of {{ cohort.get('max_days', 30) }}</p>
+            <h1 class="text-2xl font-bold tracking-tight">{{ cohort.get('name', 'Your Cohort') }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Day {{ current_day }} of {{ cohort.get('max_days', 30) }}</p>
         </div>
         <div class="flex items-center gap-4">
-            <div class="text-sm">
-                <span class="font-semibold">{{ total_done }}/{{ cohort.get('max_days', 30) }}</span> days completed
-            </div>
-            <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-primary rounded-full transition-all" style="width: {{ (total_done / cohort.get('max_days', 30)) * 100 }}%"></div>
+            <span class="text-sm text-gray-500">
+                <strong class="text-[#0f172a] font-semibold">{{ total_done }}/{{ cohort.get('max_days', 30) }}</strong> days completed
+            </span>
+            <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full gradient-primary rounded-full transition-all duration-500" style="width: {{ (total_done / cohort.get('max_days', 30)) * 100 }}%"></div>
             </div>
         </div>
     </div>
 
     <div class="grid lg:grid-cols-3 gap-8">
-        <!-- LEFT: Today's Lesson -->
+        <!-- MAIN: Today's Lesson -->
         <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-bold text-lg">
-                        Day {{ current_day }}: {% if curriculum_day %}{{ curriculum_day.get('title', 'Today\'s Lesson') }}{% else %}Getting Started{% endif %}
-                    </h2>
+            <div class="card p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="font-bold text-lg">Day {{ current_day }}</h2>
+                        <p class="text-sm text-gray-500">{% if curriculum_day %}{{ curriculum_day.get('title', 'Today\'s Lesson') }}{% else %}Getting Started{% endif %}</p>
+                    </div>
                     {% if today_video and today_video.get('production_status') == 'ready' %}
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Video Ready</span>
+                    <span class="badge bg-emerald-50 text-emerald-700">Ready</span>
                     {% elif today_video %}
-                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">{{ today_video.get('production_status', 'pending')|capitalize }}</span>
+                    <span class="badge bg-amber-50 text-amber-700">{{ today_video.get('production_status', 'pending')|capitalize }}</span>
                     {% endif %}
                 </div>
 
-                <!-- VIDEO PLAYER -->
+                <!-- VIDEO -->
                 {% if today_video and today_video.get('youtube_url') %}
-                <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden mb-6">
+                <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden mb-6 shadow-sm">
                     <iframe width="100%" height="100%" src="{{ today_video['youtube_url'] }}" frameborder="0" allowfullscreen></iframe>
                 </div>
                 {% elif today_video and today_video.get('production_status') == 'pending' %}
-                <div class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center mb-6">
+                <div class="aspect-video bg-gray-50 rounded-xl flex items-center justify-center mb-6 border border-gray-100">
                     <div class="text-center">
-                        <div class="text-4xl mb-2">🎥</div>
+                        <div class="text-4xl mb-3">🎥</div>
                         <p class="text-gray-500 font-medium">Today's video is being created</p>
-                        <p class="text-xs text-gray-400 mt-1">Check back after 6 AM — it's rendering overnight</p>
+                        <p class="text-xs text-gray-400 mt-1">Check back after 6 AM — rendering overnight</p>
                     </div>
                 </div>
                 {% else %}
-                <div class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center mb-6">
+                <div class="aspect-video bg-gray-50 rounded-xl flex items-center justify-center mb-6 border border-gray-100">
                     <div class="text-center">
-                        <div class="text-4xl mb-2">📺</div>
+                        <div class="text-4xl mb-3">📺</div>
                         <p class="text-gray-500 font-medium">Welcome to FreelanceLaunch!</p>
                         <p class="text-xs text-gray-400 mt-1">Your first video will appear here when your cohort starts.</p>
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- LESSON INFO -->
+                <!-- DESCRIPTION -->
                 {% if curriculum_day %}
                 <div class="mb-6">
-                    <h3 class="font-semibold mb-2">{{ curriculum_day.get('description', '') }}</h3>
-                    
+                    <p class="text-gray-600 leading-relaxed">{{ curriculum_day.get('description', '') }}</p>
                     {% if curriculum_day.get('learning_objectives') %}
-                    <div class="mt-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-2">🎯 Learning Objectives</h4>
-                        <p class="text-sm text-gray-600">{{ curriculum_day['learning_objectives'] }}</p>
+                    <div class="mt-4 p-4 bg-indigo-50 rounded-xl">
+                        <p class="text-sm font-medium text-indigo-700">🎯 {{ curriculum_day['learning_objectives'] }}</p>
                     </div>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                <!-- PROGRESS CHECKLIST -->
+                <!-- PROGRESS -->
                 {% if today_video %}
-                <div class="space-y-3" x-data="{ videoWatched: {{ 'true' if progress and progress.get('video_watched') else 'false' }} }">
-                    <div class="flex items-center gap-3 p-3 rounded-lg border {% if progress and progress.get('video_watched') %}border-green-200 bg-green-50{% else %}border-gray-200{% endif %}">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('video_watched') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
                         <input type="checkbox" 
                                {% if progress and progress.get('video_watched') %}checked disabled{% endif %}
-                               @click="videoWatched = !videoWatched; fetch('/api/progress/mark', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({cohort_video_id:'{{ today_video["id"] }}', field:'video_watched'})})"
-                               class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <div>
-                            <div class="font-medium text-sm">Watch Today's Video</div>
+                               onclick="fetch('/api/progress/mark',{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify({cohort_video_id:'{{ today_video["id"] }}', field:'video_watched'})}).then(()=>this.closest('div').classList.add('border-emerald-200','bg-emerald-50'))"
+                               class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">Watch today's video</div>
                             <div class="text-xs text-gray-400">~2-3 minutes</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 p-3 rounded-lg border {% if progress and progress.get('practice_completed') %}border-green-200 bg-green-50{% else %}border-gray-200{% endif %}">
+                    <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('practice_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
                         <input type="checkbox"
                                {% if progress and progress.get('practice_completed') %}checked disabled{% endif %}
                                hx-post="/api/progress/mark" hx-vals='{"cohort_video_id": "{{ today_video["id"] }}", "field": "practice_completed"}' hx-trigger="click"
-                               class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <div>
-                            <div class="font-medium text-sm">Complete Practice Task</div>
+                               class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">Complete practice task</div>
                             <div class="text-xs text-gray-400">~25 minutes</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 p-3 rounded-lg border {% if progress and progress.get('apply_completed') %}border-green-200 bg-green-50{% else %}border-gray-200{% endif %}">
+                    <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('apply_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
                         <input type="checkbox"
                                {% if progress and progress.get('apply_completed') %}checked disabled{% endif %}
                                hx-post="/api/progress/mark" hx-vals='{"cohort_video_id": "{{ today_video["id"] }}", "field": "apply_completed"}' hx-trigger="click"
-                               class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <div>
-                            <div class="font-medium text-sm">Submit Your Work</div>
+                               class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">Submit your work</div>
                             <div class="text-xs text-gray-400">~10 minutes</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- NEXT BUTTON -->
                 <div class="mt-6">
-                    <a href="{{ url_for('deliverables.submit', day=current_day) }}" 
-                       class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                    <a href="{{ url_for('deliverables.submit', day=current_day) }}" class="btn-primary px-6 py-2.5 rounded-xl font-medium text-sm inline-block">
                         Submit Deliverable →
                     </a>
                 </div>
@@ -118,61 +115,67 @@
             </div>
         </div>
 
-        <!-- RIGHT: Pipeline + Stats -->
+        <!-- SIDEBAR -->
         <div class="space-y-6">
-            <!-- FREELANCE PIPELINE SUMMARY -->
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
+            <!-- PIPELINE -->
+            <div class="card p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold">📈 Your Pipeline</h3>
-                    <a href="{{ url_for('freelance.pipeline') }}" class="text-xs text-blue-600 hover:underline">Manage</a>
+                    <h3 class="font-semibold text-sm text-gray-700">📊 Your Pipeline</h3>
+                    <a href="{{ url_for('freelance.pipeline') }}" class="text-xs text-indigo-600 hover:underline">Manage</a>
                 </div>
                 {% if pipeline %}
                 <div class="space-y-3">
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-sm py-1">
                         <span class="text-gray-500">Stage</span>
-                        <span class="font-medium">{{ pipeline.get('stage', 'exploring')|capitalize }}</span>
+                        <span class="font-medium text-[#0f172a]">{{ pipeline.get('stage', 'exploring')|capitalize }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-sm py-1">
                         <span class="text-gray-500">Proposals</span>
                         <span class="font-medium">{{ pipeline.get('proposals_sent', 0) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-sm py-1">
                         <span class="text-gray-500">Contracts</span>
-                        <span class="font-medium text-green-600">{{ pipeline.get('contracts_won', 0) }}</span>
+                        <span class="font-medium text-emerald-600">{{ pipeline.get('contracts_won', 0) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-sm py-1">
                         <span class="text-gray-500">Earned</span>
-                        <span class="font-medium text-green-600">${{ pipeline.get('total_earned', 0) }}</span>
+                        <span class="font-medium text-emerald-600">${{ pipeline.get('total_earned', 0) }}</span>
                     </div>
                 </div>
                 {% else %}
-                <p class="text-sm text-gray-400">Track your job applications and contracts here as you progress.</p>
+                <p class="text-sm text-gray-400">Track your applications and contracts here as you progress.</p>
                 {% endif %}
             </div>
 
-            <!-- STREAK / CONSISTENCY -->
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                <h3 class="font-semibold mb-4">🔥 Your Progress</h3>
+            <!-- PROGRESS -->
+            <div class="card p-6">
+                <h3 class="font-semibold text-sm text-gray-700 mb-4">🔥 This Week</h3>
                 <div class="grid grid-cols-7 gap-1.5">
-                    {% for day in range(1, 8) %}
+                    {% set week_start = [current_day, 1]|max %}
+                    {% for day in range(week_start, week_start + 7) %}
                     <div class="aspect-square rounded-lg flex items-center justify-center text-xs font-bold
-                        {% if day <= total_done %}bg-gradient-primary text-white
-                        {% elif day == current_day %}border-2 border-blue-400 bg-blue-50 text-blue-600
-                        {% else %}bg-gray-100 text-gray-400{% endif %}">
+                        {% if day < current_day %}gradient-primary text-white
+                        {% elif day == current_day %}ring-2 ring-indigo-400 bg-indigo-50 text-indigo-600
+                        {% else %}bg-gray-50 text-gray-400{% endif %}">
                         {{ day }}
                     </div>
                     {% endfor %}
                 </div>
-                <p class="text-xs text-gray-400 text-center mt-3">This week's progress</p>
             </div>
 
             <!-- QUICK LINKS -->
-            <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                <h3 class="font-semibold mb-3">🔗 Quick Links</h3>
-                <div class="space-y-2 text-sm">
-                    <a href="{{ url_for('deliverables.portfolio') }}" class="block text-gray-600 hover:text-blue-600">📂 My Portfolio</a>
-                    <a href="{{ url_for('freelance.pipeline') }}" class="block text-gray-600 hover:text-blue-600">📊 Track Applications</a>
-                    <a href="{{ url_for('payments.pricing') }}" class="block text-gray-600 hover:text-blue-600">⭐ Upgrade Plan</a>
+            <div class="card p-6">
+                <h3 class="font-semibold text-sm text-gray-700 mb-3">Quick Links</h3>
+                <div class="space-y-2.5 text-sm">
+                    <a href="{{ url_for('deliverables.portfolio') }}" class="flex items-center gap-2 text-gray-500 hover:text-[#0f172a] transition">
+                        <span>📂</span> My Portfolio
+                    </a>
+                    <a href="{{ url_for('freelance.pipeline') }}" class="flex items-center gap-2 text-gray-500 hover:text-[#0f172a] transition">
+                        <span>📊</span> Track Applications
+                    </a>
+                    <a href="{{ url_for('payments.pricing') }}" class="flex items-center gap-2 text-gray-500 hover:text-[#0f172a] transition">
+                        <span>⭐</span> Upgrade Plan
+                    </a>
                 </div>
             </div>
         </div>
