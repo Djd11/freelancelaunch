@@ -1,45 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Production Queue — Admin{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-blue-600 hover:underline mb-4 inline-block">← Admin Home</a>
-    <h1 class="text-2xl font-bold mb-6">🎬 Video Production Queue</h1>
+<div class="max-w-6xl mx-auto px-4 py-10">
+    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-indigo-600 hover:underline mb-6 inline-block">← Admin</a>
+    <h1 class="text-2xl font-bold tracking-tight mb-8">🎬 Video Production</h1>
 
     <div class="grid lg:grid-cols-2 gap-8">
-        <!-- PENDING -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-6">
+        <!-- PENDING QUEUE -->
+        <div class="card p-6">
             <h2 class="font-bold text-lg mb-4">⏳ Pending ({{ pending|length }})</h2>
             {% if pending %}
-            <div class="space-y-2">
+            <div class="space-y-3">
                 {% for p in pending %}
-                <div class="flex justify-between items-center p-3 bg-amber-50 rounded-lg text-sm">
+                <div class="flex items-center justify-between p-4 bg-amber-50 rounded-xl">
                     <div>
-                        <span class="font-medium">Day {{ p.get('day_number', '?') }}</span>
-                        <span class="text-gray-500 ml-2">{{ p.get('youtube_title', '')[:40] }}</span>
+                        <span class="font-semibold text-sm">Day {{ p.get('day_number', '?') }}</span>
+                        <span class="text-xs text-gray-500 ml-2">{{ (p.get('youtube_title') or 'Untitled')[:40] }}</span>
                     </div>
-                    <span class="text-xs text-amber-600 font-medium">pending</span>
+                    <form method="POST" action="{{ url_for('admin.trigger_production', video_id=p['id']) }}">
+                        <button type="submit" class="text-xs px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition">
+                            Produce Now
+                        </button>
+                    </form>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="text-gray-400 text-sm">Queue is empty — all videos produced.</p>
+            <p class="text-sm text-gray-400 text-center py-8">Queue is empty — all videos produced.</p>
             {% endif %}
         </div>
 
-        <!-- RECENT -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-6">
-            <h2 class="font-bold text-lg mb-4">✅ Recent Productions</h2>
+        <!-- RECENT PRODUCTIONS -->
+        <div class="card p-6">
+            <h2 class="font-bold text-lg mb-4">📋 Recent ({{ recent|length }})</h2>
             {% if recent %}
             <div class="space-y-2">
                 {% for r in recent %}
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg text-sm">
-                    <div>
-                        <span class="font-medium">Day {{ r.get('day_number', '?') }}</span>
-                        <span class="text-gray-500 ml-2">{{ (r.get('youtube_title') or 'Untitled')[:40] }}</span>
+                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium">Day {{ r.get('day_number', '?') }}</div>
+                        <div class="text-xs text-gray-400 truncate">{{ (r.get('youtube_title') or 'Untitled')[:50] }}</div>
                     </div>
-                    <span class="text-xs px-2 py-1 rounded-full 
-                        {% if r.get('production_status') == 'ready' %}bg-green-100 text-green-700
-                        {% elif r.get('production_status') == 'failed' %}bg-red-100 text-red-700
+                    <span class="badge ml-3 flex-shrink-0
+                        {% if r.get('production_status') == 'ready' %}bg-emerald-50 text-emerald-700
+                        {% elif r.get('production_status') == 'failed' %}bg-red-50 text-red-700
+                        {% elif r.get('production_status') == 'rendering' %}bg-indigo-50 text-indigo-700
                         {% else %}bg-gray-100 text-gray-600{% endif %}">
                         {{ r.get('production_status', '?') }}
                     </span>
@@ -47,9 +52,19 @@
                 {% endfor %}
             </div>
             {% else %}
-            <p class="text-gray-400 text-sm">No videos produced yet.</p>
+            <p class="text-sm text-gray-400 text-center py-8">No videos produced yet.</p>
             {% endif %}
         </div>
+    </div>
+
+    <!-- NIGHTLY SCHEDULE INFO -->
+    <div class="card p-6 mt-8">
+        <h2 class="font-bold text-lg mb-2">🌙 Nightly Schedule</h2>
+        <p class="text-sm text-gray-500">The scheduler runs automatically at 2 AM daily via cron. It finds active cohorts, determines tomorrow's day number, and produces the video.</p>
+        <div class="mt-4 p-4 bg-gray-50 rounded-xl">
+            <p class="text-sm font-mono text-gray-600">0 2 * * * cd {{ video_pipeline_dir|default('/home/dhruba/Documents/exp_money/daily_learning_freelance/web-app') }} && ../venv/bin/python services/scheduler.py</p>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Run manually: <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">cd web-app && ../venv/bin/python services/scheduler.py</code></p>
     </div>
 </div>
 {% endblock %}

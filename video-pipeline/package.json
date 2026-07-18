@@ -1,0 +1,22 @@
+{
+  "name": "educational-video-v2",
+  "version": "2.0.0",
+  "description": "TwoPanel v2 — enhanced educational video with memes, code snippets, particles, camera zoom",
+  "type": "module",
+  "scripts": {
+    "preview": "npx remotion preview src/index.js",
+    "render": "npx remotion render src/index.js TwoPanel out/video-final.mp4 --overwrite",
+    "render:still": "npx remotion still src/index.js TwoPanel out/frame.png --frame=0 --overwrite",
+    "thumbnail": "npx remotion still src/index.js TwoPanel out/thumbnail.png --frame=30 --overwrite"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "4.0.484",
+    "@remotion/bundler": "4.0.484",
+    "@remotion/renderer": "4.0.484"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.484"
+  }
+}
