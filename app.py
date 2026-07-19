@@ -52,8 +52,24 @@ def create_app():
         
         @app.context_processor
         def inject_globals():
+            platform_needs_setup = False
+            platform_count = 0
+            if g.get("user"):
+                try:
+                    from services.supabase_client import get_supabase
+                    sb = get_supabase()
+                    resp = sb.table("user_platforms").select("status") \
+                        .eq("user_id", g.user["id"]).execute()
+                    platforms = resp.data or []
+                    platform_count = len(platforms)
+                    platform_needs_setup = platform_count == 0
+                except Exception:
+                    pass
+        
             return {
                 "user": g.get("user"),
+                "platform_needs_setup": platform_needs_setup,
+                "platform_count": platform_count,
                 "STRIPE_PUBLISHABLE_KEY": app.config.get("STRIPE_PUBLISHABLE_KEY", ""),
             }
         

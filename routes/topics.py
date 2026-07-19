@@ -192,5 +192,5 @@ def enroll(slug):
         "landing_topic": slug,
     }).eq("user_id", g.user["id"]).execute()
     
-    flash(f"You're enrolled in {topic['name']}! Cohort starts {cohort['start_date']}.", "success")
-    return redirect(url_for("dashboard.home"))
+    flash(f"You're enrolled in {topic['name']}! Now let's link your freelance platforms.", "success")
+    return redirect(url_for("platforms.setup"))

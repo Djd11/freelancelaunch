@@ -128,6 +128,22 @@
         {% endif %}
     {% endwith %}
 
+    <!-- PLATFORM SETUP BANNER (shown on every page until done) -->
+    {% if user and platform_needs_setup %}
+    <div class="bg-gradient-primary text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-3 text-sm">
+                <span class="text-lg">🔗</span>
+                <span><strong>Link your freelance platforms</strong> — You need Upwork, Fiverr, or Contra accounts to track jobs and contracts.</span>
+            </div>
+            <a href="{{ url_for('platforms.setup') }}" 
+               class="bg-white text-indigo-600 px-5 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition whitespace-nowrap">
+                Set up now →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- MAIN -->
     <main class="pt-16">
         {% block content %}{% endblock %}
