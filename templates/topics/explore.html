@@ -1,22 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Explore Skills — FreelanceLaunch{% endblock %}
 {% block content %}
-<!-- HERO -->
-<section class="pt-24 pb-16 px-4">
+<!-- HERO + SEARCH -->
+<section class="pt-24 pb-8 px-4">
     <div class="max-w-5xl mx-auto text-center">
         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Choose your <span class="gradient-text">skill</span>
+            Explore <span class="gradient-text">Skills</span>
         </h1>
-        <p class="text-lg text-gray-500 max-w-2xl mx-auto">Every skill is validated against live freelance market data. Pick one with real demand.</p>
+        <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
+            Search any skill to see live freelance demand, or pick from our curated list.
+        </p>
+        
+        <!-- SEARCH BAR -->
+        <div class="max-w-2xl mx-auto relative" id="search-container">
+            <div class="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 overflow-hidden">
+                <span class="pl-5 text-gray-400 text-lg">🔍</span>
+                <input type="text" id="topic-search" 
+                       placeholder="Search any skill... (e.g., machine learning, react, data entry)"
+                       class="flex-1 px-4 py-4 text-base outline-none border-none bg-transparent"
+                       autocomplete="off">
+                <button id="search-btn" 
+                        class="btn-primary m-1.5 px-6 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap">
+                    Search
+                </button>
+            </div>
+            <!-- Suggestions dropdown -->
+            <div id="search-suggestions" class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg hidden z-50 max-h-80 overflow-y-auto"></div>
+        </div>
     </div>
 </section>
 
-<!-- TOPICS GRID -->
-<section class="pb-24 px-4">
+<!-- SEARCH RESULTS (hidden initially) -->
+<section id="search-results" class="hidden pb-24 px-4">
+    <div class="max-w-5xl mx-auto">
+        <!-- Platform demand card -->
+        <div id="platform-demand" class="card p-8 mb-8"></div>
+        <!-- Matched curated topics -->
+        <div id="curated-matches" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</section>
+
+<!-- CURATED TOPICS GRID (shown by default) -->
+<section id="curated-topics" class="pb-24 px-4">
     <div class="max-w-6xl mx-auto">
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold tracking-tight">Curated <span class="gradient-text">Skills</span></h2>
+            <span class="text-sm text-gray-400">Verified by market data</span>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="topics-grid">
             {% for topic in topics %}
-            <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="card p-6 group hover:card-active transition-all">
+            <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="card p-6 group hover:card-active transition-all topic-card" data-name="{{ topic.name|lower }}">
                 <div class="flex items-start justify-between mb-5">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: {{ topic.color }}12;">
                         {{ topic.icon }}
@@ -29,13 +62,11 @@
                 </div>
                 <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-indigo-600 transition">{{ topic.name }}</h3>
                 <p class="text-sm text-gray-500 mb-5 leading-relaxed">{{ topic.tagline }}</p>
-                
                 <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
                     <span><strong class="text-[#0f172a] font-semibold">{{ topic.job_count }}</strong> open contracts</span>
                     <span><strong class="text-[#0f172a] font-semibold">${{ topic.avg_rate }}</strong>/hr avg</span>
                     <span><strong class="text-[#0f172a] font-semibold">{{ topic.weeks_to_first_gig }}wk</strong> to first gig</span>
                 </div>
-
                 <div class="flex flex-wrap gap-1.5">
                     {% for skill in topic.skills[:3] %}
                     <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">{{ skill }}</span>
@@ -47,7 +78,6 @@
             </a>
             {% endfor %}
         </div>
-
         <div class="mt-10 card p-6 text-center">
             <p class="text-sm text-gray-500">
                 📊 Demand data updated weekly from Upwork and Fiverr. Skills with <strong class="text-[#0f172a]">80+ demand score</strong> are verified for freelance viability.
@@ -55,4 +85,189 @@
         </div>
     </div>
 </section>
+
+<script>
+const searchInput = document.getElementById('topic-search');
+const searchBtn = document.getElementById('search-btn');
+const suggestions = document.getElementById('search-suggestions');
+const searchResults = document.getElementById('search-results');
+const platformDemand = document.getElementById('platform-demand');
+const curatedMatches = document.getElementById('curated-matches');
+const curatedTopics = document.getElementById('curated-topics');
+
+let searchTimeout;
+
+// Live suggestions as user types
+searchInput.addEventListener('input', function() {
+    const q = this.value.trim();
+    if (q.length < 2) {
+        suggestions.classList.add('hidden');
+        return;
+    }
+    
+    // Filter curated topics locally (instant)
+    const cards = document.querySelectorAll('.topic-card');
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        if (name.includes(q.toLowerCase())) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Show suggestions
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => fetchSuggestions(q), 200);
+});
+
+async function fetchSuggestions(q) {
+    try {
+        const resp = await fetch(`/search/suggestions`);
+        const all = await resp.json();
+        const filtered = all.filter(s => s.name.toLowerCase().includes(q));
+        
+        if (filtered.length === 0) {
+            suggestions.classList.add('hidden');
+            return;
+        }
+        
+        suggestions.innerHTML = filtered.map(s => 
+            `<div class="suggestion-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 flex items-center gap-3"
+                  onclick="doSearch('${s.name}')">
+                <span class="text-gray-400">💼</span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-[#0f172a]">${s.name}</div>
+                    <div class="text-xs text-gray-400">${s.jobs} jobs · $${s.rate}/hr avg</div>
+                </div>
+            </div>`
+        ).join('');
+        suggestions.classList.remove('hidden');
+    } catch(e) {
+        console.error('Suggestions error:', e);
+    }
+}
+
+// Full search on Enter or button click
+searchBtn.addEventListener('click', () => doSearch(searchInput.value.trim()));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value.trim()); });
+
+async function doSearch(query) {
+    if (query.length < 2) return;
+    suggestions.classList.add('hidden');
+    
+    // Show loading state
+    searchResults.classList.remove('hidden');
+    platformDemand.innerHTML = '<div class="text-center py-8 text-gray-400">🔍 Searching freelance platforms...</div>';
+    curatedMatches.innerHTML = '';
+    
+    try {
+        const resp = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
+        const data = await resp.json();
+        
+        if (data.error) {
+            platformDemand.innerHTML = `<div class="text-center py-8 text-red-500">${data.error}</div>`;
+            return;
+        }
+        
+        // Check if platforms are linked
+        if (data.platforms_linked === false) {
+            platformDemand.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-4xl mb-4">🔗</div>
+                    <h3 class="text-lg font-bold text-[#0f172a] mb-2">Link your platforms to see live demand data</h3>
+                    <p class="text-gray-500 mb-4">Connect Upwork, Fiverr, or Contra to get real-time job counts and rates.</p>
+                    <a href="/platforms/setup" class="btn-primary px-6 py-2.5 rounded-xl font-medium inline-block">
+                        Link Platforms
+                    </a>
+                </div>`;
+            return;
+        }
+        
+        // Show platform results
+        const pr = data.platform_results;
+        if (pr) {
+            const platformCards = ['upwork', 'fiverr', 'contra'].map(p => {
+            const pl = pr[p];
+            if (!pl || pl.status === 'unreachable') {
+            return `<div class="p-4 bg-gray-50 rounded-xl text-center">
+                <div class="text-lg font-bold text-gray-400">⚠️</div>
+                <div class="text-xs text-gray-500 mt-1">${p} unreachable</div>
+            </div>`;
+            }
+            const pName = p.charAt(0).toUpperCase() + p.slice(1);
+            return `<div class="p-4 rounded-xl text-center" style="background: ${p === 'upwork' ? '#f0fdf4' : p === 'fiverr' ? '#fefce8' : '#eef2ff'}">
+            <div class="text-sm font-semibold text-gray-700">${pName}</div>
+            <div class="text-2xl font-bold text-[#0f172a] mt-1">${pl.jobs.toLocaleString()}</div>
+            <div class="text-xs text-gray-500">jobs at $${pl.avg_rate}/hr avg</div>
+            <a href="${pl.url}" target="_blank" class="text-xs text-indigo-600 hover:underline mt-2 inline-block">Visit →</a>
+            </div>`;
+            }).join('');
+            
+            const trendColor = pr.trend === 'growing' ? 'text-emerald-600' : 'text-gray-600';
+            const trendLabel = pr.trend.charAt(0).toUpperCase() + pr.trend.slice(1);
+            
+            platformDemand.innerHTML = `
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl flex-shrink-0">📊</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-xl">Market Demand for "${query}"</h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Demand score: <strong class="text-[#0f172a]">${pr.demand_score}/100</strong> · 
+                            Trend: <strong class="${trendColor}">${trendLabel}</strong> · 
+                            Difficulty: <strong>${pr.difficulty}</strong> · 
+                            First gig: ~${pr.estimated_time_to_gig}
+                        </p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    ${platformCards}
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="enrollNewTopic('${query}')" 
+                            class="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm">
+                        📚 Create 30-Day Curriculum for "${query}"
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Show curated matches
+        if (data.curated_matches && data.curated_matches.length > 0) {
+            curatedMatches.innerHTML = `
+                <div class="col-span-full mb-4">
+                    <h3 class="font-semibold text-sm text-gray-700">Matching curated skills</h3>
+                </div>
+                ${data.curated_matches.map(t => `
+                    <a href="/topics/${t.slug}" class="card p-6 group hover:card-active transition-all">
+                        <h3 class="font-bold text-[#0f172a] group-hover:text-indigo-600 transition">${t.name}</h3>
+                        <p class="text-sm text-gray-500 mt-2">${t.tagline}</p>
+                    </a>
+                `).join('')}
+            `;
+        } else {
+            curatedMatches.innerHTML = `
+                <div class="col-span-full text-center py-8 text-gray-400">
+                    No matching curated skills. But the market data looks promising!
+                </div>
+            `;
+        }
+        
+    } catch(e) {
+        platformDemand.innerHTML = `<div class="text-center py-8 text-red-500">Search failed: ${e.message}</div>`;
+    }
+}
+
+function enrollNewTopic(topic) {
+    // For now, redirect to signup or topic generation
+    window.location.href = `/topics?new=${encodeURIComponent(topic)}`;
+}
+
+// Close suggestions on click outside
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('search-container').contains(e.target)) {
+        suggestions.classList.add('hidden');
+    }
+});
+</script>
 {% endblock %}
