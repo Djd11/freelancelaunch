@@ -91,6 +91,20 @@
                         <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Dashboard</a>
                         <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Pipeline</a>
                         <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition">Pricing</a>
+                        <!-- PLATFORM LINK STATUS — top right of nav -->
+                        <a href="{{ url_for('platforms.setup') }}" 
+                           class="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition
+                           {% if platform_needs_setup %}
+                               bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200
+                           {% else %}
+                               bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200
+                           {% endif %}">
+                            <span>🔗</span>
+                            <span>{% if platform_needs_setup %}Link Platforms{% else %}Platforms{% endif %}</span>
+                            {% if platform_count > 0 %}
+                            <span class="text-xs font-bold ml-0.5">{{ platform_count }}</span>
+                            {% endif %}
+                        </a>
                         <div class="relative group">
                             <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition">
                                 <div class="w-8 h-8 rounded-full gradient-primary text-white flex items-center justify-center text-xs font-bold shadow-sm">
