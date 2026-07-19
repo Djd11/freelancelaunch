@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Link Your Platforms — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold tracking-tight mb-3">Link Your <span class="gradient-text">Freelance Platforms</span></h1>
+        <p class="text-gray-500 max-w-lg mx-auto">
+            You can't apply to jobs without accounts on these platforms. 
+            Select the ones you want to use, and we'll help you set them up.
+        </p>
+    </div>
+
+    <!-- PLATFORM CARDS -->
+    <div class="space-y-4 mb-10" id="platform-list">
+        {% for key, platform in platforms.items() %}
+        {% set status = platform_status.get(key, {}) %}
+        {% set pstatus = status.get('status', 'none') %}
+        <div class="card p-6 platform-card" data-platform="{{ key }}" data-status="{{ pstatus }}">
+            <div class="flex items-start gap-5">
+                <!-- Icon -->
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style="background: {{ platform.color }}15;">
+                    {{ platform.icon }}
+                </div>
+                
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-1">
+                        <h3 class="font-bold text-lg">{{ platform.name }}</h3>
+                        <span class="status-badge text-xs font-semibold px-3 py-1 rounded-full 
+                            {% if pstatus == 'verified' %}bg-emerald-50 text-emerald-700
+                            {% elif pstatus == 'pending' %}bg-amber-50 text-amber-700
+                            {% else %}bg-gray-100 text-gray-500{% endif %}">
+                            {% if pstatus == 'verified' %}✅ Verified
+                            {% elif pstatus == 'pending' %}⏳ Pending
+                            {% else %}○ Not linked{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-3">{{ platform.about }}</p>
+                    
+                    <!-- Action area (changes based on status) -->
+                    <div class="platform-actions">
+                        {% if pstatus == 'verified' %}
+                            <div class="flex items-center gap-2 text-sm text-emerald-600">
+                                <span>✅ Account linked and verified</span>
+                            </div>
+                        {% elif pstatus == 'pending' %}
+                            <!-- Deep link + steps -->
+                            <div class="space-y-3">
+                                <a href="{{ platform.signup_url }}" target="_blank" 
+                                   class="inline-flex items-center gap-2 btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold">
+                                    🔗 Create {{ platform.name }} Account
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                                <details class="text-sm">
+                                    <summary class="text-indigo-600 cursor-pointer font-medium hover:text-indigo-700">📖 Show step-by-step guide</summary>
+                                    <ol class="mt-3 space-y-2 pl-5 list-decimal text-gray-600">
+                                        {% for step in platform.steps %}
+                                        <li>{{ step }}</li>
+                                        {% endfor %}
+                                    </ol>
+                                </details>
+                                <div class="flex gap-2 mt-3">
+                                    <button onclick="verifyPlatform('{{ key }}')" 
+                                            class="bg-emerald-500 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-emerald-600 transition">
+                                        ✅ I've done this
+                                    </button>
+                                    <button onclick="skipPlatform('{{ key }}')" 
+                                            class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition">
+                                        Skip for now
+                                    </button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Not linked — show select button -->
+                            <button onclick="selectPlatform('{{ key }}')" 
+                                    class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold">
+                                + Link {{ platform.name }}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="card p-6 mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm text-gray-700">📊 Platform Setup Progress</h3>
+            <span class="text-sm text-gray-500" id="progress-text">0/3 linked</span>
+        </div>
+        <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div id="progress-bar" class="h-full gradient-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- CONTINUE BUTTON -->
+    <div class="text-center">
+        <a href="{{ url_for('dashboard.home') }}" 
+           class="btn-primary px-8 py-3 rounded-xl font-bold text-lg inline-block">
+            Continue to Dashboard →
+        </a>
+        <p class="text-xs text-gray-400 mt-3">You can always set up platforms later from your profile.</p>
+    </div>
+</div>
+
+<script>
+const PLATFORMS = {{ platforms|tojson|safe }};
+
+async function selectPlatform(key) {
+    const resp = await fetch('/platforms/api/select', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({platform: key})
+    });
+    const data = await resp.json();
+    if (data.status === 'created' || data.status === 'already_exists') {
+        // Reload to show the pending state with deep links
+        location.reload();
+    } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+    }
+}
+
+async function verifyPlatform(key) {
+    const resp = await fetch('/platforms/api/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({platform: key})
+    });
+    const data = await resp.json();
+    if (data.status === 'verified') {
+        location.reload();
+    } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+    }
+}
+
+async function skipPlatform(key) {
+    const resp = await fetch('/platforms/api/skip', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({platform: key})
+    });
+    if (resp.ok) location.reload();
+}
+
+// Update progress bar
+function updateProgress() {
+    const cards = document.querySelectorAll('.platform-card');
+    const total = cards.length;
+    const verified = document.querySelectorAll('.platform-card[data-status="verified"]').length;
+    const pct = Math.round((verified / total) * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `${verified}/${total} linked`;
+}
+updateProgress();
+</script>
+{% endblock %}

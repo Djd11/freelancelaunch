@@ -219,6 +219,21 @@ CREATE TABLE IF NOT EXISTS video_production_log (
     output_path TEXT
 );
 
+-- ─── PLATFORM VERIFICATION (user connects freelance accounts) ──
+
+CREATE TABLE IF NOT EXISTS user_platforms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL CHECK (platform IN ('upwork', 'fiverr', 'contra', 'freelancer', 'toptal', 'linkedin')),
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'skipped')),
+    profile_url TEXT,
+    verified_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(user_id, platform)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_platforms_user_id ON user_platforms(user_id);
+
 -- ─── INDEXES ─────────────────────────────────────────────────
 
 CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
