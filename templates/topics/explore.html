@@ -259,8 +259,24 @@ async function doSearch(query) {
 }
 
 function enrollNewTopic(topic) {
-    // For now, redirect to signup or topic generation
-    window.location.href = `/topics?new=${encodeURIComponent(topic)}`;
+    fetch('/enroll/new', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topic})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else if (data.error && data.error.includes('Not logged in')) {
+            window.location.href = '/auth/login?next=/topics';
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(e => {
+        alert('Failed to create curriculum: ' + e.message);
+    });
 }
 
 // Close suggestions on click outside
