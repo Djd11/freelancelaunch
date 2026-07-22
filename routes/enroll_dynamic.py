@@ -51,7 +51,16 @@ def enroll_new_topic():
     
     # 3. Generate curriculum using LLM
     try:
-        curriculum = generate_curriculum(topic_name, 30)
+        # Get user's linked platforms to customize the curriculum
+        linked_platforms = []
+        try:
+            plat_resp = sb.table("user_platforms").select("platform") \
+                .eq("user_id", user_id).eq("status", "verified").execute()
+            linked_platforms = [p["platform"] for p in (plat_resp.data or [])]
+        except Exception:
+            pass
+        
+        curriculum = generate_curriculum(topic_name, 30, platforms=linked_platforms)
     except Exception as e:
         logger.warning(f"LLM curriculum generation failed, using fallback: {e}")
         curriculum = None
