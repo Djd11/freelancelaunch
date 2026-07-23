@@ -34,7 +34,7 @@
                     {% endif %}
                 </div>
 
-                <!-- VIDEO -->
+                <!-- VIDEO PLAYER -->
                 {% if today_video and today_video.get('youtube_url') %}
                 <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden mb-6 shadow-sm">
                     <iframe width="100%" height="100%" src="{{ today_video['youtube_url'] }}" frameborder="0" allowfullscreen></iframe>
@@ -50,10 +50,21 @@
                 {% else %}
                 <div class="aspect-video bg-gray-50 rounded-xl flex items-center justify-center mb-6 border border-gray-100">
                     <div class="text-center">
-                        <div class="text-4xl mb-3">📺</div>
-                        <p class="text-gray-500 font-medium">Welcome to FreelanceLaunch!</p>
-                        <p class="text-xs text-gray-400 mt-1">Your first video will appear here when your cohort starts.</p>
+                        <div class="text-4xl mb-3">📖</div>
+                        <p class="text-gray-900 font-semibold">Ready to start learning?</p>
+                        <p class="text-xs text-gray-400 mt-1 mb-4">Your first video will appear here when your cohort starts.</p>
+                        <a href="{{ url_for('topics.explore') }}" class="btn-primary px-5 py-2 text-sm inline-block">Browse Topics →</a>
                     </div>
+                </div>
+                {% endif %}
+
+                <!-- START LESSON CTA -->
+                {% if today_video and today_video.get('production_status') == 'ready' %}
+                <div class="mb-6">
+                    <a href="{{ url_for('dashboard.day_detail', day_number=current_day) }}" 
+                       class="btn-primary w-full py-3.5 rounded-xl font-bold text-base text-center block">
+                        ▶ Start Today's Lesson
+                    </a>
                 </div>
                 {% endif %}
 
