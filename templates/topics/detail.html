@@ -12,6 +12,9 @@
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-3 mb-2">
                         <h1 class="text-3xl font-bold tracking-tight">{{ topic.name }}</h1>
+                        {% if is_admin %}
+                        <span class="badge bg-purple-50 text-purple-700">👑 Admin View</span>
+                        {% endif %}
                         <span class="badge 
                             {% if topic.trend == 'growing' %}bg-emerald-50 text-emerald-700
                             {% else %}bg-gray-50 text-gray-600{% endif %}">
@@ -59,9 +62,9 @@
                 <span>⏱️ First contract possible in ~{{ topic.weeks_to_first_gig }} weeks</span>
             </div>
 
-            <!-- ENROLL -->
+            <!-- ENROLL / ENROLLED STATE -->
             {% if user %}
-                {% if pipeline %}
+                {% if is_enrolled %}
                 <div class="p-5 bg-emerald-50 rounded-xl flex items-center gap-3">
                     <span class="text-lg">✅</span>
                     <div>
@@ -85,21 +88,49 @@
             {% endif %}
         </div>
 
-        <!-- CURRICULUM PREVIEW -->
+        <!-- CURRICULUM SECTION -->
         <div class="card p-8">
-            <h2 class="text-xl font-bold tracking-tight mb-6">What you'll learn <span class="text-gray-400 font-normal">(30 days)</span></h2>
-            <div class="space-y-2">
-                {% for i in range(1, 11) %}
-                <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">
-                    <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold flex-shrink-0">D{{ i }}</div>
-                    <div class="min-w-0">
-                        <div class="text-sm font-medium text-[#0f172a]">{% if i == 1 %}Introduction & Setup{% elif i == 2 %}Core Concepts{% elif i == 3 %}First Project{% elif i == 4 %}Intermediate Techniques{% elif i == 5 %}Real-World Application{% elif i == 6 %}Advanced Topics{% elif i == 7 %}Tooling & Automation{% elif i == 8 %}Best Practices{% elif i == 9 %}Portfolio Project{% else %}Job Preparation{% endif %}</div>
-                        <div class="text-xs text-gray-400">Day {{ i }}</div>
-                    </div>
+            {% if curriculum_days %}
+                <h2 class="text-xl font-bold tracking-tight mb-6">Full Curriculum <span class="text-gray-400 font-normal">({{ curriculum_days|length }} days)</span></h2>
+                {% if is_admin %}
+                <div class="p-3 bg-purple-50 rounded-xl mb-6 text-sm text-purple-700">
+                    👑 Admin: Viewing all curriculum content. <a href="{{ url_for('admin.dashboard') }}" class="underline">Admin Dashboard</a>
                 </div>
-                {% endfor %}
-            </div>
-            <p class="text-center text-sm text-gray-400 mt-6">Full curriculum unlocks when you enroll</p>
+                {% endif %}
+                <div class="space-y-2">
+                    {% for day in curriculum_days %}
+                    <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">
+                        <div class="w-9 h-9 rounded-full 
+                            {% if is_enrolled %}bg-emerald-100 text-emerald-600{% else %}bg-indigo-50 text-indigo-600{% endif %} 
+                            flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {% if is_enrolled %}✓{% else %}D{{ day.day_number }}{% endif %}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium text-[#0f172a]">{{ day.title }}</div>
+                            <div class="text-xs text-gray-400">Day {{ day.day_number }}{% if day.practice_task %} · {{ day.practice_task[:40] }}{% if day.practice_task|length > 40 %}…{% endif %}{% endif %}</div>
+                        </div>
+                        {% if is_admin %}
+                        <span class="text-xs text-purple-400 flex-shrink-0">📝 {{ day.practice_task|length if day.practice_task else 0 }}c</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- PREVIEW (10 days, hardcoded) for non-enrolled users -->
+                <h2 class="text-xl font-bold tracking-tight mb-6">What you'll learn <span class="text-gray-400 font-normal">(30 days)</span></h2>
+                <div class="space-y-2">
+                    {% for i in range(1, 11) %}
+                    <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">
+                        <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold flex-shrink-0">D{{ i }}</div>
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-[#0f172a]">{% if i == 1 %}Introduction & Setup{% elif i == 2 %}Core Concepts{% elif i == 3 %}First Project{% elif i == 4 %}Intermediate Techniques{% elif i == 5 %}Real-World Application{% elif i == 6 %}Advanced Topics{% elif i == 7 %}Tooling & Automation{% elif i == 8 %}Best Practices{% elif i == 9 %}Portfolio Project{% else %}Job Preparation{% endif %}</div>
+                            <div class="text-xs text-gray-400">Day {{ i }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="text-center text-sm text-gray-400 mt-6">Full curriculum unlocks when you enroll</p>
+            {% endif %}
         </div>
     </div>
 </section>

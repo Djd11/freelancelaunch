@@ -1,7 +1,7 @@
 """
 Topics routes — browse curated topics, view topic detail
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g, current_app
 from services.supabase_client import get_supabase
 
 topics_bp = Blueprint("topics", __name__)
@@ -108,6 +108,10 @@ def detail(slug):
     
     # If user is logged in, check if they already have a pipeline for this topic
     existing_pipeline = None
+    is_admin = False
+    curriculum_days = []
+    is_enrolled = False
+    
     if g.user:
         sb = get_supabase()
         resp = sb.table("freelance_pipeline").select("*") \
@@ -117,8 +121,39 @@ def detail(slug):
             .execute()
         if resp.data:
             existing_pipeline = resp.data[0]
+            is_enrolled = True
+        
+        # Check if admin (email matches)
+        admin_email = current_app.config.get("ADMIN_EMAIL", "")
+        user_email = g.user.get("avatar_url", "")
+        is_admin = bool(admin_email and user_email == admin_email)
+        
+        # If enrolled OR admin, fetch full curriculum
+        if is_enrolled or is_admin:
+            try:
+                # Get curriculum for this topic
+                topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+                if topic_db.data:
+                    topic_id = topic_db.data[0]["id"]
+                    curr = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
+                    if curr.data:
+                        curr_id = curr.data[0]["id"]
+                        days = sb.table("curriculum_days").select("*") \
+                            .eq("curriculum_id", curr_id) \
+                            .order("day_number", asc=True) \
+                            .limit(30) \
+                            .execute()
+                        curriculum_days = days.data or []
+            except Exception as e:
+                print(f"Failed to fetch curriculum: {e}")
     
-    return render_template("topics/detail.html", topic=topic, pipeline=existing_pipeline)
+    return render_template("topics/detail.html", 
+        topic=topic, 
+        pipeline=existing_pipeline,
+        is_enrolled=is_enrolled,
+        is_admin=is_admin,
+        curriculum_days=curriculum_days,
+    )
 
 
 @topics_bp.route("/topics/<slug>/enroll", methods=["POST"])

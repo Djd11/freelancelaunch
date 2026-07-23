@@ -1,106 +1,196 @@
-Feature: Admin Production Dashboard (Browser) # tests/features/admin-production.feature:1
-  As an admin user
-  I want to monitor and trigger video production from the dashboard
-  So that I can manage the video pipeline
-  Feature: Admin Production Dashboard (Browser)  # tests/features/admin-production.feature:1
+Feature: Platform-Aware Curriculum & Contract Landing # tests/features/platform-curriculum.feature:1
+  As a user who has chosen a topic
+  I want a curriculum that teaches me BOTH the skill AND how to win contracts on my chosen platforms
+  So that I can land my first freelance contract faster
+  Feature: Platform-Aware Curriculum & Contract Landing  # tests/features/platform-curriculum.feature:1
 
-  Scenario: View production queue                                     # tests/features/admin-production.feature:10
-    Given I am logged in as an admin user                             # tests/steps/test_admin_browser.py:34
-    And there are cohort_videos with various production_status values # tests/steps/test_admin_browser.py:65
-    When I navigate to the admin production page                      # tests/steps/test_admin_browser.py:141
-    Then I should see pending videos in the "Pending" section         # tests/steps/test_admin_browser.py:163
-      ASSERT FAILED: No Pending section found
+  Scenario: CG1 — Generate curriculum for a topic without linked platforms  # tests/features/platform-curriculum.feature:10
+    Given the curriculum generator API is available                         # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                               # tests/steps/test_platform_curriculum.py:23
+    Given I am enrolled in "Web Scraping with Python"                       # tests/steps/test_platform_curriculum.py:30
+    And I have NOT linked any freelance platforms                           # tests/steps/test_platform_curriculum.py:35
+    When a 30-day curriculum is generated                                   # tests/steps/test_platform_curriculum.py:109
+    Then the curriculum should have exactly 30 days                         # tests/steps/test_platform_curriculum.py:176
+    And Day 1 should be about HTTP Requests or HTML fundamentals            # tests/steps/test_platform_curriculum.py:188
+    And Day 30 should be about job preparation, final project, or portfolio # tests/steps/test_platform_curriculum.py:200
+    And there should be NO platform-specific application days               # tests/steps/test_platform_curriculum.py:212
 
-    And I should see recent videos in the "Recent" section            # None
-    And each video should show its day number and status              # None
+  Scenario: CG2 — Generate curriculum with Upwork linked                       # tests/features/platform-curriculum.feature:19
+    Given the curriculum generator API is available                            # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                  # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Upwork" as a verified platform                        # tests/steps/test_platform_curriculum.py:40
+    When a 30-day curriculum is generated for "Web Scraping with Python"       # tests/steps/test_platform_curriculum.py:119
+    Then the curriculum should have 37 days total (30 skill + 7 Upwork)        # tests/steps/test_platform_curriculum.py:182
+    And Day 31 should be "Profile Optimization for Upwork Search"              # tests/steps/test_platform_curriculum.py:222
+    And Day 32 should be "Writing Proposals That Convert"                      # tests/steps/test_platform_curriculum.py:222
+    And Day 33 should be "Pricing Strategy for New Upwork Freelancers"         # tests/steps/test_platform_curriculum.py:222
+    And Day 37 should be "Building Job Success Score & Getting Repeat Clients" # tests/steps/test_platform_curriculum.py:222
+    And each Upwork day should have a practice_task and apply_task             # tests/steps/test_platform_curriculum.py:231
 
-  Scenario: Trigger production from dashboard                              # tests/features/admin-production.feature:16
-    Given I am logged in as an admin user                                  # tests/steps/test_admin_browser.py:34
+  Scenario: CG3 — Generate curriculum with Fiverr linked                 # tests/features/platform-curriculum.feature:29
+    Given the curriculum generator API is available                      # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                            # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Fiverr" as a verified platform                  # tests/steps/test_platform_curriculum.py:40
+    When a 30-day curriculum is generated for "Web Scraping with Python" # tests/steps/test_platform_curriculum.py:119
+    Then the curriculum should have 37 days total (30 skill + 7 Fiverr)  # tests/steps/test_platform_curriculum.py:182
+    And Day 31 should be "Fiverr Gig Creation & SEO"                     # tests/steps/test_platform_curriculum.py:222
+    And Day 33 should be "Buyer Request Mastery"                         # tests/steps/test_platform_curriculum.py:222
+    And Day 37 should be "Scaling from 1 Gig to 5 Gigs"                  # tests/steps/test_platform_curriculum.py:222
+
+  Scenario: CG4 — Generate curriculum with Contra linked                 # tests/features/platform-curriculum.feature:37
+    Given the curriculum generator API is available                      # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                            # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Contra" as a verified platform                  # tests/steps/test_platform_curriculum.py:40
+    When a 30-day curriculum is generated for "Web Scraping with Python" # tests/steps/test_platform_curriculum.py:119
+    Then the curriculum should have 35 days total (30 skill + 5 Contra)  # tests/steps/test_platform_curriculum.py:182
+    And Day 31 should be "Portfolio Creation (Contra-Specific)"          # tests/steps/test_platform_curriculum.py:222
+    And Day 34 should be "Client Communication & Negotiation"            # tests/steps/test_platform_curriculum.py:222
+    And Day 35 should be "Building Long-Term Client Relationships"       # tests/steps/test_platform_curriculum.py:222
+
+  Scenario: CG5 — Multiple platforms ordered by demand priority                # tests/features/platform-curriculum.feature:45
+    Given the curriculum generator API is available                            # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                  # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Fiverr", "Upwork", AND "Contra" as verified platforms # tests/steps/test_platform_curriculum.py:45
+    When a 30-day curriculum is generated for "Web Scraping with Python"       # tests/steps/test_platform_curriculum.py:119
+    Then the curriculum should have 49 days total                              # tests/steps/test_platform_curriculum.py:239
+    And Upwork module should appear FIRST (Days 31-37)                         # tests/steps/test_platform_curriculum.py:245
+    And Fiverr module should appear SECOND (Days 38-44)                        # tests/steps/test_platform_curriculum.py:255
+    And Contra module should appear LAST (Days 45-49)                          # tests/steps/test_platform_curriculum.py:264
+
+  Scenario: CG6 — Platform days appear after skill days, not mixed  # tests/features/platform-curriculum.feature:53
+    Given the curriculum generator API is available                 # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                       # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Upwork"                                    # None
+    When I view the generated curriculum                            # None
+    Then Days 1-30 should be all skill training                     # None
+    And Days 31+ should be all platform application training        # None
+    And no skill day should appear after Day 30                     # None
+
+  Scenario: DV1 — High demand topic shows enroll option   # tests/features/platform-curriculum.feature:60
+    Given the curriculum generator API is available       # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                             # tests/steps/test_platform_curriculum.py:23
+    Given I search for "web scraping"                     # None
+    And the platform demand data shows 247 jobs on Upwork # None
+    When I view the search results                        # None
+    Then I should see a "Create 30-Day Curriculum" button # None
+    And the demand score should be displayed              # None
+
+  Scenario: DV2 — Low demand topic shows warning                # tests/features/platform-curriculum.feature:67
+    Given the curriculum generator API is available             # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                   # tests/steps/test_platform_curriculum.py:23
+    Given I search for "obscure-niche-xyz"                      # None
+    And the platform demand score is below 30                   # None
+    When I view the search results                              # None
+    Then I should see a "Low demand" warning                    # None
+    And I should see suggestions for alternative popular topics # None
+
+  Scenario: DV3 — No demand topic is blocked                    # tests/features/platform-curriculum.feature:74
+    Given the curriculum generator API is available             # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                   # tests/steps/test_platform_curriculum.py:23
+    Given I search for "made-up-skill-12345"                    # None
+    And no platform returns any job data                        # None
+    When I view the search results                              # None
+    Then I should see "No freelance demand found"               # None
+    And the "Create 30-Day Curriculum" button should NOT appear # None
+
+  Scenario: PW1 — Upwork proposal writing exercise                                # tests/features/platform-curriculum.feature:81
+    Given the curriculum generator API is available                               # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                     # tests/steps/test_platform_curriculum.py:23
+    Given I am on Day 32 of my curriculum (Proposal Writing)                      # tests/steps/test_platform_curriculum.py:74
+    When I view the lesson                                                        # tests/steps/test_platform_curriculum.py:143
+    Then I should see a proposal writing exercise                                 # None
+    And the exercise should include a real Upwork-style job description           # None
+    And I should be prompted to write a 2-line opening about the CLIENT's problem # None
+    And the lesson should warn: "Don't use AI to write proposals"                 # None
+
+  Scenario: PW2 — Fiverr gig creation exercise                        # tests/features/platform-curriculum.feature:89
+    Given the curriculum generator API is available                   # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                         # tests/steps/test_platform_curriculum.py:23
+    Given I am on Day 31 of my Fiverr curriculum (Gig Creation)       # tests/steps/test_platform_curriculum.py:79
+    When I view the lesson                                            # tests/steps/test_platform_curriculum.py:143
+    Then I should see competitor research instructions                # None
+    And I should be guided to create title, description, and packages # None
+    And the lesson should emphasize SEO keyword matching              # None
+
+  Scenario: PW3 — Contra portfolio exercise                           # tests/features/platform-curriculum.feature:96
+    Given the curriculum generator API is available                   # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                         # tests/steps/test_platform_curriculum.py:23
+    Given I am on Day 31 of my Contra curriculum (Portfolio Creation) # tests/steps/test_platform_curriculum.py:84
+    When I view the lesson                                            # tests/steps/test_platform_curriculum.py:143
+    Then I should see the Problem to Approach to Result format        # None
+    And I should be asked to create 3 case study drafts               # None
+
+  Scenario: CT1 — Proposal tracked per platform              # tests/features/platform-curriculum.feature:102
+    Given the curriculum generator API is available          # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                # tests/steps/test_platform_curriculum.py:23
+    Given I have submitted a proposal on Upwork              # None
+    When I log it in my pipeline                             # None
+    Then I should select "Upwork" from the platform dropdown # None
+    And the proposal should be counted in my Upwork stats    # None
+    And my total proposals_sent should increment by 1        # None
+
+  Scenario: CT2 — Platform-specific checklist visible                                        # tests/features/platform-curriculum.feature:109
+    Given the curriculum generator API is available                                          # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                                # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Upwork"                                                             # None
+    When I view my dashboard                                                                 # None
+    Then I should see an Upwork profile checklist section                                    # None
+    And the checklist should include "Profile photo", "Title", "Overview", "Portfolio items" # None
+    And I should be able to mark items as complete                                           # None
+
+  Scenario: CT3 — Contract tracking filtered by platform     # tests/features/platform-curriculum.feature:116
+    Given the curriculum generator API is available          # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                # tests/steps/test_platform_curriculum.py:23
+    Given I have contracts on both Upwork and Fiverr         # tests/steps/test_platform_curriculum.py:65
+    When I view my pipeline page                             # None
+    Then I should see a platform filter dropdown             # None
+    And selecting "Upwork" should show only Upwork contracts # None
+    And selecting "All" should show all contracts            # None
+
+  Scenario: E1 — Platform-linked enrollment without platform days         # tests/features/platform-curriculum.feature:123
+    Given the curriculum generator API is available                       # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                             # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "Upwork"                                          # None
+    But the curriculum generator API is unavailable                       # None
+    When a fallback curriculum is generated                               # None
+    Then the curriculum should still have 30 skill days                   # None
+    But NO platform days should be appended (fallback doesn't support it) # None
+    And a warning should be logged                                        # None
+
+  Scenario: E2 — Invalid platform ignored in curriculum  # tests/features/platform-curriculum.feature:131
+    Given the curriculum generator API is available      # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                            # tests/steps/test_platform_curriculum.py:23
+    Given I have linked "invalid-platform-not-exist"     # tests/steps/test_platform_curriculum.py:50
+    When a curriculum is generated                       # tests/steps/test_platform_curriculum.py:164
+    Then the curriculum should have only 30 skill days   # tests/steps/test_platform_curriculum.py:386
       Traceback (most recent call last):
         File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/model.py", line 1991, in run
           match.run(runner.context)
         File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/matchers.py", line 105, in run
           self.func(context, *args, **kwargs)
-        File "tests/steps/test_admin_browser.py", line 47, in step_admin_login
-          page = _get_page(context)
-                 ^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 27, in _get_page
-          browser = _get_browser(context)
-                    ^^^^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 16, in _get_browser
-          context.playwright = sync_playwright().start()
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
-          return self.__enter__()
-                 ^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
-          raise Error(
-      playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
-      Please use the Async API instead.
+        File "tests/steps/test_platform_curriculum.py", line 388, in step_curriculum_count
+          assert len(context.curriculum) == int(count)
+                                            ^^^^^^^^^^
+      ValueError: invalid literal for int() with base 10: 'only 30 skill'
 
-    And there are cohort_videos with various production_status values      # None
-    Given there is a pending cohort_video                                  # None
-    When I click the "Produce Now" button for that video                   # None
-    Then the production status should change to "scripting" or "rendering" # None
-    And a success flash message should appear                              # None
+    And the invalid platform should be silently ignored  # None
 
-  Scenario: Status badges show correct colors                         # tests/features/admin-production.feature:22
-    Given I am logged in as an admin user                             # tests/steps/test_admin_browser.py:34
-      Traceback (most recent call last):
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/model.py", line 1991, in run
-          match.run(runner.context)
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/matchers.py", line 105, in run
-          self.func(context, *args, **kwargs)
-        File "tests/steps/test_admin_browser.py", line 47, in step_admin_login
-          page = _get_page(context)
-                 ^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 27, in _get_page
-          browser = _get_browser(context)
-                    ^^^^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 16, in _get_browser
-          context.playwright = sync_playwright().start()
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
-          return self.__enter__()
-                 ^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
-          raise Error(
-      playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
-      Please use the Async API instead.
+  Scenario: LS1 — Platform lesson has all required fields                                 # tests/features/platform-curriculum.feature:137
+    Given the curriculum generator API is available                                       # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                             # tests/steps/test_platform_curriculum.py:23
+    Given the Upwork module has 7 days                                                    # tests/steps/test_platform_curriculum.py:89
+    When I inspect each day                                                               # tests/steps/test_platform_curriculum.py:159
+    Then each day should have: title, description, practice_task, apply_task, video_title # tests/steps/test_platform_curriculum.py:320
+    And all fields should be non-empty strings                                            # tests/steps/test_platform_curriculum.py:328
 
-    And there are cohort_videos with various production_status values # None
-    When I view the production page                                   # None
-    Then "ready" status should have a green badge                     # None
-    And "failed" status should have a red badge                       # None
-    And "pending" status should have a gray badge                     # None
-    And "rendering" status should have an indigo badge                # None
+  Scenario: LS2 — Skill lesson vs platform lesson differentiation                   # tests/features/platform-curriculum.feature:143
+    Given the curriculum generator API is available                                 # tests/steps/test_platform_curriculum.py:17
+    And I am a logged-in user                                                       # tests/steps/test_platform_curriculum.py:23
+    Given I compare a skill day and a platform day                                  # tests/steps/test_platform_curriculum.py:95
+    Then the skill day's title should contain the technical topic name              # tests/steps/test_platform_curriculum.py:338
+    And the platform day's title should contain the platform name                   # tests/steps/test_platform_curriculum.py:343
+      ASSERT FAILED:
 
-  Scenario: Nightly schedule info is visible                          # tests/features/admin-production.feature:29
-    Given I am logged in as an admin user                             # tests/steps/test_admin_browser.py:34
-      Traceback (most recent call last):
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/model.py", line 1991, in run
-          match.run(runner.context)
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/behave/matchers.py", line 105, in run
-          self.func(context, *args, **kwargs)
-        File "tests/steps/test_admin_browser.py", line 47, in step_admin_login
-          page = _get_page(context)
-                 ^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 27, in _get_page
-          browser = _get_browser(context)
-                    ^^^^^^^^^^^^^^^^^^^^^
-        File "tests/steps/test_admin_browser.py", line 16, in _get_browser
-          context.playwright = sync_playwright().start()
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
-          return self.__enter__()
-                 ^^^^^^^^^^^^^^^^
-        File "/home/dhruba/Documents/exp_money/daily_learning_freelance/venv/lib/python3.11/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
-          raise Error(
-      playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
-      Please use the Async API instead.
-
-    And there are cohort_videos with various production_status values # None
-    When I view the admin production page                             # None
-    Then I should see the cron schedule information                   # None
-    And the cron command should be displayed in a code block          # None
+    And the skill day's apply_task should be coding/technical                       # None
+    And the platform day's apply_task should be about applying/submitting proposals # None
 
