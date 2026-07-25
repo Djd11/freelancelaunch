@@ -93,7 +93,7 @@ def production():
     try:
         pending_resp = sb.table("cohort_videos").select("*") \
             .eq("production_status", "pending") \
-            .order("day_number", asc=True).limit(20).execute()
+            .order("day_number", ascending=True).limit(20).execute()
         pending = pending_resp.data or []
     except Exception as e:
         logger.warning(f"Failed to get pending: {e}")

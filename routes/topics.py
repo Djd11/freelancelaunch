@@ -203,7 +203,7 @@ def detail(slug):
                         curr_id = curr.data[0]["id"]
                         days = sb.table("curriculum_days").select("*") \
                             .eq("curriculum_id", curr_id) \
-                            .order("day_number", asc=True) \
+                            .order("day_number", ascending=True) \
                             .limit(30) \
                             .execute()
                         curriculum_days = days.data or []
