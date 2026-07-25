@@ -98,6 +98,70 @@ def explore():
     return render_template("topics/explore.html", topics=CURATED_TOPICS)
 
 
+
+def _generate_and_save_curriculum(slug, topic_name, user_id):
+    """Generate a 30-day LLM curriculum and save to database."""
+    import logging
+    logger = logging.getLogger(__name__)
+    sb = get_supabase()
+    
+    # Check if curriculum already exists for this topic
+    topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+    if not topic_db.data:
+        logger.warning(f"No topic found for slug: {slug}")
+        return
+    
+    topic_id = topic_db.data[0]["id"]
+    
+    # Check existing curriculum
+    curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
+    if curr_resp.data:
+        # Check if days already exist
+        day_count = sb.table("curriculum_days").select("id", count="exact") \
+            .eq("curriculum_id", curr_resp.data[0]["id"]).execute()
+        day_ct = getattr(day_count, 'count', 0) or 0
+        if day_ct >= 30:
+            logger.info(f"Curriculum already exists with {day_ct} days")
+            return
+        curr_id = curr_resp.data[0]["id"]
+    else:
+        curr = sb.table("curricula").insert({
+            "topic_id": topic_id,
+            "total_days": 30,
+        }).execute()
+        curr_id = curr.data[0]["id"]
+    
+    # Get linked platforms for platform-specific days
+    linked_platforms = []
+    try:
+        plat_resp = sb.table("user_platforms").select("platform") \
+            .eq("user_id", user_id).eq("status", "verified").execute()
+        linked_platforms = [p["platform"] for p in (plat_resp.data or [])]
+    except Exception:
+        pass
+    
+    # Generate curriculum using LLM
+    from services.curriculum_generator import generate_curriculum
+    curriculum = generate_curriculum(topic_name, 30, platforms=linked_platforms)
+    
+    if curriculum and len(curriculum) > 0:
+        for day in curriculum:
+            try:
+                sb.table("curriculum_days").insert({
+                    "curriculum_id": curr_id,
+                    "day_number": day.get("day_number", 1),
+                    "title": day.get("title", f"Day {day.get('day_number', 1)}"),
+                    "description": day.get("description", f"Lesson for {topic_name}"),
+                    "learning_objectives": day.get("description", ""),
+                    "practice_task": day.get("practice_task", "Practice exercise"),
+                    "apply_task": day.get("apply_task", "Apply what you learned"),
+                    "video_title": day.get("video_title", f"{topic_name} — Day {day.get('day_number', 1)}"),
+                }).execute()
+            except Exception as e:
+                logger.warning(f"Failed to insert day {day.get('day_number')}: {e}")
+        
+        logger.info(f"Saved {len(curriculum)} curriculum days for {topic_name}")
+
 @topics_bp.route("/topics/<slug>")
 def detail(slug):
     """View a specific topic's detail page."""
@@ -144,8 +208,20 @@ def detail(slug):
                             .limit(30) \
                             .execute()
                         curriculum_days = days.data or []
+                    
+                    # AUTO-GENERATE: enrolled but no curriculum yet
+                    if is_enrolled and not curriculum_days:
+                        _generate_and_save_curriculum(slug, topic["name"], g.user["id"])
+                        # Re-fetch after generation
+                        if curr.data:
+                            days = sb.table("curriculum_days").select("*") \
+                                .eq("curriculum_id", curr.data[0]["id"]) \
+                                .order("day_number", asc=True) \
+                                .limit(30) \
+                                .execute()
+                            curriculum_days = days.data or []
             except Exception as e:
-                print(f"Failed to fetch curriculum: {e}")
+                print(f"Failed to fetch/generate curriculum: {e}")
     
     return render_template("topics/detail.html", 
         topic=topic, 
@@ -238,65 +314,3 @@ def enroll(slug):
     return redirect(url_for("platforms.setup"))
 
 
-def _generate_and_save_curriculum(slug, topic_name, user_id):
-    """Generate a 30-day LLM curriculum and save to database."""
-    import logging
-    logger = logging.getLogger(__name__)
-    sb = get_supabase()
-    
-    # Check if curriculum already exists for this topic
-    topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
-    if not topic_db.data:
-        logger.warning(f"No topic found for slug: {slug}")
-        return
-    
-    topic_id = topic_db.data[0]["id"]
-    
-    # Check existing curriculum
-    curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
-    if curr_resp.data:
-        # Check if days already exist
-        day_count = sb.table("curriculum_days").select("id", count="exact") \
-            .eq("curriculum_id", curr_resp.data[0]["id"]).execute()
-        day_ct = getattr(day_count, 'count', 0) or 0
-        if day_ct >= 30:
-            logger.info(f"Curriculum already exists with {day_ct} days")
-            return
-        curr_id = curr_resp.data[0]["id"]
-    else:
-        curr = sb.table("curricula").insert({
-            "topic_id": topic_id,
-            "total_days": 30,
-        }).execute()
-        curr_id = curr.data[0]["id"]
-    
-    # Get linked platforms for platform-specific days
-    linked_platforms = []
-    try:
-        plat_resp = sb.table("user_platforms").select("platform") \
-            .eq("user_id", user_id).eq("status", "verified").execute()
-        linked_platforms = [p["platform"] for p in (plat_resp.data or [])]
-    except Exception:
-        pass
-    
-    # Generate curriculum using LLM
-    from services.curriculum_generator import generate_curriculum
-    curriculum = generate_curriculum(topic_name, 30, platforms=linked_platforms)
-    
-    if curriculum and len(curriculum) > 0:
-        for day in curriculum:
-            try:
-                sb.table("curriculum_days").insert({
-                    "curriculum_id": curr_id,
-                    "day_number": day.get("day_number", 1),
-                    "title": day.get("title", f"Day {day.get('day_number', 1)}"),
-                    "description": day.get("description", f"Lesson for {topic_name}"),
-                    "learning_objectives": day.get("description", ""),
-                    "practice_task": day.get("practice_task", "Practice exercise"),
-                    "apply_task": day.get("apply_task", "Apply what you learned"),
-                    "video_title": day.get("video_title", f"{topic_name} — Day {day.get('day_number', 1)}"),
-                }).execute()
-            except Exception as e:
-                logger.warning(f"Failed to insert day {day.get('day_number')}: {e}")
-        
-        logger.info(f"Saved {len(curriculum)} curriculum days for {topic_name}")
