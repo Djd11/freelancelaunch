@@ -117,3 +117,19 @@ def _get_platform_demand_data(query: str) -> dict:
         "estimated_time_to_gig": f"{max(1, 5 - score//20)} weeks",
         "difficulty": "Beginner" if score < 30 else "Intermediate" if score < 60 else "Advanced",
     }
+
+
+@search_bp.route("/curriculum/<slug>")
+def get_curriculum(slug):
+    """API: fetch curriculum days for a topic."""
+    from services.supabase_client import get_supabase
+    try:
+        sb = get_supabase()
+        t = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+        if not t.data: return jsonify({"days":[]})
+        c = sb.table("curricula").select("id").eq("topic_id", t.data[0]["id"]).limit(1).execute()
+        if not c.data: return jsonify({"days":[]})
+        d = sb.table("curriculum_days").select("*").eq("curriculum_id",c.data[0]["id"]).order("day_number").limit(30).execute()
+        return jsonify({"days": d.data or [], "count": len(d.data or [])})
+    except Exception as e:
+        return jsonify({"error": str(e), "days": []})

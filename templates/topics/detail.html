@@ -139,4 +139,25 @@
         </div>
     </div>
 </section>
+
+{% block scripts %}
+{% if user %}
+<script>
+// Client-side curriculum refresh — triggers auto-generation
+document.addEventListener('DOMContentLoaded', function() {
+    var enrolledMsg = document.querySelector('.text-emerald-700');
+    var heading = document.querySelector('#curriculum-section h2');
+    if (enrolledMsg && heading && heading.textContent.indexOf('Full Curriculum') === -1) {
+        fetch('/api/curriculum/{{ topic.slug }}')
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if (data.days && data.days.length > 0) {
+                    window.location.reload();
+                }
+            })
+            .catch(function(){});
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
