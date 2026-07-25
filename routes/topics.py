@@ -195,7 +195,6 @@ def detail(slug):
         # If enrolled OR admin, fetch full curriculum
         if is_enrolled or is_admin:
             try:
-                # Get curriculum for this topic
                 topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
                 if topic_db.data:
                     topic_id = topic_db.data[0]["id"]
@@ -208,20 +207,8 @@ def detail(slug):
                             .limit(30) \
                             .execute()
                         curriculum_days = days.data or []
-                    
-                    # AUTO-GENERATE: enrolled but no curriculum yet
-                    if is_enrolled and not curriculum_days:
-                        _generate_and_save_curriculum(slug, topic["name"], g.user["id"])
-                        # Re-fetch after generation
-                        if curr.data:
-                            days = sb.table("curriculum_days").select("*") \
-                                .eq("curriculum_id", curr.data[0]["id"]) \
-                                .order("day_number", asc=True) \
-                                .limit(30) \
-                                .execute()
-                            curriculum_days = days.data or []
             except Exception as e:
-                print(f"Failed to fetch/generate curriculum: {e}")
+                print(f"Failed to fetch curriculum: {e}")
     
     return render_template("topics/detail.html", 
         topic=topic, 
