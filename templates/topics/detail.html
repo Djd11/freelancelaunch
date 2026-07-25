@@ -140,23 +140,45 @@
     </div>
 </section>
 
-{% if user %}
+{% if user and is_enrolled and not curriculum_days %}
+<div class="mt-6 text-center" id="curriculum-generator">
+    <p class="text-sm text-gray-500 mb-4">Your 30-day curriculum hasn't been generated yet.</p>
+    <button onclick="generateCurriculum('{{ topic.slug }}')" 
+            class="btn-primary px-8 py-3 rounded-xl font-bold text-base" id="gen-btn">
+        🎯 Generate My 30-Day Curriculum
+    </button>
+    <div id="gen-status" class="hidden mt-4">
+        <div class="flex items-center justify-center gap-3 text-sm text-gray-500">
+            <svg class="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span>Generating your 30-day curriculum...</span>
+        </div>
+        <div class="mt-3 w-full bg-gray-100 rounded-full h-2 max-w-xs mx-auto">
+            <div id="gen-progress" class="h-2 rounded-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">This takes about 30 seconds</p>
+    </div>
+</div>
 <script>
-// Client-side curriculum refresh
-document.addEventListener('DOMContentLoaded', function() {
-    var enrolledMsg = document.querySelector('.text-emerald-700');
-    var heading = document.querySelector('#curriculum-section h2');
-    if (enrolledMsg && heading && heading.textContent.indexOf('Full Curriculum') === -1) {
-        fetch('/search/curriculum/{{ topic.slug }}')
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-                if (data.days && data.days.length > 0) {
-                    window.location.reload();
-                }
-            })
-            .catch(function(){});
+async function generateCurriculum(slug) {
+    document.getElementById('gen-btn').classList.add('hidden');
+    document.getElementById('gen-status').classList.remove('hidden');
+    
+    try {
+        const resp = await fetch('/api/generate-curriculum/' + slug, { method: 'POST' });
+        const data = await resp.json();
+        
+        if (data.status === 'complete') {
+            document.getElementById('gen-progress').style.width = '100%';
+            setTimeout(function() { window.location.reload(); }, 500);
+        } else {
+            document.getElementById('gen-status').innerHTML = '<p class="text-red-500 text-sm">Error: ' + (data.error || 'Generation failed') + '</p>';
+        }
+    } catch(e) {
+        document.getElementById('gen-status').innerHTML = '<p class="text-red-500 text-sm">Error: ' + e.message + '</p>';
     }
-});
+}
 </script>
 {% endif %}
-{% endblock %}
