@@ -108,7 +108,7 @@ def generate_curriculum_api(slug):
     # Start background generation
     thread = threading.Thread(
         target=_generate_in_background,
-        args=(slug, curr_id, topic_name, 30, linked_platforms),
+        args=(slug, curr_id, topic_name, 30, linked_platforms, user_id),
         daemon=True
     )
     thread.start()
@@ -126,7 +126,7 @@ def generation_status(slug):
     return jsonify(progress)
 
 
-def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platforms):
+def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platforms, user_id):
     """Generate curriculum day-by-day in background thread."""
     try:
         # Get LLM config

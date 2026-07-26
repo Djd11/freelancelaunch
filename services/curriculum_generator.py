@@ -315,38 +315,56 @@ def _fallback_lesson(day: int, topic: str) -> dict:
 
 
 def _call_llm(prompt: str) -> str:
-    """Call the configured LLM API — tries OpenRouter first, then Hermes config, then env vars."""
-    # Priority 1: OpenRouter from config
+    """Call the configured LLM API — tries Omniroute first, then others."""
     api_url = None
     api_key = None
     model = None
     
-    try:
-        import json
-        config_path = os.path.expanduser("~/Documents/vision-tool/config.json")
-        if os.path.exists(config_path):
-            with open(config_path) as f:
-                vc = json.load(f)
-            or_key = vc.get("OPENROUTER_API_KEY", "")
-            if or_key:
-                api_url = "https://openrouter.ai/api/v1/chat/completions"
-                api_key = or_key
-                model = "google/gemma-4-26b-a4b-it:free"
-    except Exception:
-        pass
+    # Priority 1: Omniroute (local, free models)
+    import os as _os
+    if _os.path.exists("/proc"):
+        # Check if Omniroute is running
+        try:
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            result = s.connect_ex(('127.0.0.1', 20128))
+            s.close()
+            if result == 0:
+                api_url = "http://localhost:20128/v1/chat/completions"
+                api_key = ""  # Omniroute doesn't need auth locally
+                model = "auto/cheap"
+        except Exception:
+            pass
     
-    # Priority 2: Environment variables
-    if not api_key:
-        api_url = current_app.config.get("LLM_API_URL", "") or os.environ.get("LLM_API_URL", "")
-        api_key = current_app.config.get("LLM_API_KEY", "") or os.environ.get("LLM_API_KEY", "")
-        model = current_app.config.get("LLM_MODEL", "") or os.environ.get("LLM_MODEL", "")
+    # Priority 2: OpenRouter from vision-tool config
+    if not api_url:
+        try:
+            import json
+            config_path = _os.path.expanduser("~/Documents/vision-tool/config.json")
+            if _os.path.exists(config_path):
+                with open(config_path) as f:
+                    vc = json.load(f)
+                or_key = vc.get("OPENROUTER_API_KEY", "")
+                if or_key:
+                    api_url = "https://openrouter.ai/api/v1/chat/completions"
+                    api_key = or_key
+                    model = "google/gemma-4-26b-a4b-it:free"
+        except Exception:
+            pass
     
-    # Priority 3: Hermes config
-    if not api_key:
+    # Priority 3: Environment variables
+    if not api_url:
+        api_url = current_app.config.get("LLM_API_URL", "") or _os.environ.get("LLM_API_URL", "")
+        api_key = current_app.config.get("LLM_API_KEY", "") or _os.environ.get("LLM_API_KEY", "")
+        model = current_app.config.get("LLM_MODEL", "") or _os.environ.get("LLM_MODEL", "")
+    
+    # Priority 4: Hermes config
+    if not api_url:
         try:
             import yaml
-            hermes_path = os.path.expanduser("~/.hermes/config.yaml")
-            if os.path.exists(hermes_path):
+            hermes_path = _os.path.expanduser("~/.hermes/config.yaml")
+            if _os.path.exists(hermes_path):
                 with open(hermes_path) as f:
                     hermes = yaml.safe_load(f)
                 mc = hermes.get("model", {})
@@ -357,8 +375,8 @@ def _call_llm(prompt: str) -> str:
         except Exception:
             pass
     
-    if not api_key:
-        logger.warning("No LLM API key configured — using fallback content")
+    if not api_url:
+        logger.warning("No LLM API configured — using fallback content")
         return None
     
     headers = {"Content-Type": "application/json"}
@@ -381,7 +399,7 @@ def _call_llm(prompt: str) -> str:
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning(f"LLM API call failed: {e}")
+        logger.warning(f"LLM API call failed ({api_url[:50]}...): {e}")
         return None
 
 
