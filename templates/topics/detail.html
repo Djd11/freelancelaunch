@@ -140,13 +140,15 @@
     </div>
 </section>
 
-{% if user and is_enrolled and not curriculum_days %}
+{% if user and is_enrolled %}
 <div class="mt-6 text-center" id="curriculum-generator">
-    <p class="text-sm text-gray-500 mb-4">Your 30-day curriculum hasn't been generated yet.</p>
-    <button onclick="generateCurriculum('{{ topic.slug }}')" 
-            class="btn-primary px-8 py-3 rounded-xl font-bold text-base" id="gen-btn">
-        🎯 Generate My 30-Day Curriculum
-    </button>
+    <div id="gen-not-started">
+        <p class="text-sm text-gray-500 mb-4">Your 30-day curriculum hasn't been generated yet.</p>
+        <button onclick="generateCurriculum('{{ topic.slug }}')" 
+                class="btn-primary px-8 py-3 rounded-xl font-bold text-base" id="gen-btn">
+            🎯 Generate My 30-Day Curriculum
+        </button>
+    </div>
     <div id="gen-status" class="hidden mt-6">
         <div class="flex items-center justify-center gap-3 text-sm text-gray-500 mb-4">
             <svg class="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
@@ -162,6 +164,17 @@
     </div>
 </div>
 <script>
+// Check if curriculum already exists on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const resp = await fetch('/search/curriculum/{{ topic.slug }}');
+        const data = await resp.json();
+        if (data.days && data.days.length >= 30) {
+            document.getElementById('curriculum-generator').innerHTML = '<p class="text-sm text-emerald-600 font-medium">✅ Your 30-day curriculum exists!</p>';
+            setTimeout(function() { window.location.reload(); }, 1500);
+        }
+    } catch(e) {}
+});
 let pollInterval;
 
 async function generateCurriculum(slug) {
