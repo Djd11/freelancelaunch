@@ -104,20 +104,18 @@
                 {% endif %}
                 <div class="space-y-2" id="curriculum-list">
                     {% for day in curriculum_days %}
-                    <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">
+                    <a href="{{ url_for('dashboard.day_detail', day_number=day.day_number) }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group">
                         <div class="w-9 h-9 rounded-full 
                             {% if is_enrolled %}bg-emerald-100 text-emerald-600{% else %}bg-indigo-50 text-indigo-600{% endif %} 
                             flex items-center justify-center text-xs font-bold flex-shrink-0">
                             {% if is_enrolled %}✓{% else %}D{{ day.day_number }}{% endif %}
                         </div>
                         <div class="min-w-0 flex-1">
-                            <div class="text-sm font-medium text-[#0f172a]">{{ day.title }}</div>
-                            <div class="text-xs text-gray-400">Day {{ day.day_number }}{% if day.practice_task %} · {{ day.practice_task[:40] }}{% if day.practice_task|length > 40 %}…{% endif %}{% endif %}</div>
+                            <div class="text-sm font-medium text-[#0f172a] group-hover:text-indigo-600 transition">{{ day.title }}</div>
+                            <div class="text-xs text-gray-400">Day {{ day.day_number }}{% if day.practice_task %} · {{ day.practice_task[:60] }}{% if day.practice_task|length > 60 %}…{% endif %}{% endif %}</div>
                         </div>
-                        {% if is_admin %}
-                        <span class="text-xs text-purple-400 flex-shrink-0">📝 {{ day.practice_task|length if day.practice_task else 0 }}c</span>
-                        {% endif %}
-                    </div>
+                        <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
                     {% endfor %}
                 </div>
             {% else %}
@@ -166,6 +164,11 @@
 <script>
 // Check if curriculum already exists on page load
 document.addEventListener('DOMContentLoaded', async function() {
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str || ''));
+        return div.innerHTML;
+    }
     try {
         const resp = await fetch('/search/curriculum/{{ topic.slug }}');
         const data = await resp.json();
@@ -180,12 +183,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 var html = '<h2 class="text-xl font-bold tracking-tight mb-6">Full Curriculum <span class="text-gray-400 font-normal">(' + data.days.length + ' days)</span></h2>';
                 html += '<div class="space-y-2">';
                 data.days.forEach(function(day) {
-                    html += '<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">';
-                    html += '<div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>';
-                    html += '<div class="min-w-0 flex-1">';
-                    html += '<div class="text-sm font-medium text-[#0f172a]">' + day.title + '</div>';
-                    html += '<div class="text-xs text-gray-400">Day ' + day.day_number + ' · ' + (day.practice_task || '').substring(0, 40) + '</div>';
-                    html += '</div></div>';
+                    html += '<a href=\"/dashboard/day/' + day.day_number + '\" class=\"flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group\">';
+                    html += '<div class=\"w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0\">✓</div>';
+                    html += '<div class=\"min-w-0 flex-1\">';
+                    html += '<div class=\"text-sm font-medium text-[#0f172a] group-hover:text-indigo-600 transition\">' + escapeHtml(day.title) + '</div>';
+                    html += '<div class=\"text-xs text-gray-400\">Day ' + day.day_number + ' · ' + escapeHtml((day.practice_task || '').substring(0, 60)) + '</div>';
+                    html += '</div>';
+                    html += '<svg class=\"w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5l7 7-7 7\"/></svg>';
+                    html += '</a>';
                 });
                 html += '</div>';
                 section.innerHTML = html;
