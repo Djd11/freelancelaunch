@@ -170,8 +170,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         const resp = await fetch('/search/curriculum/{{ topic.slug }}');
         const data = await resp.json();
         if (data.days && data.days.length >= 30) {
-            document.getElementById('curriculum-generator').innerHTML = '<p class="text-sm text-emerald-600 font-medium">✅ Your 30-day curriculum exists!</p>';
-            setTimeout(function() { window.location.reload(); }, 1500);
+            // Hide the generate button
+            var genDiv = document.getElementById('curriculum-generator');
+            if (genDiv) genDiv.innerHTML = '';
+            
+            // Show the curriculum directly from API
+            var section = document.getElementById('curriculum-section');
+            if (section) {
+                var html = '<h2 class="text-xl font-bold tracking-tight mb-6">Full Curriculum <span class="text-gray-400 font-normal">(' + data.days.length + ' days)</span></h2>';
+                html += '<div class="space-y-2">';
+                data.days.forEach(function(day) {
+                    html += '<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition">';
+                    html += '<div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>';
+                    html += '<div class="min-w-0 flex-1">';
+                    html += '<div class="text-sm font-medium text-[#0f172a]">' + day.title + '</div>';
+                    html += '<div class="text-xs text-gray-400">Day ' + day.day_number + ' · ' + (day.practice_task || '').substring(0, 40) + '</div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+                section.innerHTML = html;
+            }
         }
     } catch(e) {}
 });
