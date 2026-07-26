@@ -138,6 +138,11 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
             
             # Save days one by one, updating progress after each
             sb = get_supabase()
+            
+            # Get the user's cohort
+            user_profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
+            cohort_id = user_profile.data[0]["cohort_id"] if user_profile.data else None
+            
             for i, day in enumerate(curriculum):
                 try:
                     # Pack 6-section format into existing columns
@@ -163,6 +168,18 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
                         "video_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
                     }
                     sb.table("curriculum_days").insert(day_data).execute()
+                    
+                    # Also create cohort_video entry so day detail links work
+                    if cohort_id:
+                        existing_video = sb.table("cohort_videos").select("id") \
+                            .eq("cohort_id", cohort_id).eq("day_number", i+1).limit(1).execute()
+                        if not existing_video.data:
+                            sb.table("cohort_videos").insert({
+                                "cohort_id": cohort_id,
+                                "day_number": i + 1,
+                                "youtube_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
+                                "production_status": "ready",
+                            }).execute()
                 except Exception as e:
                     logger.warning(f"Failed to save day {i+1}: {e}")
                 

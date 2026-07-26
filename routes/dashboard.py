@@ -119,6 +119,22 @@ def day_detail(day_number):
             .execute()
         curriculum_day = cd_resp.data[0] if cd_resp.data else None
     
+    # Fallback: get curriculum day by day_number from the cohort's curriculum
+    if not curriculum_day:
+        try:
+            # Get the cohort's curriculum
+            cohort_resp = sb.table("cohorts").select("curriculum_id").eq("id", cohort_id).limit(1).execute()
+            if cohort_resp.data and cohort_resp.data[0].get("curriculum_id"):
+                cid = cohort_resp.data[0]["curriculum_id"]
+                cd_resp = sb.table("curriculum_days").select("*") \
+                    .eq("curriculum_id", cid) \
+                    .eq("day_number", day_number) \
+                    .limit(1) \
+                    .execute()
+                curriculum_day = cd_resp.data[0] if cd_resp.data else None
+        except Exception as e:
+            print(f"Curriculum day fallback error: {e}")
+    
     # Get user progress
     progress = None
     if video:
