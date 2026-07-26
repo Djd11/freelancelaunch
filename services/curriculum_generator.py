@@ -320,47 +320,48 @@ def _call_llm(prompt: str) -> str:
     api_key = None
     model = None
     
-    # Priority 1: Omniroute (local, free models)
+    # Priority 1: OpenRouter free (works everywhere, no API key needed)
+    # Google Gemma 4 26B free tier — 20 req/min, ~1M tokens/day
+    api_url = "https://openrouter.ai/api/v1/chat/completions"
+    api_key = None
+    model = "google/gemma-4-26b-a4b-it:free"
+    
+    # Try to get OpenRouter key from vision-tool config
     import os as _os
-    if _os.path.exists("/proc"):
-        # Check if Omniroute is running
+    try:
+        import json
+        config_path = _os.path.expanduser("~/Documents/vision-tool/config.json")
+        if _os.path.exists(config_path):
+            with open(config_path) as f:
+                vc = json.load(f)
+            or_key = vc.get("OPENROUTER_API_KEY", "")
+            if or_key:
+                api_key = or_key
+    except Exception:
+        pass
+    
+    # Fallback: env vars (for Render)
+    if not api_key:
+        api_key = current_app.config.get("LLM_API_KEY", "") or _os.environ.get("LLM_API_KEY", "")
+        api_url = current_app.config.get("LLM_API_URL", "") or _os.environ.get("LLM_API_URL", "") or api_url
+        model = current_app.config.get("LLM_MODEL", "") or _os.environ.get("LLM_MODEL", "") or model
+    
+    # Fallback: Omniroute (local only)
+    if not api_key:
         try:
             import socket
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
-            result = s.connect_ex(('127.0.0.1', 20128))
-            s.close()
-            if result == 0:
+            s.settimeout(0.5)
+            if s.connect_ex(('127.0.0.1', 20128)) == 0:
                 api_url = "http://localhost:20128/v1/chat/completions"
-                api_key = ""  # Omniroute doesn't need auth locally
+                api_key = ""
                 model = "auto/cheap"
+            s.close()
         except Exception:
             pass
     
-    # Priority 2: OpenRouter from vision-tool config
-    if not api_url:
-        try:
-            import json
-            config_path = _os.path.expanduser("~/Documents/vision-tool/config.json")
-            if _os.path.exists(config_path):
-                with open(config_path) as f:
-                    vc = json.load(f)
-                or_key = vc.get("OPENROUTER_API_KEY", "")
-                if or_key:
-                    api_url = "https://openrouter.ai/api/v1/chat/completions"
-                    api_key = or_key
-                    model = "google/gemma-4-26b-a4b-it:free"
-        except Exception:
-            pass
-    
-    # Priority 3: Environment variables
-    if not api_url:
-        api_url = current_app.config.get("LLM_API_URL", "") or _os.environ.get("LLM_API_URL", "")
-        api_key = current_app.config.get("LLM_API_KEY", "") or _os.environ.get("LLM_API_KEY", "")
-        model = current_app.config.get("LLM_MODEL", "") or _os.environ.get("LLM_MODEL", "")
-    
-    # Priority 4: Hermes config
-    if not api_url:
+    # Fallback: OpenCode.ai (Hermes config)
+    if not api_key:
         try:
             import yaml
             hermes_path = _os.path.expanduser("~/.hermes/config.yaml")
@@ -368,8 +369,9 @@ def _call_llm(prompt: str) -> str:
                 with open(hermes_path) as f:
                     hermes = yaml.safe_load(f)
                 mc = hermes.get("model", {})
-                api_key = mc.get("api_key", "")
-                if api_key:
+                k = mc.get("api_key", "")
+                if k:
+                    api_key = k
                     api_url = mc.get("base_url", "") + "/chat/completions"
                     model = mc.get("default", "gpt-4o-mini")
         except Exception:
