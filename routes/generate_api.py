@@ -1,27 +1,52 @@
 """
-Generate Curriculum API — on-demand curriculum generation with progress
+Generate Curriculum API — day-by-day generation with real-time progress
 """
 import logging
-from flask import Blueprint, jsonify, g, current_app
+import os
+import threading
+from flask import Blueprint, jsonify, g
 from services.supabase_client import get_supabase
 from services.curriculum_generator import generate_curriculum
 
 logger = logging.getLogger(__name__)
 gen_bp = Blueprint("generate", __name__, url_prefix="/api")
 
+# In-memory progress tracker (for MVP — use DB table for production)
+_progress_tracker = {}
+
+
+def _get_llm_config():
+    """Get LLM API configuration from the environment or Hermes config."""
+    api_url = os.environ.get("LLM_API_URL", "https://opencode.ai/zen/v1/chat/completions")
+    api_key = os.environ.get("LLM_API_KEY", "")
+    model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+    
+    # If no env vars set, try reading from Hermes config
+    if not api_key:
+        try:
+            import yaml
+            with open(os.path.expanduser("~/.hermes/config.yaml")) as f:
+                hermes = yaml.safe_load(f)
+            model_cfg = hermes.get("model", {})
+            api_key = model_cfg.get("api_key", "")
+            api_url = model_cfg.get("base_url", api_url) + "/chat/completions"
+            model = model_cfg.get("default", model)
+        except Exception:
+            pass
+    
+    return api_url, api_key, model
+
 
 @gen_bp.route("/generate-curriculum/<slug>", methods=["POST"])
 def generate_curriculum_api(slug):
-    """Generate a 30-day curriculum for a topic and save to database.
-    Called from the topic detail page when user clicks 'Generate My 30-Day Curriculum'."""
-    
+    """Generate curriculum day-by-day. Frontend polls /status for progress."""
     if not g.user:
         return jsonify({"status": "error", "error": "Not logged in"}), 401
     
     sb = get_supabase()
     user_id = g.user["id"]
     
-    # Check if user is enrolled
+    # Verify enrollment
     pipeline = sb.table("freelance_pipeline").select("id") \
         .eq("user_id", user_id).eq("topic", slug).limit(1).execute()
     if not pipeline.data:
@@ -32,28 +57,25 @@ def generate_curriculum_api(slug):
     topic = next((t for t in CURATED_TOPICS if t["slug"] == slug), None)
     topic_name = topic["name"] if topic else slug.replace("-", " ").title()
     
-    # Get topic DB record
     topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
     if not topic_db.data:
         return jsonify({"status": "error", "error": "Topic not found"}), 404
     
     topic_id = topic_db.data[0]["id"]
     
-    # Check if curriculum already exists (don't duplicate)
-    existing = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
-    if existing.data:
-        day_count = sb.table("curriculum_days").select("id", count="exact") \
-            .eq("curriculum_id", existing.data[0]["id"]).execute()
-        if getattr(day_count, 'count', 0) or 0 >= 30:
-            return jsonify({"status": "complete", "days": getattr(day_count, 'count', 0)})
-        curr_id = existing.data[0]["id"]
+    # Get or create curriculum record
+    curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
+    if curr_resp.data:
+        curr_id = curr_resp.data[0]["id"]
+        existing = sb.table("curriculum_days").select("id", count="exact") \
+            .eq("curriculum_id", curr_id).execute()
+        if getattr(existing, 'count', 0) or 0 >= 30:
+            return jsonify({"status": "complete", "message": "Already generated"})
     else:
-        curr = sb.table("curricula").insert({
-            "topic_id": topic_id, "total_days": 30
-        }).execute()
+        curr = sb.table("curricula").insert({"topic_id": topic_id, "total_days": 30}).execute()
         curr_id = curr.data[0]["id"]
     
-    # Get user's linked platforms for platform-specific days
+    # Get linked platforms
     linked_platforms = []
     try:
         plat = sb.table("user_platforms").select("platform") \
@@ -62,39 +84,95 @@ def generate_curriculum_api(slug):
     except Exception:
         pass
     
-    # Generate curriculum (will use LLM or fallback)
-    try:
-        curriculum = generate_curriculum(topic_name, 30, platforms=linked_platforms)
-    except Exception as e:
-        logger.error(f"Curriculum generation failed: {e}")
-        return jsonify({"status": "error", "error": f"Generation failed: {e}"}), 500
+    # Initialize progress
+    _progress_tracker[slug] = {
+        "status": "generating",
+        "current_day": 0,
+        "total_days": 30,
+        "topic": topic_name,
+    }
     
-    if not curriculum or len(curriculum) == 0:
-        return jsonify({"status": "error", "error": "Generated 0 days"}), 500
-    
-    # Save days to database
-    saved = 0
-    for day in curriculum:
-        try:
-            sb.table("curriculum_days").insert({
-                "curriculum_id": curr_id,
-                "day_number": day.get("day_number", saved + 1),
-                "title": day.get("title", f"Day {saved + 1}"),
-                "description": day.get("description", ""),
-                "learning_objectives": day.get("description", ""),
-                "practice_task": day.get("practice_task", "Practice exercise"),
-                "apply_task": day.get("apply_task", "Apply what you learned"),
-                "video_title": day.get("video_title", f"{topic_name} — Day {saved + 1}"),
-            }).execute()
-            saved += 1
-        except Exception as e:
-            logger.warning(f"Failed to save day {day.get('day_number')}: {e}")
-    
-    logger.info(f"Saved {saved}/{len(curriculum)} curriculum days for {topic_name}")
+    # Start background generation
+    thread = threading.Thread(
+        target=_generate_in_background,
+        args=(slug, curr_id, topic_name, 30, linked_platforms),
+        daemon=True
+    )
+    thread.start()
     
     return jsonify({
-        "status": "complete",
-        "days": saved,
-        "total": len(curriculum),
-        "message": f"Generated {saved} days of curriculum"
+        "status": "started",
+        "message": f"Generating 30-day curriculum for {topic_name}"
     })
+
+
+@gen_bp.route("/generation-status/<slug>")
+def generation_status(slug):
+    """Poll this endpoint to get real-time generation progress."""
+    progress = _progress_tracker.get(slug, {"status": "unknown", "current_day": 0, "total_days": 30})
+    return jsonify(progress)
+
+
+def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platforms):
+    """Generate curriculum day-by-day in background thread."""
+    try:
+        # Get LLM config
+        api_url, api_key, model = _get_llm_config()
+        
+        # Set config in app context
+        import flask
+        from app import create_app
+        app = create_app()
+        
+        with app.app_context():
+            flask.current_app.config["LLM_API_URL"] = api_url
+            flask.current_app.config["LLM_API_KEY"] = api_key
+            flask.current_app.config["LLM_MODEL"] = model
+            
+            # Generate all days at once (the generator already returns 30 days)
+            curriculum = generate_curriculum(topic_name, total_days, platforms=linked_platforms)
+            
+            if not curriculum:
+                _progress_tracker[slug] = {"status": "error", "error": "Generation returned empty"}
+                return
+            
+            # Save days one by one, updating progress after each
+            sb = get_supabase()
+            for i, day in enumerate(curriculum):
+                try:
+                    sb.table("curriculum_days").insert({
+                        "curriculum_id": curr_id,
+                        "day_number": i + 1,
+                        "title": day.get("title", f"Day {i + 1}"),
+                        "description": day.get("description", ""),
+                        "learning_objectives": day.get("description", ""),
+                        "practice_task": day.get("practice_task", "Practice exercise"),
+                        "apply_task": day.get("apply_task", "Apply what you learned"),
+                        "video_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
+                    }).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to save day {i+1}: {e}")
+                
+                # Update progress after each day
+                _progress_tracker[slug] = {
+                    "status": "generating",
+                    "current_day": i + 1,
+                    "total_days": total_days,
+                    "percent": round((i + 1) / total_days * 100),
+                    "last_title": day.get("title", f"Day {i + 1}"),
+                }
+            
+            # Mark complete
+            _progress_tracker[slug] = {
+                "status": "complete",
+                "current_day": total_days,
+                "total_days": total_days,
+                "percent": 100,
+                "last_title": "Complete!",
+            }
+            
+            logger.info(f"Saved {total_days} curriculum days for {topic_name}")
+    
+    except Exception as e:
+        logger.error(f"Background generation failed: {e}")
+        _progress_tracker[slug] = {"status": "error", "error": str(e)}

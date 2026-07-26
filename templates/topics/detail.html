@@ -147,37 +147,69 @@
             class="btn-primary px-8 py-3 rounded-xl font-bold text-base" id="gen-btn">
         🎯 Generate My 30-Day Curriculum
     </button>
-    <div id="gen-status" class="hidden mt-4">
-        <div class="flex items-center justify-center gap-3 text-sm text-gray-500">
+    <div id="gen-status" class="hidden mt-6">
+        <div class="flex items-center justify-center gap-3 text-sm text-gray-500 mb-4">
             <svg class="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
-            <span>Generating your 30-day curriculum...</span>
+            <span id="gen-label">Starting generation...</span>
         </div>
-        <div class="mt-3 w-full bg-gray-100 rounded-full h-2 max-w-xs mx-auto">
-            <div id="gen-progress" class="h-2 rounded-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+        <div class="w-full bg-gray-100 rounded-full h-3 max-w-md mx-auto overflow-hidden">
+            <div id="gen-progress" class="h-full bg-indigo-600 transition-all duration-500 ease-out" style="width: 0%"></div>
         </div>
-        <p class="text-xs text-gray-400 mt-2">This takes about 30 seconds</p>
+        <p class="text-xs text-gray-400 mt-2" id="gen-detail">Initializing...</p>
     </div>
 </div>
 <script>
+let pollInterval;
+
 async function generateCurriculum(slug) {
     document.getElementById('gen-btn').classList.add('hidden');
     document.getElementById('gen-status').classList.remove('hidden');
     
+    // Start generation
+    const resp = await fetch('/api/generate-curriculum/' + slug, { method: 'POST' });
+    const data = await resp.json();
+    
+    if (data.status === 'complete') {
+        window.location.reload();
+        return;
+    }
+    
+    // Poll for progress every 2 seconds
+    pollInterval = setInterval(function() { pollProgress(slug); }, 2000);
+}
+
+async function pollProgress(slug) {
     try {
-        const resp = await fetch('/api/generate-curriculum/' + slug, { method: 'POST' });
+        const resp = await fetch('/api/generation-status/' + slug);
         const data = await resp.json();
         
         if (data.status === 'complete') {
+            clearInterval(pollInterval);
+            document.getElementById('gen-label').textContent = '✅ Complete! Loading curriculum...';
             document.getElementById('gen-progress').style.width = '100%';
-            setTimeout(function() { window.location.reload(); }, 500);
-        } else {
-            document.getElementById('gen-status').innerHTML = '<p class="text-red-500 text-sm">Error: ' + (data.error || 'Generation failed') + '</p>';
+            document.getElementById('gen-detail').textContent = 'All 30 days generated';
+            setTimeout(function() { window.location.reload(); }, 1000);
+            return;
+        }
+        
+        if (data.status === 'error') {
+            clearInterval(pollInterval);
+            document.getElementById('gen-label').textContent = '❌ Error generating curriculum';
+            document.getElementById('gen-detail').textContent = data.error || 'Generation failed';
+            return;
+        }
+        
+        if (data.status === 'generating') {
+            var pct = data.percent || Math.round(data.current_day / data.total_days * 100);
+            document.getElementById('gen-progress').style.width = pct + '%';
+            document.getElementById('gen-label').textContent = 'Generating Day ' + data.current_day + ' of ' + data.total_days;
+            document.getElementById('gen-detail').textContent = data.last_title || 'Creating lesson content...';
         }
     } catch(e) {
-        document.getElementById('gen-status').innerHTML = '<p class="text-red-500 text-sm">Error: ' + e.message + '</p>';
+        // Silently retry on network error
     }
 }
 </script>
