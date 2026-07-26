@@ -164,12 +164,13 @@
                 <div class="grid grid-cols-7 gap-1.5">
                     {% set week_start = [current_day, 1]|max %}
                     {% for day in range(week_start, week_start + 7) %}
-                    <div class="aspect-square rounded-lg flex items-center justify-center text-xs font-bold
-                        {% if day < current_day %}gradient-primary text-white
-                        {% elif day == current_day %}ring-2 ring-indigo-400 bg-indigo-50 text-indigo-600
-                        {% else %}bg-gray-50 text-gray-400{% endif %}">
+                    <a href="{{ url_for('dashboard.day_detail', day_number=day) }}" 
+                       class="aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition
+                        {% if day < current_day %}bg-indigo-600 text-white hover:bg-indigo-700
+                        {% elif day == current_day %}ring-2 ring-indigo-400 bg-indigo-50 text-indigo-600 hover:bg-indigo-100
+                        {% else %}bg-gray-50 text-gray-400 hover:bg-gray-100{% endif %}">
                         {{ day }}
-                    </div>
+                    </a>
                     {% endfor %}
                 </div>
             </div>
