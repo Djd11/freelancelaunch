@@ -140,16 +140,29 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
             sb = get_supabase()
             for i, day in enumerate(curriculum):
                 try:
-                    sb.table("curriculum_days").insert({
+                    # Pack 6-section format into existing columns
+                    hook = day.get("hook", "")
+                    concept = day.get("concept", day.get("description", ""))
+                    practice = day.get("practice", day.get("practice_task", ""))
+                    retrieval = day.get("retrieval", "")
+                    spaced = day.get("spaced_review", "")
+                    preview_text = day.get("preview", "")
+                    
+                    full_description = f"{hook}\n\n{concept}" if hook else concept
+                    full_practice = f"{practice}\n\n## Retrieval\n{retrieval}" if retrieval else practice
+                    full_apply = f"{spaced}\n\n{preview_text}" if spaced else preview_text
+                    
+                    day_data = {
                         "curriculum_id": curr_id,
                         "day_number": i + 1,
                         "title": day.get("title", f"Day {i + 1}"),
-                        "description": day.get("description", ""),
-                        "learning_objectives": day.get("description", ""),
-                        "practice_task": day.get("practice_task", "Practice exercise"),
-                        "apply_task": day.get("apply_task", "Apply what you learned"),
+                        "description": full_description[:2000],
+                        "learning_objectives": hook[:500],
+                        "practice_task": full_practice[:2000],
+                        "apply_task": full_apply[:1000],
                         "video_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
-                    }).execute()
+                    }
+                    sb.table("curriculum_days").insert(day_data).execute()
                 except Exception as e:
                     logger.warning(f"Failed to save day {i+1}: {e}")
                 
