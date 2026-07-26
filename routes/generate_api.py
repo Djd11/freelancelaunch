@@ -16,12 +16,25 @@ _progress_tracker = {}
 
 
 def _get_llm_config():
-    """Get LLM API configuration from the environment or Hermes config."""
-    api_url = os.environ.get("LLM_API_URL", "https://opencode.ai/zen/v1/chat/completions")
+    """Get LLM API configuration — tries multiple providers in order."""
+    # Priority 1: Environment variables (set on Render)
+    api_url = os.environ.get("LLM_API_URL", "")
     api_key = os.environ.get("LLM_API_KEY", "")
-    model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+    model = os.environ.get("LLM_MODEL", "")
     
-    # If no env vars set, try reading from Hermes config
+    # Priority 2: OpenRouter from vision-tool config
+    if not api_key:
+        try:
+            import json
+            with open(os.path.expanduser("~/Documents/vision-tool/config.json")) as f:
+                vc = json.load(f)
+            api_key = vc.get("OPENROUTER_API_KEY", "")
+            api_url = "https://openrouter.ai/api/v1/chat/completions"
+            model = "google/gemma-4-26b-a4b-it:free"
+        except Exception:
+            pass
+    
+    # Priority 3: Hermes config (OpenCode.ai)
     if not api_key:
         try:
             import yaml
@@ -29,8 +42,8 @@ def _get_llm_config():
                 hermes = yaml.safe_load(f)
             model_cfg = hermes.get("model", {})
             api_key = model_cfg.get("api_key", "")
-            api_url = model_cfg.get("base_url", api_url) + "/chat/completions"
-            model = model_cfg.get("default", model)
+            api_url = model_cfg.get("base_url", "") + "/chat/completions"
+            model = model_cfg.get("default", "gpt-4o-mini")
         except Exception:
             pass
     

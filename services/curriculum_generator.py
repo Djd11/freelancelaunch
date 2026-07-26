@@ -315,22 +315,58 @@ def _fallback_lesson(day: int, topic: str) -> dict:
 
 
 def _call_llm(prompt: str) -> str:
-    """Call the configured LLM API."""
-    api_url = current_app.config.get("LLM_API_URL", "https://opencode.ai/zen/v1/chat/completions")
-    api_key = current_app.config.get("LLM_API_KEY", "")
-    model = current_app.config.get("LLM_MODEL", "gpt-4o-mini")
+    """Call the configured LLM API — tries OpenRouter first, then Hermes config, then env vars."""
+    # Priority 1: OpenRouter from config
+    api_url = None
+    api_key = None
+    model = None
+    
+    try:
+        import json
+        config_path = os.path.expanduser("~/Documents/vision-tool/config.json")
+        if os.path.exists(config_path):
+            with open(config_path) as f:
+                vc = json.load(f)
+            or_key = vc.get("OPENROUTER_API_KEY", "")
+            if or_key:
+                api_url = "https://openrouter.ai/api/v1/chat/completions"
+                api_key = or_key
+                model = "google/gemma-4-26b-a4b-it:free"
+    except Exception:
+        pass
+    
+    # Priority 2: Environment variables
+    if not api_key:
+        api_url = current_app.config.get("LLM_API_URL", "") or os.environ.get("LLM_API_URL", "")
+        api_key = current_app.config.get("LLM_API_KEY", "") or os.environ.get("LLM_API_KEY", "")
+        model = current_app.config.get("LLM_MODEL", "") or os.environ.get("LLM_MODEL", "")
+    
+    # Priority 3: Hermes config
+    if not api_key:
+        try:
+            import yaml
+            hermes_path = os.path.expanduser("~/.hermes/config.yaml")
+            if os.path.exists(hermes_path):
+                with open(hermes_path) as f:
+                    hermes = yaml.safe_load(f)
+                mc = hermes.get("model", {})
+                api_key = mc.get("api_key", "")
+                if api_key:
+                    api_url = mc.get("base_url", "") + "/chat/completions"
+                    model = mc.get("default", "gpt-4o-mini")
+        except Exception:
+            pass
     
     if not api_key:
-        # Try reading from environment
-        import os
-        api_key = os.environ.get("LLM_API_KEY", "")
+        logger.warning("No LLM API key configured — using fallback content")
+        return None
     
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     
     payload = {
-        "model": model,
+        "model": model or "gpt-4o-mini",
         "messages": [
             {"role": "system", "content": "You are a curriculum designer and learning science expert. Output structured lesson content with clear section headings."},
             {"role": "user", "content": prompt}
@@ -340,7 +376,7 @@ def _call_llm(prompt: str) -> str:
     }
     
     try:
-        timeout_val = current_app.config.get("LLM_TIMEOUT", 60)
+        timeout_val = current_app.config.get("LLM_TIMEOUT", 90)
         resp = httpx.post(api_url, headers=headers, json=payload, timeout=timeout_val)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
