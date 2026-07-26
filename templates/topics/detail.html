@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const resp = await fetch('/search/curriculum/{{ topic.slug }}');
         const data = await resp.json();
-        if (data.days && data.days.length >= 30) {
+        if (data.days && data.days.length >= 1) {
             // Hide the generate button
             var genDiv = document.getElementById('curriculum-generator');
             if (genDiv) genDiv.innerHTML = '';
