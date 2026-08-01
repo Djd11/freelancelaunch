@@ -16,12 +16,64 @@
         
         <!-- VIDEO PREVIEW CTA -->
         <div class="mt-4 mb-2">
-            <a href="{{ url_for('preview.day_preview', day_number=day_number) }}"
-               class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-xl font-bold text-base">
-                ▶ Play Video Preview (HTML)
-            </a>
+            <div class="flex items-center gap-3">
+                <button onclick="togglePreview()" id="previewToggleBtn"
+                        class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-xl font-bold text-base">
+                    ▶ Play Video Preview (HTML)
+                </button>
+                <button onclick="togglePreview()" id="previewMinBtn"
+                        class="hidden items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-3 rounded-xl font-medium text-sm text-gray-600 transition">
+                    ▁ Minimize
+                </button>
+            </div>
             <p class="text-xs text-gray-400 mt-2">Animated TwoPanel lesson with voiceover — no MP4 render needed.</p>
         </div>
+
+        <!-- INLINE PREVIEW (expand/minimize) -->
+        <div id="previewContainer" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold text-gray-700">▶ Video Preview</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="setPreviewSize('small')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Small</button>
+                    <button onclick="setPreviewSize('medium')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Medium</button>
+                    <button onclick="setPreviewSize('large')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Large</button>
+                    <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition">✕ Close</button>
+                </div>
+            </div>
+            <div id="previewFrameWrap" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-900 transition-all duration-300" style="height: 420px">
+                <iframe id="previewFrame" src="{{ url_for('preview.day_preview', day_number=day_number) }}" 
+                        class="w-full h-full border-0" allow="autoplay" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <script>
+        function togglePreview() {
+            var container = document.getElementById('previewContainer');
+            var toggleBtn = document.getElementById('previewToggleBtn');
+            var minBtn = document.getElementById('previewMinBtn');
+            var isHidden = container.classList.contains('hidden');
+            
+            container.classList.toggle('hidden');
+            
+            if (isHidden) {
+                toggleBtn.classList.add('hidden');
+                minBtn.classList.remove('hidden');
+                minBtn.classList.add('inline-flex');
+                // Refresh iframe so audio starts fresh each open
+                document.getElementById('previewFrame').src = document.getElementById('previewFrame').src;
+            } else {
+                toggleBtn.classList.remove('hidden');
+                minBtn.classList.add('hidden');
+                minBtn.classList.remove('inline-flex');
+            }
+        }
+        
+        function setPreviewSize(size) {
+            var wrap = document.getElementById('previewFrameWrap');
+            var sizes = {small: '280px', medium: '420px', large: '620px'};
+            wrap.style.height = sizes[size] || '420px';
+        }
+        </script>
         
         {% if video and video.get('youtube_url') %}
         <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden my-6">
