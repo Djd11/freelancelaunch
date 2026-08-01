@@ -16,6 +16,7 @@ def mark_progress():
     data = request.get_json() or {}
     cohort_video_id = data.get("cohort_video_id")
     field = data.get("field")  # 'video_watched' | 'practice_completed' | 'apply_completed'
+    day_number = data.get("day_number")
     
     if not cohort_video_id or field not in ("video_watched", "practice_completed", "apply_completed"):
         return jsonify({"error": "Invalid request"}), 400
@@ -30,17 +31,22 @@ def mark_progress():
         .limit(1) \
         .execute()
     
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    
     if existing.data:
-        sb.table("user_progress").update({
-            field: True,
-            "updated_at": "now()"
-        }).eq("id", existing.data[0]["id"]).execute()
+        update_data = {field: True, "updated_at": now}
+        if day_number:
+            update_data["day_number"] = day_number
+        sb.table("user_progress").update(update_data).eq("id", existing.data[0]["id"]).execute()
     else:
-        sb.table("user_progress").insert({
+        insert_data = {
             "user_id": user_id,
             "cohort_video_id": cohort_video_id,
+            "day_number": day_number or 1,
             field: True,
-        }).execute()
+        }
+        sb.table("user_progress").insert(insert_data).execute()
     
     # If all 3 are done, update freelance pipeline stage
     updated = sb.table("user_progress").select("*") \
@@ -49,16 +55,25 @@ def mark_progress():
         .limit(1) \
         .execute()
     
+    day_complete = False
     if updated.data:
         p = updated.data[0]
         if p.get("video_watched") and p.get("practice_completed") and p.get("apply_completed"):
-            # Advance to 'applying' stage if still in 'learning'
+            day_complete = True
             sb.table("freelance_pipeline").update({
                 "stage": "applying",
-                "updated_at": "now()"
+                "updated_at": now
             }).eq("user_id", user_id).eq("stage", "learning").execute()
     
-    return jsonify({"success": True})
+    # Get encouragement message
+    from services.nudge_engine import get_encouragement
+    message = get_encouragement(field)
+    
+    return jsonify({
+        "success": True,
+        "message": message,
+        "day_complete": day_complete
+    })
 
 
 @progress_bp.route("/rate", methods=["POST"])

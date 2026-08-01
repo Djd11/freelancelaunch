@@ -1,9 +1,12 @@
 """
 Dashboard routes — main user experience
 """
+import logging
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, g
 from services.supabase_client import get_supabase
 
+logger = logging.getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 
@@ -67,6 +70,53 @@ def home():
         .execute()
     total_done = days_completed.count if hasattr(days_completed, 'count') else 0
     
+    # ─── CONFIDENCE ENGINE: streak, nudges, encouragement ─────
+    try:
+        from services.nudge_engine import (
+            compute_streak, get_nudges, compute_confidence,
+            get_milestone, get_encouragement, get_welcome_back
+        )
+        
+        # Fetch all user progress to compute streak and nudges
+        all_prog = sb.table("user_progress").select("day_number,video_watched,practice_completed,apply_completed,updated_at") \
+            .eq("user_id", user_id).execute()
+        prog_rows = all_prog.data or []
+        
+        # Completed dates (based on updated_at)
+        completed_dates = []
+        progress_days = {}
+        last_completed_day = 0
+        for row in prog_rows:
+            day_num = row.get("day_number")
+            progress_days[day_num] = row
+            if row.get("video_watched") or row.get("practice_completed"):
+                if row.get("updated_at"):
+                    try:
+                        completed_dates.append(datetime.fromisoformat(row["updated_at"].replace("Z", "+00:00")).date())
+                    except Exception:
+                        pass
+                if day_num and day_num > last_completed_day:
+                    last_completed_day = day_num
+        
+        streak = compute_streak(completed_dates)
+        nudges = get_nudges(progress_days, last_completed_day, current_day)
+        confidence = compute_confidence(total_done, streak, cohort.get("max_days", 30))
+        milestone = get_milestone(current_day, streak)
+        
+        # Welcome-back nudge for inactive users
+        welcome_back = None
+        if last_completed_day > 0 and last_completed_day < current_day - 1:
+            welcome_back = get_welcome_back(current_day - last_completed_day, current_day)
+        
+        # Today's celebration if all 3 done
+        day_celebrated = False
+        if progress and progress.get("video_watched") and progress.get("practice_completed") and progress.get("apply_completed"):
+            day_celebrated = True
+    except Exception as e:
+        logger.error(f"Nudge engine error: {e}")
+        streak, nudges, confidence, milestone = 0, [], {"score": 0, "level": "Day One", "message": ""}, None
+        welcome_back, day_celebrated = None, False
+    
     # Get freelance pipeline stats
     pipeline_resp = sb.table("freelance_pipeline").select("*") \
         .eq("user_id", user_id) \
@@ -82,7 +132,13 @@ def home():
         curriculum_day=curriculum_day,
         progress=progress,
         total_done=total_done,
-        pipeline=pipeline
+        pipeline=pipeline,
+        streak=streak,
+        nudges=nudges,
+        confidence=confidence,
+        milestone=milestone,
+        welcome_back=welcome_back,
+        day_celebrated=day_celebrated
     )
 
 

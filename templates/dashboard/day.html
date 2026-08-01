@@ -2,7 +2,14 @@
 {% block title %}Day {{ day_number }} — FreelanceLaunch{% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-8">
-    <a href="{{ url_for('dashboard.home') }}" class="text-sm text-blue-600 hover:underline mb-4 inline-block">← Back to Dashboard</a>
+    <a href="{{ url_for('dashboard.home') }}" class="text-sm text-indigo-600 hover:underline mb-4 inline-block">← Back to Dashboard</a>
+    
+    <!-- DAY COMPLETE CELEBRATION -->
+    {% if progress and progress.get('video_watched') and progress.get('practice_completed') and progress.get('apply_completed') %}
+    <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+        <p class="text-emerald-700 font-semibold">🎉 Day {{ day_number }} complete! Outstanding work.</p>
+    </div>
+    {% endif %}
     
     <div class="bg-white rounded-2xl border border-gray-200 p-6">
         <h1 class="text-2xl font-bold mb-2">Day {{ day_number }}: {% if curriculum_day %}{{ curriculum_day.get('title', 'Lesson') }}{% else %}Lesson {{ day_number }}{% endif %}</h1>
@@ -14,8 +21,8 @@
         {% else %}
         <div class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center my-6">
             <div class="text-center">
-                <div class="text-4xl mb-2">🎥</div>
-                <p class="text-gray-500">Video not yet available</p>
+                <div class="text-4xl mb-2">📖</div>
+                <p class="text-gray-500">Text-based lesson (video coming soon)</p>
             </div>
         </div>
         {% endif %}
@@ -24,31 +31,102 @@
         <div class="mt-6 space-y-4">
             <div>
                 <h3 class="font-semibold text-gray-700 mb-1">📖 Description</h3>
-                <p class="text-gray-600">{{ curriculum_day.get('description', '') }}</p>
+                <p class="text-gray-600 whitespace-pre-line">{{ curriculum_day.get('description', '') }}</p>
             </div>
             
             {% if curriculum_day.get('learning_objectives') %}
             <div>
                 <h3 class="font-semibold text-gray-700 mb-1">🎯 Learning Objectives</h3>
-                <p class="text-gray-600">{{ curriculum_day['learning_objectives'] }}</p>
+                <p class="text-gray-600 whitespace-pre-line">{{ curriculum_day['learning_objectives'] }}</p>
             </div>
             {% endif %}
             
             {% if curriculum_day.get('practice_task') %}
             <div class="p-4 bg-blue-50 rounded-xl">
                 <h3 class="font-semibold text-blue-700 mb-1">✏️ Practice Task (25 min)</h3>
-                <p class="text-blue-600">{{ curriculum_day['practice_task'] }}</p>
+                <p class="text-blue-600 whitespace-pre-line">{{ curriculum_day['practice_task'] }}</p>
             </div>
             {% endif %}
             
             {% if curriculum_day.get('apply_task') %}
             <div class="p-4 bg-green-50 rounded-xl">
                 <h3 class="font-semibold text-green-700 mb-1">🚀 Apply Task (10 min)</h3>
-                <p class="text-green-600">{{ curriculum_day['apply_task'] }}</p>
+                <p class="text-green-600 whitespace-pre-line">{{ curriculum_day['apply_task'] }}</p>
             </div>
             {% endif %}
         </div>
         {% endif %}
+
+        <!-- PROGRESS CHECKBOXES -->
+        {% if video %}
+        <div class="mt-8 border-t border-gray-100 pt-6 space-y-3">
+            <h3 class="font-semibold text-gray-700 mb-3">✅ Mark Your Progress</h3>
+            
+            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('video_watched') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
+                <input type="checkbox" {% if progress and progress.get('video_watched') %}checked disabled{% endif %}
+                       onclick="markProgress('{{ video['id'] }}', 'video_watched', {{ day_number }}, this)"
+                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                <div class="flex-1">
+                    <div class="font-medium text-sm">Watched the lesson</div>
+                    <div class="text-xs text-gray-400">Read through the content above</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('practice_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
+                <input type="checkbox" {% if progress and progress.get('practice_completed') %}checked disabled{% endif %}
+                       onclick="markProgress('{{ video['id'] }}', 'practice_completed', {{ day_number }}, this)"
+                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                <div class="flex-1">
+                    <div class="font-medium text-sm">Completed practice task</div>
+                    <div class="text-xs text-gray-400">Did the hands-on exercise</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('apply_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
+                <input type="checkbox" {% if progress and progress.get('apply_completed') %}checked disabled{% endif %}
+                       onclick="markProgress('{{ video['id'] }}', 'apply_completed', {{ day_number }}, this)"
+                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                <div class="flex-1">
+                    <div class="font-medium text-sm">Submitted my work</div>
+                    <div class="text-xs text-gray-400">Portfolio or deliverable done</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div id="feedback-message" class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-100 hidden">
+            <p class="text-sm text-indigo-700 font-medium" id="feedback-text"></p>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<script>
+function markProgress(videoId, field, dayNumber, checkbox) {
+    fetch('/api/progress/mark', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cohort_video_id: videoId, field: field, day_number: dayNumber})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            checkbox.closest('div').classList.add('border-emerald-200', 'bg-emerald-50');
+            checkbox.disabled = true;
+            
+            var fb = document.getElementById('feedback-message');
+            var ft = document.getElementById('feedback-text');
+            fb.classList.remove('hidden');
+            ft.textContent = data.message;
+            
+            if (data.day_complete) {
+                fb.className = 'mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200';
+                ft.textContent = '🎉 Day ' + dayNumber + ' complete! ' + data.message;
+                setTimeout(function() { window.location.reload(); }, 2500);
+            }
+        }
+    })
+    .catch(function() { checkbox.checked = false; });
+}
+</script>
 {% endblock %}
