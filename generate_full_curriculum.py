@@ -63,8 +63,8 @@ WEEKS = [
 ]
 
 
-def generate_day(day_num, theme, day_title, next_title):
-    prompt = f"""You are designing Day {day_num} of a 30-day "{TOPIC}" freelancing curriculum.
+def generate_day(day_num, theme, day_title, next_title, topic_name):
+    prompt = f"""You are designing Day {day_num} of a 30-day "{topic_name}" freelancing curriculum.
 Week theme: {theme}
 Today's lesson: {day_title}
 
@@ -124,6 +124,53 @@ def parse_sections(content):
 
 
 def main():
+    topic_slug = sys.argv[1] if len(sys.argv) > 1 else "web-scraping-python"
+    topic_name = sys.argv[2] if len(sys.argv) > 2 else "Web Scraping with Python"
+    model = sys.argv[3] if len(sys.argv) > 3 else "google/gemma-4-26b-a4b-it:free"
+
+    print(f"🎓 Generating 30-day curriculum for: {topic_name} (slug: {topic_slug})")
+    print(f"🤖 Model: {model}")
+
+    # Generic weekly structure — topics adapt via the LLM prompt
+    WEEKS = [
+        ("Foundation", [
+            "Introduction to " + topic_name,
+            "Core Concepts & Terminology",
+            "First Hands-On Project",
+            "Tools & Environment Setup",
+            "Real-World Example Walkthrough",
+            "Common Pitfalls & How to Avoid Them",
+            "Week 1 Review & Portfolio Piece",
+        ]),
+        ("Building", [
+            "Intermediate Techniques",
+            "Advanced Concepts",
+            "Workflow Optimization",
+            "Quality Standards & Best Practices",
+            "Client Communication Skills",
+            "Project Planning & Scoping",
+            "Week 2 Review & Real Project",
+        ]),
+        ("Application", [
+            "Creating Your Freelance Service",
+            "Pricing Your Services",
+            "Writing Winning Proposals",
+            "Building a Client Portfolio",
+            "Handling Difficult Clients",
+            "Delivering Quality Work",
+            "Week 3 Review & Portfolio Building",
+        ]),
+        ("Mastery", [
+            "Scaling Your Freelance Business",
+            "Building Reusable Templates",
+            "Advanced Techniques",
+            "Managing Multiple Clients",
+            "From Service to Product",
+            "Client Retention & Referrals",
+            "Graduation: Your Action Plan",
+        ]),
+    ]
+
     day_num = 0
     all_days = []
 
@@ -133,7 +180,7 @@ def main():
             next_title = days[(i + 1) % len(days)] if day_num < 30 else "Graduation"
 
             print(f"[{day_num}/30] {day_title}...", end=" ", flush=True)
-            content = generate_day(day_num, theme, day_title, next_title)
+            content = generate_day(day_num, theme, day_title, next_title, topic_name)
 
             if content:
                 print(f"OK ({len(content)} chars)")
@@ -155,7 +202,7 @@ def main():
     app = create_app()
     with app.app_context():
         sb = get_supabase_service()
-        tid = sb.table("topics").select("id").eq("slug", "web-scraping-python").limit(1).execute().data[0]["id"]
+        tid = sb.table("topics").select("id").eq("slug", topic_slug).limit(1).execute().data[0]["id"]
 
         # Delete old data
         old_curr = sb.table("curricula").select("id").eq("topic_id", tid).limit(1).execute()
@@ -191,7 +238,7 @@ def main():
                 "learning_objectives": hook[:500],
                 "practice_task": full_practice,
                 "apply_task": full_apply,
-                "video_title": f"{TOPIC} — Day {item['day']}: {item['title']}",
+                "video_title": f"{topic_name} — Day {item['day']}: {item['title']}",
             }).execute()
             saved += 1
 
