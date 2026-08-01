@@ -5,3 +5,4 @@ gunicorn>=21.2
 supabase>=2.0
 stripe>=7.0
 httpx>=0.27
+edge-tts
