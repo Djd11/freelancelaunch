@@ -33,12 +33,7 @@
         <div id="previewContainer" class="hidden mt-4">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-semibold text-gray-700">▶ Video Preview</span>
-                <div class="flex items-center gap-2">
-                    <button onclick="setPreviewSize('small')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Small</button>
-                    <button onclick="setPreviewSize('medium')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Medium</button>
-                    <button onclick="setPreviewSize('large')" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Large</button>
-                    <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition">✕ Close</button>
-                </div>
+                <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition" id="previewCloseBtn">✕ Close</button>
             </div>
             <div id="previewFrameWrap" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-900 transition-all duration-300" style="height: 420px">
                 <iframe id="previewFrame" src="{{ url_for('preview.day_preview', day_number=day_number) }}" 
@@ -67,24 +62,11 @@
                 minBtn.classList.remove('inline-flex');
             }
         }
-        
-        function setPreviewSize(size) {
-            var wrap = document.getElementById('previewFrameWrap');
-            var sizes = {small: '280px', medium: '420px', large: '620px'};
-            wrap.style.height = sizes[size] || '420px';
-        }
         </script>
         
         {% if video and video.get('youtube_url') %}
         <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden my-6">
             <iframe width="100%" height="100%" src="{{ video['youtube_url'] }}" frameborder="0" allowfullscreen></iframe>
-        </div>
-        {% else %}
-        <div class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center my-6">
-            <div class="text-center">
-                <div class="text-4xl mb-2">📖</div>
-                <p class="text-gray-500">Text-based lesson (video coming soon)</p>
-            </div>
         </div>
         {% endif %}
 
