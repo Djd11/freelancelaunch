@@ -192,23 +192,37 @@ def detail(slug):
         user_email = g.user.get("avatar_url", "")
         is_admin = bool(admin_email and user_email == admin_email)
         
-        # If enrolled OR admin, fetch full curriculum
-        if is_enrolled or is_admin:
+        # Also check cohort assignment (user may be in a cohort for this topic)
+        if not is_enrolled:
             try:
-                topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
-                if topic_db.data:
-                    topic_id = topic_db.data[0]["id"]
-                    curr = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
-                    if curr.data:
-                        curr_id = curr.data[0]["id"]
-                        days = sb.table("curriculum_days").select("*") \
-                            .eq("curriculum_id", curr_id) \
-                            .order("day_number", ascending=True) \
-                            .limit(30) \
-                            .execute()
-                        curriculum_days = days.data or []
-            except Exception as e:
-                print(f"Failed to fetch curriculum: {e}")
+                prof = sb.table("user_profiles").select("cohort_id").eq("user_id", g.user["id"]).limit(1).execute()
+                cohort_id = prof.data[0].get("cohort_id") if prof.data else None
+                if cohort_id:
+                    topic_db_id = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+                    if topic_db_id.data:
+                        cohort = sb.table("cohorts").select("topic_id").eq("id", cohort_id).limit(1).execute()
+                        if cohort.data and cohort.data[0].get("topic_id") == topic_db_id.data[0]["id"]:
+                            is_enrolled = True
+            except Exception:
+                pass
+        
+        # Fetch curriculum whenever it EXISTS in the DB (not gated by enrollment)
+        # Enrollment gates the CTA button, not curriculum display
+        try:
+            topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+            if topic_db.data:
+                topic_id = topic_db.data[0]["id"]
+                curr = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
+                if curr.data:
+                    curr_id = curr.data[0]["id"]
+                    days = sb.table("curriculum_days").select("*") \
+                        .eq("curriculum_id", curr_id) \
+                        .order("day_number") \
+                        .limit(30) \
+                        .execute()
+                    curriculum_days = days.data or []
+        except Exception as e:
+            print(f"Failed to fetch curriculum: {e}")
     
     return render_template("topics/detail.html", 
         topic=topic, 
