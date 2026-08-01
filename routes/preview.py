@@ -57,7 +57,8 @@ def day_preview(day_number):
 
     curriculum_day, video = _get_curriculum_day(sb, user_id, cohort_id, day_number)
     if not curriculum_day:
-        abort(404, description="Curriculum day not found")
+        # Graceful: curriculum not ready yet — redirect back to day page (shows loading state)
+        return redirect(url_for("dashboard.day_detail", day_number=day_number))
 
     # Build voiceover script
     from services.preview_generator import (

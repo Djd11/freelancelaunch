@@ -144,7 +144,7 @@ def home():
 
 @dashboard_bp.route("/day/<int:day_number>")
 def day_detail(day_number):
-    """View a specific day's content."""
+    """View a specific day's content. Auto-generates curriculum if missing (never 500)."""
     if not g.user:
         return redirect(url_for("auth.login"))
     
@@ -157,6 +157,15 @@ def day_detail(day_number):
     
     if not cohort_id:
         return redirect(url_for("topics.explore"))
+    
+    # Get cohort + topic slug (for curriculum generation)
+    cohort_resp = sb.table("cohorts").select("*,topics(slug,name)").eq("id", cohort_id).limit(1).execute()
+    cohort = cohort_resp.data[0] if cohort_resp.data else {}
+    topic_slug = None
+    topic_name = None
+    if cohort.get("topics"):
+        topic_slug = cohort["topics"].get("slug")
+        topic_name = cohort["topics"].get("name")
     
     # Get video for this day
     video_resp = sb.table("cohort_videos").select("*") \
@@ -176,18 +185,15 @@ def day_detail(day_number):
         curriculum_day = cd_resp.data[0] if cd_resp.data else None
     
     # Fallback: get curriculum day by day_number from the cohort's curriculum
-    if not curriculum_day:
+    if not curriculum_day and cohort.get("curriculum_id"):
         try:
-            # Get the cohort's curriculum
-            cohort_resp = sb.table("cohorts").select("curriculum_id").eq("id", cohort_id).limit(1).execute()
-            if cohort_resp.data and cohort_resp.data[0].get("curriculum_id"):
-                cid = cohort_resp.data[0]["curriculum_id"]
-                cd_resp = sb.table("curriculum_days").select("*") \
-                    .eq("curriculum_id", cid) \
-                    .eq("day_number", day_number) \
-                    .limit(1) \
-                    .execute()
-                curriculum_day = cd_resp.data[0] if cd_resp.data else None
+            cid = cohort["curriculum_id"]
+            cd_resp = sb.table("curriculum_days").select("*") \
+                .eq("curriculum_id", cid) \
+                .eq("day_number", day_number) \
+                .limit(1) \
+                .execute()
+            curriculum_day = cd_resp.data[0] if cd_resp.data else None
         except Exception as e:
             print(f"Curriculum day fallback error: {e}")
     
@@ -201,9 +207,20 @@ def day_detail(day_number):
             .execute()
         progress = prog_resp.data[0] if prog_resp.data else None
     
+    # NEEDS GENERATION: curriculum missing — show loading state, auto-trigger generation
+    needs_generation = curriculum_day is None
+    if needs_generation and not topic_slug:
+        # No topic context — fail gracefully, not 500
+        flash("No curriculum available for this topic yet", "error")
+        return redirect(url_for("dashboard.home"))
+    
     return render_template("dashboard/day.html",
         day_number=day_number,
         video=video,
         curriculum_day=curriculum_day,
-        progress=progress
+        progress=progress,
+        needs_generation=needs_generation,
+        topic_slug=topic_slug,
+        topic_name=topic_name,
+        cohort=cohort
     )
