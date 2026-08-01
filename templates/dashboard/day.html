@@ -29,15 +29,18 @@
             <p class="text-xs text-gray-400 mt-2">Animated TwoPanel lesson with voiceover — no MP4 render needed.</p>
         </div>
 
-        <!-- INLINE PREVIEW (expand/minimize) -->
+        <!-- INLINE PREVIEW (expand/minimize/fullscreen) -->
         <div id="previewContainer" class="hidden mt-4">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-semibold text-gray-700">▶ Video Preview</span>
-                <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition" id="previewCloseBtn">✕ Close</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleFullscreen()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition" id="fullscreenBtn">⛶ Fullscreen</button>
+                    <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition" id="previewCloseBtn">✕ Close</button>
+                </div>
             </div>
             <div id="previewFrameWrap" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-900 transition-all duration-300" style="height: 420px">
                 <iframe id="previewFrame" src="{{ url_for('preview.day_preview', day_number=day_number) }}" 
-                        class="w-full h-full border-0" allow="autoplay" loading="lazy"></iframe>
+                        class="w-full h-full border-0" allow="autoplay; fullscreen" loading="lazy"></iframe>
             </div>
         </div>
 
@@ -62,6 +65,27 @@
                 minBtn.classList.remove('inline-flex');
             }
         }
+        
+        function toggleFullscreen() {
+            var wrap = document.getElementById('previewFrameWrap');
+            var btn = document.getElementById('fullscreenBtn');
+            if (!document.fullscreenElement) {
+                if (wrap.requestFullscreen) {
+                    wrap.requestFullscreen();
+                    btn.textContent = '⛶ Exit Fullscreen';
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    btn.textContent = '⛶ Fullscreen';
+                }
+            }
+        }
+        
+        document.addEventListener('fullscreenchange', function() {
+            var btn = document.getElementById('fullscreenBtn');
+            if (!document.fullscreenElement && btn) btn.textContent = '⛶ Fullscreen';
+        });
         </script>
         
         {% if video and video.get('youtube_url') %}

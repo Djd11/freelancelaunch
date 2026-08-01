@@ -90,41 +90,85 @@ def extract_keywords(text: str, count: int = 5) -> list:
 
 
 def build_svg_diagram(day_number: int, title: str, keywords: list, color: str) -> str:
-    """Build a simple animated 3-step flow diagram (Learn → Practice → Apply)."""
-    steps = ["LEARN", "PRACTICE", "APPLY"]
-    subs = [
-        f"Day {day_number} concept",
-        "Hands-on exercise",
-        "Real client work",
+    """Build a ByteByteGo-style animated flow diagram (Learn → Practice → Apply).
+    Numbered steps, animated arrows, centered layout, keyword chips."""
+    steps = [
+        ("01", "LEARN", f"Day {day_number} concept", color),
+        ("02", "PRACTICE", "Hands-on exercise", "#22c55e"),
+        ("03", "APPLY", "Real client work", "#eab308"),
     ]
     
-    # 3 boxes horizontally centered at 780px wide card
-    box_w, gap, start_x = 180, 70, 100 + (780 - (3 * 180 + 2 * 70)) // 2
-    y = 120
+    # ── Centered 3-block layout (even placement formula) ──
+    box_w, gap = 170, 60
+    total_w = 3 * box_w + 2 * gap
+    start_x = (780 - total_w) // 2 + 100  # 100 = left padding of card
+    y, box_h = 60, 92
     
-    svg = [f'<svg width="780" height="310" viewBox="0 0 780 310" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,system-ui,sans-serif">']
-    svg.append(f'<defs><linearGradient id="boxg" x1="0" y1="0" x2="1" y2="1">'
-               f'<stop offset="0%" stop-color="{color}"/><stop offset="100%" stop-color="{color}88"/></linearGradient></defs>')
+    svg = ['<svg width="780" height="310" viewBox="0 0 780 310" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,system-ui,sans-serif">']
+    svg.append(f'<defs>'
+               f'<linearGradient id="boxg1" x1="0" y1="0" x2="0" y2="1">'
+               f'<stop offset="0%" stop-color="{color}"/><stop offset="100%" stop-color="{color}99"/></linearGradient>'
+               f'<linearGradient id="boxg2" x1="0" y1="0" x2="0" y2="1">'
+               f'<stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#22c55e99"/></linearGradient>'
+               f'<linearGradient id="boxg3" x1="0" y1="0" x2="0" y2="1">'
+               f'<stop offset="0%" stop-color="#eab308"/><stop offset="100%" stop-color="#eab30899"/></linearGradient>'
+               f'</defs>')
     
-    for i, (step, sub) in enumerate(zip(steps, subs)):
+    # ── Diagram title (left-aligned, small) ──
+    svg.append(f'<text x="100" y="28" fill="#94a3b8" font-size="12" font-weight="700" letter-spacing="1.5">{title[:40].upper()}</text>')
+    svg.append(f'<line x1="100" y1="38" x2="680" y2="38" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>')
+    
+    # ── Step blocks with numbered badges ──
+    for i, (num, step, sub, c) in enumerate(steps):
         x = start_x + i * (box_w + gap)
-        svg.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="70" rx="12" fill="url(#boxg)"/>')
-        svg.append(f'<text x="{x + box_w/2}" y="{y + 32}" text-anchor="middle" fill="#fff" font-size="17" font-weight="700">{step}</text>')
-        svg.append(f'<text x="{x + box_w/2}" y="{y + 52}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="12" font-weight="600">{sub}</text>')
+        grad = f"boxg{i+1}"
+        
+        # Block body
+        svg.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="14" fill="url(#{grad})"/>')
+        svg.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>')
+        
+        # Numbered badge (top-left circle)
+        svg.append(f'<circle cx="{x + 26}" cy="{y + 24}" r="13" fill="rgba(255,255,255,0.18)"/>')
+        svg.append(f'<text x="{x + 26}" y="{y + 29}" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">{num}</text>')
+        
+        # Step label + sub
+        svg.append(f'<text x="{x + box_w/2}" y="{y + 52}" text-anchor="middle" fill="#fff" font-size="19" font-weight="800" letter-spacing="0.5">{step}</text>')
+        svg.append(f'<text x="{x + box_w/2}" y="{y + 72}" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="12" font-weight="600">{sub}</text>')
+        
+        # Animated arrow between blocks (marching dashes via CSS)
         if i < 2:
-            ax = x + box_w + 8
-            svg.append(f'<line x1="{ax}" y1="{y + 35}" x2="{ax + gap - 16}" y2="{y + 35}" stroke="{color}" stroke-width="2.5" stroke-dasharray="6 6"/>')
-            svg.append(f'<path d="M {ax + gap - 16} {y + 35} l -8 -5 v 10 z" fill="{color}"/>')
+            ax1, ax2 = x + box_w + 6, x + box_w + gap - 6
+            ay = y + box_h / 2
+            svg.append(f'<line class="flow-arrow" x1="{ax1}" y1="{ay}" x2="{ax2}" y2="{ay}" stroke="{c}" stroke-width="3" stroke-dasharray="8 7"/>')
+            svg.append(f'<path d="M {ax2} {ay} l -9 -5.5 v 11 z" fill="{c}"/>')
+            # Traveling dot
+            svg.append(f'<circle class="flow-dot" cx="{ax1}" cy="{ay}" r="4.5" fill="#fff">'
+                       f'<animateMotion dur="1.6s" repeatCount="indefinite" '
+                       f'path="M 0 0 L {ax2 - ax1} 0"/></circle>')
     
-    # Keyword chips at bottom
-    ky = y + 100
-    kw_x = 100
-    for kw in keywords[:4]:
-        w = max(70, len(kw) * 9 + 20)
-        svg.append(f'<rect x="{kw_x}" y="{ky}" width="{w}" height="28" rx="14" fill="{color}22" stroke="{color}" stroke-width="1.5"/>')
-        svg.append(f'<text x="{kw_x + w/2}" y="{ky + 19}" text-anchor="middle" fill="{color}" font-size="12" font-weight="600">{kw.upper()}</text>')
-        kw_x += w + 12
+    # ── Bottom row: result badge + keyword chips ──
+    ky = y + box_h + 30
+    # Result arrow down from step 3
+    svg.append(f'<line x1="{start_x + 2*box_w + 2*gap + box_w/2}" y1="{y + box_h}" x2="{start_x + 2*box_w + 2*gap + box_w/2}" y2="{ky - 8}" stroke="#eab308" stroke-width="2.5" stroke-dasharray="6 5"/>')
+    svg.append(f'<path d="M {start_x + 2*box_w + 2*gap + box_w/2} {ky - 8} l -5 -8 h 10 z" fill="#eab308"/>')
     
+    # Result pill
+    rx = start_x + 2*box_w + 2*gap + box_w/2 - 75
+    svg.append(f'<rect x="{rx}" y="{ky}" width="150" height="34" rx="17" fill="rgba(234,179,8,0.12)" stroke="#eab308" stroke-width="1.5"/>')
+    svg.append(f'<text x="{rx + 75}" y="{ky + 22}" text-anchor="middle" fill="#eab308" font-size="13" font-weight="800">💼 FIRST CLIENT</text>')
+    
+    # Keyword chips (left side of bottom row)
+    kx = 100
+    for kw in keywords[:3]:
+        w = max(68, len(kw) * 9 + 22)
+        svg.append(f'<rect x="{kx}" y="{ky + 2}" width="{w}" height="30" rx="15" fill="{color}14" stroke="{color}" stroke-width="1.2"/>')
+        svg.append(f'<text x="{kx + w/2}" y="{ky + 22}" text-anchor="middle" fill="{color}" font-size="12" font-weight="700">{kw.upper()}</text>')
+        kx += w + 10
+    
+    svg.append('<style>'
+               '.flow-arrow { stroke-dasharray: 8 7; animation: dash 0.9s linear infinite; }'
+               '@keyframes dash { to { stroke-dashoffset: -15; } }'
+               '</style>')
     svg.append('</svg>')
     return "".join(svg)
 
