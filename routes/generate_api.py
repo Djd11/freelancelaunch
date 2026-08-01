@@ -59,10 +59,26 @@ def generate_curriculum_api(slug):
     sb = get_supabase()
     user_id = g.user["id"]
     
-    # Verify enrollment
+    # Verify enrollment — either pipeline record OR cohort assignment for this topic
     pipeline = sb.table("freelance_pipeline").select("id") \
         .eq("user_id", user_id).eq("topic", slug).limit(1).execute()
-    if not pipeline.data:
+    
+    is_enrolled = bool(pipeline.data)
+    if not is_enrolled:
+        # Check if user's cohort is for this topic
+        try:
+            prof = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
+            cohort_id = prof.data[0].get("cohort_id") if prof.data else None
+            if cohort_id:
+                topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+                if topic_db.data:
+                    cohort = sb.table("cohorts").select("topic_id").eq("id", cohort_id).limit(1).execute()
+                    if cohort.data and cohort.data[0].get("topic_id") == topic_db.data[0]["id"]:
+                        is_enrolled = True
+        except Exception:
+            pass
+    
+    if not is_enrolled:
         return jsonify({"status": "error", "error": "You must enroll first"}), 400
     
     # Get topic info
