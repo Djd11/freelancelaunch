@@ -29,6 +29,7 @@ def create_app():
         from routes.search import search_bp
         from routes.enroll_dynamic import enroll_bp
         from routes.generate_api import gen_bp
+        from routes.preview import preview_bp
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(topics_bp)
@@ -42,6 +43,7 @@ def create_app():
         app.register_blueprint(search_bp)
         app.register_blueprint(enroll_bp)
         app.register_blueprint(gen_bp)
+        app.register_blueprint(preview_bp)
         
         # ─── Inject user into all templates ────────────────────────
         @app.before_request

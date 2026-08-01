@@ -14,6 +14,15 @@
     <div class="bg-white rounded-2xl border border-gray-200 p-6">
         <h1 class="text-2xl font-bold mb-2">Day {{ day_number }}: {% if curriculum_day %}{{ curriculum_day.get('title', 'Lesson') }}{% else %}Lesson {{ day_number }}{% endif %}</h1>
         
+        <!-- VIDEO PREVIEW CTA -->
+        <div class="mt-4 mb-2">
+            <a href="{{ url_for('preview.day_preview', day_number=day_number) }}" target="_blank"
+               class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-xl font-bold text-base">
+                ▶ Play Video Preview (HTML)
+            </a>
+            <p class="text-xs text-gray-400 mt-2">Animated TwoPanel lesson with voiceover — no MP4 render needed.</p>
+        </div>
+        
         {% if video and video.get('youtube_url') %}
         <div class="aspect-video bg-gray-900 rounded-xl overflow-hidden my-6">
             <iframe width="100%" height="100%" src="{{ video['youtube_url'] }}" frameborder="0" allowfullscreen></iframe>
