@@ -315,7 +315,8 @@ def _fallback_lesson(day: int, topic: str) -> dict:
 
 
 def _call_llm(prompt: str) -> str:
-    """Call the configured LLM API — tries Omniroute first, then others."""
+    """Call the configured LLM API — tries OpenRouter first, then others.
+    Returns None fast when no API key is available (fallback content path)."""
     api_url = None
     api_key = None
     model = None
@@ -377,7 +378,8 @@ def _call_llm(prompt: str) -> str:
         except Exception:
             pass
     
-    if not api_url:
+    if not api_url or not api_key:
+        # No LLM available — fall back to structured content immediately (fast)
         logger.warning("No LLM API configured — using fallback content")
         return None
     
@@ -396,7 +398,7 @@ def _call_llm(prompt: str) -> str:
     }
     
     try:
-        timeout_val = current_app.config.get("LLM_TIMEOUT", 90)
+        timeout_val = current_app.config.get("LLM_TIMEOUT", 20)
         resp = httpx.post(api_url, headers=headers, json=payload, timeout=timeout_val)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]

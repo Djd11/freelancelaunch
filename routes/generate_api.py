@@ -143,7 +143,7 @@ def generation_status(slug):
 
 
 def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platforms, user_id):
-    """Generate curriculum day-by-day in background thread."""
+    """Generate curriculum day-by-day, saving each day with live progress."""
     try:
         # Get LLM config
         api_url, api_key, model = _get_llm_config()
@@ -157,23 +157,26 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
             flask.current_app.config["LLM_API_URL"] = api_url
             flask.current_app.config["LLM_API_KEY"] = api_key
             flask.current_app.config["LLM_MODEL"] = model
+            flask.current_app.config["LLM_TIMEOUT"] = 20
             
-            # Generate all days at once (the generator already returns 30 days)
-            curriculum = generate_curriculum(topic_name, total_days, platforms=linked_platforms)
-            
-            if not curriculum:
-                _progress_tracker[slug] = {"status": "error", "error": "Generation returned empty"}
-                return
-            
-            # Save days one by one, updating progress after each
             sb = get_supabase()
             
             # Get the user's cohort
-            user_profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
-            cohort_id = user_profile.data[0]["cohort_id"] if user_profile.data else None
+            cohort_id = None
+            try:
+                user_profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
+                cohort_id = user_profile.data[0]["cohort_id"] if user_profile.data else None
+            except Exception:
+                pass
             
-            for i, day in enumerate(curriculum):
+            # Generate + save day by day (progress updates live)
+            saved = 0
+            for day_num in range(1, total_days + 1):
                 try:
+                    day = _generate_one_day(day_num, topic_name, linked_platforms)
+                    if not day:
+                        continue
+                    
                     # Pack 6-section format into existing columns
                     hook = day.get("hook", "")
                     concept = day.get("concept", day.get("description", ""))
@@ -188,37 +191,41 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
                     
                     day_data = {
                         "curriculum_id": curr_id,
-                        "day_number": i + 1,
-                        "title": day.get("title", f"Day {i + 1}"),
+                        "day_number": day_num,
+                        "title": day.get("title", f"Day {day_num}"),
                         "description": full_description[:2000],
                         "learning_objectives": hook[:500],
                         "practice_task": full_practice[:2000],
                         "apply_task": full_apply[:1000],
-                        "video_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
+                        "video_title": day.get("video_title", f"{topic_name} — Day {day_num}"),
                     }
                     sb.table("curriculum_days").insert(day_data).execute()
+                    saved += 1
                     
-                    # Also create cohort_video entry so day detail links work
+                    # Create cohort_video so day links work
                     if cohort_id:
-                        existing_video = sb.table("cohort_videos").select("id") \
-                            .eq("cohort_id", cohort_id).eq("day_number", i+1).limit(1).execute()
-                        if not existing_video.data:
-                            sb.table("cohort_videos").insert({
-                                "cohort_id": cohort_id,
-                                "day_number": i + 1,
-                                "youtube_title": day.get("video_title", f"{topic_name} — Day {i + 1}"),
-                                "production_status": "ready",
-                            }).execute()
+                        try:
+                            existing_video = sb.table("cohort_videos").select("id") \
+                                .eq("cohort_id", cohort_id).eq("day_number", day_num).limit(1).execute()
+                            if not existing_video.data:
+                                sb.table("cohort_videos").insert({
+                                    "cohort_id": cohort_id,
+                                    "day_number": day_num,
+                                    "youtube_title": day.get("video_title", f"{topic_name} — Day {day_num}"),
+                                    "production_status": "ready",
+                                }).execute()
+                        except Exception:
+                            pass
                 except Exception as e:
-                    logger.warning(f"Failed to save day {i+1}: {e}")
+                    logger.warning(f"Failed to save day {day_num}: {e}")
                 
-                # Update progress after each day
+                # Update progress after each day (generation + save)
                 _progress_tracker[slug] = {
                     "status": "generating",
-                    "current_day": i + 1,
+                    "current_day": day_num,
                     "total_days": total_days,
-                    "percent": round((i + 1) / total_days * 100),
-                    "last_title": day.get("title", f"Day {i + 1}"),
+                    "percent": round(day_num / total_days * 100),
+                    "last_title": day.get("title", f"Day {day_num}") if day else f"Day {day_num}",
                 }
             
             # Mark complete
@@ -230,8 +237,33 @@ def _generate_in_background(slug, curr_id, topic_name, total_days, linked_platfo
                 "last_title": "Complete!",
             }
             
-            logger.info(f"Saved {total_days} curriculum days for {topic_name}")
+            logger.info(f"Saved {saved}/{total_days} curriculum days for {topic_name}")
     
     except Exception as e:
         logger.error(f"Background generation failed: {e}")
         _progress_tracker[slug] = {"status": "error", "error": str(e)}
+
+
+def _generate_one_day(day_num, topic_name, linked_platforms):
+    """Generate a single day's lesson (LLM or fallback)."""
+    from services.curriculum_generator import _generate_daily_lesson, _fallback_lesson, _get_day_focus, _get_learning_objective
+    try:
+        # Determine week/theme
+        weekly_themes = [
+            (1, "Foundation", "Core concepts and first tangible output"),
+            (2, "Building", "Intermediate skills with real examples"),
+            (3, "Application", "Portfolio work and client proposals"),
+            (4, "Mastery", "Income generation and business skills"),
+        ]
+        week_num = min(4, (day_num - 1) // 7 + 1)
+        week_theme, week_focus = weekly_themes[week_num - 1][1], weekly_themes[week_num - 1][2]
+        
+        focus = _get_day_focus(day_num, week_num, week_theme, topic_name)
+        objective = _get_learning_objective(day_num, week_num, topic_name)
+        
+        lesson = _generate_daily_lesson(day_num, week_num, week_theme, focus, objective, topic_name)
+        if lesson:
+            return lesson
+    except Exception:
+        pass
+    return _fallback_lesson(day_num, topic_name)
