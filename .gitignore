@@ -7,3 +7,4 @@ __pycache__/
 node_modules/
 out/
 .video-pipeline/
+static/previews/*.mp3
