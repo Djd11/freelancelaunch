@@ -195,6 +195,20 @@ def generate_curriculum_api(slug):
 
     topic_id = topic_db.data[0]["id"]
 
+    # Guard: if a generation is already running for this slug (in-memory or
+    # DB-backed), don't start a second thread — return the running state.
+    mem = _progress_tracker.get(slug)
+    if mem and mem.get("status") == "generating":
+        return jsonify({"status": "generating", "message": "Generation already in progress",
+                        "current_day": mem.get("current_day", 0), "total_days": 30})
+    try:
+        row = sb.table("curriculum_generation_log").select("status").eq("topic_slug", slug) \
+            .order("updated_at", desc=True).limit(1).execute()
+        if row.data and row.data[0].get("status") == "running":
+            return jsonify({"status": "generating", "message": "Generation already in progress"})
+    except Exception:
+        pass
+
     # Get or create curriculum record
     curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
     if curr_resp.data:
