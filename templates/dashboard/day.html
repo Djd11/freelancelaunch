@@ -40,6 +40,18 @@
                 <div class="text-sm text-indigo-600" id="gen-last-title">Waiting for first lesson...</div>
             </div>
             
+            <!-- Live background log (what the async job is actually doing) -->
+            <div class="mt-4 text-left">
+                <details class="rounded-xl border border-gray-200 bg-gray-50">
+                    <summary class="cursor-pointer px-4 py-3 text-xs font-semibold text-gray-600 hover:text-gray-800 transition">
+                        🐚 Live generation log — what's happening in the background
+                    </summary>
+                    <div id="gen-log" class="px-4 py-3 max-h-56 overflow-y-auto font-mono text-[11px] leading-relaxed text-gray-500 space-y-1">
+                        <div class="text-gray-400">Waiting for log entries...</div>
+                    </div>
+                </details>
+            </div>
+            
             <!-- Error state (hidden by default) -->
             <div id="gen-error" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
                 <p class="text-sm text-red-700 font-medium">⚠️ Generation hit a snag</p>
@@ -104,6 +116,26 @@
                     document.getElementById('gen-current-day').textContent = 'Day ' + data.current_day + ' of ' + data.total_days;
                     document.getElementById('gen-last-title').textContent = data.last_title || 'Writing lesson content...';
                 }
+            })
+            .catch(function() { /* retry silently */ });
+        
+        // Live background log — what's happening in the async job
+        fetch('/api/generation-log/{{ topic_slug }}')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var box = document.getElementById('gen-log');
+                if (!box) return;
+                var entries = (data.log_entries || []).slice(-40);
+                if (entries.length === 0) {
+                    box.innerHTML = '<div class="text-gray-400">' + (data.message || 'Waiting for log entries...') + '</div>';
+                    return;
+                }
+                var html = entries.map(function(e) {
+                    var color = e.level === 'error' ? 'text-red-600' : (e.level === 'warn' ? 'text-amber-600' : 'text-gray-500');
+                    return '<div class="' + color + '">[' + (e.day ? 'Day ' + e.day : '--') + '] ' + (e.msg || '') + '</div>';
+                }).join('');
+                box.innerHTML = html;
+                box.scrollTop = box.scrollHeight;
             })
             .catch(function() { /* retry silently */ });
     }

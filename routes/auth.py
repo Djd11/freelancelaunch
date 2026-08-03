@@ -26,19 +26,19 @@ def signup():
         # Create user in Supabase Auth
         resp = sb.auth.sign_up({"email": email, "password": password})
         user_id = resp.user.id
-        
+
         # Create user profile
-        sb.table("user_profiles").insert({
+        profile = sb.table("user_profiles").insert({
             "user_id": user_id,
             "display_name": name or email.split("@")[0],
             "avatar_url": email,  # store email here for display
         }).execute()
-        
+
         # Track acquisition
         source = request.args.get("source", "direct")
         source_detail = request.args.get("ref", "")
         landing_topic = topic_slug or request.args.get("topic", "")
-        
+
         sb.table("user_acquisition").insert({
             "user_id": user_id,
             "source": source,
@@ -46,13 +46,20 @@ def signup():
             "landing_topic": landing_topic,
             "signed_up_at": "now()",
         }).execute()
-        
+
         flash("Account created! Check your email to confirm.", "success")
         return redirect(url_for("auth.login"))
-    
+
     except Exception as e:
         error_msg = str(e)
-        if "already registered" in error_msg.lower():
+        # Supabase returns the SAME user object (auto-login) for an existing
+        # email in some SDK versions — the duplicate surfaces as a 23505
+        # (duplicate key) on the auth user, or a 23503 FK failure when the
+        # profile insert references an already-existing auth user.
+        low = error_msg.lower()
+        if ("already registered" in low or "23505" in error_msg
+                or "duplicate" in low or "23503" in error_msg
+                or "already exists" in low):
             flash("This email is already registered. Try logging in.", "error")
         else:
             flash(f"Signup failed: {error_msg}", "error")

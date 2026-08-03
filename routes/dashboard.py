@@ -166,6 +166,15 @@ def day_detail(day_number):
     if cohort.get("topics"):
         topic_slug = cohort["topics"].get("slug")
         topic_name = cohort["topics"].get("name")
+    # Fallback when the topics join is blocked/empty (anon key RLS): resolve by topic_id
+    if not topic_slug and cohort.get("topic_id"):
+        try:
+            tdb = sb.table("topics").select("slug,name").eq("id", cohort["topic_id"]).limit(1).execute()
+            if tdb.data:
+                topic_slug = tdb.data[0].get("slug")
+                topic_name = tdb.data[0].get("name")
+        except Exception as e:
+            print(f"Topic fallback lookup error: {e}")
     
     # Get video for this day
     video_resp = sb.table("cohort_videos").select("*") \
@@ -196,6 +205,26 @@ def day_detail(day_number):
             curriculum_day = cd_resp.data[0] if cd_resp.data else None
         except Exception as e:
             print(f"Curriculum day fallback error: {e}")
+
+    # Fallback 2: cohort.curriculum_id may be NULL even though a curriculum
+    # EXISTS for this topic (cohort_videos.curriculum_day_id also null).
+    # Resolve topic → curricula → curriculum_days by day_number so day links
+    # render real content instead of spinning forever on the generation state.
+    if not curriculum_day and topic_slug:
+        try:
+            tdb = sb.table("topics").select("id").eq("slug", topic_slug).limit(1).execute()
+            if tdb.data:
+                cur = sb.table("curricula").select("id") \
+                    .eq("topic_id", tdb.data[0]["id"]).limit(1).execute()
+                if cur.data:
+                    cd_resp = sb.table("curriculum_days").select("*") \
+                        .eq("curriculum_id", cur.data[0]["id"]) \
+                        .eq("day_number", day_number) \
+                        .limit(1) \
+                        .execute()
+                    curriculum_day = cd_resp.data[0] if cd_resp.data else None
+        except Exception as e:
+            print(f"Curriculum day fallback-2 error: {e}")
     
     # Get user progress
     progress = None

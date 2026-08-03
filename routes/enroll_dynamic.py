@@ -30,10 +30,20 @@ def enroll_new_topic():
     from routes.topics import CURATED_TOPICS
     existing_topic = next((t for t in CURATED_TOPICS if topic_slug in t["slug"]), None)
     
-    topic_id = topic_slug
-    
     if existing_topic:
-        topic_id = existing_topic["slug"]
+        # Ensure the topics row exists so we can link by UUID
+        try:
+            sb.table("topics").upsert({
+                "slug": existing_topic["slug"],
+                "name": existing_topic["name"],
+                "description": existing_topic.get("description", ""),
+                "demand_score": existing_topic.get("demand_score", 70),
+                "job_count": existing_topic.get("job_count", 100),
+                "avg_rate": existing_topic.get("avg_rate", 30),
+                "is_curated": True,
+            }, on_conflict="slug").execute()
+        except Exception as e:
+            logger.warning(f"Curated topic upsert failed: {e}")
     else:
         # 2. Create a new topic record in DB
         try:
@@ -48,6 +58,17 @@ def enroll_new_topic():
             }, on_conflict="slug").execute()
         except Exception as e:
             logger.warning(f"Topic insert failed (may already exist): {e}")
+    
+    # Resolve slug → topics.id UUID. cohorts.topic_id and
+    # user_profiles.selected_topic_id are UUID FK columns — slug strings 500.
+    lookup_slug = existing_topic["slug"] if existing_topic else topic_slug
+    topic_id = lookup_slug
+    try:
+        tdb = sb.table("topics").select("id").eq("slug", lookup_slug).limit(1).execute()
+        if tdb.data:
+            topic_id = tdb.data[0]["id"]
+    except Exception as e:
+        logger.warning(f"Topic UUID lookup failed, falling back to slug: {e}")
     
     # 3. Generate curriculum using LLM
     try:

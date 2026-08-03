@@ -246,13 +246,31 @@ def enroll(slug):
     
     sb = get_supabase()
     
+    # Resolve slug → topics.id UUID. cohorts.topic_id and
+    # user_profiles.selected_topic_id are UUID FK columns — inserting the slug
+    # string raises "invalid input syntax for type uuid" (500).
+    topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+    if not topic_db.data:
+        # Topic record missing in DB — create it so enrollment can link by UUID
+        sb.table("topics").upsert({
+            "slug": slug,
+            "name": topic["name"],
+            "description": topic.get("description", ""),
+            "demand_score": topic.get("demand_score", 70),
+            "job_count": topic.get("job_count", 100),
+            "avg_rate": topic.get("avg_rate", 30),
+            "is_curated": True,
+        }, on_conflict="slug").execute()
+        topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+    topic_uuid = topic_db.data[0]["id"]
+    
     # 1. Create or find cohort for this topic
     from datetime import date, timedelta
     today = date.today()
     
     # Find an upcoming or active cohort for this topic
     cohort_resp = sb.table("cohorts").select("*") \
-        .eq("topic_id", slug) \
+        .eq("topic_id", topic_uuid) \
         .in_("status", ["upcoming", "active"]) \
         .order("start_date", desc=True) \
         .limit(1) \
@@ -272,7 +290,7 @@ def enroll(slug):
                 start_date = date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
         
         cohort_resp = sb.table("cohorts").insert({
-            "topic_id": slug,
+            "topic_id": topic_uuid,
             "name": f"{topic['name']} — {start_date.strftime('%B %Y')}",
             "start_date": start_date.isoformat(),
             "end_date": (start_date + timedelta(days=30)).isoformat(),
@@ -281,10 +299,10 @@ def enroll(slug):
         }).execute()
         cohort = cohort_resp.data[0]
     
-    # 2. Update user profile with cohort + topic
+    # 2. Update user profile with cohort + topic (UUID)
     sb.table("user_profiles").update({
         "cohort_id": cohort["id"],
-        "selected_topic_id": slug,
+        "selected_topic_id": topic_uuid,
     }).eq("user_id", g.user["id"]).execute()
     
     # 3. Create freelance pipeline entry

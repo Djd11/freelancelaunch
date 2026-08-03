@@ -219,6 +219,25 @@ CREATE TABLE IF NOT EXISTS video_production_log (
     output_path TEXT
 );
 
+-- ─── CURRICULUM GENERATION LOG (async visibility) ───────────
+CREATE TABLE IF NOT EXISTS curriculum_generation_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    topic_id UUID REFERENCES topics(id) ON DELETE CASCADE,
+    topic_slug TEXT NOT NULL,
+    user_id UUID,
+    status TEXT DEFAULT 'running',   -- 'running' | 'complete' | 'error'
+    current_day INT DEFAULT 0,
+    total_days INT DEFAULT 30,
+    percent INT DEFAULT 0,
+    last_title TEXT,
+    message TEXT,
+    log_entries JSONB DEFAULT '[]',  -- structured per-day log lines
+    started_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_genlog_slug ON curriculum_generation_log(topic_slug);
+
 -- ─── PLATFORM VERIFICATION (user connects freelance accounts) ──
 
 CREATE TABLE IF NOT EXISTS user_platforms (
