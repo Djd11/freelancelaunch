@@ -1,11 +1,11 @@
 Feature: Complete Page-by-Page Interaction Audit
-  As a user navigating the application
-  I want every element on every page to behave correctly
-  So that the experience is consistent and predictable
+#   As a user navigating the application
+#   I want every element on every page to behave correctly
+#   So that the experience is consistent and predictable
 
-  =============================================================================
-  1. LANDING PAGE (/)
-  =============================================================================
+#   =============================================================================
+#   1. LANDING PAGE (/)
+#   =============================================================================
 
   Scenario: LP-1 — Hero section renders with CTAs
     When I visit the landing page
@@ -64,9 +64,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And I should see "Topics" link pointing to /topics
     And I should see "Pricing" link pointing to /payments/pricing
 
-  =============================================================================
-  2. TOPICS EXPLORER (/topics)
-  =============================================================================
+#   =============================================================================
+#   2. TOPICS EXPLORER (/topics)
+#   =============================================================================
 
   Scenario: TE-1 — Page header with search
     When I visit /topics
@@ -126,9 +126,9 @@ Feature: Complete Page-by-Page Interaction Audit
     Then I should see "Demand data updated weekly from Upwork and Fiverr"
     And I should see "Skills with 80+ demand score are verified"
 
-  =============================================================================
-  3. TOPIC DETAIL (/topics/<slug>)
-  =============================================================================
+#   =============================================================================
+#   3. TOPIC DETAIL (/topics/<slug>)
+#   =============================================================================
 
   Scenario: TD-1 — Header with icon, name, trend, description
     When I visit /topics/web-scraping-python
@@ -199,9 +199,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And each day should show character count for practice task
     And I should see admin dashboard link
 
-  =============================================================================
-  4. AUTH PAGES
-  =============================================================================
+#   =============================================================================
+#   4. AUTH PAGES
+#   =============================================================================
 
   Scenario: AU-1 — Login page form
     When I visit /auth/login
@@ -248,9 +248,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And the nav should show "Sign in" again
     And visiting /dashboard/ should redirect to /auth/login
 
-  =============================================================================
-  5. DASHBOARD (/dashboard/)
-  =============================================================================
+#   =============================================================================
+#   5. DASHBOARD (/dashboard/)
+#   =============================================================================
 
   Scenario: DB-1 — Header with cohort info
     Given I am logged in and enrolled
@@ -278,7 +278,7 @@ Feature: Complete Page-by-Page Interaction Audit
     When I view the dashboard
     Then I should see "Submit Deliverable →" button
     And clicking it navigates to /deliverables/submit?day=X
-    Where X is the current day number
+#     Where X is the current day number
 
   Scenario: DB-5 — Pipeline summary card
     When I view the right sidebar
@@ -306,13 +306,13 @@ Feature: Complete Page-by-Page Interaction Audit
     Given I have not linked any platforms
     When I view any page
     Then I should see a purple banner at the top
-    With text "Link your freelance platforms"
+#     With text "Link your freelance platforms"
     And a "Set up now →" button
     And clicking it navigates to /platforms/setup
 
-  =============================================================================
-  6. PIPELINE (/freelance/pipeline)
-  =============================================================================
+#   =============================================================================
+#   6. PIPELINE (/freelance/pipeline)
+#   =============================================================================
 
   Scenario: PL-1 — Pipeline stats and stage
     Given I have an active pipeline
@@ -356,7 +356,7 @@ Feature: Complete Page-by-Page Interaction Audit
     Given I have completed contracts
     When I view the pipeline
     Then I should see "Contract History" table
-    With columns: Client, Project, Platform, Value, Status
+#     With columns: Client, Project, Platform, Value, Status
     And status badges should be color-coded (green=completed, blue=active)
 
   Scenario: PL-7 — Empty pipeline state
@@ -365,9 +365,9 @@ Feature: Complete Page-by-Page Interaction Audit
     Then I should see "No active pipeline" message
     And I should see "Browse Skills" button
 
-  =============================================================================
-  7. PORTFOLIO (/deliverables/portfolio)
-  =============================================================================
+#   =============================================================================
+#   7. PORTFOLIO (/deliverables/portfolio)
+#   =============================================================================
 
   Scenario: PF-1 — Portfolio with items
     Given I have submitted deliverables
@@ -383,9 +383,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And I should see "Submit Your First Piece" button
     And clicking it navigates to /deliverables/submit
 
-  =============================================================================
-  8. SUBMIT DELIVERABLE (/deliverables/submit)
-  =============================================================================
+#   =============================================================================
+#   8. SUBMIT DELIVERABLE (/deliverables/submit)
+#   =============================================================================
 
   Scenario: SD-1 — Form fields
     When I visit /deliverables/submit
@@ -402,9 +402,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And I should be redirected to /dashboard/
     And I should see "Deliverable submitted" flash
 
-  =============================================================================
-  9. PRICING (/payments/pricing)
-  =============================================================================
+#   =============================================================================
+#   9. PRICING (/payments/pricing)
+#   =============================================================================
 
   Scenario: PR-1 — Three tier cards
     When I visit /payments/pricing
@@ -425,9 +425,9 @@ Feature: Complete Page-by-Page Interaction Audit
     When I am logged in and view pricing
     Then paid tiers show "Upgrade" → POST /payments/create-checkout
 
-  =============================================================================
-  10. PROFILE (/auth/profile)
-  =============================================================================
+#   =============================================================================
+#   10. PROFILE (/auth/profile)
+#   =============================================================================
 
   Scenario: PRF-1 — Profile form
     Given I am logged in
@@ -447,9 +447,9 @@ Feature: Complete Page-by-Page Interaction Audit
     When I view profile
     Then I should see 4 stat cards: proposals, contracts, earned, stage
 
-  =============================================================================
-  11. PLATFORM SETUP (/platforms/setup)
-  =============================================================================
+#   =============================================================================
+#   11. PLATFORM SETUP (/platforms/setup)
+#   =============================================================================
 
   Scenario: PS-1 — Three platform cards
     Given I am logged in
@@ -483,9 +483,9 @@ Feature: Complete Page-by-Page Interaction Audit
     Then I should see "Continue to Dashboard →" button
     And clicking it navigates to /dashboard/
 
-  =============================================================================
-  12. ADMIN DASHBOARD (/admin/)
-  =============================================================================
+#   =============================================================================
+#   12. ADMIN DASHBOARD (/admin/)
+#   =============================================================================
 
   Scenario: AD-1 — Three stat cards
     Given I am logged in as admin
@@ -509,9 +509,9 @@ Feature: Complete Page-by-Page Interaction Audit
     Then I should see "View All Users" link → /admin/users
     And I should see "Production Queue" link → /admin/production
 
-  =============================================================================
-  13. ADMIN USERS (/admin/users)
-  =============================================================================
+#   =============================================================================
+#   13. ADMIN USERS (/admin/users)
+#   =============================================================================
 
   Scenario: AU-1 — Users table
     When I visit /admin/users
@@ -519,9 +519,9 @@ Feature: Complete Page-by-Page Interaction Audit
     And I should see a table with: Name, Tier, Topic, Cohort, Created
     And tier badges should be color-coded
 
-  =============================================================================
-  14. ADMIN PRODUCTION (/admin/production)
-  =============================================================================
+#   =============================================================================
+#   14. ADMIN PRODUCTION (/admin/production)
+#   =============================================================================
 
   Scenario: AP-1 — Pending queue
     When I visit /admin/production
@@ -538,12 +538,12 @@ Feature: Complete Page-by-Page Interaction Audit
   Scenario: AP-3 — Nightly schedule info
     When I view the production page
     Then I should see "Nightly Schedule" section
-    With the cron command displayed
+#     With the cron command displayed
     And a manual run command
 
-  =============================================================================
-  15. NAVIGATION BAR (persistent across all pages when logged in)
-  =============================================================================
+#   =============================================================================
+#   15. NAVIGATION BAR (persistent across all pages when logged in)
+#   =============================================================================
 
   Scenario: NV-1 — Nav links (logged in)
     Given I am logged in
@@ -570,9 +570,9 @@ Feature: Complete Page-by-Page Interaction Audit
     Given I have at least one platform linked
     Then the platform badge should be green with "Platforms" and a count
 
-  =============================================================================
-  16. ERROR & EDGE CASES
-  =============================================================================
+#   =============================================================================
+#   16. ERROR & EDGE CASES
+#   =============================================================================
 
   Scenario: ERR-1 — 404 page
     When I visit /nonexistent-page

@@ -1,14 +1,12 @@
 Feature: All Buttons and Links — E2E Behavior Audit
-  As a user
-  I want every button and link on every page to work correctly
-  So that the application behaves as expected
+#   As a user
+#   I want every button and link on every page to work correctly
+#   So that the application behaves as expected
 
   Background:
     Given the application is running at https://freelancelaunch.onrender.com
 
-  ═══════════════════════════════════════════════════════════
-  LANDING PAGE (/)
-  ═══════════════════════════════════════════════════════════
+#   LANDING PAGE (/)
 
   Scenario: Landing page buttons and links
     When I visit the landing page
@@ -26,9 +24,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Browse Skills" CTA button | Link | Click → navigates to /topics |
       | "Pricing" footer link | Link | Click → navigates to /payments/pricing |
 
-  ═══════════════════════════════════════════════════════════
-  TOPICS EXPLORER (/topics)
-  ═══════════════════════════════════════════════════════════
+#   TOPICS EXPLORER (/topics)
 
   Scenario: Topics page buttons and links (logged out)
     When I visit /topics while logged out
@@ -46,9 +42,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Data Analysis with Pandas" card | Link | Click → /topics/data-analysis-pandas |
       | "Basic WordPress Development" card | Link | Click → /topics/wordpress-development |
 
-  ═══════════════════════════════════════════════════════════
-  TOPIC DETAIL (/topics/<slug>)
-  ═══════════════════════════════════════════════════════════
+#   TOPIC DETAIL (/topics/<slug>)
 
   Scenario: Topic detail page buttons and links (logged out)
     When I visit /topics/web-scraping-python while logged out
@@ -81,9 +75,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "You're enrolled" message | Alert | Shows green with "Go to Dashboard →" link |
       | "Go to Dashboard →" link | Link | Click → /dashboard/ |
 
-  ═══════════════════════════════════════════════════════════
-  AUTH PAGES
-  ═══════════════════════════════════════════════════════════
+#   AUTH PAGES
 
   Scenario: Signup page buttons and links
     When I visit /auth/signup
@@ -111,9 +103,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
     Then I should stay on /auth/login
     And see error flash message "Invalid email or password"
 
-  ═══════════════════════════════════════════════════════════
-  DASHBOARD (/dashboard/)
-  ═══════════════════════════════════════════════════════════
+#   DASHBOARD (/dashboard/)
 
   Scenario: Dashboard buttons and links (logged in, enrolled)
     Given I am logged in and enrolled with cohort
@@ -143,9 +133,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | Nav: 🔗 Link Platforms | Link | Amber if unlinked, green if linked → Click → /platforms/setup |
       | Nav: Avatar dropdown | Dropdown | Shows Profile, Link Platforms, Portfolio, Sign out |
 
-  ═══════════════════════════════════════════════════════════
-  PIPELINE (/freelance/pipeline)
-  ═══════════════════════════════════════════════════════════
+#   PIPELINE (/freelance/pipeline)
 
   Scenario: Pipeline page buttons and links
     Given I am logged in with pipeline data
@@ -169,9 +157,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | Completed status badge | Badge | Green for completed |
       | Active status badge | Badge | Blue for active |
 
-  ═══════════════════════════════════════════════════════════
-  PORTFOLIO (/deliverables/portfolio)
-  ═══════════════════════════════════════════════════════════
+#   PORTFOLIO (/deliverables/portfolio)
 
   Scenario: Portfolio page buttons and links
     Given I am logged in
@@ -195,9 +181,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | Content textarea | Textarea | Multi-line, optional |
       | "Submit for Portfolio" button | Submit | Click → POST /deliverables/submit, creates deliverable, redirects to /dashboard/ |
 
-  ═══════════════════════════════════════════════════════════
-  PRICING (/payments/pricing)
-  ═══════════════════════════════════════════════════════════
+#   PRICING (/payments/pricing)
 
   Scenario: Pricing page buttons and links (logged out)
     When I visit /payments/pricing
@@ -216,9 +200,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
     Then "Get Guided Accelerator" button | Submit | Click → POST /payments/create-checkout with tier=guided |
     And "Get Placement Program" button | Submit | Click → POST /payments/create-checkout with tier=placement |
 
-  ═══════════════════════════════════════════════════════════
-  PLATFORM SETUP (/platforms/setup)
-  ═══════════════════════════════════════════════════════════
+#   PLATFORM SETUP (/platforms/setup)
 
   Scenario: Platform setup page buttons and links
     Given I am logged in
@@ -239,9 +221,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Continue to Dashboard →" button | Link | Click → /dashboard/ |
       | Nav: 🔗 Link Platforms badge | Link | Shows green with count if linked |
 
-  ═══════════════════════════════════════════════════════════
-  PROFILE (/auth/profile)
-  ═══════════════════════════════════════════════════════════
+#   PROFILE (/auth/profile)
 
   Scenario: Profile page buttons and links
     Given I am logged in
@@ -257,9 +237,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Link Platforms" nav dropdown item | Link | Click → /platforms/setup |
       | "Sign out" nav dropdown item | Link | Click → /auth/logout, clears session, redirects to /topics |
 
-  ═══════════════════════════════════════════════════════════
-  ADMIN PAGES
-  ═══════════════════════════════════════════════════════════
+#   ADMIN PAGES
 
   Scenario: Admin dashboard buttons and links
     Given I am logged in as admin
@@ -291,9 +269,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | Red badge "failed" | Badge | Shows for failed videos |
       | Code block with cron command | Code | Shows nightly schedule |
 
-  ═══════════════════════════════════════════════════════════
-  NAVIGATION BAR (present on ALL pages when logged in)
-  ═══════════════════════════════════════════════════════════
+#   NAVIGATION BAR (present on ALL pages when logged in)
 
   Scenario: Navigation bar elements (logged in)
     Given I am logged in
@@ -322,9 +298,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Sign in" | Link | Click → /auth/login |
       | "Get Started" button | Link | Click → /auth/signup |
 
-  ═══════════════════════════════════════════════════════════
-  FOOTER (present on ALL pages)
-  ═══════════════════════════════════════════════════════════
+#   FOOTER (present on ALL pages)
 
   Scenario: Footer links
     When I scroll to the footer of any page
@@ -335,9 +309,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Topics" link | Link | Click → /topics |
       | "Pricing" link | Link | Click → /payments/pricing |
 
-  ═══════════════════════════════════════════════════════════
-  SEO META & ERROR PAGES
-  ═══════════════════════════════════════════════════════════
+#   SEO META & ERROR PAGES
 
   Scenario: Protected routes redirect to login
     When I visit /dashboard/ or /freelance/pipeline or /admin/ without logging in
@@ -348,9 +320,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
     When I visit /some-nonexistent-page
     Then I should get a 404 response
 
-  ═══════════════════════════════════════════════════════════
-  BUTTON & LINK COUNT VERIFICATION
-  ═══════════════════════════════════════════════════════════
+#   BUTTON & LINK COUNT VERIFICATION
 
   Scenario: Total interactive elements count per page
     When I visit each page
