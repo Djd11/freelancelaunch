@@ -52,8 +52,9 @@ def _update_genlog(slug, topic_id, **fields):
             fields["log_entries"] = entries
             sb.table("curriculum_generation_log").update(fields).eq("id", rid).execute()
         else:
+            append = fields.pop("append_entry", None)
             fields.setdefault("updated_at", _now_iso())
-            fields["log_entries"] = fields.get("log_entries") or []
+            fields["log_entries"] = [append] if append else (fields.get("log_entries") or [])
             sb.table("curriculum_generation_log").insert({
                 "topic_id": topic_id, "topic_slug": slug, **fields
             }).execute()
