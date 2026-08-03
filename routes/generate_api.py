@@ -203,6 +203,17 @@ def generate_curriculum_api(slug):
         if (getattr(existing, 'count', 0) or 0) >= 30:
             # Backfill cohort_videos if missing, then report complete
             _backfill_cohort_videos(sb, slug, user_id, curr_id)
+            # Record the completion in the async log so status/log endpoints
+            # reflect reality even when generation happened earlier
+            _progress_tracker[slug] = {
+                "status": "complete", "current_day": 30, "total_days": 30,
+                "percent": 100, "last_title": "Complete!", "topic": topic_name,
+            }
+            _update_genlog(slug, topic_id, status="complete", current_day=30,
+                           total_days=30, percent=100, last_title="Complete!",
+                           message=f"Curriculum already exists ({existing.count} days)",
+                           append_entry=_log_entry(30, "info",
+                                                   f"Curriculum already complete ({existing.count} days)"))
             return jsonify({"status": "complete", "message": "Already generated"})
     else:
         curr = sb.table("curricula").insert({"topic_id": topic_id, "total_days": 30}).execute()
