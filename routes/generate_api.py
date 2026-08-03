@@ -35,7 +35,9 @@ def _update_genlog(slug, topic_id, **fields):
     """Upsert the DB-backed generation log row.
 
     If the curriculum_generation_log table doesn't exist yet (PGRST205),
-    degrade gracefully: keep tracking in-memory + Python logs only.
+    fall back to video_production_log (schema-migrated table that accepts
+    inserts) so async logs work immediately; upgrade to the dedicated table
+    once schema.sql DDL is applied.
     """
     try:
         sb = get_supabase()
@@ -59,10 +61,60 @@ def _update_genlog(slug, topic_id, **fields):
         msg = str(e)
         if "PGRST205" in msg or "Could not find the table" in msg:
             logger.warning(
-                "curriculum_generation_log table missing — run schema.sql on the DB "
-                "to enable live async logs. Falling back to in-memory tracking.")
+                "curriculum_generation_log missing — falling back to video_production_log "
+                "for async logs. Run schema.sql to enable the dedicated table.")
+            _update_vplog_fallback(slug, topic_id, **fields)
         else:
             logger.error(f"genlog update failed: {e}")
+
+
+def _update_vplog_fallback(slug, topic_id, **fields):
+    """Fallback async-log sink using the schema-migrated video_production_log table.
+
+    Each update creates one row (step='curriculum:<slug>'); log_entries JSON is
+    stored in output_path so /api/generation-log can reconstruct it.
+    """
+    try:
+        sb = get_supabase()
+        append = fields.pop("append_entry", None)
+        # Read the most recent row's accumulated entries
+        prev = None
+        try:
+            rows = sb.table("video_production_log").select("output_path,status") \
+                .eq("step", f"curriculum:{slug}") \
+                .order("started_at", desc=True).limit(1).execute()
+            if rows.data:
+                prev = rows.data[0]
+        except Exception:
+            pass
+        entries = []
+        if prev and prev.get("output_path"):
+            try:
+                entries = json.loads(prev["output_path"])
+            except Exception:
+                entries = []
+        if append:
+            entries = (entries or []) + [append]
+        status = fields.get("status", "running")
+        # Terminal rows: update the latest row; otherwise insert a new one
+        if prev and status in ("complete", "error"):
+            sb.table("video_production_log").update({
+                "status": status,
+                "completed_at": _now_iso(),
+                "error_message": fields.get("message", "")[:2000],
+                "output_path": json.dumps(entries[-200:]),
+            }).eq("step", f"curriculum:{slug}") \
+              .order("started_at", desc=True).limit(1).execute()
+        else:
+            sb.table("video_production_log").insert({
+                "step": f"curriculum:{slug}",
+                "status": status,
+                "started_at": _now_iso(),
+                "error_message": fields.get("message", "")[:2000],
+                "output_path": json.dumps(entries[-200:]),
+            }).execute()
+    except Exception as e:
+        logger.error(f"vplog fallback write failed: {e}")
 
 
 def _get_llm_config():
@@ -252,7 +304,30 @@ def generation_log(slug):
             return jsonify(row.data[0])
     except Exception as e:
         logger.error(f"genlog fetch failed: {e}")
-    # Fallback: surface whatever the in-memory tracker knows
+    # Fallback: read from video_production_log (schema-migrated sink)
+    try:
+        sb = get_supabase()
+        rows = sb.table("video_production_log").select("status,error_message,output_path,started_at") \
+            .eq("step", f"curriculum:{slug}").order("started_at", desc=True).limit(1).execute()
+        if rows.data:
+            r = rows.data[0]
+            entries = []
+            if r.get("output_path"):
+                try:
+                    entries = json.loads(r["output_path"])
+                except Exception:
+                    entries = []
+            return jsonify({
+                "status": r.get("status", "unknown"),
+                "message": r.get("error_message", ""),
+                "log_entries": entries,
+                "percent": 100 if r.get("status") == "complete" else 0,
+                "current_day": len(entries),
+                "total_days": 30,
+            })
+    except Exception as e:
+        logger.error(f"vplog fetch failed: {e}")
+    # Last resort: surface whatever the in-memory tracker knows
     mem = _progress_tracker.get(slug)
     if mem:
         return jsonify({"status": mem.get("status", "unknown"),
