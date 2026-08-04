@@ -36,6 +36,25 @@ def _get_curriculum_day(sb, user_id, cohort_id, day_number):
             .eq("curriculum_id", cid).eq("day_number", day_number).limit(1).execute()
         if cd.data:
             return cd.data[0], video
+
+    # Fallback 2: cohort.curriculum_id may be NULL — resolve cohort → topic →
+    # curricula → curriculum_days by day_number (same logic as the day page).
+    try:
+        c2 = sb.table("cohorts").select("topic_id").eq("id", cohort_id).limit(1).execute()
+        if c2.data and c2.data[0].get("topic_id"):
+            tdb = sb.table("topics").select("id").eq("id", c2.data[0]["topic_id"]).limit(1).execute()
+            if tdb.data:
+                cur = sb.table("curricula").select("id") \
+                    .eq("topic_id", tdb.data[0]["id"]).limit(1).execute()
+                if cur.data:
+                    cd = sb.table("curriculum_days").select("*") \
+                        .eq("curriculum_id", cur.data[0]["id"]) \
+                        .eq("day_number", day_number).limit(1).execute()
+                    if cd.data:
+                        return cd.data[0], video
+    except Exception as e:
+        logger.warning(f"Preview curriculum fallback-2 error: {e}")
+
     return None, video
 
 
