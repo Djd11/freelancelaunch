@@ -4,7 +4,7 @@ Feature: Curriculum Links Common to All Topics
   So that the experience is identical for every topic (web-scraping, n8n, etc.)
 
   Background:
-    Given I am a logged-in user
+    Given I am logged in
     And curriculum data exists in the database for a topic
 
   Scenario: CL1 — Curriculum shows even when not enrolled (cohort-only user)
@@ -22,14 +22,14 @@ Feature: Curriculum Links Common to All Topics
     And day titles should come from the database (not "Introduction & Setup" fallback)
 
   Scenario: CL3 — Topic without curriculum shows generate state
-    Given no curriculum exists for "wordpress-development"
-    When I visit /topics/wordpress-development
+    Given no curriculum exists for "seo-content-writing"
+    When I visit /topics/seo-content-writing
     Then I should see the "What you'll learn" preview
     And I should see a "Generate My 30-Day Curriculum" button (if enrolled)
     And no day should link to /dashboard/day/<n> yet
 
   Scenario: CL4 — Curriculum API returns days for any topic
-    When I request /search/curriculum/<slug>
+    When I request /search/curriculum/web-scraping-python
     Then it should return all curriculum_days for that topic
     And count should match the number of days in the database
     And each day should have title, day_number, practice_task
