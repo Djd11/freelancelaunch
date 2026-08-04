@@ -3,7 +3,7 @@ Video Preview routes — serve HTML TwoPanel previews with voiceover for curricu
 """
 import logging
 import os
-from flask import Blueprint, render_template_string, g, redirect, url_for, abort, Response
+from flask import Blueprint, render_template_string, g, redirect, url_for, abort, Response, request
 
 logger = logging.getLogger(__name__)
 preview_bp = Blueprint("preview", __name__, url_prefix="/preview")
@@ -41,7 +41,11 @@ def _get_curriculum_day(sb, user_id, cohort_id, day_number):
 
 @preview_bp.route("/day/<int:day_number>")
 def day_preview(day_number):
-    """Serve the HTML TwoPanel video preview for a curriculum day."""
+    """Serve the HTML TwoPanel video preview for a curriculum day.
+
+    ?embed=1 strips the page chrome (topbar) so the preview can be embedded
+    inline in the day page without looking like a page-within-a-page.
+    """
     if not g.user:
         return redirect(url_for("auth.login"))
 
@@ -87,6 +91,7 @@ def day_preview(day_number):
     color = palette[day_number % len(palette)]
 
     keywords = extract_keywords(script)
-    html = build_preview_html(day_number, title, script, audio_url, color, keywords, duration)
+    embed = request.args.get("embed") == "1"
+    html = build_preview_html(day_number, title, script, audio_url, color, keywords, duration, embed=embed)
 
     return Response(html, mimetype="text/html")

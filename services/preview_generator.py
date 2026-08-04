@@ -174,8 +174,13 @@ def build_svg_diagram(day_number: int, title: str, keywords: list, color: str) -
 
 
 def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
-                       color: str = "#6366f1", keywords: list = None, audio_duration: float = 30.0) -> str:
-    """Build the complete TwoPanel HTML preview page."""
+                       color: str = "#6366f1", keywords: list = None, audio_duration: float = 30.0,
+                       embed: bool = False) -> str:
+    """Build the complete TwoPanel HTML preview page.
+
+    embed=True: strips the topbar chrome so the page can sit inside the day-page
+    iframe as a self-contained player (no page-within-a-page look).
+    """
     keywords = list(keywords or []) or extract_keywords(script)
     diagram_svg = build_svg_diagram(day_number, title, keywords, color)
     words = script.split()
@@ -191,7 +196,17 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
         cls = "kw" if clean_w.lower() in kw_lower else ""
         word_spans.append(f'<span id="w{i}" class="word {cls}">{w}</span>')
     words_html = " ".join(word_spans)
+
+    topbar_html = ""
+    if not embed:
+        topbar_html = f"""
+  <div class="topbar">
+    <a class="back" href="/dashboard/day/{day_number}">← Back to Day {day_number}</a>
+    <div class="title">▶ Day {day_number} Video Preview</div>
+    <div class="chip">HTML Preview · No render needed</div>
+  </div>"""
     
+    body_class = "embed" if embed else ""
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -200,6 +215,7 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
 <title>Day {day_number}: {title} — Preview</title>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  html, body {{ height: 100%; }}
   body {{ background: #0B0F19; color: #e2e8f0; font-family: Inter, system-ui, -apple-system, sans-serif;
          display: flex; flex-direction: column; height: 100vh; overflow: hidden; }}
   
@@ -220,8 +236,8 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
   .right {{ flex: 1; display: flex; flex-direction: column; padding: 32px 36px; overflow: hidden; }}
   
   /* ── LEFT: DIAGRAM ── */
-  .diagram-wrap {{ flex: 1; display: flex; align-items: center; justify-content: center; }}
-  .diagram-wrap svg {{ max-width: 100%; }}
+  .diagram-wrap {{ flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }}
+  .diagram-wrap svg {{ max-width: 100%; max-height: 100%; width: auto; height: auto; }}
   
   /* ── LEFT: STAT BARS ── */
   .stat-bars {{ margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); }}
@@ -232,13 +248,20 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
                         transition: width 1.2s ease; }}
   
   /* ── RIGHT: KINETIC TEXT ── */
-  .right h1 {{ font-size: 28px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.02em; margin-bottom: 6px; }}
-  .right .caption {{ font-size: 15px; color: #94a3b8; margin-bottom: 24px; }}
-  .right .divider {{ height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 24px; }}
-  .kinetic {{ font-size: 22px; line-height: 1.7; color: #64748b; }}
+  .right h1 {{ font-size: 24px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.02em; margin-bottom: 4px; }}
+  .right .caption {{ font-size: 14px; color: #94a3b8; margin-bottom: 14px; }}
+  .right .divider {{ height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 14px; }}
+  .kinetic {{ font-size: 19px; line-height: 1.6; color: #64748b; overflow-y: auto; flex: 1; min-height: 0; }}
   .word {{ opacity: 0; transition: opacity 0.25s ease, color 0.25s ease; }}
   .word.on {{ opacity: 1; color: #e2e8f0; }}
   .word.kw.on {{ color: {color}; font-weight: 700; }}
+  
+  /* ── EMBED MODE: tighter spacing so nothing feels cramped in the iframe ── */
+  body.embed .panels {{ gap: 16px; padding: 16px; }}
+  body.embed .left {{ padding: 14px; }}
+  body.embed .right {{ padding: 18px 22px; }}
+  body.embed .controls {{ padding: 10px 16px; }}
+  body.embed .note {{ display: none; }}
   
   /* ── CONTROLS ── */
   .controls {{ padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08);
@@ -261,12 +284,8 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
           font-size: 11px; color: rgba(148,163,184,0.5); white-space: nowrap; }}
 </style>
 </head>
-<body>
-  <div class="topbar">
-    <a class="back" href="/dashboard/day/{day_number}">← Back to Day {day_number}</a>
-    <div class="title">▶ Day {day_number} Video Preview</div>
-    <div class="chip">HTML Preview · No render needed</div>
-  </div>
+<body class="{body_class}">
+  {topbar_html}
   
   <div class="panels">
     <!-- LEFT PANEL: Diagram + Stats -->
