@@ -104,18 +104,24 @@
                 {% endif %}
                 <div class="space-y-2" id="curriculum-list">
                     {% for day in curriculum_days %}
+                    {% if is_enrolled %}
                     <a href="{{ url_for('dashboard.day_detail', day_number=day.day_number) }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group">
-                        <div class="w-9 h-9 rounded-full 
-                            {% if is_enrolled %}bg-emerald-100 text-emerald-600{% else %}bg-indigo-50 text-indigo-600{% endif %} 
-                            flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            {% if is_enrolled %}✓{% else %}D{{ day.day_number }}{% endif %}
-                        </div>
+                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
                         <div class="min-w-0 flex-1">
                             <div class="text-sm font-medium text-[#0f172a] group-hover:text-indigo-600 transition">{{ day.title }}</div>
                             <div class="text-xs text-gray-400">Day {{ day.day_number }}{% if day.practice_task %} · {{ day.practice_task[:60] }}{% if day.practice_task|length > 60 %}…{% endif %}{% endif %}</div>
                         </div>
                         <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
+                    {% else %}
+                    <div class="flex items-center gap-4 p-3 rounded-xl transition opacity-75">
+                        <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold flex-shrink-0">D{{ day.day_number }}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium text-[#0f172a]">{{ day.title }}</div>
+                            <div class="text-xs text-gray-400">Day {{ day.day_number }}{% if day.practice_task %} · {{ day.practice_task[:60] }}{% if day.practice_task|length > 60 %}…{% endif %}{% endif %}</div>
+                        </div>
+                    </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
             {% else %}
@@ -176,21 +182,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Hide the generate button
             var genDiv = document.getElementById('curriculum-generator');
             if (genDiv) genDiv.innerHTML = '';
-            
+
+            // Only link to dashboard days if user is enrolled in THIS topic
+            var isEnrolled = {{ 'true' if is_enrolled else 'false' }};
+
             // Show the curriculum directly from API
             var section = document.getElementById('curriculum-section');
             if (section) {
-                var html = '<h2 class="text-xl font-bold tracking-tight mb-6">Full Curriculum <span class="text-gray-400 font-normal">(' + data.days.length + ' days)</span></h2>';
-                html += '<div class="space-y-2">';
+                var html = '<h2 class=\"text-xl font-bold tracking-tight mb-6\">Full Curriculum <span class=\"text-gray-400 font-normal\">(' + data.days.length + ' days)</span></h2>';
+                html += '<div class=\"space-y-2\">';
                 data.days.forEach(function(day) {
-                    html += '<a href=\"/dashboard/day/' + day.day_number + '\" class=\"flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group\">';
-                    html += '<div class=\"w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0\">✓</div>';
-                    html += '<div class=\"min-w-0 flex-1\">';
-                    html += '<div class=\"text-sm font-medium text-[#0f172a] group-hover:text-indigo-600 transition\">' + escapeHtml(day.title) + '</div>';
-                    html += '<div class=\"text-xs text-gray-400\">Day ' + day.day_number + ' · ' + escapeHtml((day.practice_task || '').substring(0, 60)) + '</div>';
-                    html += '</div>';
-                    html += '<svg class=\"w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5l7 7-7 7\"/></svg>';
-                    html += '</a>';
+                    if (isEnrolled) {
+                        html += '<a href=\"/dashboard/day/' + day.day_number + '\" class=\"flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition group\">';
+                        html += '<div class=\"w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold flex-shrink-0\">✓</div>';
+                        html += '<div class=\"min-w-0 flex-1\">';
+                        html += '<div class=\"text-sm font-medium text-[#0f172a] group-hover:text-indigo-600 transition\">' + escapeHtml(day.title) + '</div>';
+                        html += '<div class=\"text-xs text-gray-400\">Day ' + day.day_number + ' · ' + escapeHtml((day.practice_task || '').substring(0, 60)) + '</div>';
+                        html += '</div>';
+                        html += '<svg class=\"w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5l7 7-7 7\"/></svg>';
+                        html += '</a>';
+                    } else {
+                        html += '<div class=\"flex items-center gap-4 p-3 rounded-xl transition opacity-75\">';
+                        html += '<div class=\"w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold flex-shrink-0\">D' + day.day_number + '</div>';
+                        html += '<div class=\"min-w-0 flex-1\">';
+                        html += '<div class=\"text-sm font-medium text-[#0f172a]\">' + escapeHtml(day.title) + '</div>';
+                        html += '<div class=\"text-xs text-gray-400\">Day ' + day.day_number + ' · ' + escapeHtml((day.practice_task || '').substring(0, 60)) + '</div>';
+                        html += '</div>';
+                        html += '</div>';
+                    }
                 });
                 html += '</div>';
                 section.innerHTML = html;
