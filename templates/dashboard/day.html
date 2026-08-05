@@ -276,6 +276,55 @@
         </div>
         {% endif %}
 
+        <!-- REGENERATE FALLBACK CONTENT -->
+        {% if is_fallback_content %}
+        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <div class="flex items-center gap-3">
+                <span class="text-amber-600 text-lg">⚠️</span>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-amber-800">This lesson content appears to be a placeholder</p>
+                    <p class="text-xs text-amber-600 mt-0.5">Click below to regenerate with AI-powered, topic-specific content.</p>
+                </div>
+                <button onclick="regenerateDay()" id="regenBtn"
+                        class="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition">
+                    🔄 Regenerate Lesson
+                </button>
+            </div>
+            <div id="regenStatus" class="hidden mt-3 text-sm text-amber-700"></div>
+        </div>
+        <script>
+        function regenerateDay() {
+            var btn = document.getElementById('regenBtn');
+            var status = document.getElementById('regenStatus');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+            status.classList.remove('hidden');
+            status.textContent = 'AI is creating a new lesson... this takes about 30 seconds.';
+
+            fetch('/api/regenerate-day/{{ topic_slug }}/{{ day_number }}', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.status === 'ok') {
+                        status.textContent = '✅ ' + data.message + ' Reloading...';
+                        status.className = 'mt-3 text-sm text-emerald-700';
+                        setTimeout(function() { window.location.reload(); }, 1500);
+                    } else {
+                        status.textContent = '❌ ' + (data.error || 'Failed to regenerate');
+                        status.className = 'mt-3 text-sm text-red-700';
+                        btn.disabled = false;
+                        btn.textContent = '🔄 Regenerate Lesson';
+                    }
+                })
+                .catch(function() {
+                    status.textContent = '❌ Network error — please try again';
+                    status.className = 'mt-3 text-sm text-red-700';
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Regenerate Lesson';
+                });
+        }
+        </script>
+        {% endif %}
+
         <!-- PROGRESS CHECKBOXES -->
         {% if video %}
         <div class="mt-8 border-t border-gray-100 pt-6 space-y-3">

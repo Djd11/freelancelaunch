@@ -153,6 +153,87 @@ def _get_llm_config():
     return api_url, api_key, model
 
 
+@gen_bp.route("/regenerate-day/<slug>/<int:day_number>", methods=["POST"])
+def regenerate_single_day(slug, day_number):
+    """Regenerate a single day's lesson if it has fallback/generic content.
+    Only works when the LLM is available — returns error otherwise."""
+    if not g.user:
+        return jsonify({"status": "error", "error": "Not logged in"}), 401
+
+    sb = get_supabase()
+    user_id = g.user["id"]
+
+    # Verify user has access to this topic
+    profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
+    cohort_id = profile.data[0]["cohort_id"] if profile.data else None
+    if not cohort_id:
+        return jsonify({"status": "error", "error": "Not enrolled"}), 403
+
+    # Get the topic's curriculum
+    topic_resp = sb.table("topics").select("id,name").eq("slug", slug).limit(1).execute()
+    if not topic_resp.data:
+        return jsonify({"status": "error", "error": "Topic not found"}), 404
+    topic = topic_resp.data[0]
+
+    cur_resp = sb.table("curricula").select("id").eq("topic_id", topic["id"]).limit(1).execute()
+    if not cur_resp.data:
+        return jsonify({"status": "error", "error": "No curriculum"}), 404
+    curr_id = cur_resp.data[0]["id"]
+
+    # Check if current content is fallback
+    day_resp = sb.table("curriculum_days").select("*") \
+        .eq("curriculum_id", curr_id).eq("day_number", day_number).limit(1).execute()
+    if not day_resp.data:
+        return jsonify({"status": "error", "error": "Day not found"}), 404
+
+    current = day_resp.data[0]
+    from services.curriculum_generator import is_fallback_content
+    if not is_fallback_content(current):
+        return jsonify({"status": "ok", "message": "Content is already good quality"})
+
+    # Check LLM availability
+    api_url, api_key, model = _get_llm_config()
+    if not api_url or not api_key:
+        return jsonify({"status": "error", "error": "LLM not available — cannot regenerate"}), 503
+
+    # Regenerate this single day
+    try:
+        from app import create_app
+        app = create_app()
+        with app.app_context():
+            import flask
+            flask.current_app.config["LLM_API_URL"] = api_url
+            flask.current_app.config["LLM_API_KEY"] = api_key
+            flask.current_app.config["LLM_MODEL"] = model
+            flask.current_app.config["LLM_TIMEOUT"] = 20
+
+            day = _generate_one_day(day_number, topic["name"], [])
+            if not day or is_fallback_content(day):
+                return jsonify({"status": "error", "error": "Could not generate quality content — LLM may be overloaded"}), 500
+
+            # Update the existing row
+            hook = day.get("hook", "")
+            concept = day.get("concept", day.get("description", ""))
+            practice = day.get("practice", day.get("practice_task", ""))
+            retrieval = day.get("retrieval", "")
+            spaced = day.get("spaced_review", "")
+            preview_text = day.get("preview", "")
+
+            sb.table("curriculum_days").update({
+                "title": day.get("title", current["title"]),
+                "description": f"{hook}\n\n{concept}"[:2000] if hook else concept[:2000],
+                "learning_objectives": hook[:500],
+                "practice_task": f"{practice}\n\n## Retrieval\n{retrieval}"[:2000] if retrieval else practice[:2000],
+                "apply_task": f"{spaced}\n\n{preview_text}"[:1000] if spaced else preview_text[:1000],
+                "video_title": day.get("video_title", current.get("video_title", "")),
+            }).eq("id", current["id"]).execute()
+
+            return jsonify({"status": "ok", "message": f"Day {day_number} regenerated successfully"})
+    except Exception as e:
+        logger.error(f"Regenerate day {day_number} failed: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 @gen_bp.route("/generate-curriculum/<slug>", methods=["POST"])
 def generate_curriculum_api(slug):
     """Generate curriculum day-by-day. Frontend polls /status for progress."""
@@ -416,6 +497,35 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
                     full_practice = f"{practice}\n\n## Retrieval\n{retrieval}" if retrieval else practice
                     full_apply = f"{spaced}\n\n{preview_text}" if spaced else preview_text
 
+                    # ── Quality Gate: reject fallback/generic content ──
+                    from services.curriculum_generator import is_fallback_content
+                    if is_fallback_content(day):
+                        _update_genlog(slug, topic_id,
+                                       append_entry=_log_entry(day_num, "warn",
+                                                               f"Day {day_num} REJECTED — fallback content detected, will retry"))
+                        # Retry once with LLM (fallback is only when LLM failed)
+                        day = _generate_one_day(day_num, topic_name, linked_platforms)
+                        if day and not is_fallback_content(day):
+                            # Re-pack the retried content
+                            hook = day.get("hook", "")
+                            concept = day.get("concept", day.get("description", ""))
+                            practice = day.get("practice", day.get("practice_task", ""))
+                            retrieval = day.get("retrieval", "")
+                            spaced = day.get("spaced_review", "")
+                            preview_text = day.get("preview", "")
+                            full_description = f"{hook}\n\n{concept}" if hook else concept
+                            full_practice = f"{practice}\n\n## Retrieval\n{retrieval}" if retrieval else practice
+                            full_apply = f"{spaced}\n\n{preview_text}" if spaced else preview_text
+                            _update_genlog(slug, topic_id,
+                                           append_entry=_log_entry(day_num, "info",
+                                                                   f"Day {day_num} retry succeeded"))
+                        else:
+                            # Still fallback after retry — skip this day entirely
+                            _update_genlog(slug, topic_id,
+                                           append_entry=_log_entry(day_num, "error",
+                                                                   f"Day {day_num} SKIPPED — could not generate quality content"))
+                            continue
+
                     day_data = {
                         "curriculum_id": curr_id,
                         "day_number": day_num,
@@ -472,6 +582,18 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
                                last_title=prog["last_title"],
                                message=f"Generating day {day_num}/{total_days}")
 
+            # ── Final Quality Gate: validate the saved curriculum ──
+            from services.curriculum_generator import validate_curriculum
+            all_saved = sb.table("curriculum_days") \
+                .select("title,description,practice_task,apply_task") \
+                .eq("curriculum_id", curr_id).order("day_number").execute().data or []
+            qv = validate_curriculum(all_saved)
+            if not qv["valid"]:
+                logger.warning(f"[gen:{slug}] Quality gate FAILED: {qv['errors']}")
+                _update_genlog(slug, topic_id,
+                               append_entry=_log_entry(0, "error",
+                                                       f"Quality gate: {'; '.join(qv['errors'])}"))
+
             # Mark complete
             final = {
                 "status": "complete",
@@ -480,13 +602,16 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
                 "percent": 100,
                 "last_title": "Complete!",
                 "topic": topic_name,
+                "quality_valid": qv["valid"],
+                "quality_errors": qv["errors"],
             }
             _progress_tracker[slug] = final
             _update_genlog(slug, topic_id, status="complete", current_day=total_days,
                            total_days=total_days, percent=100, last_title="Complete!",
-                           message=f"Saved {saved}/{total_days} days",
+                           message=f"Saved {saved}/{total_days} days" + (f" (quality issues: {'; '.join(qv['errors'])})" if qv["errors"] else ""),
                            append_entry=_log_entry(total_days, "info",
-                                                   f"Generation complete: {saved}/{total_days} days saved"))
+                                                   f"Generation complete: {saved}/{total_days} days saved" +
+                                                   (f" ⚠ Quality: {'; '.join(qv['errors'])}" if qv["errors"] else " ✓ Quality passed")))
 
             logger.info(f"[gen:{slug}] saved {saved}/{total_days} days for {topic_name}")
 

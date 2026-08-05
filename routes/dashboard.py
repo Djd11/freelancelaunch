@@ -246,6 +246,12 @@ def day_detail(day_number):
         flash("No curriculum available for this topic yet", "error")
         return redirect(url_for("dashboard.home"))
 
+    # Check if content is fallback-quality (for "Regenerate" button)
+    is_fallback = False
+    if curriculum_day:
+        from services.curriculum_generator import is_fallback_content
+        is_fallback = is_fallback_content(curriculum_day)
+
     return render_template("dashboard/day.html",
         day_number=day_number,
         video=video,
@@ -255,5 +261,6 @@ def day_detail(day_number):
         topic_slug=topic_slug,
         topic_name=topic_name,
         cohort=cohort,
-        is_topic_scoped=is_topic_scoped
+        is_topic_scoped=is_topic_scoped,
+        is_fallback_content=is_fallback
     )

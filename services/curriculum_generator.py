@@ -123,6 +123,101 @@ LESSON TO REVIEW:
 {lesson_text}"""
 
 
+# ─── QUALITY GATE ────────────────────────────────────────────
+
+# Patterns that indicate low-quality / fallback content
+_GENERIC_TITLE_PATTERNS = [
+    re.compile(r"Part\s*\d+", re.IGNORECASE),
+    re.compile(r"^Day\s+\d+:\s+\w.+\s+—\s+Part\s+\d+$", re.IGNORECASE),
+    re.compile(r"^Core Concepts$", re.IGNORECASE),
+]
+_GENERIC_DESCRIPTION_PATTERNS = [
+    re.compile(r"^Learn key \w+ concepts with practical applications for freelance work\.?$", re.IGNORECASE),
+    re.compile(r"^Today we explore a key \w+ concept\.", re.IGNORECASE),
+]
+
+
+def validate_curriculum(curriculum: list[dict]) -> dict:
+    """Validate a generated curriculum before saving to DB.
+
+    Returns:
+        {
+            "valid": bool,
+            "errors": [str],       # human-readable reasons
+            "warnings": [str],     # non-blocking concerns
+            "stats": { ... }       # uniqueness counts
+        }
+    """
+    errors = []
+    warnings = []
+    if not curriculum:
+        return {"valid": False, "errors": ["Empty curriculum"], "warnings": [], "stats": {}}
+
+    titles = [d.get("title", "") for d in curriculum]
+    descriptions = [d.get("description", "") for d in curriculum]
+    practice_tasks = [d.get("practice_task", d.get("practice", "")) for d in curriculum]
+
+    # 1. Check for duplicate titles
+    seen_titles = set()
+    dup_titles = []
+    for t in titles:
+        if t in seen_titles:
+            dup_titles.append(t)
+        seen_titles.add(t)
+    if dup_titles:
+        errors.append(f"{len(dup_titles)} duplicate titles found")
+
+    # 2. Check for generic "Part X" titles
+    generic_count = sum(1 for t in titles if any(p.search(t) for p in _GENERIC_TITLE_PATTERNS))
+    if generic_count > len(titles) * 0.3:
+        errors.append(f"{generic_count}/{len(titles)} titles match generic 'Part N' pattern")
+
+    # 3. Check for duplicate descriptions — any duplication is a quality failure
+    unique_descs = len(set(d.strip() for d in descriptions if d.strip()))
+    non_empty = len([d for d in descriptions if d.strip()])
+    if unique_descs < non_empty:
+        errors.append(f"Only {unique_descs}/{non_empty} unique descriptions")
+
+    # 4. Check for generic/fallback descriptions
+    fallback_desc_count = sum(1 for d in descriptions if any(p.search(d) for p in _GENERIC_DESCRIPTION_PATTERNS))
+    if fallback_desc_count > len(descriptions) * 0.5:
+        errors.append(f"{fallback_desc_count}/{len(descriptions)} descriptions match generic fallback pattern")
+
+    # 5. Check for duplicate practice tasks
+    unique_practice = len(set(p.strip() for p in practice_tasks if p.strip()))
+    if unique_practice < 3 and len(practice_tasks) > 5:
+        errors.append(f"Only {unique_practice} unique practice tasks across {len(practice_tasks)} days")
+
+    # 6. Warnings for borderline cases
+    if unique_descs < len(descriptions):
+        warnings.append(f"{len(descriptions) - unique_descs} descriptions are non-unique")
+
+    stats = {
+        "total_days": len(curriculum),
+        "unique_titles": len(seen_titles),
+        "unique_descriptions": unique_descs,
+        "unique_practice_tasks": unique_practice,
+    }
+
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings,
+        "stats": stats,
+    }
+
+
+def is_fallback_content(lesson: dict) -> bool:
+    """Check if a single lesson looks like fallback/generic content."""
+    title = lesson.get("title", "")
+    if any(p.search(title) for p in _GENERIC_TITLE_PATTERNS):
+        return True
+    desc = lesson.get("description", "")
+    if any(p.search(desc) for p in _GENERIC_DESCRIPTION_PATTERNS):
+        return True
+    return False
+
+
 # ─── CORE GENERATOR ─────────────────────────────────────────
 
 def generate_curriculum(topic_name: str, total_days: int = 30, platforms: list = None) -> list[dict]:
