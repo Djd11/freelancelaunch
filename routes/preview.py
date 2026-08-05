@@ -155,6 +155,9 @@ def day_preview(day_number):
 
     keywords = extract_keywords(script)
     embed = request.args.get("embed") == "1"
-    html = build_preview_html(day_number, title, script, audio_url, color, keywords, duration, embed=embed)
+    html = build_preview_html(day_number, title, script, audio_url, color, keywords, duration, embed=embed,
+                               description=curriculum_day.get("description", ""),
+                               practice_task=curriculum_day.get("practice_task", ""),
+                               apply_task=curriculum_day.get("apply_task", ""))
 
     return Response(html, mimetype="text/html")
