@@ -2711,6 +2711,31 @@ def ts_preview_back_href(context, expected):
     assert href == expected, f"back link href={href} != expected {expected}"
 
 
+@then(r"the preview should not show \"([^\"]+)\"")
+def ts_preview_not_shows(context, text):
+    page = _page(context)
+    body = page.inner_text("body")
+    assert text not in body, f"'{text}' found on preview page"
+
+
+@then(r"the preview iframe should have a well-formed URL with topic=([a-z0-9-]+)")
+def ts_iframe_wellformed(context, slug):
+    page = _page(context)
+    src = page.locator("#previewFrame").get_attribute("src")
+    assert src, "no preview iframe found"
+    assert f"?topic={slug}" in src, f"iframe src missing ?topic={slug}: {src}"
+    assert "&embed=1" in src, f"iframe src missing &embed=1: {src}"
+
+
+@then(r"the preview iframe URL should not contain a double question mark")
+def ts_iframe_no_double_q(context):
+    page = _page(context)
+    src = page.locator("#previewFrame").get_attribute("src")
+    assert src, "no preview iframe found"
+    assert "??" not in src, f"iframe src has double '?': {src}"
+    assert src.count("?") == 1, f"iframe src has {src.count('?')} question marks: {src}"
+
+
 @when(r"I click the preview back link")
 def ts_click_preview_back(context):
     page = _page(context)

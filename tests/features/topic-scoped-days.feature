@@ -60,3 +60,13 @@ Feature: Topic-Scoped Days and Previews
     When I open the cohort preview for day 99
     Then the preview should show "Preview not ready yet"
     And the preview back link should point to /dashboard/day/99
+
+  Scenario: TS-8 — Day page preview iframe URL is well-formed (single "?")
+    When I visit /dashboard/day/1?topic=n8n-automation
+    Then the preview iframe should have a well-formed URL with topic=n8n-automation
+    And the preview iframe URL should not contain a double question mark
+
+  Scenario: TS-9 — Topic-scoped preview URL renders the player, not "not ready"
+    When I open the preview for day 1 of web-scraping-python
+    Then the preview should show "Web Scraping"
+    And the preview should not show "Preview not ready yet"

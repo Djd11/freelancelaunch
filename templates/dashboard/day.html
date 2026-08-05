@@ -191,7 +191,7 @@
             <!-- Responsive height: fills the viewport height (min 460px, max 70vh)
                  so the TwoPanel preview isn't cramped inside a tiny fixed box. -->
             <div id="previewFrameWrap" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-900 transition-all duration-300" style="height: min(70vh, 640px); min-height: 460px">
-                <iframe id="previewFrame" src="{{ url_for('preview.day_preview', day_number=day_number, topic=topic_slug) }}?embed=1"
+                <iframe id="previewFrame" src="{{ url_for('preview.day_preview', day_number=day_number, topic=topic_slug, embed=1) }}"
                         class="w-full h-full border-0" allow="autoplay; fullscreen" loading="lazy"></iframe>
             </div>
         </div>

@@ -96,6 +96,10 @@ def day_preview(day_number):
     sb = get_supabase()
     user_id = g.user["id"]
     topic_param = (request.args.get("topic") or "").strip() or None
+    # Defensive: a malformed URL like ?topic=x?embed=1 would poison the slug.
+    # Strip anything after '?' so the topic lookup still resolves.
+    if topic_param and "?" in topic_param:
+        topic_param = topic_param.split("?", 1)[0].strip() or None
 
     profile_resp = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
     cohort_id = profile_resp.data[0]["cohort_id"] if profile_resp.data else None
