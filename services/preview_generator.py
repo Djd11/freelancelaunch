@@ -161,6 +161,25 @@ def build_svg_diagram(day_number: int, title: str, keywords: list, color: str,
                '<stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#22c55e99"/></linearGradient>'
                '<linearGradient id="boxg3" x1="0" y1="0" x2="0" y2="1">'
                '<stop offset="0%" stop-color="#eab308"/><stop offset="100%" stop-color="#eab30899"/></linearGradient>'
+               # Glow filter — colored per step
+               f'<filter id="glow1" x="-20%" y="-20%" width="140%" height="140%">'
+               f'<feGaussianBlur stdDeviation="5" result="blur"/>'
+               f'<feFlood flood-color="{color}" flood-opacity="0.4" result="color"/>'
+               f'<feComposite in="color" in2="blur" operator="in" result="glow"/>'
+               f'<feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>'
+               f'</filter>'
+               '<filter id="glow2" x="-20%" y="-20%" width="140%" height="140%">'
+               '<feGaussianBlur stdDeviation="5" result="blur"/>'
+               '<feFlood flood-color="#22c55e" flood-opacity="0.4" result="color"/>'
+               '<feComposite in="color" in2="blur" operator="in" result="glow"/>'
+               '<feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>'
+               '</filter>'
+               '<filter id="glow3" x="-20%" y="-20%" width="140%" height="140%">'
+               '<feGaussianBlur stdDeviation="5" result="blur"/>'
+               '<feFlood flood-color="#eab308" flood-opacity="0.4" result="color"/>'
+               '<feComposite in="color" in2="blur" operator="in" result="glow"/>'
+               '<feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>'
+               '</filter>'
                '</defs>')
 
     # ── Diagram title ──
@@ -174,8 +193,11 @@ def build_svg_diagram(day_number: int, title: str, keywords: list, color: str,
         x = start_x + i * (box_w + gap)
         grad = f"boxg{i + 1}"
         svg.append(f'<g class="{css_class}">')
+        # Main box
         svg.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="14" fill="url(#{grad})"/>')
         svg.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>')
+        # Pulse ring (animated when active)
+        svg.append(f'<circle class="pulse-ring" cx="{x + 24}" cy="{y + 22}" r="12" fill="none" stroke="{c}" stroke-width="2"/>')
         # Number badge
         svg.append(f'<circle cx="{x + 24}" cy="{y + 22}" r="12" fill="rgba(255,255,255,0.18)"/>')
         svg.append(f'<text x="{x + 24}" y="{y + 27}" text-anchor="middle" fill="#fff" font-size="11" font-weight="800">{num}</text>')
@@ -185,6 +207,14 @@ def build_svg_diagram(day_number: int, title: str, keywords: list, color: str,
         svg.append(f'<text x="{x + box_w / 2}" y="{y + 62}" text-anchor="middle" fill="rgba(255,255,255,0.75)" '
                    f'font-size="11" font-weight="600">'
                    f'<tspan>{sub_label}</tspan></text>')
+        # Progress bar at bottom of box (grows during this step's 1/3)
+        bar_y = y + box_h - 6
+        svg.append(f'<rect x="{x + 8}" y="{bar_y}" width="{box_w - 16}" height="3" rx="1.5" fill="rgba(255,255,255,0.1)"/>')
+        svg.append(f'<rect class="step-progress" id="spbar{i}" x="{x + 8}" y="{bar_y}" width="0" height="3" rx="1.5" fill="{c}"/>')
+        # Floating particles (3 per box, circles that float up when active)
+        for pi in range(3):
+            px = x + 30 + pi * (box_w - 60) / 2
+            svg.append(f'<circle class="particle" cx="{px}" cy="{y + box_h - 10}" r="2" fill="{c}" opacity="0.6"/>')
         svg.append("</g>")
 
         # Arrow between blocks
@@ -232,14 +262,39 @@ def build_svg_diagram(day_number: int, title: str, keywords: list, color: str,
         svg.append(f'<text x="{sx}" y="{pt_y + 22}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10" font-weight="600">{slbl}</text>')
 
     svg.append('<style>'
+               # ── Flow arrows: always animate dashes ──
                '.flow-arrow { stroke-dasharray: 8 7; animation: dash 0.9s linear infinite; }'
                '@keyframes dash { to { stroke-dashoffset: -15; } }'
-               '.step-box { opacity: 0.55; transition: opacity 0.5s ease; }'
+               # ── Step boxes: dim by default, vivid when active ──
+               '.step-box { opacity: 0.4; transition: opacity 0.5s ease, filter 0.5s ease; }'
+               '.step-box rect:first-child { transition: fill-opacity 0.6s ease; }'
                '.step-box.active { opacity: 1; }'
-               '@keyframes pulseStep { 0%,100% { opacity: 1; } 50% { opacity: 0.82; } }'
-               '.step-box.active { animation: pulseStep 1.8s ease-in-out infinite; }'
-               '.step-dot { opacity: 0.3; transition: opacity 0.4s ease; }'
+               '.step-0.active { filter: url(#glow1); }'
+               '.step-1.active { filter: url(#glow2); }'
+               '.step-2.active { filter: url(#glow3); }'
+               '.step-box.active rect:first-child { fill-opacity: 1; }'
+               # ── Progress bar inside each step box (grows during its 1/3) ──
+               '.step-progress { transition: width 0.3s linear; }'
+               # ── Pulse ring on active step badge ──
+               '@keyframes ringPulse { 0% { r: 12; opacity: 0.6; } 100% { r: 22; opacity: 0; } }'
+               '.step-box.active .pulse-ring { animation: ringPulse 1.5s ease-out infinite; }'
+               '.step-box .pulse-ring { opacity: 0; }'
+               # ── Flow dots: glow when active ──
+               '.flow-dot { opacity: 0.3; transition: opacity 0.5s ease, r 0.5s ease; }'
+               '.flow-dot.active { opacity: 1; }'
+               # ── Timeline dots: grow + glow ──
+               '.step-dot { opacity: 0.25; transition: opacity 0.4s ease, r 0.4s ease; }'
                '.step-dot.active { opacity: 1; }'
+               '@keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }'
+               '.step-dot.active { animation: dotPulse 1.2s ease-in-out infinite; }'
+               # ── Floating particles (only visible in active box) ──
+               '.particle { opacity: 0; transition: opacity 0.8s ease; }'
+               '.step-box.active .particle { opacity: 1; }'
+               '@keyframes floatUp { 0% { transform: translateY(0); opacity: 0.8; }'
+               '100% { transform: translateY(-30px); opacity: 0; } }'
+               '.step-box.active .particle { animation: floatUp 2s ease-out infinite; }'
+               '.step-box.active .particle:nth-child(2) { animation-delay: 0.5s; }'
+               '.step-box.active .particle:nth-child(3) { animation-delay: 1s; }'
                '</style>')
     svg.append("</svg>")
     return "".join(svg)
@@ -416,15 +471,30 @@ function syncWords() {{
     if (el) el.classList.add('on');
   }}
   currentWord = Math.max(currentWord, idx);
-  // Scroll the active word into view
   const activeEl = document.getElementById('w' + currentWord);
   if (activeEl) activeEl.scrollIntoView({{ block: 'center', behavior: 'smooth' }});
 
-  // ── Step animation: highlight each step-box during its 1/3 of the audio ──
+  // ── Step boxes: active during their 1/3, dim after ──
   document.querySelectorAll('.step-box').forEach((box, i) => {{
     const start = i / 3, end = (i + 1) / 3;
     box.classList.toggle('active', progress >= start && progress <= end);
   }});
+
+  // ── Progress bars inside step boxes ──
+  for (let i = 0; i < 3; i++) {{
+    const start = i / 3, end = (i + 1) / 3;
+    const bar = document.getElementById('spbar' + i);
+    if (bar) {{
+      if (progress < start) {{
+        bar.setAttribute('width', '0');
+      }} else if (progress >= end) {{
+        bar.setAttribute('width', '154');
+      }} else {{
+        const pct = (progress - start) / (end - start);
+        bar.setAttribute('width', String(pct * 154));
+      }}
+    }}
+  }}
 
   // ── Section progress dots + SVG timeline dots ──
   for (let i = 0; i < 3; i++) {{
@@ -447,6 +517,8 @@ audio.addEventListener('ended', () => {{
     if (sp) sp.classList.remove('active');
     const sd = document.querySelector('.step-dot-' + i);
     if (sd) sd.classList.remove('active');
+    const bar = document.getElementById('spbar' + i);
+    if (bar) bar.setAttribute('width', '0');
   }}
 }});
 

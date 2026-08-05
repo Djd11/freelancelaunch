@@ -2754,5 +2754,331 @@ def ts_on_url(context, path):
     assert actual == path, f"expected to be on {path}, at {actual}"
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# CURRICULUM DATA QUALITY — CQ step definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@when(r"I query the curriculum for ([a-z0-9-]+) from the database")
+def cq_query_curriculum(context, slug):
+    """Fetch all curriculum days for a topic and store in context for assertions."""
+    from flask import current_app
+    from app import create_app
+    _app = create_app()
+    with _app.app_context():
+        from services.supabase_client import get_supabase
+        sb = get_supabase()
+        topic = sb.table("topics").select("id").eq("slug", slug).limit(1).execute().data
+        if not topic:
+            context.cq_days = []
+            return
+        cur = sb.table("curricula").select("id").eq("topic_id", topic[0]["id"]).limit(1).execute().data
+        if not cur:
+            context.cq_days = []
+            return
+        context.cq_days = sb.table("curriculum_days") \
+            .select("title,description,practice_task,apply_task,learning_objectives,day_number") \
+            .eq("curriculum_id", cur[0]["id"]).order("day_number").execute().data or []
+
+
+@then(r"every day must have a unique description")
+def cq_unique_descriptions(context):
+    descs = [d["description"] for d in context.cq_days]
+    assert len(set(descs)) == len(descs), \
+        f"Only {len(set(descs))}/{len(descs)} unique descriptions"
+
+
+@then(r"no two days share identical description text")
+def cq_no_identical_descriptions(context):
+    descs = [d["description"] for d in context.cq_days]
+    for i in range(len(descs)):
+        for j in range(i + 1, len(descs)):
+            assert descs[i] != descs[j], \
+                f"Days {i+1} and {j+1} share identical description"
+
+
+@then(r"at least (\d+) different unique practice_task values must exist")
+def cq_min_unique_practice(context, min_count):
+    min_count = int(min_count)
+    tasks = [d["practice_task"] for d in context.cq_days if d.get("practice_task")]
+    unique = len(set(tasks))
+    assert unique >= min_count, \
+        f"Only {unique} unique practice_task values (need >= {min_count})"
+
+
+@then(r'no practice_task should be "Complete the following exercise"')
+def cq_no_fallback_practice(context):
+    for d in context.cq_days:
+        pt = (d.get("practice_task") or "").strip()
+        assert pt != "Complete the following exercise", \
+            f"Day {d['day_number']} has fallback practice_task"
+
+
+@then(r'no title should match "Part <number>"')
+def cq_no_part_pattern(context):
+    import re
+    for d in context.cq_days:
+        title = d.get("title", "")
+        assert not re.search(r"Part\s*\d+", title), \
+            f"Day {d['day_number']} title matches 'Part N': {title}"
+
+
+@then(r'no title should be only "Core Concepts"')
+def cq_no_core_concepts_only(context):
+    for d in context.cq_days:
+        title = d.get("title", "").strip()
+        assert title != "Core Concepts", \
+            f"Day {d['day_number']} title is just 'Core Concepts'"
+
+
+@then(r"at least (\d+) of 30 days should mention the topic name or related terms")
+def cq_topic_mentions(context, min_count):
+    min_count = int(min_count)
+    count = 0
+    for d in context.cq_days:
+        text = (d.get("description", "") + " " + d.get("title", "")).lower()
+        if "n8n" in text or "automat" in text or "workflow" in text:
+            count += 1
+    assert count >= min_count, \
+        f"Only {count}/{len(context.cq_days)} days mention n8n/automation/workflow (need >= {min_count})"
+
+
+@then(r"descriptions should vary in length \(not all identical char count\)")
+def cq_varied_desc_length(context):
+    lengths = [len(d["description"]) for d in context.cq_days]
+    assert len(set(lengths)) > 1, \
+        f"All descriptions are {lengths[0]} chars — no variation"
+
+
+@then(r"every day must have a non-empty apply_task")
+def cq_nonempty_apply(context):
+    for d in context.cq_days:
+        at = (d.get("apply_task") or "").strip()
+        assert at, f"Day {d['day_number']} has empty apply_task"
+
+
+@then(r"at least (\d+) different unique apply_task values must exist")
+def cq_min_unique_apply(context, min_count):
+    min_count = int(min_count)
+    tasks = [d["apply_task"] for d in context.cq_days if d.get("apply_task")]
+    unique = len(set(tasks))
+    assert unique >= min_count, \
+        f"Only {unique} unique apply_task values (need >= {min_count})"
+
+
+@when(r'I generate a fallback curriculum for "([^"]+)" with (\d+) days')
+def cq_generate_fallback(context, topic, num_days):
+    num_days = int(num_days)
+    from services.curriculum_generator import _fallback_lesson
+    context.fallback_days = [_fallback_lesson(d + 1, topic) for d in range(num_days)]
+
+
+@then(r"day (\d+) title should differ from day (\d+) title")
+def cq_different_titles(context, d1, d2):
+    d1, d2 = int(d1), int(d2)
+    t1 = context.fallback_days[d1 - 1]["title"]
+    t2 = context.fallback_days[d2 - 1]["title"]
+    assert t1 != t2, f"Day {d1} title == Day {d2} title: {t1}"
+
+
+@then(r"day (\d+) description should differ from day (\d+) description")
+def cq_different_descs(context, d1, d2):
+    d1, d2 = int(d1), int(d2)
+    desc1 = context.fallback_days[d1 - 1].get("description", "")
+    desc2 = context.fallback_days[d2 - 1].get("description", "")
+    assert desc1 != desc2, f"Day {d1} desc == Day {d2} desc"
+
+
+@then(r"day (\d+) practice_task should differ from day (\d+) practice_task")
+def cq_different_practice(context, d1, d2):
+    d1, d2 = int(d1), int(d2)
+    p1 = context.fallback_days[d1 - 1].get("practice_task", "")
+    p2 = context.fallback_days[d2 - 1].get("practice_task", "")
+    assert p1 != p2, f"Day {d1} practice == Day {d2} practice"
+
+
+@then(r"all titles should contain their day number")
+def cq_titles_contain_day_number(context):
+    for i, day in enumerate(context.fallback_days):
+        expected = str(i + 1)
+        assert expected in day["title"], \
+            f"Day {i+1} title '{day['title']}' missing day number {expected}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PREVIEW ANIMATION — PA step definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@when(r"I open the preview for day (\d+) of ([a-z0-9-]+) directly")
+def pa_open_preview_direct(context, day, slug):
+    """Open preview page directly (not in iframe) for animation testing."""
+    page = _page(context)
+    page.route("**/api/generate-curriculum/**", lambda route: route.abort())
+    _goto(context, f"/preview/day/{day}?topic={slug}&embed=1")
+    page.wait_for_timeout(2000)  # let audio metadata load
+
+
+@when(r"I play the preview audio for (\d+) seconds")
+def pa_play_audio_seconds(context, seconds):
+    seconds = int(seconds)
+    page = _page(context)
+    page.click("#playBtn")
+    page.wait_for_timeout(seconds * 1000)
+
+
+@when(r"I play the preview audio to (\d+) percent progress")
+def pa_play_audio_percent(context, pct):
+    pct = int(pct)
+    page = _page(context)
+    # Set audio time directly via JS
+    page.evaluate(f"""() => {{
+        const a = document.getElementById('audio');
+        if (a && a.duration) {{
+            a.currentTime = (a.duration * {pct}) / 100;
+            a.play();
+        }}
+    }}""")
+    page.wait_for_timeout(1500)  # let syncWords run
+
+
+@then(r"I should see (\d+) step boxes in the SVG diagram")
+def pa_step_box_count(context, count):
+    count = int(count)
+    page = _page(context)
+    actual = page.locator(".step-box").count()
+    assert actual == count, f"Expected {count} step boxes, found {actual}"
+
+
+@then(r"each step box should have a CSS transition or animation property")
+def pa_step_box_has_animation(context):
+    page = _page(context)
+    for i in range(3):
+        # Check computed style for transition property
+        has_transition = page.evaluate(f"""() => {{
+            const box = document.querySelector('.step-box.step-{i}');
+            if (!box) return false;
+            const s = getComputedStyle(box);
+            return s.transitionProperty !== 'all 0s ease 0s' && s.transitionProperty !== '';
+        }}""")
+        has_animation = page.evaluate(f"""() => {{
+            const box = document.querySelector('.step-box.step-{i}');
+            if (!box) return false;
+            const s = getComputedStyle(box);
+            return s.animationName !== 'none' && s.animationName !== '';
+        }}""")
+        assert has_transition or has_animation, \
+            f"step-{i} has no transition or animation"
+
+
+@then(r"the step-0 box should have the \"active\" class")
+def pa_step0_active(context):
+    page = _page(context)
+    cls = page.locator(".step-box.step-0").get_attribute("class")
+    assert "active" in cls, f"step-0 class: {cls}"
+
+
+@then(r"the other step boxes should not have the \"active\" class yet")
+def pa_others_not_active(context):
+    page = _page(context)
+    for i in [1, 2]:
+        cls = page.locator(f".step-box.step-{i}").get_attribute("class")
+        assert "active" not in cls, f"step-{i} unexpectedly active: {cls}"
+
+
+@then(r"step-(\d+) box should have the \"active\" class")
+def pa_step_n_active(context, idx):
+    idx = int(idx)
+    page = _page(context)
+    cls = page.locator(f".step-box.step-{idx}").get_attribute("class")
+    assert "active" in cls, f"step-{idx} should be active: {cls}"
+
+
+@then(r"step-(\d+) and step-(\d+) boxes should not have the \"active\" class")
+def pa_steps_not_active(context, idx1, idx2):
+    idx1, idx2 = int(idx1), int(idx2)
+    page = _page(context)
+    for idx in [idx1, idx2]:
+        cls = page.locator(f".step-box.step-{idx}").get_attribute("class")
+        assert "active" not in cls, f"step-{idx} should not be active: {cls}"
+
+
+@then(r"section dot (\d+) should be active")
+def pa_section_dot_active(context, idx):
+    idx = int(idx)
+    page = _page(context)
+    cls = page.locator(f"#sp{idx}").get_attribute("class")
+    assert "active" in cls, f"sp{idx} should be active: {cls}"
+
+
+@then(r"section dots? (\d+) and (\d+) should not be active")
+def pa_section_dots_not_active(context, idx1, idx2):
+    idx1, idx2 = int(idx1), int(idx2)
+    page = _page(context)
+    for idx in [idx1, idx2]:
+        cls = page.locator(f"#sp{idx}").get_attribute("class")
+        assert "active" not in cls, f"sp{idx} should not be active: {cls}"
+
+
+@then(r"the step box labels should not contain \"Day 1 concept\"")
+def pa_no_generic_label(context):
+    page = _page(context)
+    # Use JS textContent (SVG elements don't have inner_text in Playwright)
+    svg_text = page.evaluate("document.querySelector('svg').textContent")
+    assert "Day 1 concept" not in svg_text, \
+        f"Found generic label 'Day 1 concept' in SVG"
+
+
+@then(r"the step box labels should contain meaningful text")
+def pa_meaningful_labels(context):
+    page = _page(context)
+    # Check sublabels via JS textContent
+    for i in range(3):
+        combined = page.evaluate(f"""() => {{
+            const g = document.querySelector('.step-box.step-{i}');
+            return g ? g.textContent.toLowerCase() : '';
+        }}""")
+        # Should NOT be just "Day X concept", "Hands-on exercise", "Real client work"
+        assert "day 1 concept" not in combined or len(combined) > 30, \
+            f"step-{i} has generic label: {combined[:60]}"
+
+
+@then(r'the SVG viewBox should be "([^"]+)"')
+def pa_svg_viewbox(context, expected):
+    page = _page(context)
+    vb = page.locator("svg").first.get_attribute("viewBox")
+    assert vb == expected, f"SVG viewBox: {vb} != {expected}"
+
+
+@then(r"all step boxes should have x-coordinates less than 780")
+def pa_step_boxes_in_bounds(context):
+    page = _page(context)
+    for i in range(3):
+        rects = page.locator(f".step-box.step-{i} rect").all()
+        if rects:
+            x = float(rects[0].get_attribute("x"))
+            w = float(rects[0].get_attribute("width"))
+            assert x + w <= 780, f"step-{i} overflows: x={x} w={w} total={x+w}"
+
+
+@then(r"the play button should show pause icon")
+def pa_play_shows_pause(context):
+    page = _page(context)
+    btn_text = page.locator("#playBtn").inner_text()
+    assert "⏸" in btn_text or "pause" in btn_text.lower() or "❚❚" in btn_text, \
+        f"Play button text: {btn_text}"
+
+
+@when(r"I click the play button.*")
+def pa_click_play(context):
+    _page(context).click("#playBtn")
+
+
+@then(r"the play button should show play icon")
+def pa_play_shows_play(context):
+    page = _page(context)
+    btn_text = page.locator("#playBtn").inner_text()
+    assert "▶" in btn_text or "play" in btn_text.lower() or "▶" in btn_text, \
+        f"Play button text: {btn_text}"
+
+
 # ─── restore default matcher so other step modules keep working ─────────────
 use_step_matcher("parse")

@@ -296,21 +296,118 @@ def _get_learning_objective(day: int, week: int, topic: str) -> str:
 
 
 def _fallback_lesson(day: int, topic: str) -> dict:
-    """Generate a structured fallback lesson when LLM is unavailable."""
+    """Generate a structured fallback lesson when LLM is unavailable.
+    Produces day-specific content using the weekly theme framework so each
+    day feels distinct even without AI generation."""
+    week_num = min(4, (day - 1) // 7 + 1)
+    day_in_week = ((day - 1) % 7) + 1
+
+    week_meta = {
+        1: {"theme": "Foundation", "desc_prefix": "building core fundamentals",
+            "practice_prefix": "hands-on setup exercise",
+            "apply_prefix": "create your first deliverable"},
+        2: {"theme": "Building", "desc_prefix": "developing intermediate skills",
+            "practice_prefix": "real-world practice scenario",
+            "apply_prefix": "build a portfolio piece"},
+        3: {"theme": "Application", "desc_prefix": "applying skills to client work",
+            "practice_prefix": "client-facing project simulation",
+            "apply_prefix": "write a real proposal or pitch"},
+        4: {"theme": "Mastery", "desc_prefix": "mastering advanced techniques",
+            "practice_prefix": "optimization and refinement exercise",
+            "apply_prefix": "complete your graduation project"},
+    }
+    wm = week_meta[week_num]
+    focus = _get_day_focus(day, week_num, wm["theme"], topic)
+
+    # Title: topic-specific, never generic "Part X"
+    title = f"Day {day}: {focus} ({topic})"
+
+    # Description: week+focus specific
+    description = (
+        f"Day {day} of your {topic} freelance journey — {wm['desc_prefix']}. "
+        f"Today you focus on {focus.lower()}, a skill that directly helps you "
+        f"land and deliver {topic} projects for paying clients."
+    )
+
+    # Hook: varies by week progression
+    hooks = [
+        f"Every {topic} freelancer started exactly where you are now — on Day {day}. "
+        f"Today's {focus.lower()} lesson is the step that separates beginners from working pros.",
+        f"What if you could master {focus.lower()} in just one focused session? "
+        f"Day {day} of {topic} is designed to get you there with a real exercise.",
+        f"Clients hiring for {topic} roles specifically look for {focus.lower()} skills. "
+        f"Today you'll prove you have them — hands on keyboard, not just reading.",
+    ]
+    hook = hooks[day % len(hooks)]
+
+    # Concept: topic + focus specific
+    concept = (
+        f"Today's core concept: {focus} in {topic} freelancing.\n\n"
+        f"Understanding {focus.lower()} is essential because clients judge your "
+        f"{topic} expertise by how well you handle this specific area. The best "
+        f"{topic} freelancers don't just know the theory — they've practiced "
+        f"applying {focus.lower()} in real project scenarios.\n\n"
+        f"Key insight: {focus} connects directly to client outcomes. When you "
+        f"master this, you can confidently pitch {topic} services at higher rates."
+    )
+
+    # Practice: day-specific exercise
+    practices = [
+        f"Setup & Configure: Set up your {topic} workspace with the tools needed for {focus.lower()}. "
+        f"Document each step and save screenshots for your portfolio.",
+        f"Build a Mini-Project: Create a small {topic} project focused on {focus.lower()}. "
+        f"It should demonstrate your understanding and be presentable to a client.",
+        f"Analyze a Real Example: Find a real-world {topic} project that uses {focus.lower()}. "
+        f"Break down what they did well and what you'd improve.",
+        f"Create a Template: Build a reusable template or checklist for {focus.lower()} in {topic} projects. "
+        f"This becomes part of your freelance toolkit.",
+        f"Solve a Client Scenario: Given this brief — 'I need {focus.lower()} for my {topic} project' — "
+        f"outline your approach, deliverables, and timeline.",
+    ]
+    practice = practices[day % len(practices)]
+
+    # Apply task: week-appropriate deliverable
+    apply_tasks = {
+        1: f"Document what you built today for {focus.lower()} and add it to your learning journal. "
+           f"Write 3 sentences about how this skill helps {topic} clients.",
+        2: f"Take your practice output and refine it into a portfolio-ready piece. "
+           f"Screenshot the before/after and write a brief case study paragraph.",
+        3: f"Draft a short proposal paragraph for a hypothetical {topic} client who needs {focus.lower()}. "
+           f"Include your approach, timeline, and what makes you the right fit.",
+        4: f"Compile your best {focus.lower()} work from this week into a single showcase piece. "
+           f"Write a caption explaining your {topic} expertise to a potential client.",
+    }
+    apply_task = apply_tasks[week_num]
+
+    # Learning objectives: Bloom's level per week
+    bloom = {1: "Understand and set up", 2: "Apply and build", 3: "Analyze and create", 4: "Evaluate and optimize"}
+    learning_objectives = f"{bloom[week_num]} {focus.lower()} in {topic} freelancing (Day {day}/30)"
+
     return {
         "day_number": day,
-        "title": f"Day {day}: {topic} — Part {day}",
-        "hook": f"Did you know that freelancers who master {topic} earn 3x more than generalists? Today you'll take a concrete step toward that goal.",
-        "concept": f"Today we explore a key {topic} concept. Understanding this will help you deliver better results for your clients and command higher rates.",
-        "practice": f"Complete the following exercise:\n1. Review the concept from today's lesson\n2. Apply it to a real scenario\n3. Document your output for your portfolio",
-        "retrieval": "1. Write down the 3 most important things you learned today.\n2. Explain today's concept to someone who knows nothing about it.\n3. What's one thing you're still confused about?",
-        "spaced_review": f"Think back to what you learned yesterday. How does today's concept build on that foundation? Write one sentence connecting them.",
-        "preview": f"Tomorrow we'll build on this foundation with a practical application that brings you closer to your first client.",
-        "video_title": f"{topic} — Day {day}: Core Concepts",
-        "description": f"Learn key {topic} concepts with practical applications for freelance work.",
-        "practice_task": f"Practice: Apply today's {topic} concept to a real scenario.",
-        "apply_task": f"Submit your work and complete the retrieval exercise.",
-        "learning_objectives": f"Master {topic} concepts for Day {day}",
+        "title": title,
+        "hook": hook,
+        "concept": concept,
+        "practice": practice,
+        "retrieval": (
+            f"1. Write down the 3 most important {focus.lower()} concepts from today.\n"
+            f"2. Explain {focus.lower()} to someone who has never used {topic}.\n"
+            f"3. What's one thing about {focus.lower()} you still need to practice?"
+        ),
+        "spaced_review": (
+            f"Yesterday you learned about {('core setup' if day == 2 else 'the previous topic')}. "
+            f"Today's {focus.lower()} builds directly on that foundation. "
+            f"How do they connect in a real {topic} project?"
+        ),
+        "preview": (
+            f"Tomorrow's lesson takes {focus.lower()} further with advanced techniques "
+            f"that impress {topic} clients."
+        ),
+        "video_title": f"{topic} — Day {day}: {focus}",
+        "description": description,
+        "practice_task": practice,
+        "apply_task": apply_task,
+        "learning_objectives": learning_objectives,
     }
 
 
