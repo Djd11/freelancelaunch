@@ -24,7 +24,7 @@ Feature: Curriculum Days are Clickable with Visible Content
     Then I should see the day number and title as heading
     And I should see the full lesson content (Hook, Concept, Practice, Retrieval)
     And I should see the practice task
-    And I should see a "Back to Dashboard" link
+    And I should see a "Back to Topic" link
 
   Scenario: CD4 — All 30 days are present and numbered
     When I view the curriculum section

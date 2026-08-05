@@ -2261,7 +2261,7 @@ def then_each_day_clickable(context):
     assert n > 0, "no clickable day links found"
     hrefs = [links.nth(i).get_attribute("href") for i in range(min(n, 5))]
     for h in hrefs:
-        assert re.match(r"/dashboard/day/\d+$", h or ""), f"bad day link: {h}"
+        assert re.match(r"/dashboard/day/\d+(\?topic=[a-z0-9-]+)?$", h or ""), f"bad day link: {h}"
 
 
 @then(r'I should NOT see the hardcoded "What you\'ll learn" preview')
@@ -2432,7 +2432,7 @@ def then_server_html_day_links(context):
 @then(r"NOT require JavaScript execution to appear")
 def then_no_js_needed(context):
     html = getattr(context, "cl_html", "")
-    assert re.search(r'href="/dashboard/day/\d+"', html), "day links require JS to render"
+    assert re.search(r'href="/dashboard/day/\d+(?:\?topic=[a-z0-9-]+)?"', html), "day links require JS to render"
 
 
 # ─── curriculum-clickable-days.feature (CD) ─────────────────────────────────
@@ -2451,7 +2451,7 @@ def cd_link_points(context):
     links = page.locator("#curriculum-section a[href*='/dashboard/day/']")
     for i in range(min(links.count(), 5)):
         href = links.nth(i).get_attribute("href")
-        assert re.match(r"/dashboard/day/\d+$", href or ""), f"bad href {href}"
+        assert re.match(r"/dashboard/day/\d+(\?topic=[a-z0-9-]+)?$", href or ""), f"bad href {href}"
 
 
 @then(r"clicking a day should navigate to that day's detail page")
@@ -2461,7 +2461,7 @@ def cd_click_day_navigates(context):
     href = link.get_attribute("href")
     with page.expect_navigation(wait_until="domcontentloaded", timeout=15000):
         link.click()
-    assert _path(page.url) == href, f"clicked to {page.url}, expected {href}"
+    assert _path(page.url) == _path(href), f"clicked to {page.url}, expected {href}"
 
 
 @then(r"each row should display the day number \(e\.g\., \"Day 1\"\)")
@@ -2635,7 +2635,7 @@ def cd_click_day5(context):
     target = None
     for i in range(links.count()):
         href = links.nth(i).get_attribute("href")
-        if href and href.endswith("/5"):
+        if href and _path(href).endswith("/5"):
             target = links.nth(i)
             break
     assert target is not None, "no Day 5 link found"

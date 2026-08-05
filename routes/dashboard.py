@@ -3,7 +3,7 @@ Dashboard routes — main user experience
 """
 import logging
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, g
+from flask import Blueprint, render_template, redirect, url_for, flash, g, request
 from services.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -144,47 +144,67 @@ def home():
 
 @dashboard_bp.route("/day/<int:day_number>")
 def day_detail(day_number):
-    """View a specific day's content. Auto-generates curriculum if missing (never 500)."""
+    """View a specific day's content. Auto-generates curriculum if missing (never 500).
+
+    Supports ?topic=<slug> for TOPIC-SCOPED day views (used by the /topics/<slug>
+    detail page day links). When present, the lesson resolves from THAT topic's
+    curriculum — never from the user's cohort — so browsing n8n day 1 can never
+    show a Shopify lesson even if the user's enrolled cohort is Shopify.
+    Progress checkboxes only appear when the user's cohort topic matches.
+    """
     if not g.user:
         return redirect(url_for("auth.login"))
-    
+
     sb = get_supabase()
     user_id = g.user["id"]
-    
+    topic_param = (request.args.get("topic") or "").strip() or None
+
     profile_resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
     profile = profile_resp.data[0] if profile_resp.data else {}
     cohort_id = profile.get("cohort_id")
-    
-    if not cohort_id:
+
+    if not cohort_id and not topic_param:
         return redirect(url_for("topics.explore"))
-    
-    # Get cohort + topic slug (for curriculum generation)
-    cohort_resp = sb.table("cohorts").select("*,topics(slug,name)").eq("id", cohort_id).limit(1).execute()
-    cohort = cohort_resp.data[0] if cohort_resp.data else {}
-    topic_slug = None
+
+    # ── Cohort context (may be absent for topic-scoped browsing) ──────────
+    cohort = {}
+    cohort_topic_slug = None
+    if cohort_id:
+        cohort_resp = sb.table("cohorts").select("*,topics(slug,name)").eq("id", cohort_id).limit(1).execute()
+        cohort = cohort_resp.data[0] if cohort_resp.data else {}
+        if cohort.get("topics"):
+            cohort_topic_slug = cohort["topics"].get("slug")
+        elif cohort.get("topic_id"):
+            try:
+                tdb = sb.table("topics").select("slug,name").eq("id", cohort["topic_id"]).limit(1).execute()
+                if tdb.data:
+                    cohort_topic_slug = tdb.data[0].get("slug")
+            except Exception as e:
+                print(f"Topic fallback lookup error: {e}")
+
+    # ── Which topic does this day belong to? ───────────────────────────────
+    is_topic_scoped = bool(topic_param)
+    topic_slug = topic_param or cohort_topic_slug
     topic_name = None
-    if cohort.get("topics"):
-        topic_slug = cohort["topics"].get("slug")
-        topic_name = cohort["topics"].get("name")
-    # Fallback when the topics join is blocked/empty (anon key RLS): resolve by topic_id
-    if not topic_slug and cohort.get("topic_id"):
+    if topic_slug:
         try:
-            tdb = sb.table("topics").select("slug,name").eq("id", cohort["topic_id"]).limit(1).execute()
+            tdb = sb.table("topics").select("name").eq("slug", topic_slug).limit(1).execute()
             if tdb.data:
-                topic_slug = tdb.data[0].get("slug")
                 topic_name = tdb.data[0].get("name")
         except Exception as e:
-            print(f"Topic fallback lookup error: {e}")
-    
-    # Get video for this day
-    video_resp = sb.table("cohort_videos").select("*") \
-        .eq("cohort_id", cohort_id) \
-        .eq("day_number", day_number) \
-        .limit(1) \
-        .execute()
-    video = video_resp.data[0] if video_resp.data else None
-    
-    # Get curriculum day
+            print(f"Topic name lookup error: {e}")
+
+    # ── Cohort video only when the cohort topic matches the viewed topic ───
+    video = None
+    if cohort_id and cohort_topic_slug == topic_slug:
+        video_resp = sb.table("cohort_videos").select("*") \
+            .eq("cohort_id", cohort_id) \
+            .eq("day_number", day_number) \
+            .limit(1) \
+            .execute()
+        video = video_resp.data[0] if video_resp.data else None
+
+    # ── Curriculum day (from the topic's curriculum, cohort-agnostic) ──────
     curriculum_day = None
     if video and video.get("curriculum_day_id"):
         cd_resp = sb.table("curriculum_days").select("*") \
@@ -192,24 +212,7 @@ def day_detail(day_number):
             .limit(1) \
             .execute()
         curriculum_day = cd_resp.data[0] if cd_resp.data else None
-    
-    # Fallback: get curriculum day by day_number from the cohort's curriculum
-    if not curriculum_day and cohort.get("curriculum_id"):
-        try:
-            cid = cohort["curriculum_id"]
-            cd_resp = sb.table("curriculum_days").select("*") \
-                .eq("curriculum_id", cid) \
-                .eq("day_number", day_number) \
-                .limit(1) \
-                .execute()
-            curriculum_day = cd_resp.data[0] if cd_resp.data else None
-        except Exception as e:
-            print(f"Curriculum day fallback error: {e}")
 
-    # Fallback 2: cohort.curriculum_id may be NULL even though a curriculum
-    # EXISTS for this topic (cohort_videos.curriculum_day_id also null).
-    # Resolve topic → curricula → curriculum_days by day_number so day links
-    # render real content instead of spinning forever on the generation state.
     if not curriculum_day and topic_slug:
         try:
             tdb = sb.table("topics").select("id").eq("slug", topic_slug).limit(1).execute()
@@ -225,8 +228,8 @@ def day_detail(day_number):
                     curriculum_day = cd_resp.data[0] if cd_resp.data else None
         except Exception as e:
             print(f"Curriculum day fallback-2 error: {e}")
-    
-    # Get user progress
+
+    # ── User progress ───────────────────────────────────────────────────────
     progress = None
     if video:
         prog_resp = sb.table("user_progress").select("*") \
@@ -235,14 +238,14 @@ def day_detail(day_number):
             .limit(1) \
             .execute()
         progress = prog_resp.data[0] if prog_resp.data else None
-    
+
     # NEEDS GENERATION: curriculum missing — show loading state, auto-trigger generation
     needs_generation = curriculum_day is None
     if needs_generation and not topic_slug:
         # No topic context — fail gracefully, not 500
         flash("No curriculum available for this topic yet", "error")
         return redirect(url_for("dashboard.home"))
-    
+
     return render_template("dashboard/day.html",
         day_number=day_number,
         video=video,
@@ -251,5 +254,6 @@ def day_detail(day_number):
         needs_generation=needs_generation,
         topic_slug=topic_slug,
         topic_name=topic_name,
-        cohort=cohort
+        cohort=cohort,
+        is_topic_scoped=is_topic_scoped
     )

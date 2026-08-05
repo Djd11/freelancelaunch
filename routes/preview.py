@@ -16,6 +16,30 @@ def _ensure_audio_dir():
     os.makedirs(AUDIO_DIR, exist_ok=True)
 
 
+def _get_curriculum_day_for_topic(sb, topic_slug, day_number):
+    """Get curriculum day for a specific topic slug — cohort-agnostic.
+
+    Used for topic-scoped previews (?topic=<slug>) so the embedded player on a
+    /topics/<slug> day view shows THAT topic's lesson, never the user's cohort
+    topic (which may be a completely different subject, e.g. Shopify).
+    """
+    try:
+        tdb = sb.table("topics").select("id").eq("slug", topic_slug).limit(1).execute()
+        if not tdb.data:
+            return None, None
+        cur = sb.table("curricula").select("id") \
+            .eq("topic_id", tdb.data[0]["id"]).limit(1).execute()
+        if not cur.data:
+            return None, None
+        cd = sb.table("curriculum_days").select("*") \
+            .eq("curriculum_id", cur.data[0]["id"]) \
+            .eq("day_number", day_number).limit(1).execute()
+        return (cd.data[0] if cd.data else None), None
+    except Exception as e:
+        logger.warning(f"Topic-scoped preview lookup error: {e}")
+        return None, None
+
+
 def _get_curriculum_day(sb, user_id, cohort_id, day_number):
     """Get curriculum day for a user's cohort."""
     # Try cohort_videos → curriculum_day_id
@@ -71,14 +95,19 @@ def day_preview(day_number):
     from services.supabase_client import get_supabase
     sb = get_supabase()
     user_id = g.user["id"]
+    topic_param = (request.args.get("topic") or "").strip() or None
 
     profile_resp = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
     cohort_id = profile_resp.data[0]["cohort_id"] if profile_resp.data else None
 
-    if not cohort_id:
+    if not cohort_id and not topic_param:
         return redirect(url_for("topics.explore"))
 
-    curriculum_day, video = _get_curriculum_day(sb, user_id, cohort_id, day_number)
+    if topic_param:
+        # Topic-scoped preview: resolve from the requested topic's curriculum
+        curriculum_day, video = _get_curriculum_day_for_topic(sb, topic_param, day_number)
+    else:
+        curriculum_day, video = _get_curriculum_day(sb, user_id, cohort_id, day_number)
     if not curriculum_day:
         # Curriculum not ready yet — return a simple HTML message (NOT a redirect
         # to the day page, which would load the full page inside the iframe and
