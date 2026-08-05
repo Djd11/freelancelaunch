@@ -11,7 +11,7 @@ import os
 import threading
 import json
 from datetime import datetime, timezone
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, request
 from services.supabase_client import get_supabase
 from services.curriculum_generator import generate_curriculum
 
@@ -291,26 +291,41 @@ def generate_curriculum_api(slug):
         pass
 
     # Get or create curriculum record
+    force = request.args.get("force") == "1" or request.form.get("force") == "1"
     curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
     if curr_resp.data:
         curr_id = curr_resp.data[0]["id"]
         existing = sb.table("curriculum_days").select("id", count="exact") \
             .eq("curriculum_id", curr_id).execute()
-        if (getattr(existing, 'count', 0) or 0) >= 30:
+        existing_count = getattr(existing, 'count', 0) or 0
+        if existing_count >= 30 and not force:
             # Backfill cohort_videos if missing, then report complete
             _backfill_cohort_videos(sb, slug, user_id, curr_id)
-            # Record the completion in the async log so status/log endpoints
-            # reflect reality even when generation happened earlier
             _progress_tracker[slug] = {
                 "status": "complete", "current_day": 30, "total_days": 30,
                 "percent": 100, "last_title": "Complete!", "topic": topic_name,
             }
             _update_genlog(slug, topic_id, status="complete", current_day=30,
                            total_days=30, percent=100, last_title="Complete!",
-                           message=f"Curriculum already exists ({existing.count} days)",
+                           message=f"Curriculum already exists ({existing_count} days)",
                            append_entry=_log_entry(30, "info",
-                                                   f"Curriculum already complete ({existing.count} days)"))
+                                                   f"Curriculum already complete ({existing_count} days)"))
             return jsonify({"status": "complete", "message": "Already generated"})
+        if existing_count > 0 and force:
+            # Delete old curriculum_days before regenerating
+            old_days = sb.table("curriculum_days").select("id").eq("curriculum_id", curr_id).execute()
+            old_day_ids = [d["id"] for d in (old_days.data or [])]
+            # Also delete old cohort_videos that reference those days
+            if old_day_ids:
+                for v in (sb.table("cohort_videos").select("id").in_("curriculum_day_id", old_day_ids).execute().data or []):
+                    sb.table("cohort_videos").delete().eq("id", v["id"]).execute()
+            for d in old_day_ids:
+                sb.table("curriculum_days").delete().eq("id", d).execute()
+            _update_genlog(slug, topic_id, status="running", current_day=0,
+                           total_days=30, percent=0, last_title="Starting...",
+                           message=f"Force regenerating — deleted {existing_count} old days",
+                           append_entry=_log_entry(0, "info",
+                                                   f"Force regeneration: deleted {existing_count} old days"))
     else:
         curr = sb.table("curricula").insert({"topic_id": topic_id, "total_days": 30}).execute()
         curr_id = curr.data[0]["id"]
