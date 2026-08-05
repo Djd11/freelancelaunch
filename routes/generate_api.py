@@ -366,27 +366,48 @@ def generate_curriculum_api(slug):
     })
 
 
-def _backfill_cohort_videos(sb, slug, user_id, curr_id):
-    """Ensure cohort_videos rows exist for every curriculum day (fixes day links)."""
+def _cohorts_for_topic(sb, topic_id):
+    """All cohorts whose topic matches the given topic_id."""
     try:
-        prof = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
-        cohort_id = prof.data[0].get("cohort_id") if prof.data else None
-        if not cohort_id:
+        rows = sb.table("cohorts").select("id").eq("topic_id", topic_id).execute()
+        return [c["id"] for c in (rows.data or [])]
+    except Exception as e:
+        logger.warning(f"cohort lookup failed: {e}")
+        return []
+
+
+def _backfill_cohort_videos(sb, slug, user_id, curr_id):
+    """Ensure cohort_videos rows exist for every curriculum day (fixes day links).
+
+    Videos are created for ALL cohorts whose topic matches the curriculum's
+    topic — not just the triggering user's cohort — so day links work for
+    every cohort that displays this curriculum.
+    """
+    try:
+        cur = sb.table("curricula").select("topic_id").eq("id", curr_id).limit(1).execute()
+        if not cur.data:
+            return
+        topic_id = cur.data[0]["topic_id"]
+        cohort_ids = _cohorts_for_topic(sb, topic_id)
+        if not cohort_ids:
             return
         days = sb.table("curriculum_days").select("id,day_number") \
             .eq("curriculum_id", curr_id).order("day_number").execute()
+        created = 0
         for d in (days.data or []):
-            existing = sb.table("cohort_videos").select("id") \
-                .eq("cohort_id", cohort_id).eq("day_number", d["day_number"]).limit(1).execute()
-            if not existing.data:
-                sb.table("cohort_videos").insert({
-                    "cohort_id": cohort_id,
-                    "day_number": d["day_number"],
-                    "curriculum_day_id": d["id"],
-                    "youtube_title": f"Day {d['day_number']}",
-                    "production_status": "ready",
-                }).execute()
-        logger.info(f"Backfilled {len(days.data or [])} cohort_videos for {slug}")
+            for cohort_id in cohort_ids:
+                existing = sb.table("cohort_videos").select("id") \
+                    .eq("cohort_id", cohort_id).eq("day_number", d["day_number"]).limit(1).execute()
+                if not existing.data:
+                    sb.table("cohort_videos").insert({
+                        "cohort_id": cohort_id,
+                        "day_number": d["day_number"],
+                        "curriculum_day_id": d["id"],
+                        "youtube_title": f"Day {d['day_number']}",
+                        "production_status": "ready",
+                    }).execute()
+                    created += 1
+        logger.info(f"Backfilled {created} cohort_videos across {len(cohort_ids)} cohort(s) for {slug}")
     except Exception as e:
         logger.warning(f"cohort_videos backfill failed: {e}")
 
@@ -479,13 +500,9 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
 
             sb = get_supabase()
 
-            # Get the user's cohort
-            cohort_id = None
-            try:
-                user_profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
-                cohort_id = user_profile.data[0]["cohort_id"] if user_profile.data else None
-            except Exception:
-                pass
+            # Cohorts whose topic matches this curriculum (day links for every
+            # cohort that displays this topic — not just the triggering user's)
+            cohort_ids = _cohorts_for_topic(sb, topic_id)
 
             # Generate + save day by day (progress updates live)
             saved = 0
@@ -554,24 +571,24 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
                     sb.table("curriculum_days").insert(day_data).execute()
                     saved += 1
 
-                    # Create cohort_video so day links work
-                    if cohort_id:
-                        try:
+                    # Create cohort_video for each matching cohort so day links work
+                    try:
+                        cd = sb.table("curriculum_days").select("id") \
+                            .eq("curriculum_id", curr_id).eq("day_number", day_num).limit(1).execute()
+                        day_id = cd.data[0]["id"] if cd.data else None
+                        for cohort_id in cohort_ids:
                             existing_video = sb.table("cohort_videos").select("id") \
                                 .eq("cohort_id", cohort_id).eq("day_number", day_num).limit(1).execute()
                             if not existing_video.data:
-                                # find the inserted curriculum_day id
-                                cd = sb.table("curriculum_days").select("id") \
-                                    .eq("curriculum_id", curr_id).eq("day_number", day_num).limit(1).execute()
                                 sb.table("cohort_videos").insert({
                                     "cohort_id": cohort_id,
                                     "day_number": day_num,
-                                    "curriculum_day_id": cd.data[0]["id"] if cd.data else None,
+                                    "curriculum_day_id": day_id,
                                     "youtube_title": day.get("video_title", f"{topic_name} — Day {day_num}"),
                                     "production_status": "ready",
                                 }).execute()
-                        except Exception as e:
-                            logger.warning(f"[gen:{slug}] cohort_video day {day_num} failed: {e}")
+                    except Exception as e:
+                        logger.warning(f"[gen:{slug}] cohort_video day {day_num} failed: {e}")
 
                     _update_genlog(slug, topic_id,
                                    append_entry=_log_entry(day_num, "info",

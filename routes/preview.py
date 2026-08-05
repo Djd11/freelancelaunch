@@ -16,6 +16,18 @@ def _ensure_audio_dir():
     os.makedirs(AUDIO_DIR, exist_ok=True)
 
 
+def _get_cohort_topic_slug(sb, cohort_id):
+    """Resolve cohort_id -> topic slug (for audio cache key)."""
+    try:
+        c = sb.table("cohorts").select("topic_id").eq("id", cohort_id).limit(1).execute()
+        if c.data and c.data[0].get("topic_id"):
+            t = sb.table("topics").select("slug").eq("id", c.data[0]["topic_id"]).limit(1).execute()
+            return t.data[0]["slug"] if t.data else None
+    except Exception:
+        pass
+    return None
+
+
 def _get_curriculum_day_for_topic(sb, topic_slug, day_number):
     """Get curriculum day for a specific topic slug — cohort-agnostic.
 
@@ -135,16 +147,17 @@ def day_preview(day_number):
     script = build_voiceover_text(curriculum_day)
     title = curriculum_day.get("title", f"Day {day_number}")
 
-    # Generate TTS audio (cached)
+    # Generate TTS audio (cached per topic to avoid cross-topic contamination)
     _ensure_audio_dir()
-    audio_path = os.path.join(AUDIO_DIR, f"day_{day_number}.mp3")
-    audio_url = f"/static/previews/day_{day_number}.mp3"
+    topic_slug = topic_param or (cohort_id and _get_cohort_topic_slug(sb, cohort_id)) or "default"
+    audio_path = os.path.join(AUDIO_DIR, f"day_{topic_slug}_{day_number}.mp3")
+    audio_url = f"/static/previews/day_{topic_slug}_{day_number}.mp3"
 
     if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 1000:
-        logger.info(f"Generating TTS for day {day_number}...")
+        logger.info(f"Generating TTS for {topic_slug} day {day_number}...")
         ok = generate_tts(script, audio_path)
         if not ok:
-            logger.warning(f"TTS failed for day {day_number}, using silent fallback")
+            logger.warning(f"TTS failed for {topic_slug} day {day_number}, using silent fallback")
             audio_url = ""  # No audio — kinetic text still works
 
     duration = get_audio_duration(audio_path) if os.path.exists(audio_path) else 20.0
