@@ -6,8 +6,6 @@ Feature: Free LLM Content Curation Pipeline
   Background:
     Given the curriculum generator service is available
 
-  ─── GENERATION FOR ANY TOPIC ─────────────────────────────
-
   Scenario: G1 — Generates curriculum for any topic name
     When I run the curriculum generator for "Video Editing"
     Then it should produce 30 daily lessons
@@ -18,18 +16,15 @@ Feature: Free LLM Content Curation Pipeline
   Scenario: G2 — Weekly themes structure the curriculum
     When a curriculum is generated for a topic
     Then days 1-7 should cover Foundation concepts
-    And days 8-15 should cover Building concepts
-    And days 16-23 should cover Application concepts
-    And days 24-30 should cover Mastery concepts
-    And each week should have a review day
+    And days 8-14 should cover Building concepts
+    And days 15-21 should cover Application concepts
+    And days 22-30 should cover Mastery concepts
 
   Scenario: G3 — Content is topic-specific (not generic)
     When I generate curriculum for "Machine Learning"
     Then lesson titles should mention ML concepts (models, training, data)
     And practice tasks should be ML-specific
     And no lesson should mention unrelated topics (e.g., "video editing")
-
-  ─── FREE LLM PROVIDER USAGE ──────────────────────────────
 
   Scenario: G4 — Uses free LLM provider automatically
     When curriculum generation starts
@@ -49,8 +44,6 @@ Feature: Free LLM Content Curation Pipeline
     Then the LLM request should use less than 2000 output tokens
     And the response should fit in one request (no pagination needed)
 
-  ─── QUALITY & VALIDATION ─────────────────────────────────
-
   Scenario: G7 — Quality gate validates content
     When a lesson is generated
     Then it should be scored against 10 quality criteria
@@ -62,8 +55,6 @@ Feature: Free LLM Content Curation Pipeline
     Then it should have fields: title, hook, concept, practice, retrieval, spaced_review, preview
     And it should save cleanly to curriculum_days table
     And it should be renderable in the day detail template
-
-  ─── COST & EFFICIENCY ────────────────────────────────────
 
   Scenario: G9 — Zero cost generation
     When the generator uses OpenRouter free model

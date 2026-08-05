@@ -7,7 +7,7 @@ Feature: Freelance Platform Account Verification
     Given I am a logged-in user enrolled in a topic
     And I am on the onboarding step for platform setup
 
-  ─── CREATE & LINK PLATFORM ACCOUNTS ──────────────────────
+  #  CREATE & LINK PLATFORM ACCOUNTS # # # # # # # ─
 
   Scenario: C1 — User selects a freelance platform
     Given I see 3 platform options: Upwork, Fiverr, Contra
@@ -27,7 +27,7 @@ Feature: Freelance Platform Account Verification
     Then the user_platforms record should update to status "verified"
     And the platform should show a green checkmark
 
-  ─── READ PLATFORM STATUS ─────────────────────────────────
+  #  READ PLATFORM STATUS # # # # # # # # # # # 
 
   Scenario: R1 — Onboarding shows platform cards with deep links
     When I navigate to the platform setup page
@@ -53,7 +53,7 @@ Feature: Freelance Platform Account Verification
     And selecting "Upwork" should show only Upwork contracts
     And selecting "All" should show all contracts
 
-  ─── UPDATE PLATFORM VERIFICATION ─────────────────────────
+  #  UPDATE PLATFORM VERIFICATION # # # # # # # # ─
 
   Scenario: U1 — User changes their platform selection
     Given I have selected "Upwork" and "Fiverr"
@@ -67,7 +67,7 @@ Feature: Freelance Platform Account Verification
     Then I should see the deep link again
     And the platform status should reset to "pending"
 
-  ─── ERROR HANDLING ──────────────────────────────────────
+  #  ERROR HANDLING # # # # # # # # # # # # ──
 
   Scenario: E1 — Platform dropdown prevents empty selection
     When I try to proceed without selecting any platform
@@ -79,7 +79,7 @@ Feature: Freelance Platform Account Verification
     Then the link should open https://www.upwork.com/signup/ in a new tab
     And the current page should remain on FreelanceLaunch
 
-  ─── WHAT HAPPENS WITHOUT VERIFIED PLATFORMS ──────────────
+  #  WHAT HAPPENS WITHOUT VERIFIED PLATFORMS # # # # ──
 
   Scenario: W1 — Job application tracking blocked without accounts
     Given I have no verified platforms
@@ -97,7 +97,7 @@ Feature: Freelance Platform Account Verification
       | 4. Return here and click verified |
     And a direct link to https://contra.com/signup/
 
-  ─── CRUD COVERAGE ──────────────────────────────────────
+  #  CRUD COVERAGE # # # # # # # # # # # # ──
 
   # Table: user_platforms
   # Create:  C1, C2

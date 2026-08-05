@@ -7,7 +7,7 @@ Feature: Text-Based Curriculum Content Curation
     Given the curriculum generator API is available
     And I am logged in and enrolled in "Web Scraping with Python"
 
-  ─── CORE CONTENT STRUCTURE ───────────────────────────────
+  #  CORE CONTENT STRUCTURE # # # # # # # # # # ─
 
   Scenario: TC1 — Each day has 6 text sections (Hook, Concept, Practice, Retrieval, Spaced Review, Preview)
     When a 30-day curriculum is generated for "Web Scraping with Python"
@@ -24,8 +24,8 @@ Feature: Text-Based Curriculum Content Curation
   Scenario: TC2 — Hook section is engaging and goal-oriented
     When I read the hook for any day
     Then it should start with a connection to landing a client
-    OR include a surprising fact or statistic
-    OR end with a driving question
+# OR include a surprising fact or statistic
+# OR end with a driving question
     And it should be 2-5 sentences long
     And it should NOT contain generic filler like "In today's lesson"
 
@@ -58,7 +58,7 @@ Feature: Text-Based Curriculum Content Curation
     AND include a specific application question
     And be 2-4 sentences long
 
-  ─── CONTENT QUALITY ──────────────────────────────────────
+  #  CONTENT QUALITY # # # # # # # # # # # # ──
 
   Scenario: TQ1 — No generic fallback content
     When I scan all 30 days in the database
@@ -81,7 +81,7 @@ Feature: Text-Based Curriculum Content Curation
     And Day 24-30 should cover mastery/income generation
     And later days should reference concepts introduced in earlier days
 
-  ─── DATABASE PERSISTENCE ─────────────────────────────────
+  #  DATABASE PERSISTENCE # # # # # # # # # # # 
 
   Scenario: TQ4 — All 30 days saved with complete data
     Given curriculum has been generated for "Web Scraping with Python"
@@ -103,7 +103,7 @@ Feature: Text-Based Curriculum Content Curation
     And each should have a day_number from 1 to 30
     And each should have production_status "ready"
 
-  ─── TEXT RENDERING ────────────────────────────────────────
+  #  TEXT RENDERING # # # # # # # # # # # # # ─
 
   Scenario: TR1 — Day detail page shows all text sections
     When I visit /dashboard/day/5

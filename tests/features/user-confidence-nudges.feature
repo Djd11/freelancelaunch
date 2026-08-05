@@ -7,7 +7,7 @@ Feature: User Confidence via Nudges & Daily Practice Feedback
     Given I am a logged-in user enrolled in a cohort
     And I have a cohort_video for Day 1
 
-  ─── PROGRESS TRACKING WORKS ──────────────────────────────
+  #  PROGRESS TRACKING WORKS # # # # # # # # # # 
 
   Scenario: P1 — Marking video watched saves to database
     When I check "Watch today's video" on the dashboard
@@ -25,7 +25,7 @@ Feature: User Confidence via Nudges & Daily Practice Feedback
     Then there should still be exactly 1 user_progress record
     And it should remain True
 
-  ─── STREAK TRACKING ──────────────────────────────────────
+  #  STREAK TRACKING # # # # # # # # # # # # ──
 
   Scenario: S1 — Streak increments on consecutive days
     Given I completed Day 1
@@ -43,7 +43,7 @@ Feature: User Confidence via Nudges & Daily Practice Feedback
     When I complete Day 2 in the evening
     Then my streak should be 2 (not reset)
 
-  ─── ENCOURAGEMENT & NUDGES ───────────────────────────────
+  #  ENCOURAGEMENT & NUDGES # # # # # # # # # # ─
 
   Scenario: N1 — Positive feedback after each task
     When I check "Complete practice task"
@@ -67,7 +67,7 @@ Feature: User Confidence via Nudges & Daily Practice Feedback
     Then I should see "👋 Welcome back! Day 3 awaits you"
     And my last completed day should be shown
 
-  ─── CONFIDENCE METRICS ───────────────────────────────────
+  #  CONFIDENCE METRICS # # # # # # # # # # # ──
 
   Scenario: C1 — Dashboard shows completion percentage
     When I view the dashboard

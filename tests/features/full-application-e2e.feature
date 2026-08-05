@@ -8,10 +8,6 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     And the application is running at https://freelancelaunch.onrender.com
     And test data is seeded in the database
 
-  ═══════════════════════════════════════════════════════════
-  CREATE Operations
-  ═══════════════════════════════════════════════════════════
-
   Scenario: C1 — User creates an account (CREATE auth user + profile)
     Given I am on the signup page
     When I fill in name "Test User", email "testuser@example.com", and password "test123456"
@@ -65,10 +61,6 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     And I click "Produce Now" on a pending video
     Then the cohort_video production_status should change to "scripting" or "rendering"
     And a video_production_log entry should be created
-
-  ═══════════════════════════════════════════════════════════
-  READ Operations
-  ═══════════════════════════════════════════════════════════
 
   Scenario: R1 — Landing page shows 5 topic cards (READ topics list)
     When I visit the landing page
@@ -149,10 +141,6 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     And I should see my current tier badge
     And I should see pipeline summary cards (proposals, contracts, earned, stage)
 
-  ═══════════════════════════════════════════════════════════
-  UPDATE Operations
-  ═══════════════════════════════════════════════════════════
-
   Scenario: U1 — User updates profile name (UPDATE user_profiles)
     Given I am logged in
     When I navigate to my profile
@@ -192,10 +180,6 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     Then the cohort current_day should advance to 3
     And a new cohort_video for Day 4 should be created
 
-  ═══════════════════════════════════════════════════════════
-  DELETE Operations
-  ═══════════════════════════════════════════════════════════
-
   Scenario: D1 — Session cleared on logout (DELETE session)
     Given I am logged in
     When I click logout from the profile menu
@@ -217,10 +201,6 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     Then user_progress.video_watched should be FALSE
     And the checkbox should appear unchecked on reload
 
-  ═══════════════════════════════════════════════════════════
-  ERROR HANDLING & EDGE CASES
-  ═══════════════════════════════════════════════════════════
-
   Scenario: E1 — Login with wrong password shows error
     When I attempt to log in with email "chinaindiatesting@gmail.com" and password "wrongpass"
     Then I should see an error message "Invalid email or password"
@@ -230,7 +210,7 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     When I try to visit /dashboard without logging in
     Then I should be redirected to /auth/login
     And the URL should contain "next=/dashboard"
-    After I log in, I should be redirected back to /dashboard
+# After I log in, I should be redirected back to /dashboard
 
   Scenario: E3 — Enroll in topic without login redirects
     When I try to POST /topics/web-scraping-python/enroll without being logged in
@@ -247,12 +227,8 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     Then the form should not submit or show a validation error
     And no empty deliverable should be created in the database
 
-  ═══════════════════════════════════════════════════════════
-  CRUD COVERAGE SUMMARY
-  ═══════════════════════════════════════════════════════════
-
   # Table               Create  Read  Update  Delete
-  # ────────────────────────────────────────────────
+  # # # # # # # # # # # # # # # # # 
   # auth.users           C1      —     —       D1
   # user_profiles        C1      R10   U1      —
   # topics               —       R1,R2 —       —

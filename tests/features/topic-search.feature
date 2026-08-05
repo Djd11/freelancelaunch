@@ -7,7 +7,7 @@ Feature: Topic Search with Live Platform Data
     Given I am logged in
     And I am on the topics explorer page
 
-  ─── SEARCH UI ─────────────────────────────────────────────
+  #  SEARCH UI # # # # # # # # # # # # # # # 
 
   Scenario: S1 — Search bar is visible on topics page
     When I navigate to /topics
@@ -20,7 +20,7 @@ Feature: Topic Search with Live Platform Data
     And "Web Scraping with Python" should be visible
     And "n8n Automation" should be hidden
 
-  ─── LIVE PLATFORM SEARCH ──────────────────────────────────
+  #  LIVE PLATFORM SEARCH # # # # # # # # # # # ─
 
   Scenario: P1 — Search queries freelance platforms for job data
     When I type "machine learning" in the search box
@@ -47,7 +47,7 @@ Feature: Topic Search with Live Platform Data
     And I should see suggestions for similar popular topics
     And I should see a "Request topic" button
 
-  ─── SEARCH RESULT DETAILS ─────────────────────────────────
+  #  SEARCH RESULT DETAILS # # # # # # # # # # # 
 
   Scenario: D1 — Search result shows platform breakdown
     Given I searched for "python scripting"
@@ -65,7 +65,7 @@ Feature: Topic Search with Live Platform Data
     And I should see difficulty level: Beginner-Intermediate
     And I should see estimated time to first gig: 2-3 weeks
 
-  ─── ERROR HANDLING ────────────────────────────────────────
+  #  ERROR HANDLING # # # # # # # # # # # # # ─
 
   Scenario: E1 — Platform search timeout shows partial results
     Given Upwork is unreachable but Fiverr responds
@@ -79,7 +79,7 @@ Feature: Topic Search with Live Platform Data
     Then the default 5 curated topics should be displayed
     And the search results section should be hidden
 
-  ─── WHAT HAPPENS WITHOUT LINKED PLATFORMS ─────────────────
+  #  WHAT HAPPENS WITHOUT LINKED PLATFORMS # # # # # ──
 
   Scenario: W1 — User needs linked platforms to see live data
     Given I have not linked any freelance platforms
@@ -88,10 +88,10 @@ Feature: Topic Search with Live Platform Data
     And I should see a "Link Platforms" button
     And clicking it takes me to /platforms/setup
 
-  ─── CRUD COVERAGE ────────────────────────────────────────
+  #  CRUD COVERAGE # # # # # # # # # # # # # ─
 
   # Operation    Component
-  # ─────────────────────────────────
+  # # # # # # # # # # # # 
   # CREATE       Curriculum generation for new topic (P2)
   # READ         Search results, platform data, market demand (P1, D1, D2)
   # UPDATE       Filter curated list as user types (S2)

@@ -3151,10 +3151,59 @@ def qg_titles_pass(context):
         f"{context.qv_generic_count} titles incorrectly detected as generic"
 
 
+QG_TEST_TOPIC = "quality-gate-test"
+
+
+def _ensure_fallback_test_day(context):
+    """Create a dedicated topic with legacy generic (fallback) day 1 content.
+
+    The quality gate now prevents bad content from being SAVED, so to test the
+    regenerate path we simulate pre-existing legacy bad data by inserting a
+    genuinely generic lesson directly (as if it predated the gate).
+    """
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        from services.supabase_client import get_supabase
+        sb = get_supabase()
+        topic = sb.table("topics").select("id").eq("slug", QG_TEST_TOPIC).limit(1).execute().data
+        if topic:
+            topic_id = topic[0]["id"]
+        else:
+            ins = sb.table("topics").insert({
+                "slug": QG_TEST_TOPIC,
+                "name": "Quality Gate Test",
+                "description": "Test topic for quality-gate BDD scenarios",
+                "is_curated": False,
+                "status": "active",
+            }).execute()
+            topic_id = ins.data[0]["id"]
+        cur = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute().data
+        if cur:
+            curr_id = cur[0]["id"]
+        else:
+            curr = sb.table("curricula").insert({"topic_id": topic_id, "total_days": 1}).execute()
+            curr_id = curr.data[0]["id"]
+        # Insert one genuinely generic day (matches _GENERIC_*_PATTERNS)
+        existing_day = sb.table("curriculum_days").select("id") \
+            .eq("curriculum_id", curr_id).eq("day_number", 1).limit(1).execute().data
+        if not existing_day:
+            sb.table("curriculum_days").insert({
+                "curriculum_id": curr_id,
+                "day_number": 1,
+                "title": f"Day 1: Quality Gate Test — Part 1",
+                "description": "Learn key quality-gate concepts with practical applications for freelance work.",
+                "practice_task": "Practice the generic fallback content.",
+                "apply_task": "Apply the generic fallback content.",
+            }).execute()
+    return QG_TEST_TOPIC
+
+
 @when(r"I request curriculum generation for a topic with existing bad data")
 def qg_request_generation(context):
+    slug = _ensure_fallback_test_day(context)
     page = _ensure_browser_login(context)
-    _goto(context, "/dashboard/day/1?topic=shopify-dropshipping")
+    _goto(context, f"/dashboard/day/1?topic={slug}")
 
 
 @then(r"the system should not overwrite with fallback content")
@@ -3171,8 +3220,9 @@ def qg_quality_response(context):
 
 @when(r"I visit a day page with fallback content")
 def qg_visit_fallback_day(context):
+    slug = _ensure_fallback_test_day(context)
     page = _ensure_browser_login(context)
-    _goto(context, "/dashboard/day/1?topic=shopify-dropshipping")
+    _goto(context, f"/dashboard/day/1?topic={slug}")
 
 
 @then(r"I should see a \"Regenerate Lesson\" option")

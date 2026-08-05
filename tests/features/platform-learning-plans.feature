@@ -7,7 +7,7 @@ Feature: Platform-Specific Learning Plans
     Given I am logged in and have selected a skill
     And I have linked at least one freelance platform (Upwork, Fiverr, or Contra)
 
-  ─── PLATFORM-SPECIFIC CURRICULUM ─────────────────────────
+  #  PLATFORM-SPECIFIC CURRICULUM # # # # # # # # ─
 
   Scenario: PC1 — Curriculum adapts to linked platforms
     Given I have linked "Upwork" as my platform
@@ -38,7 +38,7 @@ Feature: Platform-Specific Learning Plans
     Then it should include both Upwork and Fiverr success days
     And the total duration should be 30 days (skill) + 14 days (platforms)
 
-  ─── PROPOSAL TRAINING ─────────────────────────────────────
+  #  PROPOSAL TRAINING # # # # # # # # # # # # ─
 
   Scenario: PT1 — Proposal writing module
     Given I have linked "Upwork"
@@ -56,7 +56,7 @@ Feature: Platform-Specific Learning Plans
     And I should be able to draft: title, description, packages, images
     And the system should give SEO suggestions for my gig title
 
-  ─── PLATFORM CHECKLIST ────────────────────────────────────
+  #  PLATFORM CHECKLIST # # # # # # # # # # # # 
 
   Scenario: PCK1 — Upwork profile checklist
     Given I am on the Upwork success module
@@ -74,7 +74,7 @@ Feature: Platform-Specific Learning Plans
     And Phase 3 should be "After 20+ Reviews"
     And each phase should have specific pricing guidance
 
-  ─── ERROR HANDLING ────────────────────────────────────────
+  #  ERROR HANDLING # # # # # # # # # # # # # ─
 
   Scenario: E1 — No platform linked
     Given I have not linked any platforms
