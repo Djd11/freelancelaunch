@@ -22,8 +22,7 @@ Feature: Topics and Curriculum Readiness
   So that a new topic never 500s and I can see what's happening in the background
 
   Background:
-    Given the application is running at BASE_URL
-    And the audit browser is Google Chrome (non-headless, DISPLAY=:0)
+    Given I am logged in
 
   # 1. TOPICS EXPLORER — browse + demand data
 

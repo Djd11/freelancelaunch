@@ -21,9 +21,7 @@ Feature: Topic-Scoped Days and Previews
   So that I never see another topic's (e.g. Shopify's) content
 
   Background:
-    Given the application is running at BASE_URL
-    And the audit browser is Google Chrome (non-headless, DISPLAY=:0)
-    And I am logged in
+    Given I am logged in
 
   Scenario: TS-1 — Day links from a topic page are topic-scoped
     When I visit /topics/n8n-automation
