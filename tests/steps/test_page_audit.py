@@ -2656,5 +2656,78 @@ def cd_show_day5(context):
     assert "Day 5" in body, f"Day 5 not on page: {body[:80]}"
 
 
+# ─── topic-scoped-days.feature (TS) ─────────────────────────────────────────
+# Verifies day lessons + previews stay topic-scoped and never fall back to the
+# user's cohort topic (the canonical "all topics → Shopify" regression).
+
+
+@then(r"every day link should carry \?topic=([a-z0-9-]+)")
+def ts_links_carry_topic(context, slug):
+    page = _ensure_curriculum_view(context)
+    links = page.locator("#curriculum-section a[href*='/dashboard/day/']")
+    n = links.count()
+    assert n > 0, "no day links found"
+    for i in range(n):
+        href = links.nth(i).get_attribute("href") or ""
+        assert f"?topic={slug}" in href, f"day link missing ?topic={slug}: {href}"
+
+
+@then(r"the page must not show progress checkboxes")
+def ts_no_progress_checkboxes(context):
+    page = _page(context)
+    body = page.inner_text("body")
+    assert "Mark Your Progress" not in body, "progress checkboxes unexpectedly present"
+
+
+@when(r"I open the preview for day (\d+) of ([a-z0-9-]+)")
+def ts_open_preview_topic(context, day, slug):
+    page = _page(context)
+    # Keep tests read-only: a needs-generation day page would otherwise POST
+    # /api/generate-curriculum/<slug> and write rows into the DB.
+    page.route("**/api/generate-curriculum/**", lambda route: route.abort())
+    _goto(context, f"/preview/day/{day}?topic={slug}&embed=1")
+
+
+@when(r"I open the cohort preview for day (\d+)")
+def ts_open_preview_cohort(context, day):
+    page = _page(context)
+    page.route("**/api/generate-curriculum/**", lambda route: route.abort())
+    _goto(context, f"/preview/day/{day}?embed=1")
+
+
+@then(r'the preview should show "([^"]+)"')
+def ts_preview_shows(context, text):
+    page = _page(context)
+    body = page.inner_text("body")
+    assert text in body, f"'{text}' not found on preview page"
+
+
+@then(r"the preview back link should point to (/[^ ]+)")
+def ts_preview_back_href(context, expected):
+    page = _page(context)
+    link = page.locator("a.btn")
+    assert link.count() > 0, "no 'Back to Day' link on preview page"
+    href = link.get_attribute("href")
+    assert href == expected, f"back link href={href} != expected {expected}"
+
+
+@when(r"I click the preview back link")
+def ts_click_preview_back(context):
+    page = _page(context)
+    link = page.locator("a.btn")
+    assert link.count() > 0, "no 'Back to Day' link on preview page"
+    with page.expect_navigation(wait_until="domcontentloaded", timeout=20000):
+        link.click()
+    page.wait_for_timeout(800)
+
+
+@then(r"I should be on (/[^ ]+)")
+def ts_on_url(context, path):
+    page = _page(context)
+    u = urlparse(page.url)
+    actual = u.path + (("?" + u.query) if u.query else "")
+    assert actual == path, f"expected to be on {path}, at {actual}"
+
+
 # ─── restore default matcher so other step modules keep working ─────────────
 use_step_matcher("parse")

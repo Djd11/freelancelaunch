@@ -112,11 +112,16 @@ def day_preview(day_number):
         # Curriculum not ready yet — return a simple HTML message (NOT a redirect
         # to the day page, which would load the full page inside the iframe and
         # create a nested/infinite display).
+        # Preserve the ?topic= scope in the back link so a topic-scoped preview
+        # never bounces the user back to their cohort's (possibly different) topic.
+        back_href = f"/dashboard/day/{day_number}"
+        if topic_param:
+            back_href += f"?topic={topic_param}"
         return Response("""<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Preview</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0B0F19;color:#94a3b8;font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px}.msg{max-width:360px}.msg h2{color:#e2e8f0;font-size:18px;margin-bottom:8px}.msg p{font-size:14px;line-height:1.6}.btn{margin-top:16px;display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}</style>
-</head><body><div class="msg"><h2>⏳ Preview not ready yet</h2><p>The curriculum is still being generated. This preview will be available once the lesson content is prepared.</p><a class="btn" href="/dashboard/day/%d">Back to Day %d</a></div></body></html>""" % (day_number, day_number), mimetype="text/html")
+</head><body><div class="msg"><h2>⏳ Preview not ready yet</h2><p>The curriculum is still being generated. This preview will be available once the lesson content is prepared.</p><a class="btn" href="%s">Back to Day %d</a></div></body></html>""" % (back_href, day_number), mimetype="text/html")
 
     # Build voiceover script
     from services.preview_generator import (
