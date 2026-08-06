@@ -26,18 +26,61 @@
     </div>
     {% endif %}
 
-    <!-- HEADER -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight">{{ active_topic_name or cohort.get('name', 'Your Cohort') }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Day {{ current_day }} of {{ cohort.get('max_days', 30) }}</p>
+    <!-- ═══ HORIZONTAL TOPIC TABS — one per topic, each showing its stage ═══ -->
+    <div class="mb-8">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Courses</p>
+        <div class="flex gap-2.5 overflow-x-auto pb-2 -mx-1 px-1">
+            {% for t in topics %}
+            <a href="{{ url_for('dashboard.home', topic=t.slug) }}"
+               class="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 transition whitespace-nowrap
+                      {% if t.slug == active_topic_slug %}bg-[#0f172a] text-white border-[#0f172a] shadow-lg shadow-[#0f172a]/10
+                      {% else %}bg-white border-[#f1f5f9] text-gray-600 hover:border-gray-300 hover:shadow-sm{% endif %}">
+                <span class="text-lg leading-none">{{ t.icon }}</span>
+                <span class="text-sm font-semibold">{{ t.name }}</span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-16 h-1.5 rounded-full overflow-hidden {% if t.slug == active_topic_slug %}bg-white/20{% else %}bg-gray-100{% endif %}">
+                        <span class="block h-full rounded-full {% if t.slug == active_topic_slug %}bg-white{% else %}bg-indigo-500{% endif %}" style="width: {{ t.pct }}%"></span>
+                    </span>
+                    <span class="text-xs font-bold {% if t.slug == active_topic_slug %}text-white/70{% else %}text-gray-400{% endif %}">{{ t.days_completed }}/{{ t.max_days }}</span>
+                </span>
+            </a>
+            {% endfor %}
         </div>
-        <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-500">
-                <strong class="text-[#0f172a] font-semibold">{{ total_done }}/{{ cohort.get('max_days', 30) }}</strong> days completed
-            </span>
-            <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div class="h-full gradient-primary rounded-full transition-all duration-500" style="width: {{ (total_done / cohort.get('max_days', 30)) * 100 }}%"></div>
+    </div>
+
+    <!-- ═══ ACTIVE TOPIC — STAGE CARD ═══ -->
+    <div class="card p-6 md:p-8 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style="background: {{ active_topic.color }}14">
+                {{ active_topic.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h1 class="text-2xl font-bold tracking-tight">{{ active_topic_name or cohort.get('name', 'Your Course') }}</h1>
+                    {% if active_topic.status == 'completed' %}
+                    <span class="badge bg-emerald-50 text-emerald-700">🎉 Completed</span>
+                    {% elif active_topic.status == 'not_started' %}
+                    <span class="badge bg-amber-50 text-amber-700">Not started yet</span>
+                    {% else %}
+                    <span class="badge bg-indigo-50 text-indigo-700">In progress</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-500 mt-1">
+                    Day {{ current_day }} of {{ max_days }} · {{ total_done }}/{{ max_days }} days completed
+                    {% if active_topic.tagline %} · {{ active_topic.tagline }}{% endif %}
+                </p>
+            </div>
+            <div class="flex flex-col items-start md:items-end gap-2.5">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <span class="text-sm font-semibold text-gray-700 whitespace-nowrap">{{ total_done }}/{{ max_days }} days</span>
+                    <div class="w-40 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full gradient-primary rounded-full transition-all duration-500" style="width: {{ active_topic.pct }}%"></div>
+                    </div>
+                </div>
+                <a href="{{ url_for('dashboard.day_detail', day_number=current_day, topic=active_topic_slug) }}"
+                   class="btn-primary px-5 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2">
+                    {% if active_topic.status == 'not_started' %}▶ Start Day {{ current_day }}{% elif active_topic.status == 'completed' %}📚 Review Course{% else %}▶ Continue Day {{ current_day }}{% endif %}
+                </a>
             </div>
         </div>
     </div>
@@ -49,7 +92,7 @@
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h2 class="font-bold text-lg">Day {{ current_day }}</h2>
-                        <p class="text-sm text-gray-500">{% if curriculum_day %}{{ curriculum_day.get('title', 'Today\'s Lesson') }}{% else %}Getting Started{% endif %}</p>
+                        <p class="text-sm text-gray-500">{% if curriculum_day %}{{ curriculum_day.get('title', 'Today\'s Lesson') }}{% else %}Day {{ current_day }} — not started yet{% endif %}</p>
                     </div>
                     {% if today_video and today_video.get('production_status') == 'ready' %}
                     <span class="badge bg-emerald-50 text-emerald-700">Ready</span>
@@ -73,11 +116,12 @@
                 </div>
                 {% else %}
                 <div class="aspect-video bg-gray-50 rounded-xl flex items-center justify-center mb-6 border border-gray-100">
-                    <div class="text-center">
-                        <div class="text-4xl mb-3">📖</div>
-                        <p class="text-gray-900 font-semibold">Ready to start learning?</p>
-                        <p class="text-xs text-gray-400 mt-1 mb-4">Your first video will appear here when your cohort starts.</p>
-                        <a href="{{ url_for('topics.explore') }}" class="btn-primary px-5 py-2 text-sm inline-block">Browse Topics →</a>
+                    <div class="text-center max-w-md mx-auto px-6">
+                        <div class="text-4xl mb-3">{{ active_topic.icon }}</div>
+                        <p class="text-gray-900 font-semibold">Ready to start {{ active_topic_name }}?</p>
+                        <p class="text-xs text-gray-400 mt-1 mb-4">Your Day {{ current_day }} lesson is generated the moment you start.</p>
+                        <a href="{{ url_for('dashboard.day_detail', day_number=current_day, topic=active_topic_slug) }}"
+                           class="btn-primary px-6 py-3 text-sm inline-block">▶ Start Day {{ current_day }}</a>
                     </div>
                 </div>
                 {% endif %}

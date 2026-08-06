@@ -71,7 +71,7 @@
                         <p class="text-emerald-700 font-medium">You're enrolled in {{ topic.name }}</p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{{ url_for('dashboard.home') }}" class="btn-primary px-4 py-2 text-sm">Go to Dashboard →</a>
+                        <a href="{{ url_for('dashboard.home', topic=topic.slug) }}" class="btn-primary px-4 py-2 text-sm">Go to Dashboard →</a>
                         {% if curriculum_days %}
                         <a href="#curriculum-section" class="btn-ghost px-4 py-2 text-sm">📖 View My Curriculum</a>
                         {% endif %}
