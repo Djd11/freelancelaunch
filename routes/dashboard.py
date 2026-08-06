@@ -21,29 +21,100 @@ def home():
     # Get user profile
     profile_resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
     profile = profile_resp.data[0] if profile_resp.data else {}
-    
+
     cohort_id = profile.get("cohort_id")
     if not cohort_id:
         # No cohort assigned — redirect to topic selection
         return redirect(url_for("topics.explore"))
-    
+
     # Get cohort info
-    cohort_resp = sb.table("cohorts").select("*").eq("id", cohort_id).limit(1).execute()
+    cohort_resp = sb.table("cohorts").select("*,topics(slug,name)").eq("id", cohort_id).limit(1).execute()
     cohort = cohort_resp.data[0] if cohort_resp.data else None
     if not cohort:
         flash("Cohort not found", "error")
         return redirect(url_for("topics.explore"))
-    
+
+    # ── Resolve the active topic: prefer selected_topic_id over cohort topic ──
+    selected_topic_id = profile.get("selected_topic_id")
+    active_topic_slug = None
+    active_topic_name = None
+
+    if selected_topic_id:
+        try:
+            tdb = sb.table("topics").select("id,name,slug").eq("id", selected_topic_id).limit(1).execute()
+            if tdb.data:
+                active_topic_slug = tdb.data[0].get("slug")
+                active_topic_name = tdb.data[0].get("name")
+        except Exception:
+            pass
+
+    # Fallback to cohort's topic
+    if not active_topic_slug and cohort.get("topics"):
+        active_topic_slug = cohort["topics"].get("slug")
+        active_topic_name = cohort["topics"].get("name")
+    elif not active_topic_slug and cohort.get("topic_id"):
+        try:
+            tdb = sb.table("topics").select("slug,name").eq("id", cohort["topic_id"]).limit(1).execute()
+            if tdb.data:
+                active_topic_slug = tdb.data[0].get("slug")
+                active_topic_name = tdb.data[0].get("name")
+        except Exception:
+            pass
+
     current_day = cohort.get("current_day", 0)
-    
-    # Get today's video (cohort_videos for current day)
-    video_resp = sb.table("cohort_videos").select("*") \
-        .eq("cohort_id", cohort_id) \
-        .eq("day_number", current_day) \
-        .limit(1) \
-        .execute()
-    today_video = video_resp.data[0] if video_resp.data else None
-    
+
+    # ── Get curriculum day from the active topic (not just the cohort) ─────
+    curriculum_day = None
+    today_video = None
+
+    # Try to find curriculum from the active topic first
+    if active_topic_slug:
+        try:
+            tdb = sb.table("topics").select("id").eq("slug", active_topic_slug).limit(1).execute()
+            if tdb.data:
+                cur = sb.table("curricula").select("id").eq("topic_id", tdb.data[0]["id"]).limit(1).execute()
+                if cur.data:
+                    cd_resp = sb.table("curriculum_days").select("*") \
+                        .eq("curriculum_id", cur.data[0]["id"]) \
+                        .eq("day_number", current_day) \
+                        .limit(1) \
+                        .execute()
+                    curriculum_day = cd_resp.data[0] if cd_resp.data else None
+        except Exception as e:
+            logger.warning(f"Dashboard curriculum lookup error: {e}")
+
+    # Also try to find a matching cohort_video for this topic
+    if active_topic_slug:
+        try:
+            # Find cohort for this topic
+            topic_cohort = sb.table("cohorts").select("id") \
+                .eq("topic_id", tdb.data[0]["id"] if tdb and tdb.data else "").limit(1).execute()
+            if topic_cohort.data:
+                vid_resp = sb.table("cohort_videos").select("*") \
+                    .eq("cohort_id", topic_cohort.data[0]["id"]) \
+                    .eq("day_number", current_day) \
+                    .limit(1).execute()
+                today_video = vid_resp.data[0] if vid_resp.data else None
+        except Exception:
+            pass
+
+    # Fallback: use cohort's video if no topic-specific video found
+    if not today_video:
+        video_resp = sb.table("cohort_videos").select("*") \
+            .eq("cohort_id", cohort_id) \
+            .eq("day_number", current_day) \
+            .limit(1) \
+            .execute()
+        today_video = video_resp.data[0] if video_resp.data else None
+
+    # Fallback: use cohort's curriculum if no topic-specific curriculum found
+    if not curriculum_day and today_video and today_video.get("curriculum_day_id"):
+        cd_resp = sb.table("curriculum_days").select("*") \
+            .eq("id", today_video["curriculum_day_id"]) \
+            .limit(1) \
+            .execute()
+        curriculum_day = cd_resp.data[0] if cd_resp.data else None
+
     # Get user's progress for today
     progress = None
     if today_video:
@@ -53,16 +124,7 @@ def home():
             .limit(1) \
             .execute()
         progress = prog_resp.data[0] if prog_resp.data else None
-    
-    # Get curriculum day info
-    curriculum_day = None
-    if today_video and today_video.get("curriculum_day_id"):
-        cd_resp = sb.table("curriculum_days").select("*") \
-            .eq("id", today_video["curriculum_day_id"]) \
-            .limit(1) \
-            .execute()
-        curriculum_day = cd_resp.data[0] if cd_resp.data else None
-    
+
     # Get overall progress stats
     days_completed = sb.table("user_progress").select("id", count="exact") \
         .eq("user_id", user_id) \
@@ -138,7 +200,9 @@ def home():
         confidence=confidence,
         milestone=milestone,
         welcome_back=welcome_back,
-        day_celebrated=day_celebrated
+        day_celebrated=day_celebrated,
+        active_topic_slug=active_topic_slug,
+        active_topic_name=active_topic_name,
     )
 
 

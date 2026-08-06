@@ -29,7 +29,7 @@
     <!-- HEADER -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight">{{ cohort.get('name', 'Your Cohort') }}</h1>
+            <h1 class="text-2xl font-bold tracking-tight">{{ active_topic_name or cohort.get('name', 'Your Cohort') }}</h1>
             <p class="text-sm text-gray-500 mt-1">Day {{ current_day }} of {{ cohort.get('max_days', 30) }}</p>
         </div>
         <div class="flex items-center gap-4">
@@ -85,7 +85,7 @@
                 <!-- START LESSON CTA -->
                 {% if today_video and today_video.get('production_status') == 'ready' %}
                 <div class="mb-6">
-                    <a href="{{ url_for('dashboard.day_detail', day_number=current_day) }}" 
+                    <a href="{{ url_for('dashboard.day_detail', day_number=current_day) }}{% if active_topic_slug %}?topic={{ active_topic_slug }}{% endif %}"
                        class="btn-primary w-full py-3.5 rounded-xl font-bold text-base text-center block">
                         ▶ Start Today's Lesson
                     </a>
@@ -260,7 +260,7 @@
                 <div class="grid grid-cols-7 gap-1.5">
                     {% set week_start = [current_day, 1]|max %}
                     {% for day in range(week_start, week_start + 7) %}
-                    <a href="{{ url_for('dashboard.day_detail', day_number=day) }}" 
+                    <a href="{{ url_for('dashboard.day_detail', day_number=day) }}{% if active_topic_slug %}?topic={{ active_topic_slug }}{% endif %}"
                        class="aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition
                         {% if day < current_day %}bg-indigo-600 text-white hover:bg-indigo-700
                         {% elif day == current_day %}ring-2 ring-indigo-400 bg-indigo-50 text-indigo-600 hover:bg-indigo-100
