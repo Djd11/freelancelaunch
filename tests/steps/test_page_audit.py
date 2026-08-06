@@ -2905,7 +2905,8 @@ def cq_titles_contain_day_number(context):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PREVIEW ANIMATION — PA step definitions
+# ═══════════════════════════════════════════════════════════════════════════════
+# PREVIEW ANIMATION — PA step definitions (single-panel kinetic text)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @when(r"I open the preview for day (\d+) of ([a-z0-9-]+) directly")
@@ -2940,131 +2941,86 @@ def pa_play_audio_percent(context, pct):
     page.wait_for_timeout(1500)  # let syncWords run
 
 
-@then(r"I should see (\d+) step boxes in the SVG diagram")
-def pa_step_box_count(context, count):
-    count = int(count)
+@then(r"I should see a single panel layout")
+def pa_single_panel_layout(context):
     page = _page(context)
-    actual = page.locator(".step-box").count()
-    assert actual == count, f"Expected {count} step boxes, found {actual}"
+    count = page.locator(".single-panel").count()
+    assert count == 1, f"Expected 1 .single-panel, found {count}"
 
 
-@then(r"each step box should have a CSS transition or animation property")
-def pa_step_box_has_animation(context):
+@then(r"the panel should contain kinetic word spans")
+def pa_has_kinetic_words(context):
     page = _page(context)
-    for i in range(3):
-        # Check computed style for transition property
-        has_transition = page.evaluate(f"""() => {{
-            const box = document.querySelector('.step-box.step-{i}');
-            if (!box) return false;
-            const s = getComputedStyle(box);
-            return s.transitionProperty !== 'all 0s ease 0s' && s.transitionProperty !== '';
-        }}""")
-        has_animation = page.evaluate(f"""() => {{
-            const box = document.querySelector('.step-box.step-{i}');
-            if (!box) return false;
-            const s = getComputedStyle(box);
-            return s.animationName !== 'none' && s.animationName !== '';
-        }}""")
-        assert has_transition or has_animation, \
-            f"step-{i} has no transition or animation"
+    count = page.locator(".word").count()
+    assert count > 10, f"Expected many .word spans, found {count}"
 
 
-@then(r"the step-0 box should have the \"active\" class")
-def pa_step0_active(context):
+@then(r"there should be no SVG diagram step boxes")
+def pa_no_step_boxes(context):
     page = _page(context)
-    cls = page.locator(".step-box.step-0").get_attribute("class")
-    assert "active" in cls, f"step-0 class: {cls}"
+    count = page.locator(".step-box").count()
+    assert count == 0, f"Expected 0 .step-box, found {count}"
 
 
-@then(r"the other step boxes should not have the \"active\" class yet")
-def pa_others_not_active(context):
+@then(r"some kinetic words should be visible")
+def pa_some_words_visible(context):
     page = _page(context)
-    for i in [1, 2]:
-        cls = page.locator(f".step-box.step-{i}").get_attribute("class")
-        assert "active" not in cls, f"step-{i} unexpectedly active: {cls}"
+    visible = page.locator(".word.on").count()
+    assert visible > 0, f"No words became visible after 3s of playback"
 
 
-@then(r"step-(\d+) box should have the \"active\" class")
-def pa_step_n_active(context, idx):
-    idx = int(idx)
+@then(r"some kinetic words should still be hidden")
+def pa_some_words_hidden(context):
     page = _page(context)
-    cls = page.locator(f".step-box.step-{idx}").get_attribute("class")
-    assert "active" in cls, f"step-{idx} should be active: {cls}"
+    total = page.locator(".word").count()
+    visible = page.locator(".word.on").count()
+    assert visible < total, f"All {total} words visible — expected some still hidden"
 
 
-@then(r"step-(\d+) and step-(\d+) boxes should not have the \"active\" class")
-def pa_steps_not_active(context, idx1, idx2):
-    idx1, idx2 = int(idx1), int(idx2)
+@then(r"the first half of kinetic words should be visible")
+def pa_first_half_visible(context):
     page = _page(context)
-    for idx in [idx1, idx2]:
-        cls = page.locator(f".step-box.step-{idx}").get_attribute("class")
-        assert "active" not in cls, f"step-{idx} should not be active: {cls}"
+    total = page.locator(".word").count()
+    visible = page.locator(".word.on").count()
+    assert visible >= total * 0.4, f"Only {visible}/{total} words visible at 50% — expected >=40%"
 
 
-@then(r"section dot (\d+) should be active")
-def pa_section_dot_active(context, idx):
-    idx = int(idx)
+@then(r"the last half of kinetic words should still be hidden")
+def pa_last_half_hidden(context):
     page = _page(context)
-    cls = page.locator(f"#sp{idx}").get_attribute("class")
-    assert "active" in cls, f"sp{idx} should be active: {cls}"
+    total = page.locator(".word").count()
+    visible = page.locator(".word.on").count()
+    assert visible < total, f"All {total} words visible — expected some still hidden at 50%"
 
 
-@then(r"section dots? (\d+) and (\d+) should not be active")
-def pa_section_dots_not_active(context, idx1, idx2):
-    idx1, idx2 = int(idx1), int(idx2)
+@then(r"most kinetic words should be visible")
+def pa_most_words_visible(context):
     page = _page(context)
-    for idx in [idx1, idx2]:
-        cls = page.locator(f"#sp{idx}").get_attribute("class")
-        assert "active" not in cls, f"sp{idx} should not be active: {cls}"
+    total = page.locator(".word").count()
+    visible = page.locator(".word.on").count()
+    assert visible >= total * 0.8, f"Only {visible}/{total} words visible at 90% — expected >=80%"
 
 
-@then(r"the step box labels should not contain \"Day 1 concept\"")
-def pa_no_generic_label(context):
+@then(r"the preview title should not be empty")
+def pa_title_not_empty(context):
     page = _page(context)
-    # Use JS textContent (SVG elements don't have inner_text in Playwright)
-    svg_text = page.evaluate("document.querySelector('svg').textContent")
-    assert "Day 1 concept" not in svg_text, \
-        f"Found generic label 'Day 1 concept' in SVG"
+    title = page.locator(".panel-heading h1").first.inner_text()
+    assert len(title.strip()) > 0, "Preview title is empty"
 
 
-@then(r"the step box labels should contain meaningful text")
-def pa_meaningful_labels(context):
+@then(r"the preview title should contain meaningful text")
+def pa_title_meaningful(context):
     page = _page(context)
-    # Check sublabels via JS textContent
-    for i in range(3):
-        combined = page.evaluate(f"""() => {{
-            const g = document.querySelector('.step-box.step-{i}');
-            return g ? g.textContent.toLowerCase() : '';
-        }}""")
-        # Should NOT be just "Day X concept", "Hands-on exercise", "Real client work"
-        assert "day 1 concept" not in combined or len(combined) > 30, \
-            f"step-{i} has generic label: {combined[:60]}"
-
-
-@then(r'the SVG viewBox should be "([^"]+)"')
-def pa_svg_viewbox(context, expected):
-    page = _page(context)
-    vb = page.locator("svg").first.get_attribute("viewBox")
-    assert vb == expected, f"SVG viewBox: {vb} != {expected}"
-
-
-@then(r"all step boxes should have x-coordinates less than 780")
-def pa_step_boxes_in_bounds(context):
-    page = _page(context)
-    for i in range(3):
-        rects = page.locator(f".step-box.step-{i} rect").all()
-        if rects:
-            x = float(rects[0].get_attribute("x"))
-            w = float(rects[0].get_attribute("width"))
-            assert x + w <= 780, f"step-{i} overflows: x={x} w={w} total={x+w}"
+    title = page.locator(".panel-heading h1").first.inner_text().lower()
+    # Should NOT be generic like "Lesson 1" or "Day 1"
+    assert "lesson" not in title or len(title) > 12, f"Title too generic: {title}"
 
 
 @then(r"the play button should show pause icon")
 def pa_play_shows_pause(context):
     page = _page(context)
     btn_text = page.locator("#playBtn").inner_text()
-    assert "⏸" in btn_text or "pause" in btn_text.lower() or "❚❚" in btn_text, \
-        f"Play button text: {btn_text}"
+    assert "\u23f8" in btn_text or "pause" in btn_text.lower() or "\u23f8" in btn_text,         f"Play button text: {btn_text}"
 
 
 @when(r"I click the play button.*")
@@ -3076,11 +3032,23 @@ def pa_click_play(context):
 def pa_play_shows_play(context):
     page = _page(context)
     btn_text = page.locator("#playBtn").inner_text()
-    assert "▶" in btn_text or "play" in btn_text.lower() or "▶" in btn_text, \
-        f"Play button text: {btn_text}"
+    assert "\u25b6" in btn_text or "play" in btn_text.lower() or "\u25b6" in btn_text,         f"Play button text: {btn_text}"
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
+@then(r"there should be no left diagram panel")
+def pa_no_left_panel(context):
+    page = _page(context)
+    count = page.locator(".panel.left").count()
+    assert count == 0, f"Expected 0 .panel.left, found {count}"
+
+
+@then(r"there should be no section progress dots")
+def pa_no_section_dots(context):
+    page = _page(context)
+    count = page.locator(".section-progress").count()
+    assert count == 0, f"Expected 0 .section-progress, found {count}"
+
+
 # CURRICULUM QUALITY GATE — QG step definitions
 # ═══════════════════════════════════════════════════════════════════════════════
 

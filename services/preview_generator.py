@@ -303,15 +303,12 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
                        color: str = "#6366f1", keywords: list = None,
                        audio_duration: float = 30.0, embed: bool = False,
                        description: str = "", practice_task: str = "", apply_task: str = "") -> str:
-    """Build the complete TwoPanel HTML preview page.
+    """Build a SINGLE-PANEL HTML preview page — kinetic text + voice over only.
 
     embed=True: strips the topbar chrome so the page can sit inside the day-page
     iframe as a self-contained player (no page-within-a-page look).
     """
     keywords = list(keywords or []) or extract_keywords(script)
-    diagram_svg = build_svg_diagram(day_number, title, keywords, color,
-                                    description=description, practice_task=practice_task,
-                                    apply_task=apply_task)
     words = script.split()
     word_count = len(words)
 
@@ -327,9 +324,9 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
     if not embed:
         topbar_html = f"""
   <div class="topbar">
-    <a class="back" href="/dashboard/day/{day_number}">\u2190 Back to Day {day_number}</a>
-    <div class="title">\u25b6 Day {day_number} Video Preview</div>
-    <div class="chip">HTML Preview \u00b7 No render needed</div>
+    <a class="back" href="/dashboard/day/{day_number}">← Back to Day {day_number}</a>
+    <div class="title">▶ Day {day_number} Video Preview</div>
+    <div class="chip">HTML Preview · No render needed</div>
   </div>"""
 
     body_class = "embed" if embed else ""
@@ -338,7 +335,7 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day {day_number}: {title} \u2014 Preview</title>
+<title>Day {day_number}: {title} — Preview</title>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   html, body {{ height: 100%; }}
@@ -353,44 +350,30 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
   .topbar .back {{ color: #94a3b8; text-decoration: none; font-size: 13px; }}
   .topbar .back:hover {{ color: #fff; }}
 
-  .panels {{ display: flex; flex: 1; gap: 20px; padding: 20px; min-height: 0; }}
-  .panel {{ background: #111827; border: 1px solid rgba(99,102,241,0.3); border-radius: 16px;
-           box-shadow: 0 0 24px rgba(99,102,241,0.08); position: relative; overflow: hidden; }}
-  .left {{ flex: 0 0 42%; display: flex; flex-direction: column; padding: 16px; }}
-  .right {{ flex: 1; display: flex; flex-direction: column; padding: 28px 32px; overflow: hidden; }}
+  /* ── SINGLE PANEL: kinetic text centered, fills the screen ── */
+  .single-panel {{ flex: 1; display: flex; flex-direction: column; padding: 32px 48px 16px;
+                   min-height: 0; position: relative; }}
 
-  .diagram-wrap {{ display: flex; flex-direction: column; align-items: stretch; padding: 0 0 8px 0; }}
-  .diagram-wrap svg {{ width: 100%; height: auto; max-height: 100%; flex-shrink: 0; }}
+  .panel-heading {{ text-align: center; margin-bottom: 18px; flex-shrink: 0; }}
+  .panel-heading h1 {{ font-size: 26px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.02em;
+                       margin-bottom: 4px; }}
+  .panel-heading .caption {{ font-size: 13px; color: #94a3b8; }}
 
-  .section-progress {{ display: flex; align-items: center; justify-content: center; gap: 14px;
-                     padding: 14px 0; flex-shrink: 0; }}
-  .section-progress .sp-dot {{ width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15);
-                              transition: background 0.4s ease, box-shadow 0.4s ease; }}
-  .section-progress .sp-dot.active {{ background: {color}; box-shadow: 0 0 12px {color}; }}
-  .section-progress .sp-line {{ flex: 1; height: 2px; background: rgba(255,255,255,0.08); }}
-  .section-progress .sp-label {{ font-size: 10px; color: rgba(255,255,255,0.35); text-align: center; margin-top: 2px; }}
-
-  .stat-bars {{ padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }}
-  .bar-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }}
-  .bar-label {{ font-size: 11px; color: #94a3b8; width: 60px; text-align: right; }}
-  .bar-track {{ flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }}
-  .bar-fill {{ height: 100%; background: {color}; border-radius: 4px; width: 0; transition: width 1.2s ease; }}
-
-  .right h1 {{ font-size: 22px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.02em; margin-bottom: 4px; }}
-  .right .caption {{ font-size: 13px; color: #94a3b8; margin-bottom: 12px; }}
-  .right .divider {{ height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 12px; }}
-  .kinetic {{ font-size: 18px; line-height: 1.65; color: #64748b; overflow-y: auto; flex: 1; min-height: 0; }}
-  .word {{ opacity: 0; transition: opacity 0.25s ease, color 0.25s ease; }}
+  .kinetic {{ flex: 1; min-height: 0; overflow-y: auto; display: flex; align-items: center;
+              justify-content: center; padding: 20px 0; }}
+  .kinetic-inner {{ font-size: 30px; line-height: 1.8; color: #64748b; text-align: center;
+                    max-width: 1500px; font-weight: 700; }}
+  .word {{ opacity: 0; transition: opacity 0.3s ease, color 0.3s ease, transform 0.3s ease; }}
   .word.on {{ opacity: 1; color: #e2e8f0; }}
-  .word.kw.on {{ color: {color}; font-weight: 700; }}
+  .word.kw.on {{ color: {color}; }}
+  .word.active {{ color: {color}; text-shadow: 0 0 24px {color}66; }}
+
   .note {{ font-size: 11px; color: rgba(148,163,184,0.4); text-align: center; margin-top: 8px; flex-shrink: 0; }}
 
-  body.embed .panels {{ gap: 12px; padding: 12px; }}
-  body.embed .left {{ padding: 10px; }}
-  body.embed .right {{ padding: 14px 18px; }}
+  body.embed .single-panel {{ padding: 20px 24px 12px; }}
+  body.embed .kinetic-inner {{ font-size: 24px; }}
   body.embed .controls {{ padding: 8px 14px; }}
   body.embed .note {{ display: none; }}
-  body.embed .scene-chip {{ display: none; }}
 
   .controls {{ padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.08);
               background: rgba(11,15,25,0.95); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }}
@@ -402,46 +385,24 @@ def build_preview_html(day_number: int, title: str, script: str, audio_url: str,
   .progress-track {{ flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; cursor: pointer; }}
   .progress-fill {{ height: 100%; background: {color}; border-radius: 3px; width: 0%; transition: width 0.2s linear; }}
   .time {{ font-size: 12px; color: #94a3b8; font-variant-numeric: tabular-nums; min-width: 90px; text-align: center; }}
-
-  .scene-chip {{ position: absolute; top: 12px; left: 12px; font-size: 11px; color: #94a3b8;
-               background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 999px; z-index: 1; }}
 </style>
 </head>
 <body class="{body_class}">
   {topbar_html}
 
-  <div class="panels">
-    <div class="panel left">
-      <div class="scene-chip">01 / 03 \u00b7 {title[:26]}</div>
-      <div class="diagram-wrap">{diagram_svg}</div>
-      <div class="section-progress">
-        <div>
-          <div class="sp-dot sp-dot-0" id="sp0"></div>
-          <div class="sp-label">Learn</div>
-        </div>
-        <div class="sp-line"></div>
-        <div>
-          <div class="sp-dot sp-dot-1" id="sp1"></div>
-          <div class="sp-label">Practice</div>
-        </div>
-        <div class="sp-line"></div>
-        <div>
-          <div class="sp-dot sp-dot-2" id="sp2"></div>
-          <div class="sp-label">Apply</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel right">
+  <div class="single-panel">
+    <div class="panel-heading">
       <h1>{title}</h1>
-      <div class="caption">Day {day_number} \u00b7 Voiceover lesson</div>
-      <div class="divider"></div>
-      <div class="kinetic" id="kinetic">{words_html}</div>
-      <div class="note">Word-by-word reveal synced to voiceover \u00b7 {word_count} words</div>
+      <div class="caption">Day {day_number} · Voiceover lesson</div>
     </div>
+    <div class="kinetic" id="kinetic">
+      <div class="kinetic-inner">{words_html}</div>
+    </div>
+    <div class="note">Word-by-word reveal synced to voiceover · {word_count} words</div>
   </div>
 
   <div class="controls">
-    <button class="play-btn" id="playBtn">\u25b6</button>
+    <button class="play-btn" id="playBtn">▶</button>
     <div class="progress-track" id="progressTrack">
       <div class="progress-fill" id="progressFill"></div>
     </div>
@@ -472,55 +433,16 @@ function syncWords() {{
   }}
   currentWord = Math.max(currentWord, idx);
   const activeEl = document.getElementById('w' + currentWord);
-  if (activeEl) activeEl.scrollIntoView({{ block: 'center', behavior: 'smooth' }});
-
-  // ── Step boxes: active during their 1/3, dim after ──
-  document.querySelectorAll('.step-box').forEach((box, i) => {{
-    const start = i / 3, end = (i + 1) / 3;
-    box.classList.toggle('active', progress >= start && progress <= end);
-  }});
-
-  // ── Progress bars inside step boxes ──
-  for (let i = 0; i < 3; i++) {{
-    const start = i / 3, end = (i + 1) / 3;
-    const bar = document.getElementById('spbar' + i);
-    if (bar) {{
-      if (progress < start) {{
-        bar.setAttribute('width', '0');
-      }} else if (progress >= end) {{
-        bar.setAttribute('width', '154');
-      }} else {{
-        const pct = (progress - start) / (end - start);
-        bar.setAttribute('width', String(pct * 154));
-      }}
-    }}
-  }}
-
-  // ── Section progress dots + SVG timeline dots ──
-  for (let i = 0; i < 3; i++) {{
-    const active = progress >= i / 3;
-    const sp = document.getElementById('sp' + i);
-    if (sp) sp.classList.toggle('active', active);
-    const sd = document.querySelector('.step-dot-' + i);
-    if (sd) sd.classList.toggle('active', active);
+  if (activeEl) {{
+    activeEl.classList.add('active');
+    activeEl.scrollIntoView({{ block: 'center', behavior: 'smooth' }});
   }}
 }}
 
 audio.addEventListener('timeupdate', syncWords);
-audio.addEventListener('play', () => {{ playBtn.textContent = '\u23f8'; syncWords(); }});
-audio.addEventListener('pause', () => {{ playBtn.textContent = '\u25b6'; }});
-audio.addEventListener('ended', () => {{
-  playBtn.textContent = '\u25b6';
-  document.querySelectorAll('.step-box').forEach(b => b.classList.remove('active'));
-  for (let i = 0; i < 3; i++) {{
-    const sp = document.getElementById('sp' + i);
-    if (sp) sp.classList.remove('active');
-    const sd = document.querySelector('.step-dot-' + i);
-    if (sd) sd.classList.remove('active');
-    const bar = document.getElementById('spbar' + i);
-    if (bar) bar.setAttribute('width', '0');
-  }}
-}});
+audio.addEventListener('play', () => {{ playBtn.textContent = '⏸'; syncWords(); }});
+audio.addEventListener('pause', () => {{ playBtn.textContent = '▶'; }});
+audio.addEventListener('ended', () => {{ playBtn.textContent = '▶'; }});
 
 playBtn.addEventListener('click', () => {{ if (audio.paused) audio.play(); else audio.pause(); }});
 
@@ -542,4 +464,3 @@ setInterval(() => {{
 </body>
 </html>"""
     return html
-
