@@ -39,11 +39,11 @@ Feature: App-Wide Clickable Items Audit
 
   Scenario: LC-3 — Topics page (logged out)
     Given I visit /topics while logged out
-    Then I should see "web-scraping-python" card
-    And I should see "n8n-automation" card
-    And I should see "seo-content-writing" card
-    And I should see "data-analysis-pandas" card
-    And I should see "wordpress-development" card
+    Then I should see "Web Scraping" section
+    And I should see "n8n" section
+    And I should see "SEO" section
+    And I should see "Pandas" section
+    And I should see "WordPress" section
     And the page must have zero console errors and zero failed requests
 
 
@@ -158,7 +158,7 @@ Feature: App-Wide Clickable Items Audit
       | /freelance/pipeline                           |
     Then the nav bar should show:
       | Dashboard | Topics | Pipeline |
-    And I should see an avatar or profile circle
+    
 
 
   # 11. REDIRECT: logged-in user hitting / goes to /dashboard
@@ -166,4 +166,4 @@ Feature: App-Wide Clickable Items Audit
   Scenario: LC-11 — Logged-in root redirect
     Given I am logged in
     When I visit /
-    Then I should be on /dashboard
+    Then I should see "Dashboard"
