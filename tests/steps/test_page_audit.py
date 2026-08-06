@@ -3215,3 +3215,12 @@ def qg_no_regen_button(context):
 
 # ─── restore default matcher so other step modules keep working ─────────────
 use_step_matcher("parse")
+
+
+# ─── restore default matcher ─────────────────────────────────────────────
+use_step_matcher("parse")
+
+
+
+# ─── restore default matcher so other step modules keep working ─────────────
+use_step_matcher("parse")
