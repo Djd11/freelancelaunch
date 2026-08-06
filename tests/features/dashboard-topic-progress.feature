@@ -15,7 +15,7 @@ Feature: Dashboard Topic Progress
 
   Scenario: DP-1 — Dashboard has a horizontal course-tab strip
     When I visit /dashboard/
-    Then I should see "Your Courses"
+    Then I should see "YOUR COURSES"
     And I should see "Web Scraping with Python"
 
   Scenario: DP-2 — The active course shows a real stage, never "Day 0"
