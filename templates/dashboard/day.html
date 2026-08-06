@@ -153,20 +153,20 @@
     
     {% else %}
     <!-- ═══ NORMAL LESSON VIEW ═══ -->
-    
+
     <!-- DAY COMPLETE CELEBRATION -->
     {% if progress and progress.get('video_watched') and progress.get('practice_completed') and progress.get('apply_completed') %}
     <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
         <p class="text-emerald-700 font-semibold">🎉 Day {{ day_number }} complete! Outstanding work.</p>
     </div>
     {% endif %}
-    
-    <div class="bg-white rounded-2xl border border-gray-200 p-6">
-        <h1 class="text-2xl font-bold mb-2">Day {{ day_number }}: {% if curriculum_day %}{{ curriculum_day.get('title', 'Lesson') }}{% else %}Lesson {{ day_number }}{% endif %}</h1>
-        
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
+        <h1 class="text-2xl md:text-3xl font-bold mb-2">Day {{ day_number }}: {% if curriculum_day %}{{ curriculum_day.get('title', 'Lesson') }}{% else %}Lesson {{ day_number }}{% endif %}</h1>
+
         <!-- VIDEO PREVIEW CTA -->
-        <div class="mt-4 mb-2">
-            <div class="flex items-center gap-3">
+        <div class="mt-6 mb-4">
+            <div class="flex items-center gap-3 flex-wrap">
                 <button onclick="togglePreview()" id="previewToggleBtn"
                         class="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-xl font-bold text-base">
                     ▶ Play Video Preview (HTML)
@@ -176,11 +176,11 @@
                     ▁ Minimize
                 </button>
             </div>
-            <p class="text-xs text-gray-400 mt-2">Animated TwoPanel lesson with voiceover — no MP4 render needed.</p>
+            <p class="text-xs text-gray-400 mt-2">Kinetic text synced to voiceover — no MP4 render needed.</p>
         </div>
 
         <!-- INLINE PREVIEW (expand/minimize/fullscreen) -->
-        <div id="previewContainer" class="hidden mt-4">
+        <div id="previewContainer" class="hidden mt-4 mb-6">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-semibold text-gray-700">▶ Video Preview</span>
                 <div class="flex items-center gap-2">
@@ -247,38 +247,120 @@
         {% endif %}
 
         {% if curriculum_day %}
-        <div class="mt-6 space-y-4">
-            <div>
-                <h3 class="font-semibold text-gray-700 mb-1">📖 Description</h3>
-                <p class="text-gray-600 whitespace-pre-line">{{ curriculum_day.get('description', '') }}</p>
+        <!-- ═══ LESSON CONTENT — HORIZONTAL TABS ═══ -->
+        <div class="mt-8 pt-6 border-t border-gray-100">
+            {% set desc = curriculum_day.get('description', '') | trim %}
+            {% set objectives = curriculum_day.get('learning_objectives', '') | trim %}
+            {% set practice = curriculum_day.get('practice_task', '') | trim %}
+            {% set apply = curriculum_day.get('apply_task', '') | trim %}
+
+            <!-- Tab bar -->
+            <div class="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6" id="lessonTabs">
+                <button onclick="switchTab('overview')" id="tab-overview"
+                        class="tab-btn flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-gray-900 shadow-sm">
+                    📖 Overview
+                </button>
+                {% if practice %}
+                <button onclick="switchTab('practice')" id="tab-practice"
+                        class="tab-btn flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700">
+                    🛠️ Practice
+                </button>
+                {% endif %}
+                {% if apply %}
+                <button onclick="switchTab('apply')" id="tab-apply"
+                        class="tab-btn flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700">
+                    🚀 Apply
+                </button>
+                {% endif %}
             </div>
-            
-            {% if curriculum_day.get('learning_objectives') %}
-            <div>
-                <h3 class="font-semibold text-gray-700 mb-1">🎯 Learning Objectives</h3>
-                <p class="text-gray-600 whitespace-pre-line">{{ curriculum_day['learning_objectives'] }}</p>
+
+            <!-- ── Overview Tab ── -->
+            <div id="panel-overview" class="tab-panel">
+                <div class="bg-white border border-gray-100 rounded-2xl p-6 md:p-8">
+                    {% if desc %}
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2.5 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </span>
+                            <h3 class="text-base font-bold text-gray-900">What You'll Learn</h3>
+                        </div>
+                        <div class="text-sm text-gray-600 leading-relaxed pl-[42px]">{{ desc }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if objectives and objectives != desc %}
+                    <div>
+                        <div class="flex items-center gap-2.5 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </span>
+                            <h3 class="text-base font-bold text-gray-900">Learning Objectives</h3>
+                        </div>
+                        <div class="text-sm text-gray-600 leading-relaxed pl-[42px]">{{ objectives }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ── Practice Tab ── -->
+            {% if practice %}
+            <div id="panel-practice" class="tab-panel hidden">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 md:p-8">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                        </span>
+                        <h3 class="text-base font-bold text-blue-900">Hands-on Practice</h3>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">~25 min</span>
+                    </div>
+                    <div class="pl-[42px]">{{ practice | md | safe }}</div>
+                </div>
             </div>
             {% endif %}
-            
-            {% if curriculum_day.get('practice_task') %}
-            <div class="p-4 bg-blue-50 rounded-xl">
-                <h3 class="font-semibold text-blue-700 mb-1">✏️ Practice Task (25 min)</h3>
-                <p class="text-blue-600 whitespace-pre-line">{{ curriculum_day['practice_task'] }}</p>
+
+            <!-- ── Apply Tab ── -->
+            {% if apply %}
+            <div id="panel-apply" class="tab-panel hidden">
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-6 md:p-8">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </span>
+                        <h3 class="text-base font-bold text-emerald-900">Real-World Apply</h3>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold bg-emerald-600 text-white rounded-full">~10 min</span>
+                    </div>
+                    <div class="pl-[42px]">{{ apply | md | safe }}</div>
+                </div>
             </div>
             {% endif %}
-            
-            {% if curriculum_day.get('apply_task') %}
-            <div class="p-4 bg-green-50 rounded-xl">
-                <h3 class="font-semibold text-green-700 mb-1">🚀 Apply Task (10 min)</h3>
-                <p class="text-green-600 whitespace-pre-line">{{ curriculum_day['apply_task'] }}</p>
-            </div>
-            {% endif %}
+
+            <script>
+            function switchTab(name) {
+                // Hide all panels
+                document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.add('hidden'); });
+                // Reset all tab buttons
+                document.querySelectorAll('.tab-btn').forEach(function(b) {
+                    b.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+                    b.classList.add('text-gray-500');
+                });
+                // Show selected panel
+                var panel = document.getElementById('panel-' + name);
+                if (panel) panel.classList.remove('hidden');
+                // Activate selected tab button
+                var btn = document.getElementById('tab-' + name);
+                if (btn) {
+                    btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+                    btn.classList.remove('text-gray-500');
+                }
+            }
+            </script>
         </div>
         {% endif %}
 
         <!-- REGENERATE FALLBACK CONTENT -->
         {% if is_fallback_content %}
-        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+        <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <div class="flex items-center gap-3">
                 <span class="text-amber-600 text-lg">⚠️</span>
                 <div class="flex-1">
@@ -327,43 +409,60 @@
 
         <!-- PROGRESS CHECKBOXES -->
         {% if video %}
-        <div class="mt-8 border-t border-gray-100 pt-6 space-y-3">
-            <h3 class="font-semibold text-gray-700 mb-3">✅ Mark Your Progress</h3>
-            
-            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('video_watched') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
-                <input type="checkbox" {% if progress and progress.get('video_watched') %}checked disabled{% endif %}
-                       onclick="markProgress('{{ video['id'] }}', 'video_watched', {{ day_number }}, this)"
-                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                <div class="flex-1">
-                    <div class="font-medium text-sm">Watched the lesson</div>
-                    <div class="text-xs text-gray-400">Read through the content above</div>
+        <div id="feedback-message" class="mt-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 hidden">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center mt-0.5">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('practice_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
-                <input type="checkbox" {% if progress and progress.get('practice_completed') %}checked disabled{% endif %}
-                       onclick="markProgress('{{ video['id'] }}', 'practice_completed', {{ day_number }}, this)"
-                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                <div class="flex-1">
-                    <div class="font-medium text-sm">Completed practice task</div>
-                    <div class="text-xs text-gray-400">Did the hands-on exercise</div>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 p-4 rounded-xl border {% if progress and progress.get('apply_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition">
-                <input type="checkbox" {% if progress and progress.get('apply_completed') %}checked disabled{% endif %}
-                       onclick="markProgress('{{ video['id'] }}', 'apply_completed', {{ day_number }}, this)"
-                       class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                <div class="flex-1">
-                    <div class="font-medium text-sm">Submitted my work</div>
-                    <div class="text-xs text-gray-400">Portfolio or deliverable done</div>
-                </div>
+                <p class="text-sm text-indigo-700 font-medium" id="feedback-text"></p>
             </div>
         </div>
 
-        <!-- FEEDBACK -->
-        <div id="feedback-message" class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-100 hidden">
-            <p class="text-sm text-indigo-700 font-medium" id="feedback-text"></p>
+        <div class="mt-8 pt-6 border-t border-gray-100">
+            <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                </span>
+                Mark Your Progress
+            </h3>
+
+            <div class="space-y-3">
+                <div class="p-4 rounded-xl border {% if progress and progress.get('video_watched') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition-all hover:border-gray-200">
+                    <label class="flex items-start gap-4 cursor-pointer">
+                        <input type="checkbox" {% if progress and progress.get('video_watched') %}checked disabled{% endif %}
+                               onclick="markProgress('{{ video['id'] }}', 'video_watched', {{ day_number }}, this)"
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-sm text-gray-900">Watched the lesson</div>
+                            <div class="text-xs text-gray-400 mt-0.5">Read through the content above</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="p-4 rounded-xl border {% if progress and progress.get('practice_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition-all hover:border-gray-200">
+                    <label class="flex items-start gap-4 cursor-pointer">
+                        <input type="checkbox" {% if progress and progress.get('practice_completed') %}checked disabled{% endif %}
+                               onclick="markProgress('{{ video['id'] }}', 'practice_completed', {{ day_number }}, this)"
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-sm text-gray-900">Completed practice task</div>
+                            <div class="text-xs text-gray-400 mt-0.5">Did the hands-on exercise</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="p-4 rounded-xl border {% if progress and progress.get('apply_completed') %}border-emerald-200 bg-emerald-50{% else %}border-gray-100{% endif %} transition-all hover:border-gray-200">
+                    <label class="flex items-start gap-4 cursor-pointer">
+                        <input type="checkbox" {% if progress and progress.get('apply_completed') %}checked disabled{% endif %}
+                               onclick="markProgress('{{ video['id'] }}', 'apply_completed', {{ day_number }}, this)"
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-sm text-gray-900">Submitted my work</div>
+                            <div class="text-xs text-gray-400 mt-0.5">Portfolio or deliverable done</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -381,14 +480,14 @@ function markProgress(videoId, field, dayNumber, checkbox) {
         if (data.success) {
             checkbox.closest('div').classList.add('border-emerald-200', 'bg-emerald-50');
             checkbox.disabled = true;
-            
+
             var fb = document.getElementById('feedback-message');
             var ft = document.getElementById('feedback-text');
             fb.classList.remove('hidden');
             ft.textContent = data.message;
-            
+
             if (data.day_complete) {
-                fb.className = 'mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200';
+                fb.className = 'mt-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200';
                 ft.textContent = '🎉 Day ' + dayNumber + ' complete! ' + data.message;
                 setTimeout(function() { window.location.reload(); }, 2500);
             }

@@ -93,7 +93,44 @@ def create_app():
         @app.route("/health")
         def health():
             return {"status": "ok", "env_set": bool(app.config.get("SUPABASE_URL"))}
-        
+
+        # ─── Markdown filter: **bold**, *italic*, numbered lists → HTML ───
+        import re as _re
+        def _md_to_html(text):
+            if not text:
+                return ""
+            # Numbered lists: "1. item\n2. item" → <ol>
+            lines = text.split("\n")
+            result = []
+            in_ol = False
+            for line in lines:
+                stripped = line.strip()
+                m = _re.match(r"^(\d+)\.\s+(.+)", stripped)
+                if m:
+                    if not in_ol:
+                        result.append("<ol class='list-decimal pl-5 space-y-1 my-2'>")
+                        in_ol = True
+                    content = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", m.group(2))
+                    content = _re.sub(r"\*([^*]+)\*", r"<em>\1</em>", content)
+                    content = _re.sub(r"`([^`]+)`", r"<code class='bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono'>\1</code>", content)
+                    result.append(f"<li class='text-sm leading-relaxed'>{content}</li>")
+                else:
+                    if in_ol:
+                        result.append("</ol>")
+                        in_ol = False
+                    content = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", stripped)
+                    content = _re.sub(r"\*([^*]+)\*", r"<em>\1</em>", content)
+                    content = _re.sub(r"`([^`]+)`", r"<code class='bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono'>\1</code>", content)
+                    if content:
+                        result.append(f"<p class='text-sm leading-relaxed mb-2'>{content}</p>")
+                    else:
+                        result.append("<br/>")
+            if in_ol:
+                result.append("</ol>")
+            return "\n".join(result)
+
+        app.jinja_env.filters["md"] = _md_to_html
+
         logger.info("✅ Flask app created successfully")
         return app
     
