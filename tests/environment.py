@@ -47,8 +47,12 @@ def before_scenario(context, scenario):
     """Set up per-scenario state."""
     context.scenario_data = {}
     context.errors = []
+    # context.feature is a behave Feature model (not JSON-serializable) — store
+    # just its name so after_all can dump a clean audit JSON.
+    feature_obj = getattr(context, "feature", None)
+    feature_name = getattr(feature_obj, "name", "") or (feature_obj.filename if feature_obj else "")
     context.scenario_audit = {
-        "feature": getattr(context, "feature", ""),
+        "feature": feature_name,
         "scenario": scenario.name,
         "file": (scenario.filename or "").split("/")[-1],
         "line": scenario.line,
