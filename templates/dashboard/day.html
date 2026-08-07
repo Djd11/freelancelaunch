@@ -238,6 +238,35 @@
             var btn = document.getElementById('fullscreenBtn');
             if (!document.fullscreenElement && btn) btn.textContent = '⛶ Fullscreen';
         });
+
+        // ── Scroll pass-through: the preview iframe traps wheel events while the
+        // pointer is over it, so the lesson content below the preview can't be
+        // reached ("can't scroll down while the video plays"). When the iframe's
+        // own scrollable area (.kinetic) is at a boundary — or the pointer is
+        // over a non-scrollable part — forward the wheel to the page instead.
+        // Same-origin iframe, so we can read its document directly.
+        function setupPreviewScrollPassThrough() {
+            var frame = document.getElementById('previewFrame');
+            if (!frame || !frame.contentDocument) return;
+            try {
+                var idoc = frame.contentDocument;
+                idoc.addEventListener('wheel', function(e) {
+                    var scroller = idoc.querySelector('.kinetic');
+                    var canScroll = scroller && scroller.scrollHeight > scroller.clientHeight + 1;
+                    var atTop = !scroller || scroller.scrollTop <= 1;
+                    var atBottom = !scroller ||
+                        scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+                    var atBoundary = e.deltaY > 0 ? atBottom : atTop;
+                    if (!canScroll || atBoundary) {
+                        window.scrollBy(0, e.deltaY);
+                        if (e.cancelable) e.preventDefault();
+                    }
+                }, { passive: false });
+            } catch (err) { /* cross-origin or not ready — ignore */ }
+        }
+        // Re-attach on every iframe load (togglePreview refreshes the src).
+        var previewFrameEl = document.getElementById('previewFrame');
+        if (previewFrameEl) previewFrameEl.addEventListener('load', setupPreviewScrollPassThrough);
         </script>
         
         {% if video and video.get('youtube_url') %}
