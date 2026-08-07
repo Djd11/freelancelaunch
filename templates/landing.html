@@ -4,11 +4,11 @@
 <!-- HERO -->
 <section class="gradient-subtle pt-24 pb-20 px-4">
     <div class="max-w-5xl mx-auto text-center">
-        <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-8">
-            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+        <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-8">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
             Launching — First cohort opening soon
         </div>
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
+        <h1 class="font-display text-5xl md:text-6xl tracking-tight leading-[1.05] mb-6">
             Pick a skill.<br>
             Get a <span class="gradient-text">30-day curriculum</span>.<br>
             Land your first client.
@@ -19,14 +19,27 @@
             portfolio and your income.
         </p>
         <div class="flex gap-4 justify-center flex-wrap">
-            <a href="{{ url_for('topics.explore') }}" class="btn-primary px-8 py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-indigo-200">
+            <a href="{{ url_for('topics.explore') }}" class="btn-primary px-8 py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-amber-200">
                 Explore Skills
             </a>
             <a href="{{ url_for('auth.signup') }}" class="bg-white border border-gray-200 text-gray-700 px-8 py-3.5 rounded-xl font-bold text-lg hover:border-gray-300 hover:shadow-sm transition-all">
                 Start Free
             </a>
         </div>
-        <div class="flex items-center justify-center gap-8 mt-12 text-sm text-gray-400">
+        <!-- THE 30-DAY TRACK — the product made visible -->
+        <div class="max-w-md mx-auto mt-14">
+            <div class="flex gap-1">
+                {% for day in range(1, 31) %}
+                <div class="flex-1 h-2.5 rounded-[3px] {% if day <= 7 %}bg-amber-400{% else %}bg-stone-200{% endif %}" title="Day {{ day }}"></div>
+                {% endfor %}
+            </div>
+            <div class="flex justify-between mt-2 font-mono-data text-[10px] uppercase tracking-[0.15em] text-[#a8a29e]">
+                <span class="text-amber-600 font-semibold">Day 7 of 30 · you are here</span>
+                <span>First client</span>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-8 mt-10 text-sm text-gray-400">
             <span class="flex items-center gap-2">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 5 in-demand skills
@@ -47,27 +60,27 @@
 <section class="py-24 px-4">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">How it <span class="gradient-text">works</span></h2>
+            <h2 class="font-display text-3xl md:text-4xl tracking-tight mb-4">How it <span class="gradient-text">works</span></h2>
             <p class="text-gray-500 max-w-md mx-auto">Four steps from zero to your first freelance income.</p>
         </div>
         <div class="grid md:grid-cols-4 gap-8">
             <div class="text-center">
-                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">1</div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-amber-600">1</div>
                 <h3 class="font-bold text-[#0f172a] mb-2">Choose a skill</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Pick from market-validated skills with real freelance demand.</p>
             </div>
             <div class="text-center">
-                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">2</div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-amber-600">2</div>
                 <h3 class="font-bold text-[#0f172a] mb-2">Get your curriculum</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">A personalized 30-day plan generated for your chosen skill.</p>
             </div>
             <div class="text-center">
-                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">3</div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-amber-600">3</div>
                 <h3 class="font-bold text-[#0f172a] mb-2">Learn daily</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Watch one video, complete one exercise, track your progress.</p>
             </div>
             <div class="text-center">
-                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-indigo-600">4</div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-5 text-xl font-bold text-amber-600">4</div>
                 <h3 class="font-bold text-[#0f172a] mb-2">Earn</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Track proposals, win contracts, build your freelance income.</p>
             </div>
@@ -79,7 +92,7 @@
 <section class="py-24 px-4 bg-white">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Available <span class="gradient-text">skills</span></h2>
+            <h2 class="font-display text-3xl md:text-4xl tracking-tight mb-4">Available <span class="gradient-text">skills</span></h2>
             <p class="text-gray-500">Each skill is validated against real freelance market demand.</p>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -87,19 +100,19 @@
             <a href="{{ url_for('topics.detail', slug=topic.slug) }}" class="card p-5 flex items-center gap-4 hover:card-active group">
                 <div class="text-2xl">{{ topic.icon }}</div>
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-[#0f172a] group-hover:text-indigo-600 transition">{{ topic.name }}</h3>
+                    <h3 class="font-semibold text-[#0f172a] group-hover:text-amber-600 transition">{{ topic.name }}</h3>
                     <div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
                         <span>{{ topic.job_count }} open contracts</span>
                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                         <span>${{ topic.avg_rate }}/hr avg</span>
                     </div>
                 </div>
-                <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-amber-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
             {% endfor %}
         </div>
         <div class="text-center mt-8">
-            <a href="{{ url_for('topics.explore') }}" class="text-indigo-600 font-medium hover:text-indigo-700 transition text-sm">View details and demand data →</a>
+            <a href="{{ url_for('topics.explore') }}" class="text-amber-600 font-medium hover:text-amber-700 transition text-sm">View details and demand data →</a>
         </div>
     </div>
 </section>
@@ -108,12 +121,12 @@
 <section class="py-24 px-4">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Built <span class="gradient-text">differently</span></h2>
+            <h2 class="font-display text-3xl md:text-4xl tracking-tight mb-4">Built <span class="gradient-text">differently</span></h2>
             <p class="text-gray-500 max-w-lg mx-auto">Your daily lessons double as YouTube content. Your curriculum builds two assets at once.</p>
         </div>
         <div class="grid md:grid-cols-2 gap-6">
             <div class="card p-8">
-                <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-4 text-xl">🎓</div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4 text-xl">🎓</div>
                 <h3 class="font-bold text-[#0f172a] mb-2">You learn</h3>
                 <p class="text-sm text-gray-500 leading-relaxed">Structured daily lessons with hands-on exercises. Every concept reinforced by practice.</p>
             </div>
@@ -129,10 +142,10 @@
 <!-- CTA -->
 <section class="gradient-primary py-20 px-4">
     <div class="max-w-2xl mx-auto text-center text-white">
-        <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">Ready to start?</h2>
+        <h2 class="font-display text-3xl md:text-4xl tracking-tight mb-4">Ready to start?</h2>
         <p class="text-white/80 mb-10 max-w-md mx-auto">Free tier includes full curriculum access. Upgrade for accountability and client introductions.</p>
         <div class="flex gap-4 justify-center flex-wrap">
-            <a href="{{ url_for('auth.signup') }}" class="bg-white text-indigo-600 px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-black/10 transition-all shadow-lg">
+            <a href="{{ url_for('auth.signup') }}" class="bg-white text-amber-600 px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-black/10 transition-all shadow-lg">
                 Get Started Free
             </a>
             <a href="{{ url_for('topics.explore') }}" class="text-white/90 hover:text-white px-8 py-3.5 rounded-xl font-bold text-lg border border-white/20 hover:border-white/40 transition-all">

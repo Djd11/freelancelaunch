@@ -2,7 +2,7 @@
 {% block title %}Production Queue — Admin{% endblock %}
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-10">
-    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-indigo-600 hover:underline mb-6 inline-block">← Admin</a>
+    <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-amber-600 hover:underline mb-6 inline-block">← Admin</a>
     <h1 class="text-2xl font-bold tracking-tight mb-8">🎬 Video Production</h1>
 
     <div class="grid lg:grid-cols-2 gap-8">
@@ -18,7 +18,7 @@
                         <span class="text-xs text-gray-500 ml-2">{{ (p.get('youtube_title') or 'Untitled')[:40] }}</span>
                     </div>
                     <form method="POST" action="{{ url_for('admin.trigger_production', video_id=p['id']) }}">
-                        <button type="submit" class="text-xs px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition">
+                        <button type="submit" class="text-xs px-4 py-2 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 transition">
                             Produce Now
                         </button>
                     </form>
@@ -44,7 +44,7 @@
                     <span class="badge ml-3 flex-shrink-0
                         {% if r.get('production_status') == 'ready' %}bg-emerald-50 text-emerald-700
                         {% elif r.get('production_status') == 'failed' %}bg-red-50 text-red-700
-                        {% elif r.get('production_status') == 'rendering' %}bg-indigo-50 text-indigo-700
+                        {% elif r.get('production_status') == 'rendering' %}bg-amber-50 text-amber-700
                         {% else %}bg-gray-100 text-gray-600{% endif %}">
                         {{ r.get('production_status', '?') }}
                     </span>

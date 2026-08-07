@@ -76,14 +76,19 @@ def step_capture_course_stats(context):
     pos = re.search(r"Day\s+(\d+)\s+of\s+(\d+)", body)
     frac = re.search(r"(\d+)/(\d+)\s+days\s+completed", body)
 
-    # 4) Active course progress bar width (%). The active stage card's bar is
-    #    the only div.gradient-primary carrying an inline width on this page.
+    # 4) Active course progress. The stage card's "day track" is a segmented
+    #    bar — one cell per day of the course — with data-completed/data-total
+    #    attributes set server-side. Compute the completed percentage.
     width_pct = None
-    bar = page.locator("div.gradient-primary").first
-    if bar.count() > 0:
-        style = bar.get_attribute("style") or ""
-        m = re.search(r"width:\s*([\d.]+)%", style)
-        width_pct = float(m.group(1)) if m else None
+    track = page.locator("div.day-track").first
+    if track.count() > 0:
+        try:
+            done = int(track.get_attribute("data-completed") or "0")
+            total = int(track.get_attribute("data-total") or "0")
+        except ValueError:
+            done = total = 0
+        if total > 0:
+            width_pct = round(done / total * 100, 1)
 
     context.course_stats = {
         "course_count": course_count,

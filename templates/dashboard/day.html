@@ -2,7 +2,7 @@
 {% block title %}Day {{ day_number }} — FreelanceLaunch{% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 py-8">
-    <a href="{% if is_topic_scoped %}{{ url_for('topics.detail', slug=topic_slug) }}{% else %}{{ url_for('dashboard.home') }}{% endif %}" class="text-sm text-indigo-600 hover:underline mb-4 inline-block">← Back to {% if is_topic_scoped %}Topic{% else %}Dashboard{% endif %}</a>
+    <a href="{% if is_topic_scoped %}{{ url_for('topics.detail', slug=topic_slug) }}{% else %}{{ url_for('dashboard.home') }}{% endif %}" class="text-sm text-amber-600 hover:underline mb-4 inline-block">← Back to {% if is_topic_scoped %}Topic{% else %}Dashboard{% endif %}</a>
     
     {% if needs_generation %}
     <!-- ═══ CURRICULUM GENERATION LOADING STATE ═══ -->
@@ -10,8 +10,8 @@
         <div class="text-center max-w-md mx-auto">
             <!-- Spinner -->
             <div class="relative w-24 h-24 mx-auto mb-6">
-                <div class="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 animate-spin" style="animation-duration: 0.9s"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-amber-100"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-amber-600 animate-spin" style="animation-duration: 0.9s"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
                     <span class="text-3xl">🎓</span>
                 </div>
@@ -25,7 +25,7 @@
             
             <!-- Progress bar -->
             <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-3">
-                <div id="gen-progress" class="h-full bg-indigo-600 rounded-full transition-all duration-500 ease-out" style="width: 4%"></div>
+                <div id="gen-progress" class="h-full bg-amber-600 rounded-full transition-all duration-500 ease-out" style="width: 4%"></div>
             </div>
             
             <!-- Status line -->
@@ -35,9 +35,9 @@
             <div class="text-xs text-gray-400" id="gen-detail">Initializing curriculum engine</div>
             
             <!-- Current day being generated -->
-            <div class="mt-6 p-4 bg-indigo-50 rounded-xl">
-                <div class="text-xs font-medium text-indigo-700 mb-1" id="gen-current-day">Day 0 of 30</div>
-                <div class="text-sm text-indigo-600" id="gen-last-title">Waiting for first lesson...</div>
+            <div class="mt-6 p-4 bg-amber-50 rounded-xl">
+                <div class="text-xs font-medium text-amber-700 mb-1" id="gen-current-day">Day 0 of 30</div>
+                <div class="text-sm text-amber-600" id="gen-last-title">Waiting for first lesson...</div>
             </div>
             
             <!-- Live background log (what the async job is actually doing) -->
@@ -185,7 +185,7 @@
                 <span class="text-sm font-semibold text-gray-700">▶ Video Preview</span>
                 <div class="flex items-center gap-2">
                     <button onclick="toggleFullscreen()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition" id="fullscreenBtn">⛶ Fullscreen</button>
-                    <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition" id="previewCloseBtn">✕ Close</button>
+                    <button onclick="togglePreview()" class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition" id="previewCloseBtn">✕ Close</button>
                 </div>
             </div>
             <!-- Responsive height: fills the viewport height (min 460px, max 70vh)
@@ -292,7 +292,7 @@
                     {% if objectives and objectives != desc %}
                     <div>
                         <div class="flex items-center gap-2.5 mb-3">
-                            <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                            <span class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </span>
                             <h3 class="text-base font-bold text-gray-900">Learning Objectives</h3>
@@ -306,7 +306,7 @@
             <!-- ── Practice Tab ── -->
             {% if practice %}
             <div id="panel-practice" class="tab-panel hidden">
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 md:p-8">
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 md:p-8">
                     <div class="flex items-center gap-2.5 mb-4">
                         <span class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
@@ -409,12 +409,12 @@
 
         <!-- PROGRESS CHECKBOXES -->
         {% if video %}
-        <div id="feedback-message" class="mt-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 hidden">
+        <div id="feedback-message" class="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100 hidden">
             <div class="flex items-start gap-3">
-                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center mt-0.5">
-                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center mt-0.5">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <p class="text-sm text-indigo-700 font-medium" id="feedback-text"></p>
+                <p class="text-sm text-amber-700 font-medium" id="feedback-text"></p>
             </div>
         </div>
 
@@ -431,7 +431,7 @@
                     <label class="flex items-start gap-4 cursor-pointer">
                         <input type="checkbox" {% if progress and progress.get('video_watched') %}checked disabled{% endif %}
                                onclick="markProgress('{{ video['id'] }}', 'video_watched', {{ day_number }}, this)"
-                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer flex-shrink-0">
                         <div class="flex-1 min-w-0">
                             <div class="font-medium text-sm text-gray-900">Watched the lesson</div>
                             <div class="text-xs text-gray-400 mt-0.5">Read through the content above</div>
@@ -443,7 +443,7 @@
                     <label class="flex items-start gap-4 cursor-pointer">
                         <input type="checkbox" {% if progress and progress.get('practice_completed') %}checked disabled{% endif %}
                                onclick="markProgress('{{ video['id'] }}', 'practice_completed', {{ day_number }}, this)"
-                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer flex-shrink-0">
                         <div class="flex-1 min-w-0">
                             <div class="font-medium text-sm text-gray-900">Completed practice task</div>
                             <div class="text-xs text-gray-400 mt-0.5">Did the hands-on exercise</div>
@@ -455,7 +455,7 @@
                     <label class="flex items-start gap-4 cursor-pointer">
                         <input type="checkbox" {% if progress and progress.get('apply_completed') %}checked disabled{% endif %}
                                onclick="markProgress('{{ video['id'] }}', 'apply_completed', {{ day_number }}, this)"
-                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0">
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer flex-shrink-0">
                         <div class="flex-1 min-w-0">
                             <div class="font-medium text-sm text-gray-900">Submitted my work</div>
                             <div class="text-xs text-gray-400 mt-0.5">Portfolio or deliverable done</div>

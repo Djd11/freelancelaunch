@@ -4,7 +4,7 @@
 <!-- HERO + SEARCH -->
 <section class="pt-24 pb-8 px-4">
     <div class="max-w-5xl mx-auto text-center">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+        <h1 class="font-display text-4xl md:text-5xl tracking-tight mb-4">
             Explore <span class="gradient-text">Skills</span>
         </h1>
         <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
@@ -13,7 +13,7 @@
         
         <!-- SEARCH BAR -->
         <div class="max-w-2xl mx-auto relative" id="search-container">
-            <div class="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 overflow-hidden">
+            <div class="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-amber-500 overflow-hidden">
                 <span class="pl-5 text-gray-400 text-lg">🔍</span>
                 <input type="text" id="topic-search" 
                        placeholder="Search any skill... (e.g., machine learning, react, data entry)"
@@ -44,7 +44,7 @@
 <section id="curated-topics" class="pb-24 px-4">
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold tracking-tight">Curated <span class="gradient-text">Skills</span></h2>
+            <h2 class="font-display text-xl tracking-tight">Curated <span class="gradient-text">Skills</span></h2>
             <span class="text-sm text-gray-400">Verified by market data</span>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="topics-grid">
@@ -60,7 +60,7 @@
                         {{ topic.trend|capitalize }}
                     </span>
                 </div>
-                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-indigo-600 transition">{{ topic.name }}</h3>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">{{ topic.name }}</h3>
                 <p class="text-sm text-gray-500 mb-5 leading-relaxed">{{ topic.tagline }}</p>
                 <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
                     <span><strong class="text-[#0f172a] font-semibold">{{ topic.job_count }}</strong> open contracts</span>
@@ -200,7 +200,7 @@ async function doSearch(query) {
             <div class="text-sm font-semibold text-gray-700">${pName}</div>
             <div class="text-2xl font-bold text-[#0f172a] mt-1">${pl.jobs.toLocaleString()}</div>
             <div class="text-xs text-gray-500">jobs at $${pl.avg_rate}/hr avg</div>
-            <a href="${pl.url}" target="_blank" class="text-xs text-indigo-600 hover:underline mt-2 inline-block">Visit →</a>
+            <a href="${pl.url}" target="_blank" class="text-xs text-amber-600 hover:underline mt-2 inline-block">Visit →</a>
             </div>`;
             }).join('');
             
@@ -209,7 +209,7 @@ async function doSearch(query) {
             
             platformDemand.innerHTML = `
                 <div class="flex items-start gap-4 mb-6">
-                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl flex-shrink-0">📊</div>
+                    <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl flex-shrink-0">📊</div>
                     <div class="flex-1">
                         <h3 class="font-bold text-xl">Market Demand for "${query}"</h3>
                         <p class="text-sm text-gray-500 mt-1">
@@ -240,7 +240,7 @@ async function doSearch(query) {
                 </div>
                 ${data.curated_matches.map(t => `
                     <a href="/topics/${t.slug}" class="card p-6 group hover:card-active transition-all">
-                        <h3 class="font-bold text-[#0f172a] group-hover:text-indigo-600 transition">${t.name}</h3>
+                        <h3 class="font-bold text-[#0f172a] group-hover:text-amber-600 transition">${t.name}</h3>
                         <p class="text-sm text-gray-500 mt-2">${t.tagline}</p>
                     </a>
                 `).join('')}

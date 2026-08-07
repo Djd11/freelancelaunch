@@ -9,3 +9,6 @@ node_modules/
 out/
 .video-pipeline/
 static/previews/*.mp3
+
+# behave pretty-formatter output
+pretty.output

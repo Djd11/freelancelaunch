@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='Inter,sans-serif' font-weight='700'%3EFL%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f59e0b'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%230f172a' font-family='Arial,sans-serif' font-weight='700'%3EFL%3C/text%3E%3C/svg%3E">
     <title>{% block title %}FreelanceLaunch{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        * { font-family: 'DM Sans', sans-serif; }
+        .font-display { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+        .font-mono-data { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace; }
+
         /* ─── Design Tokens ─────────────────────────────── */
         :root {
-            --accent: #6366f1;
-            --accent-light: #eef2ff;
-            --accent-mid: #a5b4fc;
+            --accent: #f59e0b;        /* Signal amber — money, action */
+            --accent-strong: #d97706; /* hover amber */
+            --accent-light: #fef3c7;  /* amber-50 wash */
+            --accent-mid: #fbbf24;    /* amber-400 */
             --surface: #ffffff;
-            --surface-subtle: #f8fafc;
-            --border: #f1f5f9;
-            --border-strong: #e2e8f0;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
+            --surface-subtle: #f5f5f4;
+            --border: #e7e5e4;
+            --border-strong: #d6d3d1;
+            --text: #0f172a;          /* Ink */
+            --text-secondary: #57534e;
+            --text-muted: #a8a29e;
+            --deep: #1e3a5f;          /* deep navy — secondary blocks */
+            --success: #16a34a;
             --radius: 20px;
             --radius-sm: 12px;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
             --shadow: 0 4px 24px rgba(0,0,0,0.04);
             --shadow-lg: 0 8px 40px rgba(0,0,0,0.06);
         }
-        
+
         .gradient-text {
-            background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .gradient-primary {
-            background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
         }
         .card {
             background: var(--surface);
@@ -50,19 +55,19 @@
         }
         .card-active {
             border-color: var(--accent);
-            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+            box-shadow: 0 4px 24px rgba(245, 158, 11, 0.12);
         }
         .btn-primary {
-            background: #0f172a;
-            color: white;
+            background: #f59e0b;
+            color: #0f172a;
             border-radius: var(--radius-sm);
             transition: all 0.2s ease;
-            font-weight: 600;
+            font-weight: 700;
         }
         .btn-primary:hover {
-            background: #1e293b;
+            background: #d97706;
             transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
         }
         .btn-ghost {
             background: transparent;
@@ -74,7 +79,7 @@
         }
         .btn-ghost:hover {
             background: var(--surface-subtle);
-            border-color: #cbd5e1;
+            border-color: #a8a29e;
         }
         .badge {
             display: inline-flex;
@@ -94,52 +99,52 @@
         .flash-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
         .flash-error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
         .flash-info { background: #e0f2fe; border: 1px solid #7dd3fc; color: #075985; }
-        
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide { animation: slideUp 0.4s ease; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-[#0f172a] antialiased min-h-screen">
+<body class="bg-[#fafaf9] text-[#0f172a] antialiased min-h-screen">
     <!-- NAV -->
-    <nav class="fixed top-0 w-full bg-white/70 backdrop-blur-2xl border-b border-[#f1f5f9] z-50">
+    <nav class="fixed top-0 w-full bg-white/70 backdrop-blur-2xl border-b border-[#e7e5e4] z-50">
         <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
             <div class="flex justify-between h-18 items-center">
-                <a href="/" class="text-xl font-bold tracking-tight">
+                <a href="/" class="font-display text-2xl tracking-tight">
                     <span class="gradient-text">FreelanceLaunch</span>
                 </a>
                 <div class="flex items-center gap-8">
-                    <a href="{{ url_for('topics.explore') }}" class="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">Topics</a>
+                    <a href="{{ url_for('topics.explore') }}" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Topics</a>
                     {% if user %}
-                        <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">Dashboard</a>
-                        <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">Pipeline</a>
-                        <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">Pricing</a>
-                        <a href="{{ url_for('platforms.setup') }}" 
-                           class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition text-[#64748b] hover:text-[#0f172a]">
+                        <a href="{{ url_for('dashboard.home') }}" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Dashboard</a>
+                        <a href="{{ url_for('freelance.pipeline') }}" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Pipeline</a>
+                        <a href="{{ url_for('payments.pricing') }}" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Pricing</a>
+                        <a href="{{ url_for('platforms.setup') }}"
+                           class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition text-[#57534e] hover:text-[#0f172a]">
                             <span class="w-2 h-2 rounded-full {% if platform_needs_setup %}bg-amber-400{% else %}bg-emerald-400{% endif %}"></span>
                             {% if platform_needs_setup %}Link Platforms{% else %}{{ platform_count }} Linked{% endif %}
                         </a>
                         <div class="relative group">
-                            <button class="flex items-center gap-2 text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">
+                            <button class="flex items-center gap-2 text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">
                                 <div class="w-9 h-9 rounded-full bg-[#0f172a] text-white flex items-center justify-center text-xs font-bold shadow-sm">
                                     {{ (user.get('avatar_url') or user.get('display_name') or 'U')[:1].upper() }}
                                 </div>
                             </button>
-                            <div class="absolute right-0 mt-2 w-52 bg-white border border-[#f1f5f9] rounded-2xl shadow-lg shadow-black/[0.04] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1.5">
-                                <div class="px-4 py-2 border-b border-[#f1f5f9] mb-1">
+                            <div class="absolute right-0 mt-2 w-52 bg-white border border-[#e7e5e4] rounded-2xl shadow-lg shadow-black/[0.04] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1.5">
+                                <div class="px-4 py-2 border-b border-[#e7e5e4] mb-1">
                                     <div class="text-sm font-medium text-[#0f172a]">{{ user.get('display_name', 'User') }}</div>
-                                    <div class="text-xs text-[#94a3b8]">{{ user.get('avatar_url', '') }}</div>
+                                    <div class="text-xs text-[#a8a29e]">{{ user.get('avatar_url', '') }}</div>
                                 </div>
-                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2.5 text-sm text-[#64748b] hover:bg-[#f8fafc] transition">Profile</a>
-                                <a href="{{ url_for('platforms.setup') }}" class="block px-4 py-2.5 text-sm text-[#64748b] hover:bg-[#f8fafc] transition">Link Platforms</a>
-                                <a href="{{ url_for('deliverables.portfolio') }}" class="block px-4 py-2.5 text-sm text-[#64748b] hover:bg-[#f8fafc] transition">Portfolio</a>
-                                <hr class="my-1 border-[#f1f5f9]">
+                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2.5 text-sm text-[#57534e] hover:bg-[#fafaf9] transition">Profile</a>
+                                <a href="{{ url_for('platforms.setup') }}" class="block px-4 py-2.5 text-sm text-[#57534e] hover:bg-[#fafaf9] transition">Link Platforms</a>
+                                <a href="{{ url_for('deliverables.portfolio') }}" class="block px-4 py-2.5 text-sm text-[#57534e] hover:bg-[#fafaf9] transition">Portfolio</a>
+                                <hr class="my-1 border-[#e7e5e4]">
                                 <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition">Sign out</a>
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition">Sign in</a>
+                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Sign in</a>
                         <a href="{{ url_for('auth.signup') }}" class="btn-primary px-5 py-2 text-sm">Get Started</a>
                     {% endif %}
                 </div>
@@ -155,7 +160,7 @@
                 <span>🔗</span>
                 <span>Link your freelance platforms to track jobs and contracts.</span>
             </div>
-            <a href="{{ url_for('platforms.setup') }}" 
+            <a href="{{ url_for('platforms.setup') }}"
                class="bg-white text-[#0f172a] px-5 py-1.5 rounded-lg text-sm font-bold hover:bg-white/90 transition whitespace-nowrap">
                 Set up now →
             </a>
@@ -182,18 +187,18 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-[#f1f5f9] bg-white mt-32">
+    <footer class="border-t border-[#e7e5e4] bg-white mt-32">
         <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-16">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="text-center md:text-left">
-                    <p class="font-bold tracking-tight text-lg">
+                    <p class="font-display text-2xl tracking-tight">
                         <span class="gradient-text">FreelanceLaunch</span>
                     </p>
-                    <p class="text-sm text-[#94a3b8] mt-1">Learn a skill. Land a client. Earn your freedom.</p>
+                    <p class="text-sm text-[#a8a29e] mt-1">Learn a skill. Land a client. Earn your freedom.</p>
                 </div>
-                <div class="flex gap-8 text-sm text-[#94a3b8]">
-                    <a href="{{ url_for('topics.explore') }}" class="hover:text-[#64748b] transition">Topics</a>
-                    <a href="{{ url_for('payments.pricing') }}" class="hover:text-[#64748b] transition">Pricing</a>
+                <div class="flex gap-8 text-sm text-[#a8a29e]">
+                    <a href="{{ url_for('topics.explore') }}" class="hover:text-[#57534e] transition">Topics</a>
+                    <a href="{{ url_for('payments.pricing') }}" class="hover:text-[#57534e] transition">Pricing</a>
                 </div>
             </div>
         </div>
