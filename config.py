@@ -26,6 +26,9 @@ class Config:
     
     # Gumroad (fallback for MVP payments)
     GUMROAD_TOKEN = os.getenv("GUMROAD_TOKEN", "")
+
+    # Admin (email match — see services/authz.py)
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
     
     # YouTube Data API
     YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")

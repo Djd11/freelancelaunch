@@ -73,7 +73,7 @@ def create_checkout():
                 }],
                 success_url=request.host_url + "payments/success?session_id={CHECKOUT_SESSION_ID}",
                 cancel_url=request.host_url + "payments/pricing",
-                customer_email=g.user.get("email", ""),
+                customer_email=g.user.get("avatar_url", ""),  # avatar_url stores the signup email
                 metadata={
                     "user_id": g.user["id"],
                     "tier": tier,
@@ -99,34 +99,50 @@ def create_checkout():
 
 @payments_bp.route("/success")
 def payment_success():
-    """Handle successful payment redirect."""
+    """Handle successful payment redirect.
+
+    The paid tier is granted ONLY after the Stripe session is verified to be
+    real, paid, and owned by the current user. A missing / unverifiable /
+    unpaid / foreign session_id is a hard error — never a silent upgrade
+    (previously GET /payments/success with no session_id granted the $49
+    Guided tier for free).
+    """
     if not g.user:
         return redirect(url_for("auth.login"))
-    
+
     session_id = request.args.get("session_id", "")
-    tier = "guided"  # default upgrade
-    
-    # If we have a Stripe session, verify it
     stripe_key = os.getenv("STRIPE_SECRET_KEY", "")
-    if stripe_key and session_id:
-        try:
-            stripe.api_key = stripe_key
-            checkout = stripe.checkout.Session.retrieve(session_id)
-            tier = checkout.metadata.get("tier", "guided")
-        except:
-            pass
-    
+    if not (stripe_key and session_id):
+        flash("We couldn't verify your payment. Contact support.", "error")
+        return redirect(url_for("payments.pricing"))
+
+    try:
+        stripe.api_key = stripe_key
+        checkout = stripe.checkout.Session.retrieve(session_id)
+        if checkout.payment_status != "paid":
+            flash("Payment not completed yet. Contact support.", "error")
+            return redirect(url_for("payments.pricing"))
+        if checkout.metadata.get("user_id") != g.user["id"]:
+            flash("This payment session doesn't match your account.", "error")
+            return redirect(url_for("payments.pricing"))
+        tier = checkout.metadata.get("tier", "guided")
+        if tier not in TIERS or tier == "free":
+            tier = "guided"
+    except Exception:
+        flash("Payment verification failed. Contact support.", "error")
+        return redirect(url_for("payments.pricing"))
+
     # Upgrade user in database
     sb = get_supabase()
     sb.table("user_profiles").update({
         "tier": tier,
         "updated_at": "now()"
     }).eq("user_id", g.user["id"]).execute()
-    
+
     sb.table("user_acquisition").update({
         "tier": tier,
         "converted_to_paid_at": "now()"
     }).eq("user_id", g.user["id"]).execute()
-    
+
     flash(f"Welcome to {TIERS[tier]['name']}! You now have access to premium features.", "success")
     return redirect(url_for("dashboard.home"))

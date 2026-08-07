@@ -1,6 +1,8 @@
 """
 Auth routes — login, signup, logout, profile
 """
+from urllib.parse import urlsplit
+
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, g
 from services.supabase_client import get_supabase
 
@@ -85,7 +87,12 @@ def login():
         session["access_token"] = resp.session.access_token
         
         flash("Welcome back!", "success")
+        # Only allow internal/relative redirects — blocks open-redirect phishing
+        # via ?next=https://evil.com (scheme) or ?next=//evil.com (netloc).
         next_url = request.args.get("next", url_for("dashboard.home"))
+        parsed = urlsplit(next_url)
+        if parsed.scheme or parsed.netloc:
+            next_url = url_for("dashboard.home")
         return redirect(next_url)
     
     except Exception as e:

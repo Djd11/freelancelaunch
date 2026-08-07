@@ -3,19 +3,18 @@ Admin routes — platform overview, user management, production monitoring
 """
 import os
 import logging
-from flask import Blueprint, render_template, redirect, url_for, flash, g, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, current_app
 from services.supabase_client import get_supabase
+from services.authz import require_admin
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
 
 
 @admin_bp.route("/")
+@require_admin
 def dashboard():
     """Admin overview dashboard."""
-    if not g.user:
-        return redirect(url_for("auth.login"))
-    
     sb = get_supabase()
     
     try:
@@ -65,11 +64,9 @@ def dashboard():
 
 
 @admin_bp.route("/users")
+@require_admin
 def users():
     """View all users."""
-    if not g.user:
-        return redirect(url_for("auth.login"))
-    
     sb = get_supabase()
     try:
         users_resp = sb.table("user_profiles").select("*") \
@@ -83,11 +80,9 @@ def users():
 
 
 @admin_bp.route("/production")
+@require_admin
 def production():
     """View video production queue and status."""
-    if not g.user:
-        return redirect(url_for("auth.login"))
-    
     sb = get_supabase()
     
     try:
@@ -117,11 +112,9 @@ def production():
 
 
 @admin_bp.route("/production/trigger/<video_id>", methods=["POST"])
+@require_admin
 def trigger_production(video_id):
     """Manually trigger video production for a specific cohort_video."""
-    if not g.user:
-        return redirect(url_for("auth.login"))
-    
     sb = get_supabase()
     
     try:

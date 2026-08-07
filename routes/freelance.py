@@ -57,7 +57,7 @@ def update_pipeline():
     update_data = {field: value, "updated_at": "now()"}
     
     if field == "stage" and value == "applying":
-        update_data["started_learning_at"] = sb.table("freelance_pipeline")  # no-op, just stage update
+        update_data["started_learning_at"] = "now()"
     
     sb.table("freelance_pipeline").update(update_data) \
         .eq("user_id", g.user["id"]) \

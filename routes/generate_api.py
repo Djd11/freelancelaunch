@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, g, request
 from services.supabase_client import get_supabase
 from services.curriculum_generator import generate_curriculum
+from services.authz import is_admin_user
 
 logger = logging.getLogger(__name__)
 gen_bp = Blueprint("generate", __name__, url_prefix="/api")
@@ -163,11 +164,23 @@ def regenerate_single_day(slug, day_number):
     sb = get_supabase()
     user_id = g.user["id"]
 
-    # Verify user has access to this topic
-    profile = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
-    cohort_id = profile.data[0]["cohort_id"] if profile.data else None
-    if not cohort_id:
-        return jsonify({"status": "error", "error": "Not enrolled"}), 403
+    # Verify the user's cohort actually teaches THIS topic — a user with any
+    # cohort must not be able to regenerate another topic's shared curriculum
+    # (curriculum_days are shared across all users of a topic).
+    enrolled_topic = False
+    try:
+        prof = sb.table("user_profiles").select("cohort_id").eq("user_id", user_id).limit(1).execute()
+        cohort_id = prof.data[0]["cohort_id"] if prof.data else None
+        if cohort_id:
+            topic_db = sb.table("topics").select("id").eq("slug", slug).limit(1).execute()
+            if topic_db.data:
+                cohort = sb.table("cohorts").select("topic_id").eq("id", cohort_id).limit(1).execute()
+                if cohort.data and cohort.data[0].get("topic_id") == topic_db.data[0]["id"]:
+                    enrolled_topic = True
+    except Exception:
+        enrolled_topic = False
+    if not enrolled_topic:
+        return jsonify({"status": "error", "error": "You must be enrolled in this topic to regenerate its content"}), 403
 
     # Get the topic's curriculum
     topic_resp = sb.table("topics").select("id,name").eq("slug", slug).limit(1).execute()
@@ -292,6 +305,11 @@ def generate_curriculum_api(slug):
 
     # Get or create curriculum record
     force = request.args.get("force") == "1" or request.form.get("force") == "1"
+    # Force-regeneration DELETES the topic's shared curriculum_days (and the
+    # cohort_videos referencing them, orphaning every user's progress rows) —
+    # far too destructive for any enrolled user to trigger. Admins only.
+    if force and not is_admin_user(g.user):
+        return jsonify({"status": "error", "error": "Only admins can force-regenerate a curriculum"}), 403
     curr_resp = sb.table("curricula").select("id").eq("topic_id", topic_id).limit(1).execute()
     if curr_resp.data:
         curr_id = curr_resp.data[0]["id"]

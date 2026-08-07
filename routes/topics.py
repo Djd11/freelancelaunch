@@ -1,8 +1,9 @@
 """
 Topics routes — browse curated topics, view topic detail
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g
 from services.supabase_client import get_supabase
+from services.authz import is_admin_user
 
 topics_bp = Blueprint("topics", __name__)
 
@@ -187,10 +188,8 @@ def detail(slug):
             existing_pipeline = resp.data[0]
             is_enrolled = True
         
-        # Check if admin (email matches)
-        admin_email = current_app.config.get("ADMIN_EMAIL", "")
-        user_email = g.user.get("avatar_url", "")
-        is_admin = bool(admin_email and user_email == admin_email)
+        # Check if admin (email matches ADMIN_EMAIL env var)
+        is_admin = is_admin_user(g.user)
         
         # Also check cohort assignment (user may be in a cohort for this topic)
         if not is_enrolled:
