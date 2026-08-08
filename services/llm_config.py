@@ -28,6 +28,11 @@ FALLBACK_MODEL = "deepseek-v4-flash-free"
 DEFAULT_BASE_URL = "https://opencode.ai/zen/v1"
 DEFAULT_TIMEOUT = 60  # seconds per LLM call
 
+# Persistent pooled client — opencode.ai's edge refuses rapid NEW TCP
+# connections (httpx.post per call → intermittent Errno 111). Reusing a
+# pooled client keeps connections alive and avoids the refusal.
+_client = httpx.Client(timeout=DEFAULT_TIMEOUT)
+
 # System prompt shared by curriculum generation calls
 CURRICULUM_SYSTEM_PROMPT = (
     "You are a curriculum designer and learning science expert. "
@@ -156,8 +161,7 @@ def call_llm(prompt: str, system: Optional[str] = None, max_tokens: int = 4096,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
             }
-            resp = httpx.post(provider["url"], headers=headers, json=payload,
-                              timeout=timeout)
+            resp = _client.post(provider["url"], headers=headers, json=payload)
             resp.raise_for_status()
             text = resp.json()["choices"][0]["message"]["content"]
             logger.info(f"LLM OK via {provider['name']} ({len(text)} chars)")

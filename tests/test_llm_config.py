@@ -52,7 +52,7 @@ def test_call_llm_falls_back_to_second_provider():
         mock.Mock(status_code=200, raise_for_status=mock.Mock(return_value=None),
                   json=lambda: {"choices": [{"message": {"content": "fallback OK"}}]}),
     ]
-    with mock.patch("services.llm_config.httpx.post", side_effect=responses) as m:
+    with mock.patch("services.llm_config._client.post", side_effect=responses) as m:
         result = call_llm("test prompt", max_tokens=100)
     assert result == "fallback OK"
     assert m.call_count == 2  # tried primary, then fallback
@@ -62,7 +62,7 @@ def test_call_llm_falls_back_to_second_provider():
 
 def test_call_llm_returns_none_when_all_fail():
     fail = mock.Mock(raise_for_status=mock.Mock(side_effect=Exception("boom")))
-    with mock.patch("services.llm_config.httpx.post", return_value=fail):
+    with mock.patch("services.llm_config._client.post", return_value=fail):
         result = call_llm("test prompt", max_tokens=100)
     assert result is None
 
