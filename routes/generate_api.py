@@ -120,38 +120,17 @@ def _update_vplog_fallback(slug, topic_id, **fields):
 
 
 def _get_llm_config():
-    """Get LLM API configuration — tries multiple providers in order."""
-    # Priority 1: Environment variables (set on Render)
-    api_url = os.environ.get("LLM_API_URL", "")
-    api_key = os.environ.get("LLM_API_KEY", "")
-    model = os.environ.get("LLM_MODEL", "")
+    """DEPRECATED — kept for backward compat; use services/llm_config instead.
 
-    # Priority 2: OpenRouter from vision-tool config
-    if not api_key:
-        try:
-            import json as _json
-            with open(os.path.expanduser("~/Documents/vision-tool/config.json")) as f:
-                vc = _json.load(f)
-            api_key = vc.get("OPENROUTER_API_KEY", "")
-            api_url = "https://openrouter.ai/api/v1/chat/completions"
-            model = "google/gemma-4-26b-a4b-it:free"
-        except Exception:
-            pass
-
-    # Priority 3: Hermes config (OpenCode.ai)
-    if not api_key:
-        try:
-            import yaml
-            with open(os.path.expanduser("~/.hermes/config.yaml")) as f:
-                hermes = yaml.safe_load(f)
-            model_cfg = hermes.get("model", {})
-            api_key = model_cfg.get("api_key", "")
-            api_url = model_cfg.get("base_url", "") + "/chat/completions"
-            model = model_cfg.get("default", "gpt-4o-mini")
-        except Exception:
-            pass
-
-    return api_url, api_key, model
+    Returns (api_url, api_key, model) for the PRIMARY provider
+    (big-pickle via OpenCode.ai by default).
+    """
+    from services.llm_config import get_primary_provider
+    provider = get_primary_provider()
+    if provider:
+        return provider["url"], provider["api_key"], provider["model"]
+    # No key anywhere — return empty (callers fall back to structured content)
+    return "", "", ""
 
 
 @gen_bp.route("/regenerate-day/<slug>/<int:day_number>", methods=["POST"])
@@ -204,9 +183,9 @@ def regenerate_single_day(slug, day_number):
     if not is_fallback_content(current):
         return jsonify({"status": "ok", "message": "Content is already good quality"})
 
-    # Check LLM availability
-    api_url, api_key, model = _get_llm_config()
-    if not api_url or not api_key:
+    # Check LLM availability (single source: services/llm_config)
+    from services.llm_config import get_primary_provider
+    if not get_primary_provider():
         return jsonify({"status": "error", "error": "LLM not available — cannot regenerate"}), 503
 
     # Regenerate this single day
@@ -214,12 +193,6 @@ def regenerate_single_day(slug, day_number):
         from app import create_app
         app = create_app()
         with app.app_context():
-            import flask
-            flask.current_app.config["LLM_API_URL"] = api_url
-            flask.current_app.config["LLM_API_KEY"] = api_key
-            flask.current_app.config["LLM_MODEL"] = model
-            flask.current_app.config["LLM_TIMEOUT"] = 20
-
             day = _generate_one_day(day_number, topic["name"], [])
             if not day or is_fallback_content(day):
                 return jsonify({"status": "error", "error": "Could not generate quality content — LLM may be overloaded"}), 500
@@ -502,20 +475,11 @@ def generation_log(slug):
 def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, linked_platforms, user_id):
     """Generate curriculum day-by-day, saving each day with live progress + logs."""
     try:
-        # Get LLM config
-        api_url, api_key, model = _get_llm_config()
-
-        # Set config in app context
-        import flask
+        # LLM config comes from the single source (services/llm_config)
         from app import create_app
         app = create_app()
 
         with app.app_context():
-            flask.current_app.config["LLM_API_URL"] = api_url
-            flask.current_app.config["LLM_API_KEY"] = api_key
-            flask.current_app.config["LLM_MODEL"] = model
-            flask.current_app.config["LLM_TIMEOUT"] = 20
-
             sb = get_supabase()
 
             # Cohorts whose topic matches this curriculum (day links for every
@@ -676,15 +640,28 @@ def _generate_in_background(slug, curr_id, topic_id, topic_name, total_days, lin
 
 
 def _generate_one_day(day_num, topic_name, linked_platforms):
-    """Generate a single day's lesson (LLM or fallback)."""
-    from services.curriculum_generator import _generate_daily_lesson, _fallback_lesson, _get_day_focus, _get_learning_objective
+    """Generate a single day's lesson (LLM or fallback).
+
+    Contract-first arc: platform days are interleaved at their gate positions
+    (see services.curriculum_generator._platform_day_for); skill days are
+    generated with the milestone + linked-platform context injected.
+    """
+    from services.curriculum_generator import (
+        _generate_daily_lesson, _fallback_lesson, _get_day_focus,
+        _get_learning_objective, _platform_day_for, _quality_check,
+    )
     try:
-        # Determine week/theme
+        # Platform day interleaved at its gate position? Then use it.
+        platform_day = _platform_day_for(day_num, linked_platforms)
+        if platform_day:
+            return platform_day
+
+        # Determine week/theme (contract-first arc)
         weekly_themes = [
-            (1, "Foundation", "Core concepts and first tangible output"),
-            (2, "Building", "Intermediate skills with real examples"),
-            (3, "Application", "Portfolio work and client proposals"),
-            (4, "Mastery", "Income generation and business skills"),
+            (1, "Ship Artifact #1", "Minimum skill to produce your first sellable deliverable"),
+            (2, "Platform Live", "Profiles, gigs, and portfolio that make you findable"),
+            (3, "First Order", "Proposals, delivering small, earning your first review"),
+            (4, "Rate Raise", "Pricing up, repeat clients, and contract-readiness"),
         ]
         week_num = min(4, (day_num - 1) // 7 + 1)
         week_theme, week_focus = weekly_themes[week_num - 1][1], weekly_themes[week_num - 1][2]
@@ -692,9 +669,13 @@ def _generate_one_day(day_num, topic_name, linked_platforms):
         focus = _get_day_focus(day_num, week_num, week_theme, topic_name)
         objective = _get_learning_objective(day_num, week_num, topic_name)
 
-        lesson = _generate_daily_lesson(day_num, week_num, week_theme, focus, objective, topic_name)
+        lesson = _generate_daily_lesson(day_num, week_num, week_theme, focus, objective, topic_name,
+                                        platforms=linked_platforms)
         if lesson:
-            return lesson
+            # Phase 3: contract-readiness quality gate (regen once on failure)
+            lesson = _quality_check(lesson, day_num, topic_name, platforms=linked_platforms)
+            if lesson:
+                return lesson
     except Exception:
         pass
     return _fallback_lesson(day_num, topic_name)

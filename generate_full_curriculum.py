@@ -1,6 +1,7 @@
 """
-Generate 30-day curriculum using OpenRouter free LLM and save to Supabase.
-Run: python generate_full_curriculum.py
+Generate 30-day curriculum using OpenCode.ai LLM (big-pickle → deepseek fallback)
+and save to Supabase. All LLM settings come from services/llm_config (single source).
+Run: python generate_full_curriculum.py [topic_slug] [topic_name] [model]
 """
 import httpx
 import json
@@ -13,13 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app
 from services.supabase_client import get_supabase_service
-
-# OpenRouter config
-with open(os.path.expanduser("~/Documents/vision-tool/config.json")) as f:
-    vc = json.load(f)
-API_KEY = vc["OPENROUTER_API_KEY"]
-MODEL = "google/gemma-4-26b-a4b-it:free"
-URL = "https://openrouter.ai/api/v1/chat/completions"
+from services.llm_config import get_provider_chain, call_llm
 
 TOPIC = "Web Scraping with Python"
 
@@ -63,7 +58,7 @@ WEEKS = [
 ]
 
 
-def generate_day(day_num, theme, day_title, next_title, topic_name):
+def generate_day(day_num, theme, day_title, next_title, topic_name, model=None):
     prompt = f"""You are designing Day {day_num} of a 30-day "{topic_name}" freelancing curriculum.
 Week theme: {theme}
 Today's lesson: {day_title}
@@ -92,17 +87,33 @@ Generate a lesson with EXACTLY these 6 sections:
 
 Rules: 8th grade level, specific examples, actionable, 45-60 min total."""
 
-    resp = httpx.post(
-        URL,
-        headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-        json={"model": MODEL, "messages": [{"role": "user", "content": prompt}],
-              "max_tokens": 2048, "temperature": 0.7},
-        timeout=90
-    )
-    if resp.status_code != 200:
-        print(f"  Error {resp.status_code}")
-        return ""
-    return resp.json()["choices"][0]["message"]["content"]
+    if model:
+        # Model override via CLI arg — use the chain's endpoint/key with this model
+        from services.llm_config import get_provider_chain
+        chain = get_provider_chain()
+        if chain:
+            provider = dict(chain[0])
+            provider["model"] = model
+            try:
+                headers = {"Content-Type": "application/json"}
+                if provider["api_key"]:
+                    headers["Authorization"] = f"Bearer {provider['api_key']}"
+                resp = httpx.post(
+                    provider["url"], headers=headers,
+                    json={"model": model, "messages": [{"role": "user", "content": prompt}],
+                          "max_tokens": 2048, "temperature": 0.7},
+                    timeout=90
+                )
+                if resp.status_code == 200:
+                    return resp.json()["choices"][0]["message"]["content"]
+                print(f"  Error {resp.status_code} ({model})", flush=True)
+                return ""
+            except Exception as e:
+                print(f"  Error {model}: {e}", flush=True)
+                return ""
+
+    # Default path: call_llm handles big-pickle → deepseek chain
+    return call_llm(prompt, max_tokens=2048) or ""
 
 
 def parse_sections(content):
@@ -126,10 +137,18 @@ def parse_sections(content):
 def main():
     topic_slug = sys.argv[1] if len(sys.argv) > 1 else "web-scraping-python"
     topic_name = sys.argv[2] if len(sys.argv) > 2 else "Web Scraping with Python"
-    model = sys.argv[3] if len(sys.argv) > 3 else "google/gemma-4-26b-a4b-it:free"
+    model = sys.argv[3] if len(sys.argv) > 3 else "big-pickle"
 
     print(f"🎓 Generating 30-day curriculum for: {topic_name} (slug: {topic_slug})")
     print(f"🤖 Model: {model}")
+    # Show the resolved provider chain so it's obvious what's being used
+    from services.llm_config import get_provider_chain
+    chain = get_provider_chain()
+    if chain:
+        print(f"🔌 Provider: {chain[0]['url']}")
+        print(f"⚡ Chain: {', '.join(p['name'] for p in chain)}")
+    else:
+        print("⚠️  No LLM key configured — days will use fallback content!")
 
     # Generic weekly structure — topics adapt via the LLM prompt
     WEEKS = [
@@ -180,7 +199,7 @@ def main():
             next_title = days[(i + 1) % len(days)] if day_num < 30 else "Graduation"
 
             print(f"[{day_num}/30] {day_title}...", end=" ", flush=True)
-            content = generate_day(day_num, theme, day_title, next_title, topic_name)
+            content = generate_day(day_num, theme, day_title, next_title, topic_name, model)
 
             if content:
                 print(f"OK ({len(content)} chars)")

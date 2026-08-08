@@ -4,8 +4,6 @@ Generates voiceover script and 9-panel content for any educational topic.
 """
 import json
 import re
-from flask import current_app
-import httpx
 
 
 PANEL_COLORS = [
@@ -52,37 +50,17 @@ Output format:
 
 ...through [SECTION 9]"""
 
-    api_url = current_app.config.get("LLM_API_URL", "http://localhost:3002/v1/chat/completions")
-    api_key = current_app.config.get("LLM_API_KEY", "")
-    model = current_app.config.get("LLM_MODEL", "gpt-4o-mini")
+    # Single source of truth: services/llm_config (big-pickle → deepseek chain)
+    from services.llm_config import call_llm
+    content = call_llm(prompt, system="You are an educational video scriptwriter. Output clear section-based scripts.", max_tokens=2048)
 
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "You are an educational video scriptwriter. Output clear section-based scripts."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 2048
-    }
-
-    try:
-        timeout = current_app.config.get("LLM_TIMEOUT", 60)
-        resp = httpx.post(api_url, headers=headers, json=payload, timeout=timeout)
-        resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
-        
+    if content:
         # Parse sections
         script, panels = _parse_script_to_sections(content, day_title)
         return {"script": script, "panels": panels}
-    
-    except Exception as e:
-        # Fallback: generate a simple script
-        return _fallback_content(topic, day_title)
+
+    # Fallback: generate a simple script
+    return _fallback_content(topic, day_title)
 
 
 def _parse_script_to_sections(content: str, day_title: str) -> tuple:
