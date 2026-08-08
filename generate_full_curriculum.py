@@ -58,7 +58,7 @@ WEEKS = [
 ]
 
 
-def generate_day(day_num, theme, day_title, next_title, topic_name, model=None):
+def generate_day(day_num, theme, day_title, next_title, topic_name, model=None, attempt=1):
     prompt = f"""You are designing Day {day_num} of a 30-day "{topic_name}" freelancing curriculum.
 Week theme: {theme}
 Today's lesson: {day_title}
@@ -87,33 +87,20 @@ Generate a lesson with EXACTLY these 6 sections:
 
 Rules: 8th grade level, specific examples, actionable, 45-60 min total."""
 
-    if model:
-        # Model override via CLI arg — use the chain's endpoint/key with this model
-        from services.llm_config import get_provider_chain
-        chain = get_provider_chain()
-        if chain:
-            provider = dict(chain[0])
-            provider["model"] = model
-            try:
-                headers = {"Content-Type": "application/json"}
-                if provider["api_key"]:
-                    headers["Authorization"] = f"Bearer {provider['api_key']}"
-                resp = httpx.post(
-                    provider["url"], headers=headers,
-                    json={"model": model, "messages": [{"role": "user", "content": prompt}],
-                          "max_tokens": 2048, "temperature": 0.7},
-                    timeout=90
-                )
-                if resp.status_code == 200:
-                    return resp.json()["choices"][0]["message"]["content"]
-                print(f"  Error {resp.status_code} ({model})", flush=True)
-                return ""
-            except Exception as e:
-                print(f"  Error {model}: {e}", flush=True)
-                return ""
+    # call_llm handles the full chain (requested model → deepseek fallback)
+    # and never raises — it returns None only when every provider fails.
+    content = call_llm(prompt, max_tokens=2048, model=model)
+    if content:
+        return content
 
-    # Default path: call_llm handles big-pickle → deepseek chain
-    return call_llm(prompt, max_tokens=2048) or ""
+    # Transient failure (throttling/connection) — retry with backoff
+    if attempt < 3:
+        wait = 10 * attempt
+        print(f"  (retry {attempt} in {wait}s...)", flush=True)
+        time.sleep(wait)
+        return generate_day(day_num, theme, day_title, next_title, topic_name, model, attempt + 1)
+
+    return ""
 
 
 def parse_sections(content):
@@ -212,7 +199,7 @@ def main():
                 "content": content,
                 "theme": theme,
             })
-            time.sleep(1.5)  # Rate limiting
+            time.sleep(5)  # Rate limiting — opencode.ai throttles rapid calls
 
     print(f"\nGenerated: {sum(1 for d in all_days if d['content'])}/{len(all_days)} days")
 

@@ -119,7 +119,8 @@ def get_primary_provider():
 
 
 def call_llm(prompt: str, system: Optional[str] = None, max_tokens: int = 4096,
-             temperature: float = 0.7, timeout: Optional[int] = None) -> Optional[str]:
+             temperature: float = 0.7, timeout: Optional[int] = None,
+             model: Optional[str] = None) -> Optional[str]:
     """Call the LLM, trying each provider in the chain in order.
 
     Returns the first successful response's text, or None if all fail
@@ -131,6 +132,14 @@ def call_llm(prompt: str, system: Optional[str] = None, max_tokens: int = 4096,
 
     system_prompt = system or CURRICULUM_SYSTEM_PROMPT
     timeout = timeout or int(os.environ.get("LLM_TIMEOUT", DEFAULT_TIMEOUT))
+
+    # If a specific model is requested, prepend a provider for it and let the
+    # rest of the chain act as fallback (big-pickle → deepseek on failure).
+    if model and model != chain[0]["model"]:
+        first = dict(chain[0])
+        first["model"] = model
+        first["name"] = f"opencode:{model}"
+        chain = [first] + chain
 
     for provider in chain:
         try:
