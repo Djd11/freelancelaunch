@@ -11,8 +11,9 @@ Responsibilities:
   4. Provide live counters (jobs open, avg rate).
 
 The unlock curve: front-loaded for quick wins, back-loaded with premium value.
-    v = 0.45*rate_pct + 0.35*(1 - experience_pct) + 0.20*review_pct
-    unlock_day = min(14, 1 + floor(13 * v ** 1.8))
+  - value score v = 0.45*rate_pct + 0.35*(1 - experience_pct) + 0.20*review_pct
+  - postings ranked by v, then assigned to day buckets by a designed
+    front-loaded size distribution (day 1 largest, day 14 smallest).
 """
 import logging
 from services.supabase_client import get_supabase
@@ -20,8 +21,10 @@ from services.supabase_client import get_supabase
 logger = logging.getLogger(__name__)
 
 DAY_CAP = 14
-CURVE_EXPONENT = 1.8
-MAX_BUCKET_SIZE = 50
+# Quick-win + escalating-value distribution (percentages sum to 100).
+# Front-loaded: day 1 holds the most (easiest/entry) postings for instant
+# gratification; later days hold fewer, progressively higher-value contracts.
+DAY_SIZE_PCT = [12, 11, 10, 9, 8, 8, 7, 6, 6, 5, 5, 4, 4, 5]
 
 
 def _percentile(values, x):
@@ -45,9 +48,54 @@ def _value_score(row, rates, exps, reviews):
     return 0.45 * rate_pct + 0.35 * (1.0 - exp_pct) + 0.20 * review_pct
 
 
-def _unlock_day(v):
-    """Quick-win + escalating curve. Front-loads low-value gigs to early days."""
-    return max(1, min(DAY_CAP, 1 + int(13 * (v ** CURVE_EXPONENT))))
+def _day_counts(n):
+    """Target posting count per day for n postings (front-loaded, escalating).
+
+    Guarantees day 1 is the largest bucket and every day has >= 1 posting.
+    """
+    counts = [max(1, round(pct / 100.0 * n)) for pct in DAY_SIZE_PCT]
+    diff = n - sum(counts)
+    i = 0
+    while diff > 0:
+        counts[i] += 1
+        diff -= 1
+        i = (i + 1) % DAY_CAP
+    while diff < 0:
+        idx = counts.index(max(counts))
+        if counts[idx] > 1:
+            counts[idx] -= 1
+            diff += 1
+        else:
+            break
+    return counts
+
+
+def compute_unlock_assignment(rows):
+    """Return {posting_id: unlock_day} for the approved quick-win curve.
+
+    rows: list of dicts {id, rate, experience_needed, review_count}.
+    Postings are ranked by composite value (highest = easiest/entry) and
+    assigned to day buckets by the front-loaded size distribution, so:
+      - day 1-2 unlock the most postings (quick wins)
+      - days 12-14 unlock the fewest, highest-value postings
+    """
+    rates = [float(r.get("rate") or 0) for r in rows]
+    exps = [_experience_ordinal(r.get("experience_needed")) for r in rows]
+    reviews = [float(r.get("review_count") or 0) for r in rows]
+    scored = [(_value_score(r, rates, exps, reviews), r["id"]) for r in rows]
+    scored.sort(reverse=True)  # highest value (easiest) first → unlocks earliest
+
+    counts = _day_counts(len(scored))
+    assigned = {}
+    idx = 0
+    for day, cnt in enumerate(counts, start=1):
+        for _v, pid in scored[idx:idx + cnt]:
+            assigned[pid] = day
+        idx += cnt
+    # rounding remainder → spill to the premium day
+    for _v, pid in scored[idx:]:
+        assigned[pid] = DAY_CAP
+    return assigned
 
 
 def resolve_cluster(sb=None, slug=None, display_name=None):
@@ -132,29 +180,7 @@ def assign_unlock_days(sb=None, cluster_key=None):
     if not rows:
         return
 
-    rates = [float(r.get("rate") or 0) for r in rows]
-    exps = [_experience_ordinal(r.get("experience_needed")) for r in rows]
-    reviews = [float(r.get("review_count") or 0) for r in rows]
-
-    scored = [(_value_score(r, rates, exps, reviews), r["id"]) for r in rows]
-    scored.sort()  # ascending by value → low value unlocks early
-
-    assigned = {}
-    for v, pid in scored:
-        assigned[pid] = _unlock_day(v)
-
-    # Guarantee lowest-value posting → Day 1 (quick win), highest → Day 14
-    assigned[scored[0][1]] = 1
-    assigned[scored[-1][1]] = DAY_CAP
-
-    # Bucket-size cap (keep the feed browsable)
-    buckets = {}
-    for pid, day in assigned.items():
-        buckets.setdefault(day, []).append(pid)
-    for day, pids in buckets.items():
-        if len(pids) > MAX_BUCKET_SIZE:
-            for extra in pids[MAX_BUCKET_SIZE:]:
-                assigned[extra] = min(DAY_CAP, day + 1)
+    assigned = compute_unlock_assignment(rows)
 
     for pid, day in assigned.items():
         try:

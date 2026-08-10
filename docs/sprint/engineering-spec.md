@@ -36,16 +36,18 @@ Day 1-5 ─ Copy-Work ──► Day 6-10 ─ Mock Contract ──► Day 11-14 �
 
 **Mechanic:** completing each sprint day "unlocks" a bucket of the cluster's live job postings, so the demand counter fills up as you progress.
 
-### 2.1 Bucketing algorithm (`demand_intelligence.unlock_day`)
-On ingest, every job posting in a cluster gets an `unlock_day` (1–14). The distribution is **front-loaded for quick wins and back-loaded with premium value**:
+### 2.1 Bucketing algorithm (`demand_intelligence.compute_unlock_assignment`)
+On ingest, every job posting in a cluster gets an `unlock_day` (1–14). The distribution is **front-loaded for quick wins and back-loaded with premium value** via quantile bucketing:
 
 1. Compute a composite **value score** `v` per posting in `[0,1]`:
-   `v = clamp( 0.45*rate_pct + 0.35*(1 − experience_needed_pct) + 0.20*review_pct )`
-   where each `*_pct` is the posting's percentile within the cluster. Higher `v` = easier / better-to-land entry gigs.
-2. Map to a day with a **front-loaded power curve**:
-   `unlock_day = min(14, 1 + floor(13 * v**1.8))`
-   - `v**1.8` < `v` for `v<1`, so **many postings compress into early days** (quick wins on Days 1–2), while only the highest-value postings reach Days 12–14 (fewer, but premium contracts).
-3. **Guarantee:** every cluster has at least 1 posting on Day 1 and the highest-value posting on Day 14. Day buckets are capped (default 50) so the feed stays browsable.
+   `v = clamp( 0.45*rate_pct + 0.35*(1 − experience_pct) + 0.20*review_pct )`
+   where each `*_pct` is the posting's percentile within the cluster. Higher `v` = easier / better-to-land entry gig.
+2. Rank all cluster postings **descending** by `v` (easiest → hardest) and assign them to day buckets by a designed **front-loaded size distribution**:
+   `DAY_SIZE_PCT = [12, 11, 10, 9, 8, 8, 7, 6, 6, 5, 5, 4, 4, 5]` (sums to 100)
+   Day 1 holds ~12% (the most — an instant quick win), shrinking to ~4–5% on Days 12–14 (the fewest, highest-value premium contracts).
+3. **Guarantee:** every day bucket has ≥1 posting (counts floored at 1), Day 1 is the largest bucket, and Day 14 holds only the highest-value postings. Remainder rounding spills to Day 14.
+
+> Note: an earlier per-item power curve (`v**1.8`) proved unreliable because real value scores cluster mid-range. Quantile bucketing guarantees the quick-win + escalating shape deterministically.
 
 **Net effect (example, 450-job cluster):**
 | Day | unlocked this day | cumulative | vibe |
