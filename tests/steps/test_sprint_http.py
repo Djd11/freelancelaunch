@@ -129,8 +129,9 @@ def _location(context):
 def _html(context):
     """Return the last response body as text, whether _get/_post set page_html
     (test_sprint_http) or only context.response (test_api_contract)."""
-    if getattr(context, "page_html", None) is not None:
-        return context.page_html
+    page_html = getattr(context, "page_html", None)
+    if page_html:
+        return page_html
     resp = getattr(context, "response", None)
     return resp.get_data(as_text=True) if resp is not None else ""
 
@@ -504,3 +505,89 @@ def step_badge_issued(context, sid):
     badges = context.fake.rows("badges")
     mine = [b for b in badges if b.get("sprint_id") == sid]
     assert mine, f"no badge issued for {sid}: {badges}"
+
+
+def _get_path_with_interpolation(context, path):
+    if "{id}" in path and getattr(context, "created_sprint_id", None):
+        path = path.format(id=context.created_sprint_id)
+    if "{pid}" in path and getattr(context, "created_proposal_id", None):
+        path = path.format(pid=context.created_proposal_id)
+    return path
+
+# The generic API GET step already handles these requests; this helper is
+# intentionally not registered as a duplicate Behave step.
+step_get_path = _get_path_with_interpolation
+
+
+@then("the page contains a link to the sprint track landing page")
+def step_contains_sprint_link(context):
+    html = _html(context)
+    # url_for('sprints.landing') generates /sprints
+    print(f"DEBUG: response type={type(context.response)}, has get_data={hasattr(context.response, 'get_data')}")
+    if context.response:
+        print(f"DEBUG: response status={context.response.status_code}")
+        print(f"DEBUG: response data len={len(context.response.get_data(as_text=True))}")
+    if '/sprints' not in html:
+        print(f"DEBUG HTML (first 2000 chars): {html[:2000]}")
+    assert '/sprints' in html, f"No link to /sprints found in HTML: {html[:500]}"
+
+
+@then("the page contains a link to the freelance pipeline")
+def step_contains_pipeline_link(context):
+    html = _html(context)
+    # url_for('freelance.pipeline') generates /freelance/pipeline
+    if '/freelance/pipeline' not in html:
+        print(f"DEBUG HTML (first 2000 chars): {html[:2000]}")
+    assert '/freelance/pipeline' in html, f"No link to /freelance/pipeline found: {html[:500]}"
+
+
+@then("the page contains a link to the dashboard")
+def step_contains_dashboard_link(context):
+    html = _html(context)
+    # url_for('dashboard.home') generates /dashboard/
+    if '/dashboard/' not in html:
+        print(f"DEBUG HTML (first 2000 chars): {html[:2000]}")
+    assert '/dashboard/' in html, f"No link to /dashboard/ found: {html[:500]}"
+
+
+@then("the page contains a link to the pipeline from sprint track")
+def step_contains_pipeline_from_sprint(context):
+    # Sprint track pages should have pipeline link via base nav
+    html = _html(context)
+    assert '/freelance/pipeline"' in html or "/freelance/pipeline'" in html, "No pipeline link on sprint page"
+
+
+# ─── Freelance pipeline API steps ────────────────────────────────────────
+# Use the generic API step: @when('I POST to "{path}" with JSON {body}')
+# from tests/steps/test_api_contract.py
+
+@then('the JSON response has field "{field}" equal to {value}')
+def step_json_field_equal(context, field, value):
+    import json
+    data = json.loads(context.response.get_data(as_text=True))
+    if value.lower() == "true":
+        value = True
+    elif value.lower() == "false":
+        value = False
+    elif value.isdigit():
+        value = int(value)
+    assert data.get(field) == value, f"field {field}: expected {value}, got {data.get(field)}"
+
+
+@then("the freelance pipeline proposals_sent increments")
+def step_pipeline_increments(context):
+    rows = context.fake.rows("freelance_pipeline")
+    assert len(rows) == 1
+    assert rows[0].get("proposals_sent", 0) == 1, f"proposals_sent not incremented: {rows[0]}"
+
+
+# Use the existing step at line ~178:
+# @given('the mock contract for sprint "{sid}" has passed verification')
+# def step_mock_passed(context, sid): ...
+
+
+@when('I submit the proposal form to "{path}"')
+def step_submit_proposal_form(context, path):
+    if "{pid}" in path and getattr(context, "created_proposal_id", None):
+        path = path.format(pid=context.created_proposal_id)
+    context.response = context.client.post(path, data={}, follow_redirects=False)

@@ -149,15 +149,24 @@ def complete_day(sprint_id, day_no):
     if not user_id:
         return jsonify({"ok": False, "error": "not logged in"}), 401
     sb = get_supabase()
+    sprint = _get_sprint(sb, sprint_id, user_id)
+    if not sprint:
+        return jsonify({"ok": False, "error": "sprint not found"}), 404
+
+    # A completion request may only complete a real day belonging to this sprint.
+    day_resp = sb.table("sprint_days").select("id,is_done").eq("sprint_id", sprint_id) \
+        .eq("day_no", day_no).limit(1).execute()
+    if not day_resp.data:
+        return jsonify({"ok": False, "error": "day not found"}), 404
 
     sb.table("sprint_days").update({"is_done": True, "completed_at": "now()"}) \
         .eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
 
-    # advance current_day + phase
-    next_day = day_no + 1
+    # Do not allow an old-day request to move a sprint backwards.
+    next_day = max(int(sprint.get("current_day") or 1), day_no + 1)
     new_phase = sprint_planner.phase_for_day(next_day)
     sb.table("sprints").update({"current_day": next_day, "phase": new_phase}) \
-        .eq("id", sprint_id).execute()
+        .eq("id", sprint_id).eq("user_id", user_id).execute()
 
     # the meter uptick — the core motivational moment
     meter = unlock_engine.recompute(sb, sprint_id, user_id)
