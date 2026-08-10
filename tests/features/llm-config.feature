@@ -23,7 +23,7 @@ Feature: LLM Config — Single Source of Truth
   Scenario: LC4 — call_llm returns None when all providers fail
     Given both providers fail
     Then call_llm should return None
-    So callers fall back to structured content
+    And callers fall back to structured content
 
   Scenario: LC5 — CLI curriculum generator uses the same module
     Given I run generate_full_curriculum.py

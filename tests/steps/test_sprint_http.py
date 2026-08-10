@@ -168,6 +168,18 @@ def step_other_sprint(context, sid, n):
     _seed_sprint(context, sid, days=14, day=int(n), user=OTHER_USER_ID)
 
 
+@given('the user has a verified platform "{platform}"')
+def step_verified_platform(context, platform):
+    """Seed a verified user_platforms row for the test user."""
+    context.fake.seed("user_platforms", [{
+        "id": f"platform-{platform}-{TEST_USER_ID}",
+        "user_id": TEST_USER_ID,
+        "platform": platform,
+        "status": "verified",
+        "verified_at": "now()",
+    }])
+
+
 @given('a draft proposal "{pid}" exists for job "{jid}" on sprint "{sid}"')
 def step_draft_proposal(context, pid, jid, sid):
     context.fake.seed("proposals", [{

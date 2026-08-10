@@ -120,6 +120,7 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
   Scenario: Sprint proposals has back-link to sprint dashboard
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
     And the page contains a link to "/sprints/s1"
@@ -127,6 +128,7 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
   Scenario: Sprint proposals nav bar has Pipeline link
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
     And the page contains a link to the freelance pipeline
@@ -134,6 +136,7 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
   Scenario: Submitting a proposal from sprint increments freelance pipeline
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
     When I submit the proposal form to "/sprints/s1/proposals/p1/submit"
     Then the response status is 302

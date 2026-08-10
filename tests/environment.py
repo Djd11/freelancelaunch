@@ -29,7 +29,7 @@ API_CONTRACT_FEATURE_NAME = "HTTP API Contract"
 # FakeSupabase. Each name here gets the fake installed for the scenario.
 HTTP_FAKE_FEATURES = {
     API_CONTRACT_FEATURE_NAME,
-    "Dashboard Pipeline Sprint Connection",
+    "Dashboard ↔ Pipeline ↔ Sprint Track Connections",
 }
 
 # Module attributes that bind `get_supabase` at import time (routes/services).

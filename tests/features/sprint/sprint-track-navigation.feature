@@ -82,6 +82,7 @@ Feature: V2 Sprint Track Navigation
 
   Scenario: The sprint dashboard links to proposals
     Given I have an active sprint "s1" with 14 days
+    And the user has a verified platform "upwork"
     When I open the sprint dashboard for "s1"
     Then the page contains a link to "/sprints/s1/proposals"
     When I click through to "/sprints/s1/proposals"
@@ -165,6 +166,7 @@ Feature: V2 Sprint Track Navigation
   Scenario: The proposals page is reachable and links back to the sprint dashboard
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I open "/sprints/s1/proposals"
     Then the response status is 200
     And the page is the proposals page
@@ -189,6 +191,7 @@ Feature: V2 Sprint Track Navigation
   Scenario: Every CTA on the sprint dashboard resolves to a live page
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I open the sprint dashboard for "s1"
     Then every rendered href resolves to a live page
 
@@ -207,6 +210,7 @@ Feature: V2 Sprint Track Navigation
   Scenario: Every CTA on the proposals page resolves to a live page
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I open "/sprints/s1/proposals"
     Then every rendered href resolves to a live page
 

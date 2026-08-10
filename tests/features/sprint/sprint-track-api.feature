@@ -239,6 +239,7 @@ Feature: V2 Sprint Track API
   Scenario: The proposals page renders live jobs as draft proposals
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
     And the page contains the text "First-Bid"
@@ -246,6 +247,7 @@ Feature: V2 Sprint Track API
   Scenario: The proposals page seeds draft proposals for live jobs
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
     And draft proposals exist for sprint "s1"
@@ -253,6 +255,7 @@ Feature: V2 Sprint Track API
   Scenario: Submitting a proposal increments the pipeline count
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
     When I POST to "/sprints/s1/proposals/p1/submit"
     Then the response status is 302
@@ -261,6 +264,7 @@ Feature: V2 Sprint Track API
   Scenario: Proposal submit redirects back to the proposals page
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
     And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
     When I POST to "/sprints/s1/proposals/p1/submit"
     Then the response status is 302

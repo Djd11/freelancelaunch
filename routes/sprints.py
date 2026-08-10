@@ -222,6 +222,14 @@ def proposals(sprint_id):
     sb = get_supabase()
     sprint = _get_sprint(sb, sprint_id, user_id)
 
+    # Gate: require at least one verified platform before entering Phase C
+    platform_resp = sb.table("user_platforms").select("*") \
+        .eq("user_id", user_id).eq("status", "verified").execute()
+    verified_platforms = platform_resp.data or []
+    if not verified_platforms:
+        flash("Connect a freelance platform (Upwork, Fiverr, or Contra) before starting proposals.", "info")
+        return redirect(url_for("platforms.setup"))
+
     # First-Bid challenge: 5 live jobs → generate drafts
     jobs = sb.table("job_feed").select("*").eq("cluster_key", sprint.get("cluster_key")) \
         .eq("status", "active").order("unlock_day").limit(5).execute().data or []
@@ -234,7 +242,8 @@ def proposals(sprint_id):
             drafts.append(p)
     submitted = sum(1 for p in drafts if p.get("status") == "submitted")
     return render_template("sprint/proposals.html",
-        sprint=sprint, drafts=drafts, submitted=submitted, target=5)
+        sprint=sprint, drafts=drafts, submitted=submitted, target=5,
+        user_platforms=verified_platforms)
 
 
 @sprints_bp.route("/sprints/<sprint_id>/proposals/<proposal_id>/submit", methods=["POST"])
@@ -243,6 +252,14 @@ def proposal_submit(sprint_id, proposal_id):
     if not user_id:
         return redirect(url_for("auth.login"))
     sb = get_supabase()
+
+    # Gate: require at least one verified platform before submitting
+    platform_resp = sb.table("user_platforms").select("*") \
+        .eq("user_id", user_id).eq("status", "verified").limit(1).execute()
+    if not platform_resp.data:
+        flash("Connect a freelance platform before submitting proposals.", "error")
+        return redirect(url_for("platforms.setup"))
+
     proposal_engine.mark_submitted(sb, proposal_id)
     sb.table("freelance_pipeline").update({"proposals_sent": "proposals_sent + 1"}) \
         .eq("user_id", user_id).execute()

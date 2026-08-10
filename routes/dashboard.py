@@ -309,13 +309,6 @@ def home():
     except Exception as e:
         logger.error(f"Nudge engine error: {e}")
 
-    # Get freelance pipeline stats
-    pipeline_resp = sb.table("freelance_pipeline").select("*") \
-        .eq("user_id", user_id) \
-        .limit(1) \
-        .execute()
-    pipeline = pipeline_resp.data[0] if pipeline_resp.data else None
-
     return render_template("dashboard/home.html",
         profile=profile,
         cohort=active_cohort,
@@ -325,7 +318,6 @@ def home():
         curriculum_day=curriculum_day,
         progress=progress,
         total_done=total_done,
-        pipeline=pipeline,
         streak=streak,
         nudges=nudges,
         confidence=confidence,

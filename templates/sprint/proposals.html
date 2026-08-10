@@ -7,6 +7,17 @@
   <h1 class="font-display text-3xl tracking-tight mt-2">First-Bid — {{ submitted }} / {{ target }} proposals</h1>
   <p class="text-sm text-gray-500 mt-1">Engineered proposals with "I see you need X…" hooks. You copy-paste and confirm — we never auto-submit.</p>
 
+  <!-- Connected platform indicator -->
+  {% set platform_icons = {'upwork': '💼', 'fiverr': '🎯', 'contra': '⚡'} %}
+  {% if user_platforms %}
+  <div class="mt-4 flex items-center gap-2 text-sm text-emerald-700">
+    <span class="font-medium">Connected:</span>
+    {% for p in user_platforms %}
+    <span class="badge bg-emerald-50 text-emerald-700">{{ platform_icons.get(p.platform, '🔗') }} {{ p.platform|title }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden mt-6">
     <div class="h-full bg-emerald-500 transition-all" style="width: {{ (submitted / target * 100)|round }}%"></div>
   </div>
