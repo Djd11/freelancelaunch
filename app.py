@@ -30,7 +30,8 @@ def create_app():
         from routes.enroll_dynamic import enroll_bp
         from routes.generate_api import gen_bp
         from routes.preview import preview_bp
-        
+        from routes.sprints import sprints_bp  # Sprint Track (parallel placement path)
+
         app.register_blueprint(auth_bp)
         app.register_blueprint(topics_bp)
         app.register_blueprint(dashboard_bp)
@@ -44,7 +45,8 @@ def create_app():
         app.register_blueprint(enroll_bp)
         app.register_blueprint(gen_bp)
         app.register_blueprint(preview_bp)
-        
+        app.register_blueprint(sprints_bp)  # Sprint Track
+
         # ─── Inject user into all templates ────────────────────────
         @app.before_request
         def load_user():
@@ -82,13 +84,18 @@ def create_app():
             }
         
         # ─── Routes ────────────────────────────────────────────────
-        from routes.topics import CURATED_TOPICS
-        
+        from routes.topics import CURATED_TOPICS, _live_topics
+
         @app.route("/")
         def index():
             if g.user:
                 return redirect(url_for("dashboard.home"))
-            return render_template("landing.html", topics=CURATED_TOPICS)
+            # Serve live demand numbers (Contra/Fiverr/Upwork) on the landing page
+            try:
+                topics = _live_topics()
+            except Exception:
+                topics = CURATED_TOPICS
+            return render_template("landing.html", topics=topics)
         
         @app.route("/health")
         def health():

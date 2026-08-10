@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Day {{ day_no }} · {{ sprint.cluster_key }} Sprint — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <a href="{{ url_for('sprints.dashboard', sprint_id=sprint.id) }}" class="text-sm text-amber-600 hover:underline mb-4 inline-block">← Sprint Dashboard</a>
+
+  <div class="flex items-center gap-3 flex-wrap mb-2">
+    <span class="badge bg-amber-50 text-amber-700">Phase {{ day.phase if day else sprint.phase }} · Day {{ day_no }}</span>
+    <span class="text-sm text-gray-400">{{ day.action_type if day else '—' }}</span>
+  </div>
+  <h1 class="font-display text-3xl tracking-tight">{{ day.title if day else 'Day ' ~ day_no }}</h1>
+  <p class="text-sm text-gray-500 mt-1">{{ day.description if day else '' }}</p>
+
+  <!-- METER UPTICK (hidden until day completes) -->
+  <div id="uptick" class="hidden mt-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <p class="font-bold text-emerald-700 text-lg">🎉 Day {{ day_no }} complete — postings unlocked!</p>
+        <p id="uptick-msg" class="text-sm text-emerald-700 mt-1"></p>
+      </div>
+      <div class="text-right">
+        <div class="text-2xl font-mono-data font-bold text-emerald-600" id="uptick-count">—</div>
+        <div class="text-xs text-emerald-600">jobs unlocked now</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-6 mt-6">
+    <h3 class="font-bold text-lg mb-3">Today's action</h3>
+    <div class="space-y-3">
+      {% if day and day.action_type == 'copywork' %}
+        <p class="text-sm text-gray-600">Rebuild this real project from scratch — same triggers, same logic, no peeking.</p>
+        <div class="p-4 bg-blue-50 rounded-xl"><p class="text-sm font-medium text-blue-800">Replication project #{{ day.action_payload.project_index }}</p></div>
+      {% elif day and day.action_type == 'contract' %}
+        <a href="{{ url_for('sprints.contract', sprint_id=sprint.id) }}" class="text-sm text-amber-600 hover:underline">Open the Mock Contract brief →</a>
+      {% elif day and day.action_type == 'proposal' %}
+        <a href="{{ url_for('sprints.proposals', sprint_id=sprint.id) }}" class="text-sm text-amber-600 hover:underline">Open the Proposal Builder →</a>
+      {% else %}
+        <p class="text-sm text-gray-600">Follow the lesson and complete the day.</p>
+      {% endif %}
+
+      {% if phase_gate.get('phase_c_locked') %}
+      <div class="p-4 bg-amber-50 rounded-xl"><p class="text-sm text-amber-700">🔒 Phase C stays locked until your Mock Contract passes verification.</p></div>
+      {% endif %}
+    </div>
+
+    <button id="completeBtn" onclick="completeDay()" class="btn-primary px-6 py-3 mt-6 text-sm w-full">
+      {% if day and day.is_done %}✓ Day complete{% else %}✔ Mark Day {{ day_no }} Complete{% endif %}
+    </button>
+  </div>
+</div>
+
+<script>
+function completeDay() {
+  var btn = document.getElementById('completeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Unlocking postings…';
+  fetch('{{ url_for("sprints.complete_day", sprint_id=sprint.id, day_no=day_no) }}', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.ok) { btn.disabled = false; btn.textContent = '❌ Try again'; return; }
+      btn.textContent = '✓ Day complete';
+      var m = data.meter || {};
+      var box = document.getElementById('uptick');
+      box.classList.remove('hidden');
+      document.getElementById('uptick-msg').textContent =
+        'You unlocked +' + (m.newly_unlocked||0) + ' more job postings → ' + (m.unlocked||0) + ' of ' + (m.total||0) + ' active jobs are now open to you.';
+      document.getElementById('uptick-count').textContent = (m.unlocked||0) + ' / ' + (m.total||0);
+    })
+    .catch(function(){ btn.disabled = false; btn.textContent = '❌ Network error'; });
+}
+</script>
+{% endblock %}

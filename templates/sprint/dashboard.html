@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Sprint · {{ sprint.cluster_key }} — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-10">
+  <a href="{{ url_for('dashboard.home') }}" class="text-sm text-amber-600 hover:underline mb-4 inline-block">← Dashboard</a>
+
+  <div class="card p-6 md:p-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="font-display text-3xl tracking-tight">{{ sprint.cluster_key.replace('-', ' ').title() }} Sprint</h1>
+        <p class="text-sm text-gray-500 mt-1">Day {{ current_day }} of 14 · Phase {{ sprint.phase }}
+          {% if sprint.phase == 'A' %}· Skill Acquisition{% elif sprint.phase == 'B' %}· Mock Contract{% else %}· Supply Chain{% endif %}
+        </p>
+      </div>
+      <div class="text-right">
+        <div class="text-3xl font-mono-data font-bold text-emerald-600">{{ meter.unlocked|default(0) }}</div>
+        <div class="text-xs text-gray-400">/ {{ meter.total|default(cluster.jobs) }} active jobs unlocked</div>
+      </div>
+    </div>
+
+    <!-- JOB UNLOCK METER -->
+    <div class="mt-6 pt-5 border-t border-[#e7e5e4]">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-[0.15em] text-[#a8a29e]">Job Unlock Meter</span>
+        {% if meter.newly_unlocked %}
+        <span class="badge bg-emerald-50 text-emerald-700">🔥 +{{ meter.newly_unlocked }} postings this day</span>
+        {% endif %}
+      </div>
+      <div class="day-track flex gap-1">
+        {% for d in days %}
+        <div class="flex-1 h-3 rounded-[3px] {% if d.is_done %}bg-emerald-400{% elif d.day_no == current_day %}bg-amber-100 ring-2 ring-amber-500{% else %}bg-stone-200{% endif %}"
+             title="Day {{ d.day_no }} · {{ d.title }}"></div>
+        {% endfor %}
+      </div>
+      <div class="flex justify-between mt-1.5 text-[10px] uppercase tracking-[0.15em] text-[#a8a29e] font-mono-data">
+        <span>Day 1 · quick win</span><span>Day 14 · premium contracts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE GATES -->
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    {% for p in ['A','B','C'] %}
+    {% set labels = {'A':'Skill Acquisition','B':'Mock Contract','C':'Supply Chain'} %}
+    {% set phase_complete = (p=='A' and completed>=5) or (p=='B' and completed>=10) %}
+    <div class="card p-5 {% if p == sprint.phase %}border-amber-400 shadow{% endif %} {% if p=='B' and completed<5 %}opacity-70{% endif %} {% if p=='C' and completed<10 %}opacity-70{% endif %}">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider {% if p=='A'%}text-blue-600{% elif p=='B'%}text-purple-600{% else %}text-emerald-600{% endif %}">Phase {{ p }} · Days</span>
+        {% if phase_complete %}<span class="badge bg-emerald-50 text-emerald-700">Done</span>{% elif p == sprint.phase %}<span class="badge bg-amber-50 text-amber-700">Active</span>{% elif p=='B' %}<span class="badge bg-gray-100 text-gray-500">🔒 Day 6</span>{% elif p=='C' %}<span class="badge bg-gray-100 text-gray-500">🔒 Day 11</span>{% endif %}
+      </div>
+      <h3 class="font-semibold mt-2">{{ labels[p] }}</h3>
+      <p class="text-xs text-gray-400 mt-1">
+        {% if p=='A' %}Copy-Work: rebuild 3 real projects + gap-fill.{% elif p=='B' %}Fulfill a real anonymized brief, then a case study.{% else %}Engineered proposals + the First-Bid challenge.{% endif %}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- TODAY -->
+  <div class="card p-6 mt-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">📌 Day {{ current_day }}</h3>
+      <a href="{{ url_for('sprints.day', sprint_id=sprint.id, day_no=current_day) }}" class="btn-primary px-5 py-2.5 text-sm">▶ Open Day {{ current_day }}</a>
+    </div>
+    {% set today = days|selectattr('day_no', 'equalto', current_day)|first %}
+    <p class="text-sm text-gray-600">{{ today.title if today else 'Day ready' }}</p>
+    {% if today %}<p class="text-xs text-gray-400 mt-1">{{ today.description }}</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

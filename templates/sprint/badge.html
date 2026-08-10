@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Your Badges — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <a href="{{ url_for('dashboard.home') }}" class="text-sm text-amber-600 hover:underline mb-4 inline-block">← Dashboard</a>
+  <h1 class="font-display text-3xl tracking-tight">🏅 Demand-Validated Badges</h1>
+  <p class="text-sm text-gray-500 mt-1">Badges are issued only when the Mock Contract passes verification — never for just finishing a course.</p>
+
+  {% if badge %}
+  <div class="card p-6 mt-6 border-emerald-200 bg-emerald-50/40">
+    <div class="flex items-center gap-4">
+      <div class="text-5xl">🏅</div>
+      <div>
+        <h3 class="font-bold text-lg">{{ badge.cluster_key.replace('-', ' ').title() }} Sprint</h3>
+        <p class="text-sm text-emerald-700"><b>{{ badge.jobs_now|default(badge.jobs_at_issue) }} active jobs</b> right now
+          {% if badge.jobs_at_issue %}· {{ badge.jobs_at_issue }} at issue{% endif %}</p>
+        <p class="text-xs text-gray-400 mt-1">Issued {{ badge.issued_at }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="mt-6 space-y-3">
+    {% for b in badges %}
+    <div class="card p-5 flex items-center gap-4">
+      <div class="text-4xl">🏅</div>
+      <div>
+        <h4 class="font-semibold">{{ b.cluster_key.replace('-', ' ').title() }} Sprint</h4>
+        <p class="text-sm text-emerald-600"><b>{{ b.jobs_now|default(0) }} active jobs</b> now</p>
+      </div>
+    </div>
+    {% else %}
+    <div class="card p-8 text-center text-gray-400">No badges yet. Complete and verify a sprint to earn one.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

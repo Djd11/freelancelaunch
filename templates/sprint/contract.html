@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Mock Contract — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <a href="{{ url_for('sprints.dashboard', sprint_id=sprint.id) }}" class="text-sm text-amber-600 hover:underline mb-4 inline-block">← Sprint Dashboard</a>
+  <span class="badge bg-purple-50 text-purple-700">Phase B · Mock Contract</span>
+  <h1 class="font-display text-3xl tracking-tight mt-2">Your First "Client"</h1>
+  <p class="text-sm text-gray-500 mt-1">An anonymized real job post. Same deadline, same constraints — fulfill it like it's paid.</p>
+
+  {% if brief %}
+  <div class="card p-6 mt-6 border-t-4 border-purple-400">
+    <div class="flex justify-between flex-wrap gap-3">
+      <div>
+        <h3 class="font-bold text-lg">📄 {{ brief.title }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Reference job #{{ brief.job_feed_id[:8] }} · anonymized</p>
+      </div>
+      {% if review and review.status == 'pass' %}
+      <span class="badge bg-emerald-50 text-emerald-700">✓ Verified — Phase C unlocked</span>
+      {% elif review and review.status == 'pending' %}
+      <span class="badge bg-amber-50 text-amber-700">⏳ Under review</span>
+      {% else %}
+      <span class="badge bg-red-50 text-red-700">⏱ Awaiting submission</span>
+      {% endif %}
+    </div>
+
+    <div class="mt-5 grid md:grid-cols-2 gap-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-purple-600">Requirements</p>
+        <p class="text-sm text-gray-600 mt-2">{{ brief.requirements or 'Fulfill the brief scope within the stated constraints.' }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-purple-600">Constraints</p>
+        <ul class="text-sm text-gray-600 mt-2 space-y-1">
+          {% for k, v in brief.constraints.items() %}
+          <li><b>{{ k.replace('_',' ').title() }}:</b> {{ v }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {% if review and review.feedback %}
+    <div class="mt-5 p-4 bg-gray-50 rounded-xl"><p class="text-sm text-gray-600">{{ review.feedback }}</p></div>
+    {% endif %}
+
+    {% if not review or review.status != 'pass' %}
+    <form method="post" action="{{ url_for('sprints.contract_submit', sprint_id=sprint.id) }}" class="mt-6 space-y-3">
+      <input name="submission_url" type="url" required placeholder="Paste a link to your deliverable (e.g. Notion, GitHub, Figma)"
+             class="w-full px-4 py-3 rounded-xl border border-[#e7e5e4] text-sm">
+      <button class="btn-primary px-6 py-3 text-sm w-full" type="submit">Submit for verification</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="card p-8 mt-6 text-center"><p class="text-gray-500">No brief available yet. Return to the sprint dashboard.</p></div>
+  {% endif %}
+</div>
+{% endblock %}
