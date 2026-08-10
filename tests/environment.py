@@ -25,8 +25,20 @@ AUDIT_JSON = "/tmp/fl_audit_behave.json"
 
 API_CONTRACT_FEATURE_NAME = "HTTP API Contract"
 
+# Features that exercise the real Flask HTTP stack against an in-memory
+# FakeSupabase. Each name here gets the fake installed for the scenario.
+HTTP_FAKE_FEATURES = {
+    API_CONTRACT_FEATURE_NAME,
+}
+
 # Module attributes that bind `get_supabase` at import time (routes/services).
 _API_BOUND_ATTRS = [
+    "routes.auth.get_supabase",
+    "routes.admin.get_supabase",
+    "routes.payments.get_supabase",
+    "routes.deliverables.get_supabase",
+    "routes.topics.get_supabase",
+    "routes.dashboard.get_supabase",
     "routes.progress.get_supabase",
     "routes.platforms.get_supabase",
     "routes.freelance.get_supabase",
@@ -50,11 +62,19 @@ _API_SOURCE_ATTRS = ["services.supabase_client.get_supabase"]
 
 def _is_api_contract_feature(context):
     feat = getattr(context, "feature", None)
-    return bool(feat and getattr(feat, "name", None) == API_CONTRACT_FEATURE_NAME)
+    return bool(feat and getattr(feat, "name", None) in HTTP_FAKE_FEATURES)
+
+
+def _stub_llm(*args, **kwargs):
+    """Deterministic offline stand-in for llm_config.call_llm so BDD tests never
+    hit the network. Returns None → callers fall back to their structured/deterministic
+    templates (proposals, mentor, badges). No 500, no flake, no latency."""
+    return None
 
 
 def install_api_supabase(context):
-    """Patch every get_supabase binding to return the in-memory FakeSupabase."""
+    """Patch every get_supabase binding to return the in-memory FakeSupabase,
+    and stub the LLM chain so no scenario performs a real network call."""
     from tests.support.fake_supabase import FakeSupabase, make_get_supabase
 
     if getattr(context, "fake", None) is None:
@@ -67,6 +87,25 @@ def install_api_supabase(context):
             context._supabase_patchers.append(p)
         except Exception:  # module may not be imported on this runner
             continue
+
+    # Hermetic LLM: never perform a real provider call during BDD tests.
+    for target in (
+        "services.llm_config.call_llm",
+        "services.proposal_engine.llm_config.call_llm",
+        "services.curriculum_generator.call_llm",
+    ):
+        try:
+            p = mock.patch(target, _stub_llm)
+            p.start()
+            context._supabase_patchers.append(p)
+        except Exception:
+            continue
+    try:
+        p = mock.patch("services.llm_config.get_provider_chain", lambda: [])
+        p.start()
+        context._supabase_patchers.append(p)
+    except Exception:
+        pass
 
 
 def _teardown_api_supabase(context):

@@ -26,6 +26,32 @@ def _get_sprint(sb, sprint_id, user_id):
     return resp.data[0] if resp.data else None
 
 
+# ─── sprint track landing (entry point) ───────────────────────────────
+
+@sprints_bp.route("/sprints")
+def landing():
+    user_id = _require_user()
+    if not user_id:
+        return redirect(url_for("auth.login"))
+    sb = get_supabase()
+
+    # active / past sprints for this user
+    my_sprints = sb.table("sprints").select("*") \
+        .eq("user_id", user_id).order("created_at").execute().data or []
+
+    # live demand clusters for the start form (seeded on demand)
+    clusters = [
+        {"key": "email-automation", "display_name": "Email Automation"},
+        {"key": "web-scraping", "display_name": "Web Scraping"},
+        {"key": "ai-chatbots", "display_name": "AI Chatbots"},
+        {"key": "shopify-dev", "display_name": "Shopify Development"},
+        {"key": "data-viz", "display_name": "Data Visualization"},
+    ]
+
+    return render_template("sprint/landing.html",
+        sprints=my_sprints, clusters=clusters)
+
+
 # ─── enrollment → plan ────────────────────────────────────────────────
 
 @sprints_bp.route("/sprints/new", methods=["POST"])

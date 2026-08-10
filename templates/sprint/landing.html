@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Sprint Track — FreelanceLaunch{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-10">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+    <div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Parallel Placement Path</p>
+      <h1 class="font-display text-4xl tracking-tight">Sprint Track</h1>
+      <p class="text-sm text-gray-500 mt-2 max-w-xl">
+        A 14-day, client-ready sprint. Day 1 is a quick win — by Day 14 you'll have
+        real deliverables, a live proposal draft, and a verified mock contract.
+      </p>
+    </div>
+    <div class="card px-6 py-4 text-right">
+      <div class="text-3xl font-mono-data font-bold text-emerald-600">{{ sprints|length }}</div>
+      <div class="text-xs text-gray-400 uppercase tracking-wider">Sprints started</div>
+    </div>
+  </div>
+
+  <!-- START A SPRINT -->
+  <div class="card p-6 md:p-8 mb-8 border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-white">
+    <h2 class="font-bold text-lg mb-1">🚀 Start a new sprint</h2>
+    <p class="text-sm text-gray-500 mb-5">Pick a demand cluster — we seed a live job feed and plan your first 14 days.</p>
+    <form method="POST" action="{{ url_for('sprints.new_sprint') }}" class="flex flex-col sm:flex-row gap-3">
+      <select name="topic" class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        {% for c in clusters %}
+        <option value="{{ c.key }}">{{ c.display_name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-bold text-sm">Start Sprint →</button>
+    </form>
+  </div>
+
+  <!-- ACTIVE SPRINTS -->
+  {% if sprints %}
+  <div class="mb-6">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your sprints</p>
+    <div class="grid md:grid-cols-2 gap-4">
+      {% for s in sprints %}
+      <a href="{{ url_for('sprints.dashboard', sprint_id=s.id) }}" class="card p-6 block hover:shadow transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-bold">{{ s.cluster_key.replace('-', ' ').title() }}</span>
+          <span class="badge {% if s.status == 'completed' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
+            {{ s.status|capitalize }} · Phase {{ s.phase }}
+          </span>
+        </div>
+        <div class="flex gap-1 mb-3">
+          {% for d in range(1, 15) %}
+          <div class="flex-1 h-2 rounded-sm {% if d < (s.current_day|default(1)) %}bg-amber-400{% elif d == (s.current_day|default(1)) %}bg-amber-100 ring-2 ring-amber-500{% else %}bg-stone-200{% endif %}"
+               title="Day {{ d }}"></div>
+          {% endfor %}
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 font-mono-data">
+          <span>Day {{ s.current_day|default(1) }}/14</span>
+          <span>Started {{ s.start_date }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card p-10 text-center border-dashed">
+    <div class="text-5xl mb-3">🏁</div>
+    <p class="text-gray-500 font-medium">No sprints yet.</p>
+    <p class="text-sm text-gray-400 mt-1">Pick a cluster above to launch your first 14-day sprint.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

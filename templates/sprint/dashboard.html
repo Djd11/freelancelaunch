@@ -26,10 +26,11 @@
         <span class="badge bg-emerald-50 text-emerald-700">🔥 +{{ meter.newly_unlocked }} postings this day</span>
         {% endif %}
       </div>
-      <div class="day-track flex gap-1">
+      <div class="flex gap-1">
         {% for d in days %}
-        <div class="flex-1 h-3 rounded-[3px] {% if d.is_done %}bg-emerald-400{% elif d.day_no == current_day %}bg-amber-100 ring-2 ring-amber-500{% else %}bg-stone-200{% endif %}"
-             title="Day {{ d.day_no }} · {{ d.title }}"></div>
+        <a href="{{ url_for('sprints.day', sprint_id=sprint.id, day_no=d.day_no) }}"
+           class="flex-1 h-3 rounded-[3px] {% if d.is_done %}bg-emerald-400{% elif d.day_no == current_day %}bg-amber-100 ring-2 ring-amber-500{% else %}bg-stone-200 hover:bg-amber-300{% endif %} transition"
+           title="Day {{ d.day_no }} · {{ d.title }}" aria-label="Open day {{ d.day_no }}"></a>
         {% endfor %}
       </div>
       <div class="flex justify-between mt-1.5 text-[10px] uppercase tracking-[0.15em] text-[#a8a29e] font-mono-data">
@@ -54,6 +55,28 @@
       </p>
     </div>
     {% endfor %}
+  </div>
+
+  <!-- STAGE ACTIONS — proposals / contract / badge (must never be orphaned) -->
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    <a href="{{ url_for('sprints.proposals', sprint_id=sprint.id) }}" class="card p-5 block hover:shadow transition">
+      <div class="text-2xl mb-1">📤</div>
+      <h3 class="font-bold text-sm">First-Bid Proposals</h3>
+      <p class="text-xs text-gray-400 mt-1">5 live jobs → engineered drafts, human-confirmed submission.</p>
+      <span class="inline-block mt-3 text-xs font-bold text-amber-600">Open proposals →</span>
+    </a>
+    <a href="{{ url_for('sprints.contract', sprint_id=sprint.id) }}" class="card p-5 block hover:shadow transition">
+      <div class="text-2xl mb-1">📋</div>
+      <h3 class="font-bold text-sm">Mock Contract</h3>
+      <p class="text-xs text-gray-400 mt-1">Fulfill a real anonymized brief and pass verification.</p>
+      <span class="inline-block mt-3 text-xs font-bold text-amber-600">Open contract →</span>
+    </a>
+    <a href="{{ url_for('sprints.badge', sprint_id=sprint.id) }}" class="card p-5 block hover:shadow transition">
+      <div class="text-2xl mb-1">🏅</div>
+      <h3 class="font-bold text-sm">Your Badge</h3>
+      <p class="text-xs text-gray-400 mt-1">The client-ready credential with a live job counter.</p>
+      <span class="inline-block mt-3 text-xs font-bold text-amber-600">View badge →</span>
+    </a>
   </div>
 
   <!-- TODAY -->
