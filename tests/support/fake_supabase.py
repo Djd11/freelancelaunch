@@ -204,7 +204,9 @@ def _key(v):
 def _resolve_value(old, new):
     """Resolve SQL-ish string increments like "col + 1" to a real int."""
     if isinstance(new, str) and re.fullmatch(r"[a-z_]+ ?\+ ?\d+", new):
-        col, _, num = re.split(r"\s*\+\s*", new)
+        parts = re.split(r"\s*\+\s*", new)
+        col = parts[0]
+        num = parts[1]
         try:
             base = int(old) if old is not None else 0
             return base + int(num)
