@@ -26,7 +26,7 @@
             </div>
 
             <!-- DEMAND METRICS -->
-            <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="grid grid-cols-3 gap-4 mb-2">
                 <div class="p-5 bg-amber-50 rounded-xl text-center">
                     <div class="text-2xl font-bold text-amber-600">{{ topic.job_count }}</div>
                     <div class="text-xs text-gray-500 mt-1.5">Open contracts this week</div>
@@ -39,6 +39,15 @@
                     <div class="text-2xl font-bold text-amber-600">{{ topic.demand_score }}/100</div>
                     <div class="text-xs text-gray-500 mt-1.5">Market demand score</div>
                 </div>
+            </div>
+            <div class="mb-8 text-xs {% if topic.data_source == 'live' and not topic.data_stale %}text-emerald-600{% elif topic.data_source == 'live' %}text-amber-600{% else %}text-gray-400{% endif %}">
+                {% if topic.data_source == 'live' and not topic.data_stale %}
+                    ● Live from Upwork / Fiverr / Contra{% if topic.last_updated %} · updated {{ topic.last_updated[:10] }}{% endif %}
+                {% elif topic.data_source == 'live' and topic.data_stale %}
+                    ◐ Cached demand data — nightly refresh pending{% if topic.last_updated %} · last {{ topic.last_updated[:10] }}{% endif %}
+                {% else %}
+                    ◇ Curated estimate — live scrape not yet available
+                {% endif %}
             </div>
 
             <!-- SKILLS -->

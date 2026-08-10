@@ -29,6 +29,10 @@ class Config:
 
     # Admin (email match — see services/authz.py)
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
+
+    # Curriculum quality scoring (contract-readiness gate). Set "0" to disable
+    # the extra LLM scoring call per lesson (deterministic checks still run).
+    ENABLE_QUALITY_SCORE = os.getenv("ENABLE_QUALITY_SCORE", "1")
     
     # YouTube Data API
     YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")

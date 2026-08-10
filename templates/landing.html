@@ -105,6 +105,11 @@
                         <span>{{ topic.job_count }} open contracts</span>
                         <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                         <span>${{ topic.avg_rate }}/hr avg</span>
+                        {% if topic.data_source == 'live' and not topic.data_stale %}
+                        <span class="text-[10px] text-emerald-600">● Live</span>
+                        {% elif topic.data_source == 'live' %}
+                        <span class="text-[10px] text-amber-600">◐ Cached</span>
+                        {% endif %}
                     </div>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 group-hover:text-amber-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>

@@ -89,13 +89,13 @@ Rules: 8th grade level, specific examples, actionable, 45-60 min total."""
 
     # call_llm handles the full chain (requested model → deepseek fallback)
     # and never raises — it returns None only when every provider fails.
-    content = call_llm(prompt, max_tokens=2048, model=model)
+    content = call_llm(prompt, max_tokens=1600, model=model)
     if content:
         return content
 
     # Transient failure (throttling/connection) — retry with backoff
-    if attempt < 3:
-        wait = 10 * attempt
+    if attempt < 4:
+        wait = 8 * attempt
         print(f"  (retry {attempt} in {wait}s...)", flush=True)
         time.sleep(wait)
         return generate_day(day_num, theme, day_title, next_title, topic_name, model, attempt + 1)

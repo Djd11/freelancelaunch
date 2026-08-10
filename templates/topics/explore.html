@@ -67,6 +67,11 @@
                     <span><strong class="text-[#0f172a] font-semibold">${{ topic.avg_rate }}</strong>/hr avg</span>
                     <span><strong class="text-[#0f172a] font-semibold">{{ topic.weeks_to_first_gig }}wk</strong> to first gig</span>
                 </div>
+                {% if topic.data_source == 'live' and not topic.data_stale %}
+                <div class="text-[10px] text-emerald-600 mb-3">● Live from Upwork / Fiverr / Contra</div>
+                {% elif topic.data_source == 'live' and topic.data_stale %}
+                <div class="text-[10px] text-amber-600 mb-3">◐ Cached — refresh pending</div>
+                {% endif %}
                 <div class="flex flex-wrap gap-1.5">
                     {% for skill in topic.skills[:3] %}
                     <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">{{ skill }}</span>
@@ -80,7 +85,7 @@
         </div>
         <div class="mt-10 card p-6 text-center">
             <p class="text-sm text-gray-500">
-                📊 Demand data updated weekly from Upwork and Fiverr. Skills with <strong class="text-[#0f172a]">80+ demand score</strong> are verified for freelance viability.
+                📊 Demand data refreshed nightly from Upwork, Fiverr, and Contra. Skills with <strong class="text-[#0f172a]">80+ demand score</strong> are verified for freelance viability.
             </p>
         </div>
     </div>
@@ -169,22 +174,8 @@ async function doSearch(query) {
             platformDemand.innerHTML = `<div class="text-center py-8 text-red-500">${data.error}</div>`;
             return;
         }
-        
-        // Check if platforms are linked
-        if (data.platforms_linked === false) {
-            platformDemand.innerHTML = `
-                <div class="text-center py-8">
-                    <div class="text-4xl mb-4">🔗</div>
-                    <h3 class="text-lg font-bold text-[#0f172a] mb-2">Link your platforms to see live demand data</h3>
-                    <p class="text-gray-500 mb-4">Connect Upwork, Fiverr, or Contra to get real-time job counts and rates.</p>
-                    <a href="/platforms/setup" class="btn-primary px-6 py-2.5 rounded-xl font-medium inline-block">
-                        Link Platforms
-                    </a>
-                </div>`;
-            return;
-        }
-        
-        // Show platform results
+
+        // Show platform results (market data is public; linked platforms optional)
         const pr = data.platform_results;
         if (pr) {
             const platformCards = ['upwork', 'fiverr', 'contra'].map(p => {
@@ -196,37 +187,54 @@ async function doSearch(query) {
             </div>`;
             }
             const pName = p.charAt(0).toUpperCase() + p.slice(1);
+            const sourceNote = pl.source === 'synthetic' ? ' <span class="text-amber-500">(est.)</span>' : '';
             return `<div class="p-4 rounded-xl text-center" style="background: ${p === 'upwork' ? '#f0fdf4' : p === 'fiverr' ? '#fefce8' : '#eef2ff'}">
             <div class="text-sm font-semibold text-gray-700">${pName}</div>
-            <div class="text-2xl font-bold text-[#0f172a] mt-1">${pl.jobs.toLocaleString()}</div>
-            <div class="text-xs text-gray-500">jobs at $${pl.avg_rate}/hr avg</div>
+            <div class="text-2xl font-bold text-[#0f172a] mt-1">${Number(pl.jobs || 0).toLocaleString()}</div>
+            <div class="text-xs text-gray-500">jobs at $${pl.avg_rate}/hr avg${sourceNote}</div>
             <a href="${pl.url}" target="_blank" class="text-xs text-amber-600 hover:underline mt-2 inline-block">Visit →</a>
             </div>`;
             }).join('');
-            
+
             const trendColor = pr.trend === 'growing' ? 'text-emerald-600' : 'text-gray-600';
-            const trendLabel = pr.trend.charAt(0).toUpperCase() + pr.trend.slice(1);
-            
+            const trendLabel = (pr.trend || 'stable').charAt(0).toUpperCase() + (pr.trend || 'stable').slice(1);
+            const sourceLabel = pr.data_source === 'live'
+                ? (pr.stale ? '◐ Cached (refresh pending)' : '● Live from Upwork / Fiverr / Contra')
+                : pr.data_source === 'stale-cache'
+                    ? '◐ Cached (refresh pending)'
+                    : '◇ Estimated (platforms unreachable)';
+            const sourceColor = pr.data_source === 'live' && !pr.stale ? 'text-emerald-600'
+                : pr.data_source === 'synthetic' ? 'text-amber-600' : 'text-gray-500';
+
+            // Soft nudge to link platforms (does not block data)
+            const linkNudge = data.platforms_linked === false ? `
+                <div class="mt-4 p-3 bg-gray-50 rounded-xl text-sm text-gray-500 flex items-center justify-between gap-3">
+                    <span>Link your freelancing accounts to track applications against this demand.</span>
+                    <a href="/platforms/setup" class="text-amber-600 font-medium whitespace-nowrap">Link Platforms →</a>
+                </div>` : '';
+
             platformDemand.innerHTML = `
                 <div class="flex items-start gap-4 mb-6">
                     <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl flex-shrink-0">📊</div>
                     <div class="flex-1">
                         <h3 class="font-bold text-xl">Market Demand for "${query}"</h3>
                         <p class="text-sm text-gray-500 mt-1">
-                            Demand score: <strong class="text-[#0f172a]">${pr.demand_score}/100</strong> · 
-                            Trend: <strong class="${trendColor}">${trendLabel}</strong> · 
-                            Difficulty: <strong>${pr.difficulty}</strong> · 
+                            Demand score: <strong class="text-[#0f172a]">${pr.demand_score}/100</strong> ·
+                            Trend: <strong class="${trendColor}">${trendLabel}</strong> ·
+                            Difficulty: <strong>${pr.difficulty}</strong> ·
                             First gig: ~${pr.estimated_time_to_gig}
                         </p>
+                        <p class="text-xs ${sourceColor} mt-1">${sourceLabel}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     ${platformCards}
                 </div>
+                ${linkNudge}
                 <div class="mt-6 text-center">
-                    <button onclick="enrollNewTopic('${query}')" 
+                    <button onclick="enrollNewTopic('${query.replace(/'/g, "\\'")}')"
                             class="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm">
-                        📚 Create 30-Day Curriculum for "${query}"
+                        Create 30-Day Curriculum for "${query}"
                     </button>
                 </div>
             `;

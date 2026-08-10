@@ -202,8 +202,14 @@ CREATE TABLE IF NOT EXISTS topic_intelligence (
     avg_first_contract_value DECIMAL,
     avg_earnings_90_days DECIMAL,
     viability_score DECIMAL DEFAULT 50,
+    -- Per-platform raw scrape payload: {upwork:{job_count,avg_rate,trend}, fiverr:..., contra:...}
+    platform_breakdown JSONB DEFAULT '{}'::jsonb,
     last_updated TIMESTAMPTZ DEFAULT now()
 );
+
+-- Idempotent add for existing deployments that pre-date platform_breakdown
+ALTER TABLE topic_intelligence
+    ADD COLUMN IF NOT EXISTS platform_breakdown JSONB DEFAULT '{}'::jsonb;
 
 -- ─── VIDEO PRODUCTION LOG ────────────────────────────────────
 

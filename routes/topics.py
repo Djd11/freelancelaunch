@@ -1,14 +1,20 @@
 """
 Topics routes — browse curated topics, view topic detail
+
+Demand numbers (job_count / avg_rate / demand_score / trend) are overlaid
+from `topic_intelligence` (filled by Contra/Fiverr/Upwork scrapes via
+services.demand_refresh) so the UI never serves permanently-stale hardcoded
+counts. Hardcoded values remain as offline fallback only.
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
 from services.supabase_client import get_supabase
 from services.authz import is_admin_user
+from services.topic_data import get_enriched_topics, get_enriched_topic
 
 topics_bp = Blueprint("topics", __name__)
 
 
-# ─── Curated MVP topics (hard-coded, scraper comes Phase 2) ───
+# ─── Curated MVP topics (static metadata; demand fields are live-overlaid) ───
 CURATED_TOPICS = [
     {
         "slug": "web-scraping-python",
@@ -93,11 +99,20 @@ CURATED_TOPICS = [
 ]
 
 
+def _live_topics():
+    """Curated topics with live demand numbers from topic_intelligence."""
+    try:
+        sb = get_supabase()
+        return get_enriched_topics(sb, CURATED_TOPICS)
+    except Exception:
+        # Offline / no DB — serve hardcoded defaults
+        return get_enriched_topics(None, CURATED_TOPICS)
+
+
 @topics_bp.route("/topics")
 def explore():
-    """Browse all available topics with demand data."""
-    return render_template("topics/explore.html", topics=CURATED_TOPICS)
-
+    """Browse all available topics with live demand data."""
+    return render_template("topics/explore.html", topics=_live_topics())
 
 
 def _generate_and_save_curriculum(slug, topic_name, user_id):
@@ -165,20 +180,28 @@ def _generate_and_save_curriculum(slug, topic_name, user_id):
 
 @topics_bp.route("/topics/<slug>")
 def detail(slug):
-    """View a specific topic's detail page."""
-    topic = next((t for t in CURATED_TOPICS if t["slug"] == slug), None)
-    if not topic:
+    """View a specific topic's detail page with live demand metrics."""
+    base = next((t for t in CURATED_TOPICS if t["slug"] == slug), None)
+    if not base:
         flash("Topic not found", "error")
         return redirect(url_for("topics.explore"))
-    
+
     # If user is logged in, check if they already have a pipeline for this topic
     existing_pipeline = None
     is_admin = False
     curriculum_days = []
     is_enrolled = False
-    
-    if g.user:
+    sb = None
+
+    try:
         sb = get_supabase()
+    except Exception:
+        sb = None
+
+    # Overlay live Contra/Fiverr/Upwork numbers from topic_intelligence
+    topic = get_enriched_topic(sb, base) if sb is not None else get_enriched_topic(None, base)
+
+    if g.user and sb is not None:
         resp = sb.table("freelance_pipeline").select("*") \
             .eq("user_id", g.user["id"]) \
             .eq("topic", slug) \
@@ -187,10 +210,10 @@ def detail(slug):
         if resp.data:
             existing_pipeline = resp.data[0]
             is_enrolled = True
-        
+
         # Check if admin (email matches ADMIN_EMAIL env var)
         is_admin = is_admin_user(g.user)
-        
+
         # Also check cohort assignment (user may be in a cohort for this topic)
         if not is_enrolled:
             try:
@@ -204,7 +227,7 @@ def detail(slug):
                             is_enrolled = True
             except Exception:
                 pass
-        
+
         # Fetch curriculum whenever it EXISTS in the DB (not gated by enrollment)
         # Enrollment gates the CTA button, not curriculum display
         try:
@@ -222,9 +245,9 @@ def detail(slug):
                     curriculum_days = days.data or []
         except Exception as e:
             print(f"Failed to fetch curriculum: {e}")
-    
-    return render_template("topics/detail.html", 
-        topic=topic, 
+
+    return render_template("topics/detail.html",
+        topic=topic,
         pipeline=existing_pipeline,
         is_enrolled=is_enrolled,
         is_admin=is_admin,

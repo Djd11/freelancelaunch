@@ -3,10 +3,11 @@ Step Definitions: Platform-Aware Curriculum & Contract Landing
 Tests the curriculum generator with platform-aware days
 """
 import json
+import re
 from behave import given, when, then
 from services.curriculum_generator import (
-    generate_curriculum, 
-    PLATFORM_MODULES, 
+    generate_curriculum,
+    PLATFORM_MODULES,
     get_platform_day_count,
     _generate_platform_days
 )
@@ -71,19 +72,19 @@ def step_contracts_both(context):
     ]
 
 
-@given("I am on Day 32 of my curriculum (Proposal Writing)")
-def step_on_day_32(context):
-    context.current_day = 32
+@given("I am on Day 11 of my curriculum (Proposal Writing)")
+def step_on_day_11(context):
+    context.current_day = 11
 
 
-@given("I am on Day 31 of my Fiverr curriculum (Gig Creation)")
-def step_on_fiverr_day_31(context):
-    context.current_day = 31
+@given("I am on Day 7 of my Fiverr curriculum (Gig Creation)")
+def step_on_fiverr_day_7(context):
+    context.current_day = 7
 
 
-@given("I am on Day 31 of my Contra curriculum (Portfolio Creation)")
-def step_on_contra_day_31(context):
-    context.current_day = 31
+@given("I am on Day 10 of my Contra curriculum (Portfolio Creation)")
+def step_on_contra_day_10(context):
+    context.current_day = 10
 
 
 @given("the Upwork module has 7 days")
@@ -101,7 +102,7 @@ def step_compare_days(context):
         "apply_task": "Submit your script to portfolio",
         "video_title": "HTTP Requests — Complete Guide"
     }
-    context.platform_day = PLATFORM_MODULES["upwork"]["days"][1]  # Day 32: Writing Proposals
+    context.platform_day = PLATFORM_MODULES["upwork"]["days"][2]  # Day 11: Writing Proposals
 
 
 # ─── WHEN ───────────────────────────────────────────────────
@@ -211,12 +212,13 @@ def step_day30_content(context):
 
 @then("there should be NO platform-specific application days")
 def step_no_platform_days(context):
-    platform_keywords = ["upwork", "fiverr", "contra", "proposal", "gig"]
+    # Contract-first arc includes generic proposal/gig skill days even without
+    # linked platforms — the discriminator is the platform NAME itself.
     for day in context.curriculum:
         title = day.get("title", "").lower()
-        for kw in platform_keywords:
-            assert kw not in title, \
-                f"Found platform keyword '{kw}' in day without platforms: '{title}'"
+        for name in ("upwork", "fiverr", "contra"):
+            assert re.search(rf"\b{name}\b", title) is None, \
+                f"Found platform '{name}' in day without platforms: '{title}'"
 
 
 @then('Day {day} should be "{title}"')
@@ -340,9 +342,11 @@ def step_skill_title_has_topic(context):
     assert "HTTP" in context.skill_day["title"] or "HTML" in context.skill_day["title"]
 
 
-@then("the platform day's title should contain the platform name")
+@then("the platform day's title should contain the platform name or a platform term")
 def step_platform_title_has_name(context):
-    assert "Upwork" in context.platform_day["title"]
+    title = context.platform_day["title"]
+    assert any(k in title for k in
+               ("Upwork", "Proposal", "Gig", "Portfolio", "Fiverr", "Contra")), title
 
 
 @then("the skill day's apply_task should be coding/technical")
@@ -366,11 +370,11 @@ def step_30_skill_days(context):
 
 @then("NO platform days should be appended (fallback doesn't support it)")
 def step_no_platform_fallback(context):
-    platform_kw = ["upwork", "fiverr", "contra", "proposal", "gig"]
     for day in context.curriculum:
         title = day.get("title", "").lower()
-        for kw in platform_kw:
-            assert kw not in title
+        for name in ("upwork", "fiverr", "contra"):
+            assert re.search(rf"\b{name}\b", title) is None, \
+                f"Fallback curriculum contains platform day: '{title}'"
 
 
 @then("a warning should be logged")
@@ -386,6 +390,33 @@ def step_invalid_ignored(context):
 @then("the curriculum should have {count} days")
 def step_curriculum_count(context, count):
     assert len(context.curriculum) == int(count)
+
+
+@then("the curriculum should include {count} platform days")
+def step_platform_day_count(context, count):
+    platform_days = [d for d in context.curriculum if d.get("is_platform_day")]
+    assert len(platform_days) == int(count), \
+        f"Expected {count} platform days, got {len(platform_days)}"
+
+
+@then("a platform day should appear at Day {day}")
+def step_platform_day_at(context, day):
+    idx = int(day) - 1
+    assert idx < len(context.curriculum), f"Day {day} doesn't exist"
+    title = context.curriculum[idx].get("title", "").lower()
+    assert any(re.search(rf"\b{n}\b", title) for n in ("upwork", "fiverr", "contra")), \
+        f"Day {day} is not a platform day: '{context.curriculum[idx].get('title')}'"
+
+
+@then("skill days should still appear after Day {day}")
+def step_skill_after(context, day):
+    platform_names = ("upwork", "fiverr", "contra")
+    for i in range(int(day), len(context.curriculum)):
+        title = context.curriculum[i].get("title", "").lower()
+        if not any(re.search(rf"\b{n}\b", title) for n in platform_names):
+            return  # found a skill day after the first platform day
+    assert False, (f"No skill day appears after Day {day} — "
+                   "platform days were appended, not interleaved")
 
 
 @then("the {field} should be counted in my Upwork stats")

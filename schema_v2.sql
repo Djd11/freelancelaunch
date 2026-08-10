@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS job_feed (
     skills TEXT[] DEFAULT '{}',
     rate DECIMAL,                           -- posting value
     experience_needed TEXT,                 -- 'entry' | 'intermediate' | 'expert'
+    review_count INT DEFAULT 0,             -- posting feedback count (unlock-curve signal)
     unlock_day INT NOT NULL,                -- 1..14 (quick-win + escalating curve)
     status TEXT DEFAULT 'active',
     posted_at TIMESTAMPTZ DEFAULT now()

@@ -64,20 +64,20 @@ def get_encouragement(field: str) -> str:
 def get_milestone(day_number: int, streak: int) -> dict:
     """Return milestone celebration if applicable."""
     if day_number == 7:
-        return {"icon": "🏆", "title": "Week 1 Complete!", 
-                "message": "You've finished the Foundation week. Keep building!"}
+        return {"icon": "🏆", "title": "Week 1 Complete!",
+                "message": "You've shipped your first deliverable. A client can already see you're worth paying."}
     if day_number == 14:
         return {"icon": "🚀", "title": "Halfway There!",
-                "message": "14 days in — you're officially consistent. Momentum is real."}
+                "message": "14 days in — your platform is live and first orders are in sight. Momentum is real."}
     if day_number == 21:
         return {"icon": "🎖️", "title": "Week 3 Complete!",
-                "message": "Application week done. You're client-ready soon."}
+                "message": "First-order cycle done. Reviews are the unlock — keep over-delivering."}
     if day_number == 28:
         return {"icon": "👑", "title": "Almost Graduated!",
-                "message": "4 weeks of daily practice. Incredible discipline."}
+                "message": "You're in the Rate Raise stretch — 4 weeks of daily practice."}
     if day_number == 30:
         return {"icon": "🎓", "title": "Graduation Day!",
-                "message": "You completed the full 30-day journey. Now go win clients!"}
+                "message": "You completed the full 30-day sprint. Now go win that first contract!"}
     if streak in (3, 5, 10, 15, 21, 30):
         return {"icon": "🔥", "title": f"{streak}-Day Streak!",
                 "message": f"You've practiced {streak} days in a row. That's real commitment."}
