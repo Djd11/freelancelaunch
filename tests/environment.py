@@ -7,6 +7,7 @@ import json
 import time
 import tempfile
 import shutil
+from unittest import mock
 
 # Add web-app root to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -15,6 +16,66 @@ from app import create_app
 
 AUDIT_DIR = "/tmp/fl_audit_shots"
 AUDIT_JSON = "/tmp/fl_audit_behave.json"
+
+# ─── API-contract fake Supabase installation ──────────────────────────
+# The `HTTP API Contract` feature exercises real HTTP endpoints against an
+# in-memory FakeSupabase. Every module that binds `get_supabase` (either at
+# module import in routes/services, or via a function-body import in app.py)
+# must be patched so the fake is used instead of the live service-role client.
+
+API_CONTRACT_FEATURE_NAME = "HTTP API Contract"
+
+# Module attributes that bind `get_supabase` at import time (routes/services).
+_API_BOUND_ATTRS = [
+    "routes.progress.get_supabase",
+    "routes.platforms.get_supabase",
+    "routes.freelance.get_supabase",
+    "routes.search.get_supabase",
+    "routes.enroll_dynamic.get_supabase",
+    "routes.generate_api.get_supabase",
+    "routes.sprints.get_supabase",
+    "services.nudge_engine.get_supabase",
+    "services.demand_intelligence.get_supabase",
+    "services.sprint_planner.get_supabase",
+    "services.unlock_engine.get_supabase",
+    "services.mock_contract_engine.get_supabase",
+    "services.verification_service.get_supabase",
+    "services.proposal_engine.get_supabase",
+    "services.badge_engine.get_supabase",
+    "services.topic_data.get_supabase",
+]
+# Covers function-body imports (app.py before_request / context_processor).
+_API_SOURCE_ATTRS = ["services.supabase_client.get_supabase"]
+
+
+def _is_api_contract_feature(context):
+    feat = getattr(context, "feature", None)
+    return bool(feat and getattr(feat, "name", None) == API_CONTRACT_FEATURE_NAME)
+
+
+def install_api_supabase(context):
+    """Patch every get_supabase binding to return the in-memory FakeSupabase."""
+    from tests.support.fake_supabase import FakeSupabase, make_get_supabase
+
+    if getattr(context, "fake", None) is None:
+        context.fake = FakeSupabase()
+    context._supabase_patchers = []
+    for target in _API_BOUND_ATTRS + _API_SOURCE_ATTRS:
+        try:
+            p = mock.patch(target, make_get_supabase(context.fake))
+            p.start()
+            context._supabase_patchers.append(p)
+        except Exception:  # module may not be imported on this runner
+            continue
+
+
+def _teardown_api_supabase(context):
+    for p in getattr(context, "_supabase_patchers", []):
+        try:
+            p.stop()
+        except Exception:
+            pass
+    context._supabase_patchers = []
 
 
 def before_all(context):
@@ -47,6 +108,8 @@ def before_scenario(context, scenario):
     """Set up per-scenario state."""
     context.scenario_data = {}
     context.errors = []
+    if _is_api_contract_feature(context):
+        install_api_supabase(context)
     # context.feature is a behave Feature model (not JSON-serializable) — store
     # just its name so after_all can dump a clean audit JSON.
     feature_obj = getattr(context, "feature", None)
@@ -73,6 +136,8 @@ def before_scenario(context, scenario):
 
 def after_scenario(context, scenario):
     """Clean up per-scenario state and record the audit entry."""
+    if _is_api_contract_feature(context):
+        _teardown_api_supabase(context)
     if scenario.status == "failed":
         context.scenario_audit["status"] = "failed"
     elif scenario.status == "skipped":
