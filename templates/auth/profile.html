@@ -27,29 +27,5 @@
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">Save</button>
         </form>
     </div>
-
-    {% if pipeline %}
-    <div class="bg-white rounded-2xl border border-gray-200 p-6">
-        <h2 class="font-semibold text-lg mb-4">Freelance Summary</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="p-4 bg-blue-50 rounded-lg text-center">
-                <div class="text-2xl font-bold text-blue-600">{{ pipeline[0].get('proposals_sent', 0) }}</div>
-                <div class="text-xs text-gray-500 mt-1">Proposals Sent</div>
-            </div>
-            <div class="p-4 bg-green-50 rounded-lg text-center">
-                <div class="text-2xl font-bold text-green-600">{{ pipeline[0].get('contracts_won', 0) }}</div>
-                <div class="text-xs text-gray-500 mt-1">Contracts Won</div>
-            </div>
-            <div class="p-4 bg-purple-50 rounded-lg text-center">
-                <div class="text-2xl font-bold text-purple-600">${{ pipeline[0].get('total_earned', 0) }}</div>
-                <div class="text-xs text-gray-500 mt-1">Total Earned</div>
-            </div>
-            <div class="p-4 bg-amber-50 rounded-lg text-center">
-                <div class="text-2xl font-bold text-amber-600">{{ pipeline[0].get('stage', 'exploring')|capitalize }}</div>
-                <div class="text-xs text-gray-500 mt-1">Current Stage</div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

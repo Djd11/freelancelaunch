@@ -138,10 +138,9 @@ Feature: Complete Element-by-Element Interaction Audit
 #    ISSUE: The weekly grid shows day numbers only — should show day titles on hover
 #    ISSUE: No "View All Days" link to see full curriculum progress
 
-  Scenario: D3 — Pipeline summary card
-#    ISSUE: Shows stage, proposals, contracts, earned — good
-#    ISSUE: But no CTA — should have "Submit a Proposal" button linking to pipeline
-#    ISSUE: If pipeline is empty, shows nothing useful — should prompt to start
+  Scenario: D3 — Pipeline summary card (removed from dashboard)
+#    Pipeline was removed from the Dashboard UI — Sprint Track now owns the
+#    placement path (proposals, contracts, earnings are tracked there).
 
   Scenario: D4 — Sidebar quick links
 #     "My Portfolio" — useful

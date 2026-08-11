@@ -127,10 +127,13 @@ CREATE TABLE IF NOT EXISTS proposals (
     template_body TEXT,                    -- engineered proposal
     hooks JSONB DEFAULT '[]',              -- "I see you need X…"
     status TEXT DEFAULT 'draft' CHECK (status IN ('draft','submitted')),
+    platform TEXT,                         -- marketplace used: 'upwork' | 'fiverr' | 'contra' | ...
     score INT,                             -- completeness 0..100
     submitted_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_proposals_sprint ON proposals(sprint_id);
+-- Idempotent migration for existing deployments that predate platform column
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS platform TEXT;
 
 -- ─── BADGES ──────────────────────────────────────────────────────────
 

@@ -813,11 +813,11 @@ def then_generic_block(context, text):
     assert text in page.inner_text("body"), f"'{text}' not found"
 
 
-@then(r"I should see the nav should show: Logo, Topics, Dashboard, Pipeline, Pricing, Platform badge, Avatar dropdown")
+@then(r"the nav should show: Logo, Topics, Dashboard, Sprint Track, Pricing, Platform badge, Avatar dropdown")
 def then_nav_list(context):
     page = _page(context)
     body = page.inner_text("body")
-    for item in ("Topics", "Dashboard", "Pipeline", "Pricing"):
+    for item in ("Topics", "Dashboard", "Sprint Track", "Pricing"):
         assert item in body, f"nav item '{item}' missing"
 
 

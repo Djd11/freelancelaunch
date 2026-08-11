@@ -280,14 +280,12 @@ Feature: Complete Page-by-Page Interaction Audit
     And clicking it navigates to /deliverables/submit?day=X
 #     Where X is the current day number
 
-  Scenario: DB-5 — Pipeline summary card
-    When I view the right sidebar
-    Then I should see "Your Pipeline" card
-    And I should see stage name
-    And I should see proposals count
-    And I should see contracts count
-    And I should see earned amount
-    And I should see "Manage" link to /freelance/pipeline
+  Scenario: DB-5 — Sprint Track hero CTA (replaces the removed Pipeline card)
+    When I view the dashboard
+    Then I should see "Sprint Track" card
+    And I should see "14-day placement" badge
+    And I should see "Open Sprint Track →" link
+    And clicking it navigates to /sprints
 
   Scenario: DB-6 — Weekly progress grid
     When I view the "This Week" section
@@ -296,10 +294,11 @@ Feature: Complete Page-by-Page Interaction Audit
     And current day should have indigo ring
     And future days should be gray
 
-  Scenario: DB-7 — Quick Links section
+  Scenario: DB-7 — Quick Links section (no Pipeline link)
     When I view the sidebar
     Then I should see "My Portfolio" link
-    And I should see "Track Applications" link
+    And I should see "Sprint Track" link
+    And I should not see "Track Applications" link
     And I should see "Upgrade Plan" link
 
   Scenario: DB-8 — Platform banner (if platforms not linked)
@@ -548,11 +547,11 @@ Feature: Complete Page-by-Page Interaction Audit
   Scenario: NV-1 — Nav links (logged in)
     Given I am logged in
     When I view any page
-    Then the nav should show: Logo, Topics, Dashboard, Pipeline, Pricing, Platform badge, Avatar dropdown
+    Then the nav should show: Logo, Topics, Dashboard, Sprint Track, Pricing, Platform badge, Avatar dropdown
     And clicking Logo → /
     And clicking Topics → /topics
     And clicking Dashboard → /dashboard/
-    And clicking Pipeline → /freelance/pipeline
+    And clicking Sprint Track → /sprints
     And clicking Pricing → /payments/pricing
     And clicking Platform badge → /platforms/setup
 

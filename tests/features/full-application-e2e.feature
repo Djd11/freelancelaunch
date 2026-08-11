@@ -134,12 +134,12 @@ Feature: FreelanceLaunch Full Application E2E — CRUD Coverage
     And the nightly cron schedule should be displayed
     And "Produce Now" buttons should be visible for pending items
 
-  Scenario: R10 — Profile page shows user stats (READ user_profile + pipeline)
+  Scenario: R10 — Profile page shows user stats (READ user_profile)
     Given I am logged in with pipeline data
     When I navigate to /auth/profile
     Then I should see my display name and email
     And I should see my current tier badge
-    And I should see pipeline summary cards (proposals, contracts, earned, stage)
+    And I should not see pipeline summary cards (proposals, contracts, earned, stage)
 
   Scenario: U1 — User updates profile name (UPDATE user_profiles)
     Given I am logged in

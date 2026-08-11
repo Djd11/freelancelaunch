@@ -180,6 +180,19 @@ def step_verified_platform(context, platform):
     }])
 
 
+@given('the user has verified platforms "{p1}" and "{p2}"')
+def step_verified_two_platforms(context, p1, p2):
+    """Seed two verified user_platforms rows (forces an explicit platform choice)."""
+    for p in (p1, p2):
+        context.fake.seed("user_platforms", [{
+            "id": f"platform-{p}-{TEST_USER_ID}",
+            "user_id": TEST_USER_ID,
+            "platform": p,
+            "status": "verified",
+            "verified_at": "now()",
+        }])
+
+
 @given('a draft proposal "{pid}" exists for job "{jid}" on sprint "{sid}"')
 def step_draft_proposal(context, pid, jid, sid):
     context.fake.seed("proposals", [{
@@ -544,6 +557,13 @@ def step_contains_sprint_link(context):
     assert '/sprints' in html, f"No link to /sprints found in HTML: {html[:500]}"
 
 
+@then('the page contains a form field named "{name}"')
+def step_contains_form_field(context, name):
+    html = _html(context)
+    assert f'name="{name}"' in html or f"name='{name}'" in html, (
+        f"No form field named '{name}' found in HTML: {html[:2000]}")
+
+
 @then("the page contains a link to the freelance pipeline")
 def step_contains_pipeline_link(context):
     html = _html(context)
@@ -551,6 +571,14 @@ def step_contains_pipeline_link(context):
     if '/freelance/pipeline' not in html:
         print(f"DEBUG HTML (first 2000 chars): {html[:2000]}")
     assert '/freelance/pipeline' in html, f"No link to /freelance/pipeline found: {html[:500]}"
+
+
+@then("the page does not contain a link to the freelance pipeline")
+def step_not_contains_pipeline_link(context):
+    """Pipeline is no longer surfaced in Dashboard / Sprint Track navigation."""
+    html = _html(context)
+    assert '/freelance/pipeline' not in html, (
+        f"Pipeline link should be removed from this page, but found /freelance/pipeline in HTML: {html[:2000]}")
 
 
 @then("the page contains a link to the dashboard")
@@ -603,3 +631,27 @@ def step_submit_proposal_form(context, path):
     if "{pid}" in path and getattr(context, "created_proposal_id", None):
         path = path.format(pid=context.created_proposal_id)
     context.response = context.client.post(path, data={}, follow_redirects=False)
+
+
+@when('I choose platform "{platform}" and submit the proposal form to "{path}"')
+def step_submit_proposal_form_on_platform(context, platform, path):
+    if "{pid}" in path and getattr(context, "created_proposal_id", None):
+        path = path.format(pid=context.created_proposal_id)
+    context.response = context.client.post(path, data={"platform": platform}, follow_redirects=False)
+
+
+@then('the proposal "{pid}" is submitted on platform "{platform}"')
+def step_proposal_submitted_platform(context, pid, platform):
+    props = context.fake.rows("proposals")
+    row = next((p for p in props if p.get("id") == pid), None)
+    assert row, f"proposal {pid} missing"
+    assert row.get("status") == "submitted", f"proposal {pid} status={row.get('status')}"
+    assert row.get("platform") == platform, f"proposal {pid} platform={row.get('platform')}, expected {platform}"
+
+
+@then('the proposal "{pid}" is still a draft')
+def step_proposal_still_draft(context, pid):
+    props = context.fake.rows("proposals")
+    row = next((p for p in props if p.get("id") == pid), None)
+    assert row, f"proposal {pid} missing"
+    assert row.get("status") == "draft", f"proposal {pid} status={row.get('status')}, expected draft"

@@ -125,9 +125,5 @@ def profile():
     # Get profile
     profile_resp = sb.table("user_profiles").select("*").eq("user_id", g.user["id"]).limit(1).execute()
     profile = profile_resp.data[0] if profile_resp.data else {}
-    
-    # Get pipeline stats
-    pipeline_resp = sb.table("freelance_pipeline").select("*").eq("user_id", g.user["id"]).execute()
-    pipeline = pipeline_resp.data if pipeline_resp.data else []
-    
-    return render_template("auth/profile.html", profile=profile, pipeline=pipeline)
+
+    return render_template("auth/profile.html", profile=profile)

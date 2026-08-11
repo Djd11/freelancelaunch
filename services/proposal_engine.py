@@ -52,8 +52,12 @@ def generate(sb=None, sprint_id=None, user_id=None, job_feed_id=None):
     return proposal.data[0] if proposal.data else None
 
 
-def mark_submitted(sb=None, proposal_id=None):
-    """Mark a proposal submitted (human confirmation). Returns updated row."""
+def mark_submitted(sb=None, proposal_id=None, platform=None):
+    """Mark a proposal submitted (human confirmation) and record the marketplace
+    platform it was sent through (upwork, fiverr, contra, …). Returns updated row."""
     sb = sb or get_supabase()
-    sb.table("proposals").update({"status": "submitted", "submitted_at": "now()"}).eq("id", proposal_id).execute()
+    data = {"status": "submitted", "submitted_at": "now()"}
+    if platform:
+        data["platform"] = platform
+    sb.table("proposals").update(data).eq("id", proposal_id).execute()
     return sb.table("proposals").select("*").eq("id", proposal_id).limit(1).execute().data[0]

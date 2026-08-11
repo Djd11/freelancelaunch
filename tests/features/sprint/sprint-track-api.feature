@@ -270,6 +270,64 @@ Feature: V2 Sprint Track API
     Then the response status is 302
     And the response redirects to "/sprints/s1/proposals"
 
+  # ── PLATFORM RECORDING (upwork / fiverr / contra like the pipeline) ──
+
+  Scenario: Submitting with a single verified platform records that platform
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
+    And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
+    When I submit the proposal form to "/sprints/s1/proposals/p1/submit"
+    Then the response status is 302
+    And the proposal "p1" is submitted on platform "upwork"
+
+  Scenario: Submitting with multiple platforms records the chosen platform
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has verified platforms "upwork" and "fiverr"
+    And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
+    When I choose platform "fiverr" and submit the proposal form to "/sprints/s1/proposals/p1/submit"
+    Then the response status is 302
+    And the proposal "p1" is submitted on platform "fiverr"
+
+  Scenario: Submitting on a platform you have not verified is rejected
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has verified platforms "upwork" and "fiverr"
+    And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
+    When I choose platform "contra" and submit the proposal form to "/sprints/s1/proposals/p1/submit"
+    Then the response status is 302
+    And the proposal "p1" is still a draft
+
+  Scenario: Submitting with multiple platforms but no platform choice is rejected
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has verified platforms "upwork" and "fiverr"
+    And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
+    When I submit the proposal form to "/sprints/s1/proposals/p1/submit"
+    Then the response status is 302
+    And the flash message mentions "Pick the platform"
+    And the proposal "p1" is still a draft
+
+  Scenario: The proposals page renders a platform selector when multiple platforms are linked
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has verified platforms "upwork" and "fiverr"
+    When I GET "/sprints/s1/proposals"
+    Then the response status is 200
+    And the page contains a form field named "platform"
+
+  Scenario: The proposals page shows which platform a submitted proposal went to
+    Given I have an active sprint "s1" with 14 days
+    And a job cluster "email-automation" with 5 active postings
+    And the user has a verified platform "upwork"
+    And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"
+    When I choose platform "upwork" and submit the proposal form to "/sprints/s1/proposals/p1/submit"
+    Then the response status is 302
+    When I GET "/sprints/s1/proposals"
+    Then the response status is 200
+    And the page contains the text "Upwork"
+
   # ═══════════════════════════════════════════════════════════════════
   # BADGE — GET /sprints/<id>/badge
   # ═══════════════════════════════════════════════════════════════════

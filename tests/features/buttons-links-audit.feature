@@ -122,14 +122,12 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "Complete practice task" checkbox | Checkbox | Click → POST /api/progress/mark, sets practice_completed=true |
       | "Submit your work" checkbox | Checkbox | Click → POST /api/progress/mark, sets apply_completed=true |
       | "Submit Deliverable →" button | Link | Click → /deliverables/submit?day=X |
-      | "Your Pipeline" card | Card | Shows stage, proposals, contracts, earned |
-      | "Manage" link | Link | Click → /freelance/pipeline |
       | "This Week" grid | Grid | Shows 7 day boxes, current day highlighted |
       | "My Portfolio" link | Link | Click → /deliverables/portfolio |
-      | "Track Applications" link | Link | Click → /freelance/pipeline |
+      | "Sprint Track" link | Link | Click → /sprints |
       | "Upgrade Plan" link | Link | Click → /payments/pricing |
       | Nav: Dashboard | Link | Click → /dashboard/ |
-      | Nav: Pipeline | Link | Click → /freelance/pipeline |
+      | Nav: Sprint Track | Link | Click → /sprints |
       | Nav: 🔗 Link Platforms | Link | Amber if unlinked, green if linked → Click → /platforms/setup |
       | Nav: Avatar dropdown | Dropdown | Shows Profile, Link Platforms, Portfolio, Sign out |
 
@@ -279,7 +277,7 @@ Feature: All Buttons and Links — E2E Behavior Audit
       | "FreelanceLaunch" logo | Link | Click → / |
       | "Topics" | Link | Click → /topics |
       | "Dashboard" | Link | Click → /dashboard/ |
-      | "Pipeline" | Link | Click → /freelance/pipeline |
+      | "Sprint Track" | Link | Click → /sprints |
       | "Pricing" | Link | Click → /payments/pricing |
       | 🔗 "Link Platforms" (amber) or "Platforms" (green) | Link | Amber=no platforms linked, green=linked → click → /platforms/setup |
       | Avatar circle with initial | Button | Shows first letter of name/email → opens dropdown |

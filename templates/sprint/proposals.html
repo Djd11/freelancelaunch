@@ -31,9 +31,18 @@
           <p class="text-xs text-gray-400">Rate ${% if p.rate %}{{ p.rate }}{% else %}—{% endif %} · {{ p.status }}</p>
         </div>
         {% if p.status == 'submitted' %}
-        <span class="badge bg-emerald-50 text-emerald-700">✓ Submitted</span>
+        <span class="badge bg-emerald-50 text-emerald-700">✓ Submitted{% if p.platform %} · {{ p.platform|title }}{% endif %}</span>
         {% else %}
-        <form method="post" action="{{ url_for('sprints.proposal_submit', sprint_id=sprint.id, proposal_id=p.id) }}">
+        <form method="post" action="{{ url_for('sprints.proposal_submit', sprint_id=sprint.id, proposal_id=p.id) }}" class="flex items-center gap-2">
+          {% if user_platforms|length > 1 %}
+          <select name="platform" class="px-3 py-2 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none" title="Marketplace you'll submit on">
+            {% for up in user_platforms %}
+            <option value="{{ up.platform }}">{{ up.platform|title }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="hidden" name="platform" value="{{ user_platforms[0].platform }}">
+          {% endif %}
           <button class="btn-primary px-4 py-2 text-xs">Mark submitted</button>
         </form>
         {% endif %}

@@ -22,20 +22,20 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to the sprint track landing page
 
-  Scenario: Dashboard has Pipeline quick-link
+  Scenario: Dashboard has no Pipeline quick-link (Pipeline was removed)
     When I GET "/dashboard/"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   Scenario: Dashboard nav bar has Sprint Track
     When I GET "/dashboard/"
     Then the response status is 200
     And the page contains a link to the sprint track landing page
 
-  Scenario: Dashboard nav bar has Pipeline
+  Scenario: Dashboard nav bar has no Pipeline link (Pipeline was removed)
     When I GET "/dashboard/"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   # ═══════════════════════════════════════════════════════════════════
   # SPRINT LANDING — back to dashboard
@@ -46,10 +46,10 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to the dashboard
 
-  Scenario: Sprint landing has nav bar with Pipeline link
+  Scenario: Sprint landing nav bar has no Pipeline link (Pipeline was removed)
     When I GET "/sprints"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   # ═══════════════════════════════════════════════════════════════════
   # SPRINT DASHBOARD — back to main dashboard, links to pipeline
@@ -61,11 +61,11 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to the dashboard
 
-  Scenario: Sprint dashboard nav bar has Pipeline link
+  Scenario: Sprint dashboard nav bar has no Pipeline link (Pipeline was removed)
     Given I have an active sprint "s1" with 14 days
     When I GET "/sprints/s1"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   Scenario: Sprint dashboard nav bar has Dashboard link
     Given I have an active sprint "s1" with 14 days
@@ -106,12 +106,12 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to "/sprints/s1"
 
-  Scenario: Sprint contract nav bar has Pipeline link
+  Scenario: Sprint contract nav bar has no Pipeline link (Pipeline was removed)
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
     When I GET "/sprints/s1/contract"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   # ═══════════════════════════════════════════════════════════════════
   # SPRINT PROPOSALS — back to sprint dashboard, pipeline increment
@@ -125,13 +125,13 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to "/sprints/s1"
 
-  Scenario: Sprint proposals nav bar has Pipeline link
+  Scenario: Sprint proposals nav bar has no Pipeline link (Pipeline was removed)
     Given I have an active sprint "s1" with 14 days
     And a job cluster "email-automation" with 5 active postings
     And the user has a verified platform "upwork"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   Scenario: Submitting a proposal from sprint increments freelance pipeline
     Given I have an active sprint "s1" with 14 days
@@ -152,11 +152,11 @@ Feature: Dashboard ↔ Pipeline ↔ Sprint Track Connections
     Then the response status is 200
     And the page contains a link to the dashboard
 
-  Scenario: Sprint badge nav bar has Pipeline link
+  Scenario: Sprint badge nav bar has no Pipeline link (Pipeline was removed)
     Given I have an active sprint "s1" with 14 days
     When I GET "/sprints/s1/badge"
     Then the response status is 200
-    And the page contains a link to the freelance pipeline
+    And the page does not contain a link to the freelance pipeline
 
   # ═══════════════════════════════════════════════════════════════════
   # PIPELINE — back to dashboard (currently missing, should be added)

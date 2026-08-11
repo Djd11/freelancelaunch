@@ -31,7 +31,7 @@ Feature: App-Wide Clickable Items Audit
     When I visit /dashboard
     Then I should see "Dashboard" link
     And I should see "Topics" link
-    And I should see "Pipeline" link
+    And I should see "Sprint Track" link
     And the page must have zero console errors and zero failed requests
 
 
@@ -157,7 +157,7 @@ Feature: App-Wide Clickable Items Audit
       | /dashboard/day/1?topic=web-scraping-python    |
       | /freelance/pipeline                           |
     Then the nav bar should show:
-      | Dashboard | Topics | Pipeline |
+      | Dashboard | Topics | Sprint Track |
     
 
 

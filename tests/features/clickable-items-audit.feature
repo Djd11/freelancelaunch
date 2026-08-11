@@ -151,9 +151,8 @@ Feature: Clickable Items Audit
       | Current day card link            | Link      | Click → /dashboard/day/N                   |
       | Week grid day boxes (7)          | Link      | Each click → /dashboard/day/<n>            |
       | "My Portfolio"                   | Link      | Click → /deliverables/portfolio            |
-      | "Track Applications"             | Link      | Click → /freelance/pipeline                |
+      | "Sprint Track"                   | Link      | Click → /sprints                          |
       | "Upgrade Plan"                   | Link      | Click → /payments/pricing                  |
-      | Pipeline card "Manage"           | Link      | Click → /freelance/pipeline                |
 
 
   # 6. DAY DETAIL (/dashboard/day/<n>)
@@ -301,7 +300,7 @@ Feature: Clickable Items Audit
       | Logo "FreelanceLaunch"           | Link      | Click → /                                  |
       | Nav "Topics"                     | Link      | Click → /topics                            |
       | Nav "Dashboard"                  | Link      | Click → /dashboard/                        |
-      | Nav "Pipeline"                   | Link      | Click → /freelance/pipeline                |
+      | Nav "Sprint Track"               | Link      | Click → /sprints                          |
       | Nav "Pricing"                    | Link      | Click → /payments/pricing                  |
       | Nav "Link Platforms" badge       | Link      | Click → /platforms/setup                   |
       | Avatar button                    | Button    | Click → opens dropdown                     |

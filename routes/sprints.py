@@ -255,15 +255,27 @@ def proposal_submit(sprint_id, proposal_id):
 
     # Gate: require at least one verified platform before submitting
     platform_resp = sb.table("user_platforms").select("*") \
-        .eq("user_id", user_id).eq("status", "verified").limit(1).execute()
-    if not platform_resp.data:
+        .eq("user_id", user_id).eq("status", "verified").execute()
+    verified = platform_resp.data or []
+    if not verified:
         flash("Connect a freelance platform before submitting proposals.", "error")
         return redirect(url_for("platforms.setup"))
 
-    proposal_engine.mark_submitted(sb, proposal_id)
+    # Which marketplace was this submitted on? The form carries the platform;
+    # fall back to the user's single verified platform when only one exists.
+    platform = (request.form.get("platform") or "").strip().lower()
+    verified_names = {p.get("platform") for p in verified}
+    if platform not in verified_names:
+        if len(verified) == 1:
+            platform = verified[0]["platform"]
+        else:
+            flash("Pick the platform you submitted this proposal on.", "error")
+            return redirect(url_for("sprints.proposals", sprint_id=sprint_id))
+
+    proposal_engine.mark_submitted(sb, proposal_id, platform=platform)
     sb.table("freelance_pipeline").update({"proposals_sent": "proposals_sent + 1"}) \
         .eq("user_id", user_id).execute()
-    flash("Proposal marked submitted — great work!", "success")
+    flash(f"Proposal marked submitted on {platform} — great work!", "success")
     return redirect(url_for("sprints.proposals", sprint_id=sprint_id))
 
 
