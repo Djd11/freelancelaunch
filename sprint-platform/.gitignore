@@ -1,0 +1,11 @@
+# ── Flask app hygiene (for the scaffold that will live here) ──
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+node_modules/
+.env
+*.log
+.pytest_cache/
+behave-*.log

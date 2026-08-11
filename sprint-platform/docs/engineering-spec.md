@@ -1,7 +1,7 @@
 # FreelanceLaunch · Sprint Platform — Engineering Spec (v1)
 
 **Status:** New project · **Version:** 1.0 · **Date:** 2026-08-11 · **Owner:** Dhruba
-**Product truth:** [`../../mockups/product-mockup.html`](../../mockups/product-mockup.html) — an 8-screen static walkthrough. This spec is the mockup rendered as behavior.
+**Product truth:** [`./mockups/product-mockup.html`](./mockups/product-mockup.html) — an 8-screen static walkthrough. This spec is the mockup rendered as behavior.
 **Branch:** `sprint-platform` · **DB:** [`../db/schema.sql`](../db/schema.sql)
 **Companions:** [`architecture.md`](./architecture.md) · [`bdd/`](./bdd/) · [`decisions.md`](./decisions.md)
 
@@ -150,4 +150,4 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 
 ---
 
-*References: `../../mockups/product-mockup.html` (primary), `../../research_material.txt` (thesis), `../../web-app/docs/sprint/engineering-spec.md` (superseded by this spec).*
+*References: `./mockups/product-mockup.html` (primary) · `./research_material.txt` (thesis) · superseded: v2 sprint track spec in the v1 repo.*

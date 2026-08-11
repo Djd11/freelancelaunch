@@ -1,0 +1,11 @@
+# ─────────────────────────────────────────────────────────────
+# ROOT ISOLATION LAYER
+# This branch (sprint-platform) tracks ONLY sprint-platform/.
+# The v1 workspace (web-app/, venv/, old planning docs, skills
+# config, etc.) is intentionally untracked here so it can NEVER
+# be swept into a sprint-platform commit by `git add .`.
+# Give v1 its own branch/master when you're ready to commit it.
+# ─────────────────────────────────────────────────────────────
+/*
+!/sprint-platform/
+!/.gitignore

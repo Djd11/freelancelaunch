@@ -1,6 +1,6 @@
 # Product & Architecture Decisions
 
-Record of the decisions that shaped this new project. Source of truth: `../../mockups/product-mockup.html`.
+Record of the decisions that shaped this new project. Source of truth: `./mockups/product-mockup.html`.
 
 | # | Decision | Choice | Rationale |
 |---|----------|--------|-----------|

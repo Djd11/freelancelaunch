@@ -1,7 +1,7 @@
 # FreelanceLaunch · Sprint Platform — Architecture (v1)
 
 **Status:** New project · **Version:** 1.0 · **Date:** 2026-08-11 · **Owner:** Dhruba
-**Product truth:** [`../../mockups/product-mockup.html`](../../mockups/product-mockup.html)
+**Product truth:** [`./mockups/product-mockup.html`](./mockups/product-mockup.html)
 **Companions:** [`engineering-spec.md`](./engineering-spec.md) · [`../db/schema.sql`](../db/schema.sql) · [`bdd/`](./bdd/)
 
 ---
@@ -240,4 +240,4 @@ The app never 500s on a missing API key.
 
 ---
 
-*References: `engineering-spec.md`, `db/schema.sql`, `bdd/*.feature`, `../../mockups/product-mockup.html`.*
+*References: `engineering-spec.md`, `db/schema.sql`, `bdd/*.feature`, `./mockups/product-mockup.html`.*

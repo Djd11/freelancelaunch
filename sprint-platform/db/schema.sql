@@ -3,8 +3,31 @@
 -- Fresh project. Built from product-mockup.html (the product truth).
 -- Deliberately NO freelance_pipeline table and NO v1 30-day curriculum tables.
 -- The sprint record owns the whole outcome lifecycle (proposals → contracts).
--- Run in the Supabase SQL Editor (idempotent).
+--
+-- ⚠️  TARGETS A NEW, SEPARATE Supabase project — NEVER the v1 project.
+--    Several table names here (cohorts, contracts, badges, job_feed,
+--    proposals, sprints, mentor) COLLIDE with the v1 schema.sql/schema_v2.sql.
+--    Applying this to the v1 database would corrupt it. See
+--    docs/supabase-setup.md for creating the dedicated project.
+--
+-- Run in the NEW project's Supabase SQL Editor (idempotent).
 -- =====================================================================
+
+-- ─── GUARD: refuse to run against the v1 database ─────────────────────
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'public'
+      AND tablename IN ('topics', 'curricula', 'freelance_pipeline',
+                        'user_progress', 'cohort_videos', 'curriculum_days')
+  ) THEN
+    RAISE EXCEPTION
+      'Sprint-Platform schema aborted: v1 tables (topics/curricula/freelance_pipeline) found. '
+      'This schema must be applied to a NEW, dedicated Supabase project — never the v1 database. '
+      'See docs/supabase-setup.md.';
+  END IF;
+END $$;
 
 -- ─── USERS & PROFILES ─────────────────────────────────────────────────
 

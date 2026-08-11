@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreelanceLaunch · Sprint Mockup</title>
+<style>
+  :root{
+    --primary:#2563eb; --primary-dark:#1d4ed8; --accent:#f59e0b; --accent-soft:#fef3c7;
+    --bg:#ffffff; --bg-alt:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+    --success:#10b981; --success-soft:#d1fae5; --danger:#ef4444; --danger-soft:#fee2e2;
+    --purple:#7c3aed; --purple-soft:#ede9fe;
+    --gradient:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);
+    --shadow:0 10px 30px rgba(15,23,42,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.55;background:var(--bg-alt)}
+  a{text-decoration:none;color:inherit}
+
+  /* ── Mockup chrome ── */
+  .chrome{position:sticky;top:0;z-index:100;background:#0f172a;color:#e2e8f0;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid #1e293b}
+  .chrome b{color:#fff;font-size:13px;letter-spacing:.3px}
+  .chrome .hint{color:#94a3b8;font-size:11px}
+  .navpills{display:flex;gap:6px;flex-wrap:wrap}
+  .navpills button{background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:6px 12px;border-radius:999px;font-size:12px;cursor:pointer;transition:.15s}
+  .navpills button:hover{background:#334155;color:#fff}
+  .navpills button.on{background:var(--gradient);color:#fff;border-color:transparent;font-weight:600}
+  .stage{margin:8px 12px}
+  .screen{display:none;max-width:1180px;margin:0 auto;padding:20px 0 60px}
+  .screen.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ── Shared components ── */
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:.15s;white-space:nowrap}
+  .btn-p{background:var(--gradient);color:#fff}
+  .btn-p:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(37,99,235,.35)}
+  .btn-o{background:#fff;color:var(--primary);border:1px solid var(--border)}
+  .btn-o:hover{border-color:var(--primary);background:#f5f8ff}
+  .btn-sm{padding:7px 14px;font-size:13px}
+  .btn-g{background:var(--success);color:#fff}
+  .card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600}
+  .b-green{background:var(--success-soft);color:#047857}
+  .b-amber{background:var(--accent-soft);color:#b45309}
+  .b-purple{background:var(--purple-soft);color:#6d28d9}
+  .b-slate{background:#f1f5f9;color:#475569}
+  .b-red{background:var(--danger-soft);color:#b91c1c}
+  .muted{color:var(--muted)} .small{font-size:13px} .xs{font-size:12px}
+  h2{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  h3{font-size:18px;font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .logo{font-size:22px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border)}
+  .navl{display:flex;gap:26px;font-weight:500;color:var(--muted)} .navl a:hover{color:var(--primary)}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:#92400e;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px}
+  .track{display:flex;gap:4px} .track>div{flex:1;height:12px;border-radius:4px}
+  .t-done{background:var(--success)} .t-cur{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)} .t-lock{background:#e2e8f0}
+  .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:14px}
+  .kv:last-child{border:none}
+  .divider{height:1px;background:var(--border);margin:18px 0}
+  .icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .fade-in{animation:fade .3s ease}
+
+  .phases-track{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+  .phase{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;position:relative}
+  .phase .tag{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+  .phase.done{border-color:#a7f3d0}
+  .phase.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .phase.locked{opacity:.55}
+  .phase .phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .lock-ic{font-size:18px}
+
+  .check-item{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;transition:.15s}
+  .check-item.done{background:var(--success-soft);border-color:#a7f3d0}
+  .check-item .cbox{width:22px;height:22px;border-radius:6px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+  .check-item.done .cbox{background:var(--success);border-color:var(--success)}
+
+  /* mentor chat */
+  .chat{background:#f8fafc;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .msg{display:flex;gap:12px;padding:14px 16px}
+  .msg.mentor{background:#fff}
+  .msg .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .msg p{font-size:14px;color:#334155}
+  .msg .row{background:#eef2ff;border:1px solid #e0e7ff;color:#3730a3;font-size:13px;padding:10px 14px;border-radius:10px;margin-top:8px}
+  .chat-input{display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--border);background:#fff}
+  .chat-input input{flex:1;border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;outline:none}
+  .chat-input input:focus{border-color:var(--primary)}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);background:#f8fafc}
+  td{padding:12px;border-bottom:1px solid var(--border)}
+  tr:hover td{background:#fafbff}
+
+  .cta-band{background:var(--gradient);border-radius:18px;color:#fff;padding:40px;text-align:center;margin-top:40px}
+  .cta-band h2{color:#fff;margin-bottom:8px}
+  .cta-band p{color:#e0e7ff;max-width:520px;margin:0 auto 22px}
+  .btn-white{background:#fff;color:var(--primary-dark)}
+
+  .stat{text-align:center;padding:20px}
+  .stat .n{font-size:30px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:4px}
+
+  @media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}.phases-track{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ MOCKUP CHROME ══════════ -->
+<div class="chrome">
+  <b>◈ FreelanceLaunch · Product Mockup</b>
+  <span class="hint">click a screen to review · static demo, not wired</span>
+  <div class="navpills" id="navpills">
+    <button data-s="landing" class="on">1 · Landing</button>
+    <button data-s="picker">2 · Sprint Picker</button>
+    <button data-s="sprint">3 · Sprint Dashboard</button>
+    <button data-s="day">4 · Day · Phase A</button>
+    <button data-s="contract">5 · Mock Contract</button>
+    <button data-s="proposal">6 · Proposal Builder</button>
+    <button data-s="profile">7 · Demand Profile</button>
+    <button data-s="mentor">8 · AI Mentor</button>
+  </div>
+</div>
+<div class="stage">
+
+<!-- ══════════ 1 · LANDING ══════════ -->
+<section class="screen on" id="landing">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">FreelanceLaunch</div>
+      <div class="navl"><a href="#">Sprints</a><a href="#">Topics</a><a href="#">How it works</a><a href="#">Pricing</a></div>
+      <a class="btn btn-p btn-sm" href="#">Start free</a>
+    </div>
+
+    <div style="padding:70px 0 30px;text-align:center;max-width:820px;margin:0 auto">
+      <span class="chip">⚡ 14 days · 3 phases · first client</span>
+      <h2 style="font-size:44px;margin:18px 0 14px;line-height:1.1">Stop learning skills.<br>Start <span style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">landing clients.</span></h2>
+      <p class="muted" style="font-size:18px;max-width:600px;margin:0 auto 28px">A 14-day demand-validated sprint that teaches you to fulfill a real contract — not just watch videos — then hands you a proposal and sends you to bid.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a class="btn btn-p" href="#">🚀 Start your sprint</a>
+        <a class="btn btn-o" href="#">See how it works</a>
+      </div>
+    </div>
+
+    <!-- headline demand counter -->
+    <div class="card" style="max-width:860px;margin:10px auto;border-left:5px solid var(--success)">
+      <div class="grid3">
+        <div class="stat"><div class="n">450</div><div class="l">active jobs · Email Automation</div></div>
+        <div class="stat"><div class="n">$62</div><div class="l">median hourly rate</div></div>
+        <div class="stat"><div class="n">+18%</div><div class="l" style="color:var(--success)">demand this quarter</div></div>
+      </div>
+      <p class="xs muted" style="text-align:center">This is the demand you're training against — not a generic course.</p>
+    </div>
+
+    <!-- 3 phases -->
+    <div class="phases-track" style="margin-top:40px">
+      <div class="phase">
+        <div class="phead"><span class="tag" style="color:var(--primary)">Phase A · Days 1–5</span></div>
+        <h3>🧰 Skill Acquisition</h3>
+        <p class="small muted" style="margin-top:8px">The <b>Copy-Work method</b>: rebuild 3 real projects from scratch to build muscle memory, then a gap-fill micro-lesson on what's missing.</p>
+      </div>
+      <div class="phase">
+        <div class="phead"><span class="tag" style="color:var(--purple)">Phase B · Days 6–10</span></div>
+        <h3>📄 Mock Contract</h3>
+        <p class="small muted" style="margin-top:8px">Fulfill a real anonymized job brief under deadline + constraints — and package it as a case-study portfolio that doubles as your first proposal.</p>
+      </div>
+      <div class="phase">
+        <div class="phead"><span class="tag" style="color:var(--success)">Phase C · Days 11–14</span></div>
+        <h3>🚀 Supply Chain</h3>
+        <p class="small muted" style="margin-top:8px">Engineered proposals with "I see you need X…" hooks, a 5-proposal First-Bid challenge, and an auto-adapting iteration loop.</p>
+      </div>
+    </div>
+
+    <div class="cta-band">
+      <h2>Your skill has a live job count. Prove it.</h2>
+      <p>Earn a Demand-Validated badge with a live "N jobs open" counter — so clients can filter straight to freelancers who've recently completed this exact sprint.</p>
+      <a class="btn btn-white" href="#">Pick a demand-validated topic →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 2 · SPRINT PICKER ══════════ -->
+<section class="screen" id="picker">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">FreelanceLaunch</div>
+      <div class="navl"><a href="#">Sprints</a><a href="#">Topics</a><a href="#">Pricing</a></div>
+    </div>
+    <div style="padding:36px 0 20px">
+      <span class="chip">⚡ Demand-validated sprints</span>
+      <h2 style="margin:14px 0 6px">Choose your sprint</h2>
+      <p class="muted">Every sprint is built against a live job cluster. The badge shows how many jobs are open right now.</p>
+    </div>
+
+    <div class="grid3">
+      <!-- Email Automation -->
+      <div class="card">
+        <div class="icon" style="background:var(--accent-soft)">✉️</div>
+        <h3 style="margin:14px 0 4px">Email Automation</h3>
+        <p class="xs muted">Klaviyo · Mailchimp · n8n flows</p>
+        <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:6px">
+          <span class="badge b-green">● 450 jobs open</span>
+          <span class="badge b-slate">$62/hr avg</span>
+          <span class="badge b-slate">14 days</span>
+        </div>
+        <p class="small muted">Rebuild 3 real flows, fulfill a mock contract, and send 5 live proposals.</p>
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+          <a class="btn btn-p btn-sm" href="#">Start sprint</a>
+          <span class="xs muted">🔥 Trending</span>
+        </div>
+      </div>
+
+      <!-- Web Scraping -->
+      <div class="card">
+        <div class="icon" style="background:#dbeafe">🕷️</div>
+        <h3 style="margin:14px 0 4px">Web Scraping & Data</h3>
+        <p class="xs muted">Python · BeautifulSoup · APIs</p>
+        <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:6px">
+          <span class="badge b-green">● 322 jobs open</span>
+          <span class="badge b-slate">$48/hr avg</span>
+          <span class="badge b-slate">14 days</span>
+        </div>
+        <p class="small muted">Scrape a live target, extract clean data, and ship it like a paid contract.</p>
+        <div style="margin-top:16px"><a class="btn btn-o btn-sm" href="#">Start sprint</a></div>
+      </div>
+
+      <!-- AI Chatbots -->
+      <div class="card">
+        <div class="icon" style="background:var(--purple-soft)">🤖</div>
+        <h3 style="margin:14px 0 4px">AI Chatbot Builds</h3>
+        <p class="xs muted">OpenAI API · RAG · deployment</p>
+        <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:6px">
+          <span class="badge b-green">● 268 jobs open</span>
+          <span class="badge b-slate">$55/hr avg</span>
+          <span class="badge b-slate">14 days</span>
+        </div>
+        <p class="small muted">Deploy a working chatbot for a mock client brief and package the case study.</p>
+        <div style="margin-top:16px"><a class="btn btn-o btn-sm" href="#">Start sprint</a></div>
+      </div>
+    </div>
+
+    <p class="xs muted" style="margin-top:20px;text-align:center">Don't see your skill? <a href="#" style="color:var(--primary);font-weight:600">Request a sprint</a> — we curate the live demand feed before we build it.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3 · SPRINT DASHBOARD ══════════ -->
+<section class="screen" id="sprint">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">FreelanceLaunch</div>
+      <div class="navl"><a href="#">Dashboard</a><a href="#">Mentor</a><a href="#">Portfolio</a><a href="#">Profile</a></div>
+    </div>
+
+    <div style="padding:24px 0">
+      <div class="card">
+        <div class="kv" style="font-size:15px"><span><b>✉️ Email Automation Sprint</b> <span class="badge b-amber">Day 4 · Phase A</span></span><span class="muted small">Cohort #12 · ends Aug 23</span></div>
+        <div class="kv" style="border:none"><span class="muted small">Training against</span><span class="small"><b>450 active jobs</b> · $62/hr · email automation cluster</span></div>
+      </div>
+
+      <!-- phase lock track -->
+      <div class="phases-track">
+        <div class="phase active">
+          <div class="phead"><span class="tag" style="color:var(--primary)">Phase A · Days 1–5</span><span class="badge b-amber">In progress</span></div>
+          <h3>🧰 Skill Acquisition</h3>
+          <p class="xs muted" style="margin-top:6px">Copy-Work: 3 replication projects + gap-fill</p>
+          <div class="track" style="margin-top:12px"><div class="t-done"></div><div class="t-done"></div><div class="t-done"></div><div class="t-cur"></div><div class="t-lock"></div></div>
+          <p class="xs muted" style="margin-top:6px">3 / 5 days</p>
+        </div>
+        <div class="phase locked">
+          <div class="phead"><span class="tag" style="color:var(--purple)">Phase B · Days 6–10</span><span class="lock-ic">🔒</span></div>
+          <h3>📄 Mock Contract</h3>
+          <p class="xs muted" style="margin-top:6px">Fulfill a real brief + case study</p>
+          <p class="xs" style="margin-top:10px;color:#b45309">Unlocks when Phase A passes verification</p>
+        </div>
+        <div class="phase locked">
+          <div class="phead"><span class="tag" style="color:var(--success)">Phase C · Days 11–14</span><span class="lock-ic">🔒</span></div>
+          <h3>🚀 Supply Chain</h3>
+          <p class="xs muted" style="margin-top:6px">Proposals + First-Bid challenge</p>
+        </div>
+      </div>
+
+      <!-- ═══ JOB UNLOCK METER ═══ -->
+      <div class="card" style="margin-top:18px;border-left:5px solid var(--success)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+          <div>
+            <h3 style="display:flex;align-items:center;gap:8px">📈 Job Unlock Meter</h3>
+            <p class="small muted">Every day you complete unlocks another batch of live job postings in your cluster.</p>
+          </div>
+          <div style="text-align:right">
+            <b style="font-size:24px;color:var(--success)">186</b><span class="muted small"> / 450 active jobs unlocked</span>
+          </div>
+        </div>
+        <div class="track" style="margin:16px 0 8px">
+          <div class="t-done"></div><div class="t-done"></div><div class="t-done"></div><div class="t-done"></div><div class="t-cur"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div><div class="t-lock"></div>
+        </div>
+        <div class="small" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span class="xs muted">4 of 14 days done · each bar = one day you've unlocked</span>
+          <span class="chip">🔥 +38 postings unlocked so far</span>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="kv" style="border:none;padding-bottom:12px"><h3>📌 Today · Day 4</h3><span class="badge b-amber">Copy-Work · Project 2 of 3</span></div>
+          <p class="small muted">Rebuild this abandoned-cart recovery flow in Klaviyo from scratch — same triggers, same logic, no peeking.</p>
+          <div style="margin-top:16px" class="check-item done"><div class="cbox">✓</div><div><b>Watch lesson</b><div class="xs muted">Learn the flow anatomy (5 min)</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Replicate the project</b><div class="xs muted">Rebuild from a blank canvas (~35 min)</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Self-check vs rubric</b><div class="xs muted">3 acceptance criteria (~10 min)</div></div></div>
+          <a class="btn btn-p" href="#" style="margin-top:6px">Open Day 4 →</a>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:10px">🔥 Momentum</h3>
+          <div class="kv"><span class="muted">Day streak</span><b>4 🔥</b></div>
+          <div class="kv"><span class="muted">Confidence</span><b style="color:var(--accent)">72 / 100</b></div>
+          <div class="kv"><span class="muted">Proposals sent</span><b>0</b></div>
+          <div class="kv"><span class="muted">Contracts</span><b style="color:var(--success)">0</b></div>
+          <div class="divider"></div>
+          <p class="small"><span class="chip">💡 Nudge</span></p>
+          <p class="small muted" style="margin-top:8px">"You're past the hardest part of a new skill. 3 days of Copy-Work builds more muscle memory than 30 days of videos — keep going."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4 · DAY VIEW · PHASE A ══════════ -->
+<section class="screen" id="day">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">FreelanceLaunch</div><div class="navl"><a href="#">← Dashboard</a></div></div>
+    <div style="padding:24px 0">
+      <span class="chip">Phase A · Day 4 · Copy-Work</span>
+      <h2 style="margin:12px 0 4px">Project 2 — Rebuild the Abandoned-Cart Flow</h2>
+      <p class="muted small">Replicate a real, high-performing Klaviyo flow from scratch. Copy builds muscle memory faster than passive watching.</p>
+
+      <!-- ═══ DAY-COMPLETE UPTICK BANNER ═══ -->
+      <div style="margin-top:20px;padding:18px 20px;background:var(--success-soft);border:1px solid #a7f3d0;border-radius:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <b style="font-size:18px">🎉 Day 4 complete — job postings unlocked!</b>
+          <p class="small" style="color:#047857;margin-top:4px">You unlocked <b>+38 more job postings</b> → <b>186 of 450</b> active jobs in your cluster are now open to you.</p>
+        </div>
+        <div style="text-align:right">
+          <div class="track" style="width:200px"><div class="t-done" style="flex:41%"></div><div class="t-lock" style="flex:59%"></div></div>
+          <span class="xs muted" style="display:block;margin-top:5px">41% of your cluster unlocked</span>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:20px">
+        <div class="card">
+          <h3 style="margin-bottom:12px">🎬 Watch · Lesson</h3>
+          <div style="background:#0f172a;border-radius:12px;height:180px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:14px">▶ TwoPanel HTML preview — kinetic text + TTS (no MP4)</div>
+          <div class="divider"></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Mark lesson watched</b><div class="xs muted">~5 min</div></div></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
+          <p class="small muted">From a blank Klaviyo account, rebuild the exact flow:</p>
+          <ul class="small" style="margin:10px 0 0 18px;color:#334155">
+            <li>Trigger on <b>Checkout Started</b></li>
+            <li>2-step sequence: 30 min + 24 hr delays</li>
+            <li>Cart summary dynamic block</li>
+            <li>Coupon at step 2 (10% off)</li>
+          </ul>
+          <div class="divider"></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Pass 3-point rubric</b><div class="xs muted">auto-checked by verification service</div></div></div>
+          <a class="btn btn-p" href="#" style="margin-top:6px">Submit for check</a>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;border-left:5px solid var(--accent)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div><h3>🧩 Gap-Fill · Day 5 preview</h3><p class="small muted">Your last project flagged <b>mobile responsiveness</b> as the missing nuance — Day 5 serves a targeted 30-min micro-lesson to fix it.</p></div>
+          <span class="badge b-amber">Auto-detected</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 5 · MOCK CONTRACT ══════════ -->
+<section class="screen" id="contract">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">FreelanceLaunch</div><div class="navl"><a href="#">← Dashboard</a></div></div>
+    <div style="padding:24px 0">
+      <span class="chip">Phase B · Day 6 · Mock Contract</span>
+      <h2 style="margin:12px 0 4px">Your First "Client" — fulfill it like it's paid</h2>
+      <p class="muted small">This brief is an anonymized real job post. Same deadline, same constraints. Most platforms teach skills — this one teaches <b>fulfillment</b>.</p>
+
+      <div class="card" style="margin-top:20px;border-top:4px solid var(--purple)">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h3>📄 Client Brief · "Set up email automation for my e-commerce brand"</h3>
+            <p class="xs muted">Anonymized from Upwork posting · posted 3 days ago</p>
+          </div>
+          <div style="text-align:right">
+            <span class="badge b-red">⏱ Due in 4 days</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:16px">
+          <div>
+            <p class="xs" style="font-weight:700;color:var(--purple)">REQUIREMENTS</p>
+            <ul class="small" style="margin:8px 0 0 18px;color:#334155">
+              <li>Klaviyo checkout recovery + post-purchase upsell</li>
+              <li>Segmentation for VIP repeat buyers</li>
+              <li>Deliverables: flow exports + setup docs</li>
+              <li>Must be mobile-responsive emails</li>
+            </ul>
+          </div>
+          <div>
+            <p class="xs" style="font-weight:700;color:var(--purple)">CONSTRAINTS</p>
+            <ul class="small" style="margin:8px 0 0 18px;color:#334155">
+              <li>Deadline: <b>4 days</b></li>
+              <li>Budget: <b>$180 fixed</b></li>
+              <li>Client prefers async updates</li>
+            </ul>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center">
+          <div class="small"><b>Steps to complete:</b> execute flow (Day 6–8) → write Problem / Solution / Result case study (Day 9–10)</div>
+          <a class="btn btn-g" href="#">Submit deliverable for verification</a>
+        </div>
+      </div>
+
+      <!-- verification gate -->
+      <div class="card" style="margin-top:18px">
+        <h3 style="margin-bottom:6px">🔐 Verification Gate — locks Phase C</h3>
+        <p class="small muted">Your Mock Contract must pass review before you can enter the job-feed stage. This is what makes your badge credible to clients.</p>
+        <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="check-item" style="flex:1;min-width:220px"><div class="cbox"></div><div><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div></div>
+          <div class="check-item" style="flex:1;min-width:220px"><div class="cbox"></div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6 · PROPOSAL BUILDER ══════════ -->
+<section class="screen" id="proposal">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">FreelanceLaunch</div><div class="navl"><a href="#">← Dashboard</a></div></div>
+    <div style="padding:24px 0">
+      <span class="chip">Phase C · Day 11 · Proposal Engineering</span>
+      <h2 style="margin:12px 0 4px">First-Bid Challenge — 0 / 5 proposals</h2>
+      <p class="muted small">We pre-write the "I see you need X…" hooks from your job cluster. You send 5 live proposals. If none convert, the system diagnoses why and assigns a fix.</p>
+
+      <div style="display:flex;gap:8px;margin:18px 0">
+        <div class="t-done" style="width:0%"></div>
+        <div class="t-lock" style="flex:1"></div>
+        <div class="t-lock" style="flex:1"></div><div class="t-lock" style="flex:1"></div><div class="t-lock" style="flex:1"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="kv" style="border:none;padding-bottom:10px"><h3>📝 Proposal Builder</h3><span class="badge b-green">Auto-generated</span></div>
+          <div class="small" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px">
+            <p style="font-weight:700;color:var(--primary)">Opening hook</p>
+            <p class="muted" style="margin:6px 0 12px">"I see you need a Klaviyo flow that recovers abandoned carts — I just rebuilt exactly that flow for a mock client and it passed a 3-point checklist. I can have your version live in 3 days."</p>
+            <p style="font-weight:700;color:var(--primary)">Proof (from your Mock Contract)</p>
+            <p class="muted" style="margin:6px 0 12px">"I completed a 4-day brief with checkout recovery + VIP segmentation. Here's the case study — problem, solution, result."</p>
+            <p style="font-weight:700;color:var(--primary)">CTA</p>
+            <p class="muted" style="margin:6px 0 0">"Happy to run a quick scope call this week."</p>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <a class="btn btn-p btn-sm" href="#">Copy proposal</a>
+            <a class="btn btn-o btn-sm" href="#">Edit</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:10px">📋 Live jobs to bid on</h3>
+          <table>
+            <thead><tr><th>Job</th><th>Rate</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Klaviyo flow setup for store</td><td>$180</td><td><span class="badge b-amber">Draft</span></td></tr>
+              <tr><td>Email automation revamp</td><td>$250</td><td><span class="badge b-slate">Not started</span></td></tr>
+              <tr><td>Abandoned cart series</td><td>$140</td><td><span class="badge b-slate">Not started</span></td></tr>
+              <tr><td>Segment + campaign build</td><td>$210</td><td><span class="badge b-slate">Not started</span></td></tr>
+              <tr><td>Post-purchase upsell flow</td><td>$165</td><td><span class="badge b-slate">Not started</span></td></tr>
+            </tbody>
+          </table>
+          <p class="xs muted" style="margin-top:10px">Proposals are human-initiated — you copy-paste and track. We never auto-submit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7 · DEMAND PROFILE ══════════ -->
+<section class="screen" id="profile">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">FreelanceLaunch</div><div class="navl"><a href="#">Dashboard</a><a href="#">Mentor</a><a href="#">Portfolio</a></div></div>
+    <div style="padding:24px 0">
+      <span class="chip">Your public profile — what clients see</span>
+      <h2 style="margin:12px 0 6px">👋 Maya Chen</h2>
+      <p class="muted small">Freelancer · Email Automation & Web Scraping</p>
+
+      <div class="grid2" style="margin-top:20px">
+        <div class="card">
+          <h3 style="margin-bottom:14px">🏅 Demand-Validated Badges</h3>
+          <div class="check-item done" style="align-items:center">
+            <div class="icon" style="width:44px;height:44px;background:var(--success-soft)">🏅</div>
+            <div style="flex:1">
+              <b>Email Automation Sprint</b> <span class="badge b-green">completed 12 days ago</span>
+              <div style="margin-top:6px" class="small"><b style="color:var(--success)">● 450 active jobs right now</b> <span class="muted xs">↑ from 410 two weeks ago</span></div>
+              <p class="xs muted" style="margin-top:4px">Mock contract verified · 5 proposals sent · 1 interview</p>
+            </div>
+          </div>
+          <div class="check-item" style="align-items:center;opacity:.6">
+            <div class="icon" style="width:44px;height:44px;background:var(--purple-soft)">🏅</div>
+            <div style="flex:1">
+              <b>Web Scraping Sprint</b> <span class="badge b-slate">in progress · Day 7</span>
+              <div class="small" style="margin-top:6px"><b>● 322 active jobs</b></div>
+            </div>
+          </div>
+          <p class="xs muted" style="margin-top:12px">Badges are only issued when the Mock Contract passes verification — never for "finishing a course."</p>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:14px">📂 Case Study Portfolio</h3>
+          <div class="check-item done" style="align-items:center">
+            <div class="icon" style="width:44px;height:44px;background:#dbeafe">📄</div>
+            <div style="flex:1"><b>Abandoned-Cart Recovery Flow</b><div class="xs muted">Problem / Solution / Result · client-format case study</div></div>
+          </div>
+          <div class="check-item" style="align-items:center;opacity:.7">
+            <div class="icon" style="width:44px;height:44px;background:#dbeafe">📄</div>
+            <div style="flex:1"><b>VIP Segmentation Strategy</b><div class="xs muted">draft — completes with Mock Contract</div></div>
+          </div>
+          <p class="small muted" style="margin-top:12px">For clients: filter freelancers by <b>"Completed [Skill] Sprint within last 30 days"</b> — fresh, verified supply.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 8 · AI MENTOR ══════════ -->
+<section class="screen" id="mentor">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">FreelanceLaunch</div><div class="navl"><a href="#">Dashboard</a></div></div>
+    <div style="padding:24px 0">
+      <span class="chip">AI Mentor · grounded in your target job</span>
+      <h2 style="margin:12px 0 6px">💬 Ask — it answers in your job's language</h2>
+      <p class="muted small">The mentor reads your live job description and your progress, then guides you — it never just hands you the answer.</p>
+
+      <div class="chat" style="margin-top:20px">
+        <div class="msg mentor"><div class="av" style="background:var(--gradient);color:#fff">🤖</div>
+          <div style="flex:1">
+            <b class="small">Mentor</b>
+            <p style="margin-top:4px">You're on Day 4 of Email Automation. Your target job says: <i>"build a multi-step abandoned cart recovery flow with dynamic cart summaries."</i> What's one part of that you're unsure about?</p>
+            <div class="row">📌 Context: job #1042 · Klaviyo · checkout recovery · progress 60%</div>
+          </div>
+        </div>
+        <div class="msg"><div class="av" style="background:var(--accent-soft)">🧑</div>
+          <div style="flex:1"><b class="small">You</b><p style="margin-top:4px">What does "dynamic cart summary" actually mean in the email itself?</p></div>
+        </div>
+        <div class="msg mentor"><div class="av" style="background:var(--gradient);color:#fff">🤖</div>
+          <div style="flex:1">
+            <b class="small">Mentor</b>
+            <p style="margin-top:4px">Good question — it's the block that shows <i>the specific item a shopper left behind</i>, not a generic product image. In Klaviyo you add the <b>Cart Summary</b> block and map it to the <code>Items in cart</code> event property. Try this: rebuild your flow and add that block to step 1. Then tell me what renders in the preview.</p>
+            <p class="small muted" style="margin-top:6px">Hint: I won't give you the finished code — go make it, then we debug together. 💪</p>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <input placeholder="Ask about your target job or your progress…">
+        <a class="btn btn-p" href="#">Send</a>
+      </div>
+      <p class="xs muted" style="margin-top:10px">Guided & Socratic · uses the exact terminology of the job post you're targeting · never just answers.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  var btns=document.querySelectorAll('#navpills button');
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      btns.forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+      var t=document.getElementById(b.dataset.s);
+      if(t){t.classList.add('on');window.scrollTo({top:0,behavior:'smooth'});}
+    });
+  });
+</script>
+</body>
+</html>
