@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+  <div>
+    <span class="chip"><span class="dot"></span>Curation</span>
+    <h2>Job Clusters</h2>
+    <p class="sub">{{ clusters|length }} clusters · active clusters show on the learner picker.</p>
+  </div>
+  <a class="btn btn-p btn-sm" href="/admin/clusters/create">Create cluster</a>
+</div>
+
+<div class="card card-flat" style="padding:0;overflow-x:auto">
+  <table>
+    <thead><tr><th>Key</th><th>Name</th><th>Jobs</th><th>Rate</th><th>Growth</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for c in clusters %}
+      <tr>
+        <td><code>{{ c.cluster_key }}</code></td>
+        <td><b>{{ c.display_name }}</b></td>
+        <td>{{ c.job_count }}</td>
+        <td>${{ c.avg_rate }}</td>
+        <td>+{{ c.growth_score }}%</td>
+        <td>
+          {% if c.status == 'active' %}<span class="badge b-green">active</span>
+          {% elif c.status == 'requested' %}<span class="badge b-accent">requested</span>
+          {% elif c.status == 'paused' %}<span class="badge b-amber">paused</span>
+          {% else %}<span class="badge b-slate">{{ c.status }}</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not clusters %}<tr><td colspan="6" class="muted">No clusters yet — create the first one.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

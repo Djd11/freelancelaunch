@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px">
+  <div>
+    <span class="chip"><span class="dot"></span>Curation</span>
+    <h2>Job Feed</h2>
+    <p class="sub">{{ jobs|length }} postings · unlock_day controls when each one appears in a sprinter's Job Unlock Meter.</p>
+  </div>
+  <a class="btn btn-p btn-sm" href="/admin/feed/create">Add posting</a>
+</div>
+
+<div class="card card-flat" style="padding:0;overflow-x:auto">
+  <table>
+    <thead><tr><th>Cluster</th><th>Title</th><th>Rate</th><th>Experience</th><th>Unlock Day</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td><code>{{ j.cluster_key }}</code></td>
+        <td><b>{{ j.title }}</b></td>
+        <td>${{ j.rate }}</td>
+        <td>{{ j.experience_needed }}</td>
+        <td>Day {{ j.unlock_day }}</td>
+        <td>
+          {% if j.status == 'active' %}<span class="badge b-green">active</span>
+          {% elif j.status == 'filled' %}<span class="badge b-slate">filled</span>
+          {% elif j.status == 'expired' %}<span class="badge b-amber">expired</span>
+          {% else %}<span class="badge b-slate">{{ j.status }}</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not jobs %}<tr><td colspan="6" class="muted">No postings yet — add the first one.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

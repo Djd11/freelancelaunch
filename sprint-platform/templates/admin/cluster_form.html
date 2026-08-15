@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Curation</span>
+  <h2>Create Job Cluster</h2>
+  <p class="sub">A demand cluster learners can start a sprint against. Set status to <b>active</b> to publish it to the picker.</p>
+</div>
+
+<div class="card" style="max-width:640px">
+  <form method="POST">
+    <div class="grid2">
+      <div class="field">
+        <label for="cluster_key">Cluster key</label>
+        <input id="cluster_key" name="cluster_key" required placeholder="email-automation">
+      </div>
+      <div class="field">
+        <label for="display_name">Display name</label>
+        <input id="display_name" name="display_name" required placeholder="Email Automation">
+      </div>
+    </div>
+    <div class="field">
+      <label for="icon">Icon (emoji)</label>
+      <input id="icon" name="icon" placeholder="📧">
+    </div>
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="2" placeholder="Klaviyo · Mailchimp · n8n flows"></textarea>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label for="job_count">Job count</label>
+        <input id="job_count" name="job_count" type="number" min="0" value="0">
+      </div>
+      <div class="field">
+        <label for="avg_rate">Avg rate ($/hr)</label>
+        <input id="avg_rate" name="avg_rate" type="number" step="0.01" min="0" value="0">
+      </div>
+      <div class="field">
+        <label for="growth_score">Growth score (%)</label>
+        <input id="growth_score" name="growth_score" type="number" step="0.01" min="0" value="0">
+      </div>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="active">active</option>
+        <option value="requested">requested</option>
+        <option value="paused">paused</option>
+        <option value="archived">archived</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-p" type="submit">Create cluster</button>
+      <a class="btn btn-o" href="/admin/clusters">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

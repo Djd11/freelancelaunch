@@ -1,4 +1,4 @@
-# ── Flask app hygiene (for the scaffold that will live here) ──
+# ── Flask app hygiene ──
 __pycache__/
 *.py[cod]
 .venv/
@@ -9,3 +9,6 @@ node_modules/
 *.log
 .pytest_cache/
 behave-*.log
+pretty.output
+probe_live.py
+seed_live.py

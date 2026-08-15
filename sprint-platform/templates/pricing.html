@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="pricing">
+  <div class="wrap" style="max-width:640px;padding-top:56px">
+    <div class="topnav" style="border:none;padding-bottom:0">
+      <div class="logo">Freelance<em>Launch</em></div>
+      <div class="navl"><a href="/sprints">Sprints</a><a href="/">Home</a></div>
+    </div>
+
+    <div class="pagehead">
+      <span class="chip"><span class="dot"></span>Pricing</span>
+      <h2>Pricing comes after placement</h2>
+      <p class="sub">Monetization is deferred for v1 (engineering-spec §7.3). The first thing we owe you is a demand-validated placement — not a paywall.</p>
+    </div>
+
+    <div style="border-top:1px solid var(--hairline-strong)">
+      <div style="display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--hairline)">
+        <span class="badge b-green" style="height:fit-content;margin-top:2px">Free now</span>
+        <div>
+          <b>Start a sprint free</b>
+          <p class="small muted" style="margin-top:2px">All 14 days, all three phases, the Job Unlock Meter, and the Demand-Validated badge — no card required.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--hairline)">
+        <span class="badge b-slate" style="height:fit-content;margin-top:2px">Later</span>
+        <div>
+          <b>Placement-first monetization</b>
+          <p class="small muted" style="margin-top:2px">When pricing arrives it will follow outcomes — interviews and contracts — not seat time.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px"><a class="btn btn-p" href="/sprints">Start free</a></div>
+  </div>
+</section>
+{% endblock %}

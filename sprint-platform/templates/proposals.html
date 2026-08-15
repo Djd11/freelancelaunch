@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="proposal">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
+    <div style="padding:26px 0">
+      {% if locked %}
+      <span class="chip"><span class="dot"></span>Phase C · Proposal Engineering</span>
+      <h2 style="margin:14px 0 6px">🔒 Phase C is locked</h2>
+      <p class="muted small" style="max-width:600px">Phase C stays locked until the Mock Contract passes verification. Fulfill your brief and submit the deliverable to unlock the proposal challenge.</p>
+      <div class="card" style="margin-top:22px;max-width:520px">
+        <p class="small">Your next step: <a href="/sprints/{{ sprint.id }}/contract" style="color:var(--accent-ink);font-weight:600">Open the Mock Contract →</a></p>
+      </div>
+      {% else %}
+      <span class="chip"><span class="dot"></span>Phase C · Day 11 · Proposal Engineering</span>
+      <h2 style="margin:14px 0 6px">First-Bid Challenge — {{ submitted_count }} / 5 proposals</h2>
+      <p class="muted small" style="max-width:640px">We pre-write the "I see you need X…" hooks from your job cluster. You send 5 live proposals. If none convert, the system diagnoses why and assigns a fix.</p>
+
+      <div style="display:flex;gap:6px;margin:20px 0">
+        {% for i in range(0, 5) %}<div class="{{ 't-done' if i < submitted_count else 't-lock' }}" style="flex:1;height:10px;border-radius:3px"></div>{% endfor %}
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="kv" style="border:none;padding-bottom:10px"><h3>Proposal Builder</h3><span class="badge b-green">Auto-generated</span></div>
+          <div class="small" style="background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px">
+            <p style="font-weight:700;color:var(--accent-ink)">Opening hook</p>
+            <p class="muted" style="margin:6px 0 14px">"{{ template.hook }}"</p>
+            <p style="font-weight:700;color:var(--accent-ink)">Proof (from your Mock Contract)</p>
+            <p class="muted" style="margin:6px 0 14px">"{{ template.proof }}"</p>
+            <p style="font-weight:700;color:var(--accent-ink)">CTA</p>
+            <p class="muted" style="margin:6px 0 0">"{{ template.cta }}"</p>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <a class="btn btn-p btn-sm" href="#">Copy proposal</a>
+            <a class="btn btn-o btn-sm" href="#">Edit</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:12px">Live jobs to bid on</h3>
+          <table>
+            <thead><tr><th>Job</th><th>Rate</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for p in proposals %}
+              <tr>
+                <td>{{ p.title }}</td>
+                <td>${{ p.rate }}</td>
+                <td>
+                  {% if p.status == 'submitted' %}<span class="badge b-green">Submitted</span>
+                  {% elif p.status == 'draft' %}
+                    <form method="post" action="/sprints/{{ sprint.id }}/proposals/{{ p.proposal_id }}/submit" style="display:inline">
+                      <input type="hidden" name="platform" value="{{ verified_platform }}">
+                      <button class="btn btn-p btn-sm" type="submit">Draft — submit</button>
+                    </form>
+                  {% else %}<span class="badge b-slate">Not started</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <p class="xs muted" style="margin-top:12px">Proposals are human-initiated — you copy-paste and track. We never auto-submit.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

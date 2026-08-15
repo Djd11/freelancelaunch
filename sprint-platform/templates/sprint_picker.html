@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="picker">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">Freelance<em>Launch</em></div>
+      <div class="navl"><a href="/sprints">Sprints</a><a href="/pricing">Pricing</a><a href="/mentor">Mentor</a></div>
+      {% if user %}<a class="btn btn-o btn-sm" href="/auth/logout">Sign out</a>{% endif %}
+    </div>
+
+    <div class="pagehead">
+      <span class="chip"><span class="dot"></span>Demand-validated sprints</span>
+      <h2>Choose your sprint</h2>
+      <p class="sub">Every sprint is built against a live job cluster. The badge shows how many jobs are open right now.</p>
+    </div>
+
+    <div class="grid3">
+      {% for c in clusters %}
+      <div class="card" style="display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:26px" aria-hidden="true">{{ c.icon }}</span>
+          {% if c.cluster_key == 'email-automation' %}<span class="badge b-accent">Trending</span>{% endif %}
+        </div>
+        <h3 style="margin:14px 0 4px">{{ c.display_name }}</h3>
+        <p class="xs muted">{{ c.description }}</p>
+        <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:6px">
+          <span class="badge b-green">● {{ c.job_count }} jobs open</span>
+          <span class="badge b-slate">${{ c.avg_rate }}/hr avg</span>
+          <span class="badge b-slate">14 days</span>
+        </div>
+        <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
+        <div style="margin-top:18px">
+          <a class="btn btn-p btn-sm" href="/sprints/{{ c.cluster_key }}/start">Start sprint</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <p class="xs muted" style="margin-top:24px;text-align:center">Don't see your skill? <a href="#request" style="color:var(--accent-ink);font-weight:600">Request a sprint</a> — we curate the live demand feed before we build it.</p>
+
+    <div id="request" class="card card-flat" style="max-width:520px;margin:20px auto">
+      <h3 style="margin-bottom:6px">Request a sprint</h3>
+      <p class="small muted" style="margin-bottom:16px">Tell us the skill — we curate the live demand feed before we build it.</p>
+      <form method="post" action="/sprints/request">
+        <div style="display:flex;gap:10px">
+          <input type="text" name="skill" placeholder="e.g. notion-automation" aria-label="Skill to request">
+          <button class="btn btn-ink" type="submit">Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

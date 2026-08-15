@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="mentor">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints">Dashboard</a></div></div>
+    <div style="padding:26px 0;max-width:760px">
+      <span class="chip"><span class="dot"></span>AI Mentor · grounded in your target job</span>
+      <h2 style="margin:14px 0 6px">Ask — it answers in your job's language</h2>
+      <p class="muted small">The mentor reads your live job description and your progress, then guides you — it never just hands you the answer.</p>
+
+      <div class="chat" style="margin-top:22px">
+        {% for m in messages %}
+        <div class="msg {{ 'mentor' if m.role == 'mentor' else '' }}">
+          <div class="av">{{ 'M' if m.role == 'mentor' else 'Y' }}</div>
+          <div style="flex:1">
+            <b class="small">{{ 'Mentor' if m.role == 'mentor' else 'You' }}</b>
+            <p style="margin-top:4px">{{ m.text }}</p>
+            {% if m.context %}<div class="row">{{ m.context }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        <form class="chat-input" method="post" action="/mentor/turn">
+          <input type="text" name="question" placeholder="Ask about your target job or your progress…" aria-label="Question for mentor">
+          <button class="btn btn-p" type="submit">Send</button>
+        </form>
+      </div>
+      <p class="xs muted" style="margin-top:12px">Guided &amp; Socratic · uses the exact terminology of the job post you're targeting · never just answers.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+document.querySelector('.chat-input').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const input = this.querySelector('input');
+  const q = input.value.trim();
+  if (!q) return;
+  fetch('/mentor/turn', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({question: q}),
+  }).then(r => r.json()).then(data => {
+    location.reload();
+  });
+});
+</script>
+{% endblock %}

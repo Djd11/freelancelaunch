@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="contract">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
+    <div style="padding:26px 0">
+      <span class="chip"><span class="dot"></span>Phase B · Day 6 · Mock Contract</span>
+      <h2 style="margin:14px 0 6px">Your First "Client" — fulfill it like it's paid</h2>
+      <p class="muted small" style="max-width:640px">This brief is an anonymized real job post. Same deadline, same constraints. Most platforms teach skills — this one teaches <b>fulfillment</b>.</p>
+
+      <div class="card" style="margin-top:22px">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h3>Client Brief · "{{ brief.title }}"</h3>
+            <p class="xs muted" style="margin-top:4px">Anonymized from a curated job posting · posted recently</p>
+          </div>
+          <div style="text-align:right">
+            <span class="badge b-red">⏱ Due in {{ brief.constraints.deadline_days if brief.constraints else 4 }} days</span>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:18px">
+          <div>
+            <p class="xs" style="font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">REQUIREMENTS</p>
+            <ul class="small" style="margin:0 0 0 18px;color:var(--ink-2)">
+              {% for r in brief.requirements_list %}<li style="margin-bottom:6px">{{ r }}</li>{% endfor %}
+            </ul>
+          </div>
+          <div>
+            <p class="xs" style="font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">CONSTRAINTS</p>
+            <ul class="small" style="margin:0 0 0 18px;color:var(--ink-2)">
+              <li style="margin-bottom:6px">Deadline: <b>{{ brief.constraints.deadline_days if brief.constraints else 4 }} days</b></li>
+              <li style="margin-bottom:6px">Budget: <b>${{ brief.constraints.budget if brief.constraints else 180 }} fixed</b></li>
+              {% for n in brief.constraints.notes if brief.constraints %}<li style="margin-bottom:6px">{{ n }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="small"><b>Steps to complete:</b> execute flow (Day 6–8) → write Problem / Solution / Result case study (Day 9–10)</div>
+        <div style="margin-top:16px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px">
+          <p class="small" style="font-weight:700;margin-bottom:10px">Submit your deliverable for verification</p>
+          <form method="post" action="/sprints/{{ sprint.id }}/contract/submit">
+            <div style="display:flex;gap:10px">
+              <input type="url" name="submission_url" placeholder="Paste a link to your deliverable…" aria-label="Deliverable link">
+              <button class="btn btn-g" type="submit">Submit deliverable for verification</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- verification gate -->
+      <div class="card" style="margin-top:18px">
+        <h3 style="margin-bottom:6px">Verification Gate — locks Phase C</h3>
+        <p class="small muted">Your Mock Contract must pass review before you can enter the job-feed stage. This is what makes your badge credible to clients.</p>
+        <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="check-item" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox"></div><div><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div></div>
+          <div class="check-item" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox"></div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

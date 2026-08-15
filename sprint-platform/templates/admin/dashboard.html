@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Platform operations</span>
+  <h2>Admin Dashboard</h2>
+  <p class="sub">Curate the live demand feed, open cohorts, and keep every sprint training against real job counts.</p>
+</div>
+
+<div class="grid3">
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3>Job Clusters</h3>
+    <p class="small muted" style="margin:6px 0 16px;flex:1">Demand clusters with live job counts, rates, and growth — the numbers every badge displays.</p>
+    <div style="display:flex;gap:8px">
+      <a class="btn btn-o btn-sm" href="/admin/clusters">View</a>
+      <a class="btn btn-p btn-sm" href="/admin/clusters/create">Create cluster</a>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3>Job Feed</h3>
+    <p class="small muted" style="margin:6px 0 16px;flex:1">Anonymized real postings that unlock day by day and become the Mock Contract briefs.</p>
+    <div style="display:flex;gap:8px">
+      <a class="btn btn-o btn-sm" href="/admin/feed">View</a>
+      <a class="btn btn-p btn-sm" href="/admin/feed/create">Add posting</a>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column">
+    <h3>Cohorts</h3>
+    <p class="small muted" style="margin:6px 0 16px;flex:1">Start windows learners join when they begin a sprint — the cohort line on every dashboard.</p>
+    <div style="display:flex;gap:8px">
+      <a class="btn btn-o btn-sm" href="/admin/cohorts">View</a>
+      <a class="btn btn-p btn-sm" href="/admin/cohorts/create">Create cohort</a>
+    </div>
+  </div>
+</div>
+
+<div class="card card-flat" style="margin-top:18px">
+  <h3 style="margin-bottom:8px">How curation reaches learners</h3>
+  <p class="small muted">An <b>active</b> cluster appears on the sprint picker immediately. Feed rows unlock by <code>unlock_day</code> as sprinters complete days. The newest active cohort for a cluster is the one new sprinters join.</p>
+</div>
+{% endblock %}

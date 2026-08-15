@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Curation</span>
+  <h2>Create Cohort</h2>
+  <p class="sub">The cohort line ("Cohort #12 · ends Aug 23") renders on every learner dashboard in this window.</p>
+</div>
+
+<div class="card" style="max-width:560px">
+  <form method="POST">
+    <div class="grid2">
+      <div class="field">
+        <label for="cluster_key">Cluster key</label>
+        <input id="cluster_key" name="cluster_key" required placeholder="email-automation">
+      </div>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" required placeholder="Cohort #13">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="start_date">Start date</label>
+        <input id="start_date" name="start_date" type="date" required>
+      </div>
+      <div class="field">
+        <label for="end_date">End date</label>
+        <input id="end_date" name="end_date" type="date" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="upcoming">upcoming</option>
+        <option value="active">active</option>
+        <option value="completed">completed</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-p" type="submit">Create cohort</button>
+      <a class="btn btn-o" href="/admin/cohorts">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

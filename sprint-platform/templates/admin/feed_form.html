@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Curation</span>
+  <h2>Add Job Posting</h2>
+  <p class="sub">Anonymize real postings — no client names. The brief becomes Mock Contract material and First-Bid targets.</p>
+</div>
+
+<div class="card" style="max-width:640px">
+  <form method="POST">
+    <div class="grid2">
+      <div class="field">
+        <label for="cluster_key">Cluster key</label>
+        <input id="cluster_key" name="cluster_key" required placeholder="email-automation">
+      </div>
+      <div class="field">
+        <label for="title">Title</label>
+        <input id="title" name="title" required placeholder="Klaviyo flow setup for store">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="source">Source</label>
+        <input id="source" name="source" value="curated">
+      </div>
+      <div class="field">
+        <label for="source_url">Source URL</label>
+        <input id="source_url" name="source_url" type="url" placeholder="https://…">
+      </div>
+    </div>
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="3" placeholder="Anonymized scope of work…"></textarea>
+    </div>
+    <div class="field">
+      <label for="skills">Skills (comma-separated)</label>
+      <input id="skills" name="skills" placeholder="klaviyo, email, automation">
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label for="rate">Rate ($)</label>
+        <input id="rate" name="rate" type="number" step="0.01" required>
+      </div>
+      <div class="field">
+        <label for="experience_needed">Experience</label>
+        <select id="experience_needed" name="experience_needed">
+          <option value="entry">entry</option>
+          <option value="intermediate">intermediate</option>
+          <option value="expert">expert</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="unlock_day">Unlock day (1–14)</label>
+        <input id="unlock_day" name="unlock_day" type="number" min="1" max="14" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="active">active</option>
+        <option value="filled">filled</option>
+        <option value="expired">expired</option>
+        <option value="archived">archived</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-p" type="submit">Add posting</button>
+      <a class="btn btn-o" href="/admin/feed">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="day">
+  <div class="wrap">
+    <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
+    <div style="padding:26px 0">
+      <span class="chip"><span class="dot"></span>Phase {{ day.phase }} · Day {{ day.day_no }} · {{ day.action_type|capitalize }}</span>
+      <h2 style="margin:14px 0 6px">{{ ('Project ' ~ project.project_index ~ ' — ') if project else '' }}{{ project.title if project else day.title }}</h2>
+      <p class="muted small" style="max-width:640px">{{ project.description if project and project.description else 'Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.' }}</p>
+
+      <!-- ═══ DAY-COMPLETE UPTICK BANNER (only when the day is done) ═══ -->
+      {% if day_done %}
+      <div style="margin-top:22px;padding:20px 22px;background:var(--green-soft);border:1px solid #CBE0CB;border-radius:var(--radius-lg);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+        <div>
+          <b style="font-size:18px;font-family:var(--font-display);font-weight:650">🎉 Day {{ day.day_no }} complete — job postings unlocked!</b>
+          <p class="small" style="color:var(--green-ink);margin-top:6px">You unlocked <b>+{{ meter.last_delta }} more job postings</b> → <b>{{ meter.unlocked_count }} of {{ meter.total_in_cluster }}</b> active jobs in your cluster are now open to you.</p>
+        </div>
+        <div style="text-align:right">
+          <div class="track" style="width:200px"><div class="t-done" style="flex:{{ pct }}%"></div><div class="t-lock" style="flex:{{ 100 - pct }}%"></div></div>
+          <span class="xs muted" style="display:block;margin-top:6px">{{ pct }}% of your cluster unlocked</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="grid2" style="margin-top:22px">
+        <div class="card">
+          <h3 style="margin-bottom:12px">Watch · Lesson</h3>
+          <div style="background:var(--ink);border-radius:var(--radius);height:180px;display:flex;align-items:center;justify-content:center;color:#E8E5DE;font-size:14px">▶ TwoPanel HTML preview — kinetic text + TTS</div>
+          <div class="divider"></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Mark lesson watched</b><div class="xs muted">~5 min</div></div></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:12px">Copy-Work Task</h3>
+          <p class="small muted">From a blank account, rebuild the exact flow:</p>
+          <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
+            <li>Trigger on <b>Checkout Started</b></li>
+            <li>2-step sequence: 30 min + 24 hr delays</li>
+            <li>Cart summary dynamic block</li>
+            <li>Coupon at step 2 (10% off)</li>
+          </ul>
+          <div class="divider"></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Pass 3-point rubric</b><div class="xs muted">auto-checked by verification service</div></div></div>
+          <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
+            <input type="hidden" name="rubric_url" value="">
+            <button class="btn btn-p" type="submit">Submit for check</button>
+          </form>
+        </div>
+      </div>
+
+      {% if gap_fill_topic %}
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div><h3>Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
+          <span class="badge b-amber">Auto-detected</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

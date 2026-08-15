@@ -42,6 +42,16 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Marketplaces the freelancer has verified (proposal submission is allowed
+-- only on a platform in this set — human copy-paste + confirm, never auto-submit).
+CREATE TABLE IF NOT EXISTS user_platforms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,               -- 'upwork' | 'fiverr' | 'contra' | ...
+    verified_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(user_id, platform)
+);
+
 -- ─── DEMAND INTELLIGENCE ──────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS job_clusters (
@@ -54,7 +64,7 @@ CREATE TABLE IF NOT EXISTS job_clusters (
     avg_rate DECIMAL DEFAULT 0,           -- median hourly rate ("$62/hr")
     growth_score DECIMAL DEFAULT 0,       -- "+18% demand this quarter"
     keywords TEXT[] DEFAULT '{}',
-    status TEXT DEFAULT 'active' CHECK (status IN ('active','paused','archived')),
+    status TEXT DEFAULT 'active' CHECK (status IN ('requested','active','paused','archived')),
     last_synced_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -185,6 +195,24 @@ CREATE TABLE IF NOT EXISTS capstone_briefs (
     verification_type TEXT DEFAULT 'auto' CHECK (verification_type IN ('auto','peer')),
     created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Case study deliverable: the Problem/Solution/Result artifact written during
+-- Phase B (days 9-10). Doubles as the first proposal draft + the portfolio item
+-- shown on the public demand profile. Draft until the Mock Contract passes.
+CREATE TABLE IF NOT EXISTS case_studies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sprint_id UUID NOT NULL REFERENCES sprints(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    problem TEXT,
+    solution TEXT,
+    result TEXT,
+    is_draft BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_case_studies_sprint ON case_studies(sprint_id);
+CREATE INDEX IF NOT EXISTS idx_case_studies_user ON case_studies(user_id);
 
 -- ─── PHASE C: PROPOSALS & CONTRACTS ───────────────────────────────────
 

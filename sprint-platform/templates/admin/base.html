@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="admin">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">Freelance<em>Launch</em> <span class="badge b-accent" style="margin-left:8px">Admin</span></div>
+      <div class="navl">
+        <a href="/admin/">Dashboard</a>
+        <a href="/admin/clusters">Job Clusters</a>
+        <a href="/admin/feed">Job Feed</a>
+        <a href="/admin/cohorts">Cohorts</a>
+      </div>
+      <a class="btn btn-o btn-sm" href="/sprints">Learner view</a>
+    </div>
+    {% block admin %}{% endblock %}
+  </div>
+</section>
+{% endblock %}

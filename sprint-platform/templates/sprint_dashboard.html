@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="sprint">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">Freelance<em>Launch</em></div>
+      <div class="navl"><a href="/sprints/{{ sprint.id }}">Dashboard</a><a href="/mentor">Mentor</a><a href="/profile/{{ user.display_name.split(' ')[0]|lower }}">Profile</a></div>
+      <a class="btn btn-o btn-sm" href="/auth/logout">Sign out</a>
+    </div>
+
+    <div style="padding:26px 0">
+      <!-- Sprint header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:20px">
+        <div>
+          <span class="chip"><span class="dot"></span>{{ cohort.name if cohort else 'Sprint' }}{% if cohort and cohort.end_date %} · ends {{ cohort.end_date|dt }}{% endif %}</span>
+          <h2 style="margin-top:12px">{{ cluster.icon }} {{ cluster.display_name }} Sprint</h2>
+          <p class="small muted" style="margin-top:4px">Training against <b style="color:var(--ink)">{{ cluster.job_count }} active jobs</b> · ${{ cluster.avg_rate }}/hr · {{ cluster.cluster_key }} cluster</p>
+        </div>
+        <span class="badge b-amber" style="font-size:13px;padding:8px 14px">Day {{ sprint.current_day }} · Phase {{ sprint.phase }}</span>
+      </div>
+
+      <!-- phase lock track -->
+      <div class="phases-track">
+        <div class="phase active" data-phase="A">
+          <div class="phead"><span class="tag">Phase A · Days 1–5</span><span class="badge b-accent">In progress</span></div>
+          <h3>Skill Acquisition</h3>
+          <p class="xs muted" style="margin-top:6px">Copy-Work: 3 replication projects + gap-fill</p>
+          <div class="track" style="margin-top:12px">
+            {% for i in range(1, 6) %}<div class="{{ 't-done' if i <= phase_a_days else ('t-cur' if i == phase_a_days + 1 else 't-lock') }}"></div>{% endfor %}
+          </div>
+          <p class="xs muted" style="margin-top:6px">{{ phase_a_days }} / 5 days</p>
+        </div>
+        <div class="phase {{ 'active' if sprint.phase == 'B' else 'locked' }}" data-phase="B">
+          <div class="phead"><span class="tag">Phase B · Days 6–10</span>{% if not gate_a_pass %}<span class="lock-ic" title="Locked">🔒</span>{% endif %}</div>
+          <h3>Mock Contract</h3>
+          <p class="xs muted" style="margin-top:6px">Fulfill a real brief + case study</p>
+          {% if not gate_a_pass %}<p class="lock-note">Unlocks when Phase A passes verification</p>{% endif %}
+        </div>
+        <div class="phase {{ 'active' if sprint.phase == 'C' else 'locked' }}" data-phase="C">
+          <div class="phead"><span class="tag">Phase C · Days 11–14</span>{% if not gate_b_pass %}<span class="lock-ic" title="Locked">🔒</span>{% endif %}</div>
+          <h3>Supply Chain</h3>
+          <p class="xs muted" style="margin-top:6px">Proposals + First-Bid challenge</p>
+          {% if not gate_b_pass %}<p class="lock-note">Locked until Mock Contract passes</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- ═══ JOB UNLOCK METER ═══ -->
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+          <div>
+            <h3>Job Unlock Meter</h3>
+            <p class="small muted">Every day you complete unlocks another batch of live job postings in your cluster.</p>
+          </div>
+          <div style="text-align:right">
+            <span style="font-family:var(--font-display);font-size:30px;font-weight:650;color:var(--accent-ink)">{{ meter.unlocked_count }}</span>
+            <span class="muted small"> / {{ meter.total_in_cluster }} active jobs unlocked</span>
+          </div>
+        </div>
+        <div class="track" style="margin:16px 0 8px">
+          {% for i in range(1, 15) %}<div class="{{ 't-done' if i <= meter.completed_days else ('t-cur' if i == meter.completed_days + 1 else 't-lock') }}"></div>{% endfor %}
+        </div>
+        <div class="small" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span class="xs muted">{{ meter.completed_days }} of 14 days done · each bar = one day you've unlocked</span>
+          <span class="chip">+{{ meter.last_delta }} postings unlocked so far</span>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:18px">
+        <div class="card">
+          <div class="kv" style="border:none;padding-bottom:12px"><h3>Today · Day {{ sprint.current_day }}</h3><span class="badge b-amber">{{ today.action_type|capitalize }} · Project {{ today.action_payload.project_index if today.action_payload and today.action_payload.project_index is defined else 1 }} of 3</span></div>
+          <p class="small muted">{{ today.description or 'Complete today\'s action to unlock the next batch of live job postings.' }}</p>
+          <div style="margin-top:16px" class="check-item done"><div class="cbox">✓</div><div><b>Watch lesson</b><div class="xs muted">Learn the flow anatomy (5 min)</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Replicate the project</b><div class="xs muted">Rebuild from a blank canvas (~35 min)</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Self-check vs rubric</b><div class="xs muted">3 acceptance criteria (~10 min)</div></div></div>
+          <a class="btn btn-p" href="/sprints/{{ sprint.id }}/day/{{ sprint.current_day }}" style="margin-top:8px">Open Day {{ sprint.current_day }} →</a>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:10px">Momentum</h3>
+          <div class="kv"><span class="muted">Day streak</span><b>{{ momentum.day_streak }} 🔥</b></div>
+          <div class="kv"><span class="muted">Confidence</span><b style="color:var(--accent-ink)">{{ momentum.confidence }} / 100</b></div>
+          <div class="kv"><span class="muted">Proposals sent</span><b>{{ sprint.proposals_sent }}</b></div>
+          <div class="kv"><span class="muted">Contracts</span><b style="color:var(--green-ink)">{{ sprint.contracts_won }}</b></div>
+          <div class="divider"></div>
+          <p class="small"><span class="chip">Nudge</span></p>
+          <p class="small muted" style="margin-top:8px">{{ nudge }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

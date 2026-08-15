@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="screen" id="landing">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">Freelance<em>Launch</em></div>
+      <div class="navl"><a href="/sprints">Sprints</a><a href="#how">How it works</a><a href="/pricing">Pricing</a></div>
+      <a class="btn btn-ink btn-sm" href="/sprints">Start free</a>
+    </div>
+
+    <!-- Hero — one idea: demand, not curriculum -->
+    <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding:72px 0 48px">
+      <div>
+        <span class="chip"><span class="dot"></span>14 days · 3 phases · first client</span>
+        <h1 style="font-family:var(--font-display);font-size:52px;line-height:1.06;font-weight:650;letter-spacing:-.02em;margin:20px 0 18px">
+          Stop learning skills.<br>Start landing clients.
+        </h1>
+        <p class="muted" style="font-size:17px;max-width:520px;margin-bottom:30px">A 14-day demand-validated sprint that teaches you to fulfill a real contract — not just watch videos — then hands you a proposal and sends you to bid.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="btn btn-p" href="/sprints">Start your sprint</a>
+          <a class="btn btn-o" href="#how">See how it works</a>
+        </div>
+      </div>
+
+      <!-- headline demand counter -->
+      <div class="card" style="padding:26px">
+        <p class="xs" style="font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Live demand · {{ featured.display_name }}</p>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div class="stat" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
+            <div class="n" style="display:flex;align-items:baseline;gap:10px">{{ featured.job_count }} <span class="l" style="margin:0">active jobs</span></div>
+          </div>
+          <div class="stat" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
+            <div class="n" style="display:flex;align-items:baseline;gap:10px">${{ featured.avg_rate }} <span class="l" style="margin:0">median hourly rate</span></div>
+          </div>
+          <div class="stat" style="text-align:left;padding:10px 0">
+            <div class="n" style="display:flex;align-items:baseline;gap:10px;color:var(--green)">+{{ featured.growth_score }}% <span class="l" style="margin:0">demand this quarter</span></div>
+          </div>
+        </div>
+        <p class="xs muted" style="margin-top:12px">This is the demand you're training against — not a generic course.</p>
+      </div>
+    </div>
+
+    <!-- 3 phases — numbered editorial list, not three equal cards -->
+    <div id="how" style="padding:24px 0 8px">
+      <h2 style="margin-bottom:6px">Three phases. One loop.</h2>
+      <p class="muted small" style="margin-bottom:26px">Teach → fulfill → sell, compressed into 14 days.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--hairline-strong)">
+        <div style="padding:26px 26px 26px 0;border-right:1px solid var(--hairline)">
+          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE A · DAYS 1–5</p>
+          <h3 style="margin-bottom:8px">Skill Acquisition</h3>
+          <p class="small muted">The <b>Copy-Work method</b>: rebuild 3 real projects from scratch to build muscle memory, then a gap-fill micro-lesson on what's missing.</p>
+        </div>
+        <div style="padding:26px;border-right:1px solid var(--hairline)">
+          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE B · DAYS 6–10</p>
+          <h3 style="margin-bottom:8px">Mock Contract</h3>
+          <p class="small muted">Fulfill a real anonymized job brief under deadline + constraints — and package it as a case-study portfolio that doubles as your first proposal.</p>
+        </div>
+        <div style="padding:26px 0 26px 26px">
+          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE C · DAYS 11–14</p>
+          <h3 style="margin-bottom:8px">Supply Chain</h3>
+          <p class="small muted">Engineered proposals with "I see you need X…" hooks, a 5-proposal First-Bid challenge, and an auto-adapting iteration loop.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-band">
+      <h2>Your skill has a live job count. Prove it.</h2>
+      <p>Earn a Demand-Validated badge with a live "N jobs open" counter — so clients can filter straight to freelancers who've recently completed this exact sprint.</p>
+      <a class="btn btn-white" href="/sprints">Pick a demand-validated topic →</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

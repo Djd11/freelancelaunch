@@ -1,0 +1,4 @@
+flask==3.1.*
+gunicorn==26.*
+python-dotenv==1.2.*
+supabase==2.31.*

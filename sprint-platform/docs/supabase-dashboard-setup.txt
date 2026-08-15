@@ -1,0 +1,196 @@
+================================================================================
+SPRINT PLATFORM - SUPABASE DASHBOARD SETUP (DETAILED STEPS)
+================================================================================
+Purpose: Create a NEW, dedicated Supabase project for the Sprint Platform and
+apply db/schema.sql. NEVER reuse the v1 FreelanceLaunch project - the schemas
+collide by table name and applying this schema to v1 would corrupt it.
+
+Full docs: docs/supabase-setup.md
+Schema:    db/schema.sql
+================================================================================
+
+
+STEP 1 - SIGN IN & CREATE THE PROJECT
+--------------------------------------------------------------------------------
+1. Go to https://supabase.com and sign in (GitHub sign-in is easiest).
+   If you don't have an account, create a free one first.
+2. You will land on the dashboard (app.supabase.com).
+   Click "New project" (blue button, top-right).
+3. Fill in the "New project" form:
+
+   - Name:            sprint-platform-dev   (or sprint-platform-prod)
+   - Database Password:  Generate/enter a strong password and SAVE IT SOMEWHERE
+                         SAFE - Supabase does not show it again.
+   - Region:          Pick the one closest to your users
+                      (e.g. us-east-1, ap-southeast-1, eu-west-1)
+   - Pricing Plan:    Free is fine for development (500 MB DB).
+                      Upgrade to Pro later if you need more.
+
+4. IMPORTANT: Make sure you are creating a NEW project here.
+   Do NOT select or reuse your existing v1 "freelancelaunch" project.
+
+5. Click "Create new project" and wait. Provisioning takes 1-3 minutes
+   (there is a progress screen). Wait until the project opens.
+
+
+STEP 2 - GRAB THE PROJECT URL + API KEYS
+--------------------------------------------------------------------------------
+1. In the project dashboard, go to:  Settings (gear icon, bottom-left) -> API
+2. Under "Project URL", copy the value. It looks like:
+        https://<project-ref>.supabase.co
+   This is your SUPABASE_URL.
+
+3. Under "Project API keys", find and copy TWO keys:
+        - anon  (public)   -> this is your SUPABASE_ANON_KEY
+        - service_role (secret) -> this is your SUPABASE_SERVICE_ROLE_KEY
+
+   WARNING: The service_role key BYPASSES Row Level Security and is a
+   server-side secret. Never put it in HTML/browser code. It belongs ONLY in
+   your .env file on the server. If it ever leaks, rotate it immediately:
+   Settings -> API -> API keys -> Reveal -> Regenerate.
+
+
+STEP 3 - ENABLE EMAIL AUTHENTICATION
+--------------------------------------------------------------------------------
+1. Go to:  Authentication -> Providers (left sidebar).
+2. Find "Email". It is usually Enabled by default. If not:
+   click it, toggle "Enable Sign ups" / "Enable", then Save.
+3. (Optional, later) Enable Google / GitHub when the client-facing profile
+   needs social login.
+
+Note: The auth.users table (which db/schema.sql references via foreign keys)
+is created automatically by Supabase Auth. You do NOT create it yourself.
+
+
+STEP 4 - APPLY THE SCHEMA (THE COPY-PASTE STEP)
+--------------------------------------------------------------------------------
+1. Go to:  SQL Editor (left sidebar, top item).
+2. Click "New query" (or the + / New button).
+3. Open the file  db/schema.sql  from this repo in any editor,
+   select ALL of it, and copy it.
+4. Paste the entire contents into the SQL Editor.
+5. Click "Run" (bottom-right), or press Ctrl/Cmd + Enter.
+6. On success you should see:  "Success. No rows returned" at the bottom.
+
+IF YOU GET AN EXCEPTION like:
+   "Sprint-Platform schema aborted: v1 tables (topics/curricula/
+    freelance_pipeline) found..."
+STOP - you are in the WRONG (v1) project. Delete the query, switch to the
+new project, and repeat there.
+
+
+STEP 5 - VERIFY THE SCHEMA
+--------------------------------------------------------------------------------
+In the same SQL Editor, run these checks.
+
+Check 1 - all tables + view exist:
+
+  SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+  UNION ALL
+  SELECT viewname FROM pg_views WHERE schemaname = 'public'
+  ORDER BY 1;
+
+You should see all of these:
+  badges
+  capstone_briefs
+  case_studies
+  cohorts
+  contracts
+  copywork_projects
+  demand_snapshots
+  job_clusters
+  job_feed
+  mentor_sessions
+  proposals
+  public_freelancers   (view)
+  sprint_days
+  sprint_unlock_snapshots
+  sprints
+  user_momentum
+  user_platforms
+  user_profiles
+  verification_reviews
+
+Check 2 - data is empty but reachable:
+
+  select * from sprints limit 1;
+
+This must return "0 rows".
+If instead you see  relation "sprints" does not exist  then the schema did
+not apply - re-run Step 4.
+
+
+STEP 6 - WIRE UP .env (LOCAL FLASK APP)
+--------------------------------------------------------------------------------
+1. In the repo root, copy the template:
+        cp .env.example .env
+
+2. Edit .env and fill in:
+
+        SUPABASE_URL=https://<project-ref>.supabase.co
+        SUPABASE_ANON_KEY=<your-anon-key>
+        SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+        SECRET_KEY=<generate-a-long-random-string>
+        FLASK_ENV=development
+
+   (SUPABASE_URL and the keys come from Step 2 above.
+    Generate SECRET_KEY with:  openssl rand -hex 32 )
+
+3. Leave the LLM and ADMIN lines blank for now - the app works without them.
+
+
+STEP 7 - TEST THE CONNECTION
+--------------------------------------------------------------------------------
+1. From the repo root, run the Flask app:
+        python3 run.py
+   or:
+        flask run
+
+2. Hit the health endpoint in a browser or with curl:
+        curl http://127.0.0.1:5000/health
+
+   - WORKING:  returns  {"mode": "supabase", ...}
+   - NOT WIRED UP:  returns  {"mode": "dev-fake", ...}
+     (this means SUPABASE_URL / keys are missing or wrong in .env)
+
+3. Optional direct DB check in the Supabase SQL Editor:
+        select current_setting('app.settings.project_name');
+
+
+TROUBLESHOOTING QUICK REFERENCE
+--------------------------------------------------------------------------------
+Symptom                                        Fix
+-------                                        ---
+Schema run aborts with "v1 tables found"       You are in the WRONG (v1)
+                                               project. Create/switch to the
+                                               new one, then re-run.
+
+/health shows "dev-fake"                       .env not loaded, or
+                                               SUPABASE_URL / key empty.
+                                               Restart Flask after editing
+                                               .env.
+
+401 / 403 on app queries                       Wrong/mismatched keys. Re-copy
+                                               from Settings -> API of the
+                                               NEW project.
+
+service_role leaked                            Rotate it immediately:
+                                               Settings -> API -> API keys.
+
+Tables missing after Run                       Re-run db/schema.sql (it is
+                                               idempotent), then re-check
+                                               Step 5.
+
+
+CONNECTION CHECKLIST (BEFORE ANY APP CODE)
+--------------------------------------------------------------------------------
+[ ] SUPABASE_URL points to the NEW project (not freelancelaunch's)
+[ ] SUPABASE_SERVICE_ROLE_KEY is the NEW project's key
+[ ] db/schema.sql ran cleanly in the new project
+[ ] select * from sprints limit 1;  returns "0 rows" (not "relation does not exist")
+
+
+TEARDOWN (IF YOU EVER STOP USING IT)
+--------------------------------------------------------------------------------
+Pause or delete the project from the Supabase dashboard. The v1 project is
+untouched.
