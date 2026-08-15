@@ -45,7 +45,17 @@ def create_app(test_config=None):
         g.user = None
         user_id = session.get("user_id")
         if user_id:
-            from services.supabase_client import get_supabase
+            from services.supabase_client import get_supabase, is_live_configured
+            # Live mode: sessions must reference a real auth.users UUID. A
+            # stale dev-mode id ("demo-user") would pass load_user but crash
+            # the first uuid-FK write (Postgres 22P02) — drop it here.
+            if is_live_configured(app.config):
+                import uuid as _uuid
+                try:
+                    _uuid.UUID(user_id)
+                except (ValueError, AttributeError, TypeError):
+                    session.pop("user_id", None)
+                    return
             sb = get_supabase()
             try:
                 resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
