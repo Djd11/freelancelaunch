@@ -9,8 +9,8 @@ description: >
   work", "why is X broken", "add a test for X").
 
   This project's test bed is the behave suite in tests/features/
-  (FakeSupabase dev mode — no network). A fix that has no failing
-  feature or unit test does not exist.
+  (live Supabase test project via tests/live_db_adapter.py). A fix that
+  has no failing feature or unit test does not exist.
 
   NOT for: greenfield features with no existing behavior, pure
   copywriting, or exploratory research.
@@ -29,8 +29,9 @@ NEVER write a fix without first having a failing test that reproduces the bug.
 - Run suite: `behave` (or `python3 -m behave`) from the repo root — `behave.ini` sets
   `paths = tests/features/`.
 - Run one feature: `behave tests/features/<name>.feature --no-capture -k`.
-- FakeSupabase: dev mode (no `SUPABASE_URL`) returns an in-memory store; each scenario
-  resets it (`tests/environment.py` → `reset_dev_db()`). No network, no real DB.
+- Live Supabase: every scenario runs against the dedicated test project via
+  `tests/live_db_adapter.py` (readable fixture IDs → real UUIDs, per-scenario
+  cleanup in `tests/environment.py`). There is no in-memory database.
 
 ## Process
 1. **Reproduce**: Run the existing suite, or write the smallest failing feature/step

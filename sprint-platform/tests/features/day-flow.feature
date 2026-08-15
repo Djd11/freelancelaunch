@@ -4,7 +4,7 @@ Feature: Day View & Copy-Work (mockup screen 4)
   So that I build muscle memory by rebuilding real projects
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user
     Given I have an active sprint "s1" with 14 days for cluster "email-automation"
 

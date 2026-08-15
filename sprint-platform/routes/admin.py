@@ -37,7 +37,7 @@ def _require_admin():
         except Exception:
             pass
         
-        # Third check: if we're using live Supabase (has auth.admin)
+        # Live Supabase: verify the user exists and carries role=admin metadata.
         if hasattr(sb, 'auth') and hasattr(sb.auth, 'admin'):
             # Verify user exists in user_profiles
             resp = sb.table("user_profiles").select("user_id").eq("user_id", user_id).limit(1).execute()
@@ -47,12 +47,7 @@ def _require_admin():
             auth_resp = sb.auth.admin.get_user_by_id(user_id)
             user = auth_resp.user
             return user.user_metadata.get("role") == "admin" if user and user.user_metadata else False
-        
-        # For FakeSupabase (dev mode), check if user has admin flag in user_profiles
-        profile_resp = sb.table("user_profiles").select("user_id").eq("user_id", user_id).limit(1).execute()
-        if not profile_resp.data:
-            return False
-            
+
         return False
     except Exception as e:
         current_app.logger.warning(f"Admin check failed: {e}")

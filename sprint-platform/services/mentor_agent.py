@@ -48,10 +48,10 @@ def _guided_answer(question, job_description):
 def answer(question, job_description=None):
     """Return a guided, job-grounded answer. Never hands over the finished answer."""
     job_description = job_description or ""
-    # In v1, the LLM fallback chain would run here (OpenRouter → env → Omniroute
-    # → Hermes → deterministic). For the localhost MVP we always use the
-    # deterministic guided path, which satisfies the "degrades gracefully when
-    # the LLM is unavailable" scenario and keeps the app offline-safe.
+    # The LLM fallback chain (OpenRouter → env → Omniroute → Hermes) plugs in
+    # here; until it is wired up the deterministic guided path is the
+    # specced graceful fallback (eng-spec §5: "deterministic fallback",
+    # arch §6 step 6), which keeps the mentor offline-safe.
     text = _guided_answer(question, job_description)
     return {
         "answer": text,

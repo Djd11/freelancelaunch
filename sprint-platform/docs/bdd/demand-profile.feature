@@ -4,7 +4,7 @@ Feature: Demand Profile & Client Loop (mockup screen 7)
   So that verified supply is fresh, credible, and findable
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user with display name "Maya Chen"
 
   Scenario: The public profile renders the freelancer's headline and badges

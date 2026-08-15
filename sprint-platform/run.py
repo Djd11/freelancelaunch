@@ -1,13 +1,7 @@
-"""Localhost dev server — renders the mockup 1:1 with zero DB setup."""
+"""Localhost dev server — runs against the live Supabase project (.env)."""
 import os
 
 from app import create_app
-from services.supabase_client import get_dev_db
-from services.seed_demo import seed_demo
-
-db = get_dev_db()
-if not db.rows("job_clusters"):
-    seed_demo(db)
 
 app = create_app()
 if __name__ == "__main__":

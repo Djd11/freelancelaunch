@@ -4,7 +4,7 @@ Feature: Mock Contract & Verification Gate (mockup screen 5)
   So that I prove I can fulfill, not just learn
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user
     Given I have an active sprint "s1" with 14 days for cluster "email-automation"
     And a job cluster "email-automation" with 5 active postings

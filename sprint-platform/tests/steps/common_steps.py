@@ -1,6 +1,6 @@
 """Common BDD steps — HTTP surface + page/text/JSON assertions (shared by all 8 features).
 
-Works with LiveDBAdapter: fake IDs are resolved to real Supabase UUIDs at runtime.
+Works with LiveDBAdapter: fixture IDs are resolved to real Supabase UUIDs at runtime.
 """
 import re
 import json as _json
@@ -9,11 +9,11 @@ from behave import given, when, then
 from tests.live_db_adapter import get_live_adapter, TEST_USER_ID, OTHER_USER_ID, ADMIN_USER_ID
 
 # The adapter resolves these at runtime
-def _resolve_user_id(context, fake_id=TEST_USER_ID):
-    return get_live_adapter().resolve_user_id(fake_id)
+def _resolve_user_id(context, fixture_id=TEST_USER_ID):
+    return get_live_adapter().resolve_user_id(fixture_id)
 
-def _resolve_sprint_id(context, fake_id, cluster="email-automation", user_fake=TEST_USER_ID):
-    return get_live_adapter().resolve_sprint_id(fake_id, cluster, user_fake)
+def _resolve_sprint_id(context, fixture_id, cluster="email-automation", user_fixture=TEST_USER_ID):
+    return get_live_adapter().resolve_sprint_id(fixture_id, cluster, user_fixture)
 
 
 def _get(context, path):
@@ -64,7 +64,7 @@ def _html(context):
 
 
 # ── Givens: environment ────────────────────────────────────────────
-@given('the app is running with an in-memory test database')
+@given('the app is running against the live test database')
 def step_running(context):
     pass  # environment.before_scenario already set up LiveDBAdapter
 

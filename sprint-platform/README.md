@@ -24,7 +24,7 @@ source of truth.
 
 ## Next steps (build order)
 1. Scaffold the Flask app from `docs/architecture.md` (blueprints + services).
-2. Port the 8 BDD features into a `behave` suite (tests/support FakeSupabase pattern from v1).
+2. Port the 8 BDD features into a `behave` suite (live-DB adapter pattern).
 3. Implement `db/schema.sql` in Supabase (**a NEW, dedicated project** — see below).
 4. Build green screen-by-screen: Landing → Picker → Dashboard → Day → Contract → Proposals → Profile → Mentor.
 

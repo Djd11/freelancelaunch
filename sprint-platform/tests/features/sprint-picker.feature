@@ -4,7 +4,7 @@ Feature: Sprint Picker (mockup screen 2)
   So that I train against skills with real market demand
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user
     And a job cluster "email-automation" with job_count 450 and avg_rate 62 and growth_score 18
     And a job cluster "web-scraping" with job_count 322 and avg_rate 48 and growth_score 12

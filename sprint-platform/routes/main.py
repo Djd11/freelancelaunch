@@ -6,8 +6,11 @@ from services.supabase_client import get_supabase
 
 main_bp = Blueprint("main", __name__)
 
-FALLBACK_FEATURED = {
-    "job_count": 450, "avg_rate": 62, "growth_score": 18, "display_name": "Email Automation",
+# Empty-state shape for the landing counter card when no active clusters exist
+# yet. Numbers are never fabricated — every counter shown on the landing page
+# comes from job_clusters (eng-spec J1/J2 acceptance).
+EMPTY_FEATURED = {
+    "job_count": 0, "avg_rate": 0, "growth_score": 0, "display_name": "—",
 }
 
 
@@ -20,7 +23,7 @@ def _active_clusters(sb):
 def index():
     sb = get_supabase()
     clusters = _active_clusters(sb)
-    featured = clusters[0] if clusters else FALLBACK_FEATURED
+    featured = clusters[0] if clusters else EMPTY_FEATURED
     return render_template("landing.html", featured=featured, clusters=clusters)
 
 

@@ -4,7 +4,7 @@ Feature: Proposal Builder & First-Bid Challenge (mockup screen 6)
   So that I convert my verified mock contract into interviews
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user
     Given I have an active sprint "s1" with 14 days for cluster "email-automation"
     And a job cluster "email-automation" with 5 active postings

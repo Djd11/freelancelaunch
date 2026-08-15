@@ -1,7 +1,7 @@
 """
 Sprint Platform — Flask application factory.
-Blueprints mirror architecture.md §4.2. In DEV mode (no SUPABASE_URL) the app
-serves from an in-memory FakeSupabase so localhost renders the mockup 1:1.
+Blueprints mirror architecture.md §4.2. All data lives in the dedicated
+Supabase project (services/supabase_client.py) — no in-memory fallback.
 """
 import os
 import logging
@@ -45,17 +45,16 @@ def create_app(test_config=None):
         g.user = None
         user_id = session.get("user_id")
         if user_id:
-            from services.supabase_client import get_supabase, is_live_configured
-            # Live mode: sessions must reference a real auth.users UUID. A
-            # stale dev-mode id ("demo-user") would pass load_user but crash
-            # the first uuid-FK write (Postgres 22P02) — drop it here.
-            if is_live_configured(app.config):
-                import uuid as _uuid
-                try:
-                    _uuid.UUID(user_id)
-                except (ValueError, AttributeError, TypeError):
-                    session.pop("user_id", None)
-                    return
+            from services.supabase_client import get_supabase
+            # Sessions must reference a real auth.users UUID. A stale
+            # non-UUID id would pass load_user but crash the first uuid-FK
+            # write (Postgres 22P02) — drop it here.
+            import uuid as _uuid
+            try:
+                _uuid.UUID(user_id)
+            except (ValueError, AttributeError, TypeError):
+                session.pop("user_id", None)
+                return
             sb = get_supabase()
             try:
                 resp = sb.table("user_profiles").select("*").eq("user_id", user_id).limit(1).execute()
@@ -74,23 +73,16 @@ def create_app(test_config=None):
 
     @app.route("/health")
     def health():
-        from services.supabase_client import get_supabase, is_live_configured
-        live = is_live_configured(app.config)
+        from services.supabase_client import get_supabase
         try:
             db = get_supabase()
         except Exception as exc:
             return {
                 "status": "error",
-                "mode": "supabase" if live else "dev-fake",
+                "mode": "supabase",
                 "error": str(exc),
             }, 503
-        if hasattr(db, "_data"):
-            return {
-                "status": "ok",
-                "mode": "dev-fake",
-                "tables": sorted(list(db._data.keys())),
-            }
-        # Live client: ping a public marketing table so we know RLS + schema are up.
+        # Ping a public marketing table so we know RLS + schema are up.
         try:
             ping = db.table("job_clusters").select("cluster_key").limit(1).execute()
             return {
@@ -128,10 +120,5 @@ def create_app(test_config=None):
 
 
 if __name__ == "__main__":
-    from services.supabase_client import get_dev_db
-    from services.seed_demo import seed_demo
-    db = get_dev_db()
-    if not db.rows("job_clusters"):
-        seed_demo(db)
     port = int(os.getenv("PORT", 5000))
     create_app().run(host="127.0.0.1", port=port, debug=True)

@@ -4,7 +4,7 @@ Feature: Admin Dashboard & Feed Curation
   So that sprinters have fresh, demand-validated opportunities
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And I am logged in as an admin user
 
   Scenario: Admin can access the admin dashboard

@@ -1,8 +1,8 @@
 """
 Sprint Platform — Configuration.
-When SUPABASE_URL + SUPABASE_SERVICE_KEY are set the app talks to the real
-Supabase project. Without them it runs in DEV mode against an in-memory
-FakeSupabase seeded with demo data — localhost "just works" like the mockup.
+The app talks to the dedicated Supabase project: SUPABASE_URL +
+SUPABASE_SERVICE_ROLE_KEY are required (see .env.example and
+docs/supabase-setup.md). There is no in-memory fallback database.
 """
 import os
 from dotenv import load_dotenv

@@ -4,7 +4,7 @@ Feature: Landing (mockup screen 1)
   So that I understand the 14-day placement sprint and am motivated to start
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
 
   Scenario: Landing renders without auth
     When I GET "/"

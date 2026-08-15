@@ -1,7 +1,7 @@
 """
 Behave BDD Environment — LIVE Supabase mode.
 Each scenario runs against the REAL Supabase project with a LiveDBAdapter that:
-- Maps fake test IDs ("test-user-123", "s1") → real UUIDs
+- Maps readable fixture IDs ("test-user-123", "s1") → real UUIDs
 - Seeds/cleans per scenario in FK-safe order
 - Uses real auth.users for login sessions
 """
@@ -17,17 +17,17 @@ from tests.live_db_adapter import (LiveDBAdapter, get_live_adapter, reset_live_a
 
 
 class SprintIDRewritingClient:
-    """Wrapper around Flask test client that rewrites fake sprint IDs in URLs to real UUIDs."""
+    """Wrapper around Flask test client that rewrites fixture sprint IDs in URLs to real UUIDs."""
 
     def __init__(self, client, adapter_getter):
         self._client = client
         self._adapter_getter = adapter_getter
-        # Rewrite both /sprints/<fake_id> and /sprints/<id>/proposals/<fake_pid>
+        # Rewrite both /sprints/<fixture_id> and /sprints/<id>/proposals/<fixture_pid>
         self._sprint_id_pattern = re.compile(r'/sprints/([^/]+)(/.*)?$')
         self._proposal_id_pattern = re.compile(r'/sprints/([^/]+)/proposals/([^/]+)(/.*)?$')
 
     def _rewrite_url(self, path):
-        """Replace fake sprint IDs and proposal IDs in path with real UUIDs."""
+        """Replace fixture sprint IDs and proposal IDs in path with real UUIDs."""
         import uuid as _uuid
 
         def is_uuid(s):
@@ -38,22 +38,22 @@ class SprintIDRewritingClient:
                 return False
 
         def rewrite_proposal(match):
-            fake_sprint = match.group(1)
-            fake_proposal = match.group(2)
+            fixture_sprint = match.group(1)
+            fixture_proposal = match.group(2)
             rest = match.group(3) or ""
             adapter = self._adapter_getter()
-            real_sprint = adapter.resolve_sprint_id(fake_sprint, resolve_only=True) if not is_uuid(fake_sprint) else fake_sprint
-            real_proposal = adapter.resolve_proposal_id(fake_proposal) if not is_uuid(fake_proposal) else fake_proposal
+            real_sprint = adapter.resolve_sprint_id(fixture_sprint, resolve_only=True) if not is_uuid(fixture_sprint) else fixture_sprint
+            real_proposal = adapter.resolve_proposal_id(fixture_proposal) if not is_uuid(fixture_proposal) else fixture_proposal
             return f"/sprints/{real_sprint}/proposals/{real_proposal}{rest}"
 
         def rewrite_sprint(match):
-            fake_id = match.group(1)
+            fixture_id = match.group(1)
             rest = match.group(2) or ""
-            if not is_uuid(fake_id):
+            if not is_uuid(fixture_id):
                 adapter = self._adapter_getter()
-                # resolve_only: unknown fake ids pass through unchanged so the
+                # resolve_only: unknown fixture ids pass through unchanged so the
                 # route sees a nonexistent sprint and returns the specced 302.
-                real_id = adapter.resolve_sprint_id(fake_id, resolve_only=True)
+                real_id = adapter.resolve_sprint_id(fixture_id, resolve_only=True)
                 return f"/sprints/{real_id}{rest}"
             return match.group(0)
 
@@ -100,7 +100,7 @@ def before_all(context):
 def _seed_static_data(adapter: LiveDBAdapter):
     """Seed reference tables that persist across all scenarios (job_clusters, cohorts, job_feed).
 
-    All IDs are DETERMINISTIC (uuid5 of the fake id) so upserts are idempotent
+    All IDs are DETERMINISTIC (uuid5 of the fixture id) so upserts are idempotent
     across runs — re-running the suite never multiplies static rows.
     """
     import uuid

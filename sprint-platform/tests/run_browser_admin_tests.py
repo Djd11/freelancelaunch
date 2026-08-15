@@ -38,7 +38,7 @@ async def login_admin(page):
     print(f"🔐 Logging in as admin: {ADMIN_EMAIL}")
     await page.goto(f"{BASE_URL}/auth/login", wait_until="networkidle")
     
-    # Fill login form - demo mode only has email field
+    # Fill login form — email only (the login surface takes an email, no password field)
     await page.fill("input[name='email']", ADMIN_EMAIL)
     await page.click("button[type='submit']")
     

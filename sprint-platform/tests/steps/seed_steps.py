@@ -352,14 +352,14 @@ def step_projects_done(context, a, b, c, sid):
 
 
 # ── capstone brief ─────────────────────────────────────────────────
-def _seed_brief(adapter, sid, job_fake, notes=None):
+def _seed_brief(adapter, sid, job_fixture, notes=None):
     """Seed one capstone brief for the sprint (delete-then-insert: the table
     has no unique constraint on sprint_id, so upsert-on-conflict is invalid)."""
     real_sprint_id = adapter.resolve_sprint_id(sid)
     adapter.sb.table("capstone_briefs").delete().eq("sprint_id", real_sprint_id).execute()
     adapter.seed_table("capstone_briefs", [{
         "sprint_id": real_sprint_id,
-        "job_feed_id": job_fake,
+        "job_feed_id": job_fixture,
         "title": "Set up email automation for my e-commerce brand",
         "requirements": "Klaviyo checkout recovery + post-purchase upsell\nSegmentation for VIP repeat buyers\nDeliverables: flow exports + setup docs\nMust be mobile-responsive emails",
         "constraints": {"deadline_days": 4, "budget": 180, "notes": notes or []},
@@ -424,14 +424,14 @@ from tests.live_db_adapter import TEST_USER_ID
 # Persona names in the features map to the canonical test users — the logged-in
 # user IS "Maya Chen" (demo) and "Jordan Lee" is the other user. Creating fresh
 # auth users with colliding display names broke slug resolution on /profile/<slug>.
-PERSONA_TO_FAKE = {
+PERSONA_TO_FIXTURE = {
     "maya chen": TEST_USER_ID,
     "jordan lee": OTHER_USER_ID,
 }
 
 
-def _persona_fake_id(name):
-    return PERSONA_TO_FAKE.get(name.lower(), f"profile-{name.lower().replace(' ', '-')}")
+def _persona_fixture_id(name):
+    return PERSONA_TO_FIXTURE.get(name.lower(), f"profile-{name.lower().replace(' ', '-')}")
 
 
 @given('a badge for user "{name}" on cluster "{cluster}"')
@@ -470,10 +470,10 @@ def _seed_badge(adapter, cluster, jobs_at_issue):
 @given('freelancer "{name}" has a badge on "{cluster}" issued {days} days ago')
 def step_freelancer_badge(context, name, cluster, days):
     adapter = get_live_adapter()
-    fake_id = _persona_fake_id(name)
-    real_user_id = adapter.resolve_user_id(fake_id)
+    fixture_id = _persona_fixture_id(name)
+    real_user_id = adapter.resolve_user_id(fixture_id)
     sprint_id = f"badge-{real_user_id}-{cluster}"
-    real_sprint_id = adapter.resolve_sprint_id(sprint_id, cluster, fake_id)
+    real_sprint_id = adapter.resolve_sprint_id(sprint_id, cluster, fixture_id)
 
     # Ensure user_profiles row exists for this freelancer
     adapter.sb.table("user_profiles").upsert({
@@ -503,8 +503,8 @@ def step_freelancer_badge(context, name, cluster, days):
 @given('freelancer "{name}" has profile is_public equal to false')
 def step_not_public(context, name):
     adapter = get_live_adapter()
-    fake_id = _persona_fake_id(name)
-    real_user_id = adapter.resolve_user_id(fake_id)
+    fixture_id = _persona_fixture_id(name)
+    real_user_id = adapter.resolve_user_id(fixture_id)
     # Use upsert to ensure the profile exists, then update is_public
     adapter.sb.table("user_profiles").upsert({
         "user_id": real_user_id,
@@ -542,7 +542,7 @@ def step_case_study(context, title):
     real_user_id = adapter.resolve_user_id(TEST_USER_ID)
     # Find a completed sprint
     sprints = adapter.sb.table("sprints").select("*").eq("user_id", real_user_id).eq("status", "completed").limit(1).execute().data
-    sprint_id = sprints[0]["id"] if sprints else f"dummy-{title}"
+    sprint_id = sprints[0]["id"] if sprints else f"cs-fixture-{title}"
     adapter.seed_table("case_studies", [{
         "id": f"cs-{abs(hash(title)) % 100000}",
         "sprint_id": sprint_id,
@@ -585,7 +585,7 @@ def step_mentor_context(context, job, pct):
 @given('the target job description mentions "{term}"')
 def step_job_desc(context, term):
     adapter = get_live_adapter()
-    # Map fake job ID to real UUID using module-level storage
+    # Map fixture job ID to real UUID using module-level storage
     real_job_id = get_static_job_id("email-automation-1")
     adapter.sb.table("job_feed").update({
         "description": f"Need help building a {term} for my store.",

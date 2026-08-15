@@ -149,9 +149,9 @@ STEP 7 - TEST THE CONNECTION
 2. Hit the health endpoint in a browser or with curl:
         curl http://127.0.0.1:5000/health
 
-   - WORKING:  returns  {"mode": "supabase", ...}
-   - NOT WIRED UP:  returns  {"mode": "dev-fake", ...}
-     (this means SUPABASE_URL / keys are missing or wrong in .env)
+   - WORKING:  returns  {"status": "ok", "mode": "supabase", ...}
+   - NOT WIRED UP:  returns  {"status": "error", ...} with a Supabase
+     configuration message (SUPABASE_URL / keys missing or wrong in .env)
 
 3. Optional direct DB check in the Supabase SQL Editor:
         select current_setting('app.settings.project_name');
@@ -165,7 +165,7 @@ Schema run aborts with "v1 tables found"       You are in the WRONG (v1)
                                                project. Create/switch to the
                                                new one, then re-run.
 
-/health shows "dev-fake"                       .env not loaded, or
+/health shows status "error"                   .env not loaded, or
                                                SUPABASE_URL / key empty.
                                                Restart Flask after editing
                                                .env.

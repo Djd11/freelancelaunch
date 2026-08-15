@@ -178,7 +178,7 @@ def step_no_badge(context):
 def step_mentor_session(context, sid, job):
     adapter = get_live_adapter()
     real_sprint_id = adapter.resolve_sprint_id(sid)
-    # Map fake job ID to real UUID using module-level storage
+    # Map fixture job ID to real UUID using module-level storage
     real_job_id = get_static_job_id(job)
     rows = adapter.sb.table("mentor_sessions").select("*").eq("sprint_id", real_sprint_id).eq("job_feed_id", real_job_id).execute().data
     assert rows, f"no mentor session for ({sid}, {job})"

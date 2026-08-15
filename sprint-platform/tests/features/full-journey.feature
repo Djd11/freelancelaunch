@@ -4,7 +4,7 @@ Feature: Full Learner Journey (eng-spec J1→J7 chained)
   So that the platform's core promise — demand-validated placement — is proven end to end
 
   Background:
-    Given the app is running with an in-memory test database
+    Given the app is running against the live test database
     And a logged-in user with display name "Maya Chen"
     And a job cluster "email-automation" with job_count 450 and avg_rate 62 and growth_score 18
     And the user has a verified platform "upwork"

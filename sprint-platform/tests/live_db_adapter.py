@@ -1,12 +1,11 @@
 """
-Live-DB BDD Adapter — maps fake test IDs to real Supabase UUIDs.
+Live-DB BDD Adapter — maps readable test IDs to real Supabase UUIDs.
 
-The BDD features/steps were written against an in-memory FakeSupabase that
-accepted string IDs like "test-user-123", "s1", "email-automation-1".
-
-This adapter rewires them to work against the REAL Supabase project:
-- Fake user IDs → real auth.users UUIDs (created once, cached)
-- Fake sprint IDs → real sprints.id UUIDs (created per scenario, tracked)
+The BDD features/steps use readable fixture identifiers ("test-user-123",
+"s1", "email-automation-1"). This adapter rewires them onto the REAL
+Supabase project:
+- Test user IDs → real auth.users UUIDs (created once, cached)
+- Test sprint IDs → real sprints.id UUIDs (created per scenario, tracked)
 - FK order cleanup: children first → parents last
 """
 
@@ -18,21 +17,21 @@ from typing import Any, Dict, List, Optional
 from services.supabase_client import get_supabase
 
 
-# Well-known fake IDs used in BDD steps
+# Well-known fixture IDs used in BDD steps
 TEST_USER_ID = "test-user-123"
 OTHER_USER_ID = "other-user-999"
 ADMIN_USER_ID = "admin-user"
 
 # Module-level storage for static data that persists across scenarios
 _static_data = {
-    "job_ids": {},       # fake job ID -> real UUID
+    "job_ids": {},       # fixture job ID -> real UUID
     "cohort_id": None,   # real UUID
 }
 
 
-def get_static_job_id(fake_id: str) -> str:
-    """Get real UUID for a fake job ID, or return the fake ID if not mapped."""
-    return _static_data["job_ids"].get(fake_id, fake_id)
+def get_static_job_id(fixture_id: str) -> str:
+    """Get real UUID for a fixture job ID, or return the fixture ID if not mapped."""
+    return _static_data["job_ids"].get(fixture_id, fixture_id)
 
 
 def get_static_cohort_id() -> Optional[str]:
@@ -49,13 +48,13 @@ def set_static_cohort_id(cohort_id: str):
 
 
 class LiveDBAdapter:
-    """Maps fake test IDs to real Supabase UUIDs and manages per-scenario data."""
+    """Maps readable fixture IDs to real Supabase UUIDs and manages per-scenario data."""
 
     def __init__(self, sb):
         self.sb = sb
-        self._fake_to_real_user: Dict[str, str] = {}
-        self._fake_to_real_sprint: Dict[str, str] = {}
-        self._fake_to_real_proposal: Dict[str, str] = {}
+        self._fixture_to_real_user: Dict[str, str] = {}
+        self._fixture_to_real_sprint: Dict[str, str] = {}
+        self._fixture_to_real_proposal: Dict[str, str] = {}
         self._created_sprints: List[str] = []
         self._created_rows: Dict[str, List[str]] = {}  # table -> list of real IDs
 
@@ -63,25 +62,25 @@ class LiveDBAdapter:
     # USER ID MAPPING
     # ──────────────────────────────────────────────────────────────
 
-    def resolve_user_id(self, fake_id: str) -> str:
-        """Map fake user ID to real auth user UUID."""
-        if fake_id in self._fake_to_real_user:
-            return self._fake_to_real_user[fake_id]
+    def resolve_user_id(self, fixture_id: str) -> str:
+        """Map a fixture user ID to a real auth user UUID."""
+        if fixture_id in self._fixture_to_real_user:
+            return self._fixture_to_real_user[fixture_id]
 
-        # Special well-known fake IDs
-        if fake_id == "test-user-123":
+        # Special well-known fixture IDs
+        if fixture_id == "test-user-123":
             real_id = self._ensure_demo_user()
-        elif fake_id == "other-user-999":
+        elif fixture_id == "other-user-999":
             real_id = self._ensure_other_user()
-        elif fake_id == "admin-user":
+        elif fixture_id == "admin-user":
             real_id = self._ensure_admin_user()
-        elif fake_id == "demo-user":
+        elif fixture_id == "demo-user":
             real_id = self._ensure_demo_user()
         else:
-            # Create a new test user for any other fake ID
-            real_id = self._create_test_user(fake_id)
+            # Create a new test user for any other fixture ID
+            real_id = self._create_test_user(fixture_id)
 
-        self._fake_to_real_user[fake_id] = real_id
+        self._fixture_to_real_user[fixture_id] = real_id
         return real_id
 
     def _ensure_demo_user(self) -> str:
@@ -179,9 +178,9 @@ class LiveDBAdapter:
 
         return user_id
 
-    def _create_test_user(self, fake_id: str) -> str:
-        """Create a test user for arbitrary fake ID, or return existing."""
-        email = f"{fake_id.replace('-', '')}@test.sprint-platform.local"
+    def _create_test_user(self, fixture_id: str) -> str:
+        """Create a test user for arbitrary fixture ID, or return existing."""
+        email = f"{fixture_id.replace('-', '')}@test.sprint-platform.local"
         # Check if user already exists
         try:
             users = self.sb.auth.admin.list_users()
@@ -195,7 +194,7 @@ class LiveDBAdapter:
             "email": email,
             "password": "test-pass-123",
             "email_confirm": True,
-            "user_metadata": {"display_name": fake_id.replace("-", " ").title()},
+            "user_metadata": {"display_name": fixture_id.replace("-", " ").title()},
         })
         user_id = resp.user.id
         return user_id
@@ -204,25 +203,25 @@ class LiveDBAdapter:
     # SPRINT ID MAPPING
     # ──────────────────────────────────────────────────────────────
 
-    def resolve_sprint_id(self, fake_id: str, cluster_key: str = "email-automation", user_fake: str = "test-user-123", resolve_only: bool = False) -> str:
-        """Map fake sprint ID to real sprint UUID.
+    def resolve_sprint_id(self, fixture_id: str, cluster_key: str = "email-automation", user_fixture: str = "test-user-123", resolve_only: bool = False) -> str:
+        """Map fixture sprint ID to real sprint UUID.
 
-        resolve_only=True: never create — return the fake id unchanged when no
+        resolve_only=True: never create — return the fixture id unchanged when no
         mapping/reuse exists (used by the URL rewriter so unknown sprint ids
         reach the route and get the specced 302).
         Every sprint returned (created OR reused) is tracked so cleanup can
         reset/delete it — reused rows must not leak state between scenarios.
         """
-        if fake_id in self._fake_to_real_sprint:
-            return self._fake_to_real_sprint[fake_id]
+        if fixture_id in self._fixture_to_real_sprint:
+            return self._fixture_to_real_sprint[fixture_id]
 
-        # resolve_only: only the in-memory map is authoritative. Never do the
-        # user-scoped reuse lookup here — an unknown fake id must pass through
+        # resolve_only: only the adapter's mapping is authoritative. Never do the
+        # user-scoped reuse lookup here — an unknown fixture id must pass through
         # unchanged so routes return the specced not-found redirect.
         if resolve_only:
-            return fake_id
+            return fixture_id
 
-        user_id = self.resolve_user_id(user_fake)
+        user_id = self.resolve_user_id(user_fixture)
 
         # Check for existing sprint with matching cluster
         existing = self.sb.table("sprints").select("id").eq("user_id", user_id).eq("cluster_key", cluster_key).limit(1).execute().data
@@ -272,31 +271,31 @@ class LiveDBAdapter:
                 "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
             }).execute()
 
-        self._fake_to_real_sprint[fake_id] = real_id
+        self._fixture_to_real_sprint[fixture_id] = real_id
         return real_id
 
     # ──────────────────────────────────────────────────────────────
     # PROPOSAL ID MAPPING
     # ──────────────────────────────────────────────────────────────
 
-    def resolve_proposal_id(self, fake_id: str) -> str:
-        """Map fake proposal ID to real UUID, creating if needed."""
-        if fake_id in self._fake_to_real_proposal:
-            return self._fake_to_real_proposal[fake_id]
+    def resolve_proposal_id(self, fixture_id: str) -> str:
+        """Map fixture proposal ID to real UUID, creating if needed."""
+        if fixture_id in self._fixture_to_real_proposal:
+            return self._fixture_to_real_proposal[fixture_id]
         # If it's already a valid UUID, accept it directly
-        if self._is_uuid(fake_id):
-            self._fake_to_real_proposal[fake_id] = fake_id
-            return fake_id
+        if self._is_uuid(fixture_id):
+            self._fixture_to_real_proposal[fixture_id] = fixture_id
+            return fixture_id
         # Otherwise generate a real UUID and track the mapping
         real_id = str(_uuid.uuid4())
-        self._fake_to_real_proposal[fake_id] = real_id
+        self._fixture_to_real_proposal[fixture_id] = real_id
         return real_id
 
-    def get_proposal_real_id(self, fake_id: str) -> str:
-        """Look up the real UUID for a fake proposal ID that was seeded.
-        Returns the fake ID unchanged if no mapping exists (for assertions
+    def get_proposal_real_id(self, fixture_id: str) -> str:
+        """Look up the real UUID for a fixture proposal ID that was seeded.
+        Returns the fixture ID unchanged if no mapping exists (for assertions
         that haven't been resolved yet)."""
-        return self._fake_to_real_proposal.get(fake_id, fake_id)
+        return self._fixture_to_real_proposal.get(fixture_id, fixture_id)
 
     # ──────────────────────────────────────────────────────────────
     # SEED HELPERS (write-through to live DB)
@@ -305,17 +304,17 @@ class LiveDBAdapter:
     def seed_table(self, table: str, rows: List[Dict[str, Any]], on_conflict: Optional[str] = None, track_cleanup: bool = True):
         """Seed rows into live DB, optionally track created IDs for cleanup."""
         for row in rows:
-            # Resolve fake IDs in the row (user_id, sprint_id, job_feed_id, etc.)
-            row = self._resolve_fake_ids_in_row(row)
+            # Resolve fixture IDs in the row (user_id, sprint_id, job_feed_id, etc.)
+            row = self._resolve_fixture_ids_in_row(row)
 
-            # Track fake → real proposal ID mapping for proposals table
-            fake_id = row.get("id") if isinstance(row.get("id"), str) else None
-            if table == "proposals" and fake_id and not self._is_uuid(fake_id):
+            # Track fixture → real proposal ID mapping for proposals table
+            fixture_id = row.get("id") if isinstance(row.get("id"), str) else None
+            if table == "proposals" and fixture_id and not self._is_uuid(fixture_id):
                 real_id = str(_uuid.uuid4())
-                self._fake_to_real_proposal[fake_id] = real_id
+                self._fixture_to_real_proposal[fixture_id] = real_id
                 row["id"] = real_id
             else:
-                # Generate real UUID for id field if it's a fake ID
+                # Generate real UUID for id field if it's a fixture ID
                 if "id" in row and isinstance(row["id"], str):
                     if not self._is_uuid(row["id"]):
                         row["id"] = str(_uuid.uuid4())
@@ -330,8 +329,8 @@ class LiveDBAdapter:
                 if created_id:
                     self._created_rows.setdefault(table, []).append(created_id)
 
-    def _resolve_fake_ids_in_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Replace fake user_id, sprint_id, cluster_key with real UUIDs."""
+    def _resolve_fixture_ids_in_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """Replace fixture user_id, sprint_id, cluster_key with real UUIDs."""
         new_row = dict(row)
 
         # user_id
@@ -342,7 +341,7 @@ class LiveDBAdapter:
         # sprint_id
         if "sprint_id" in new_row and isinstance(new_row["sprint_id"], str):
             if not self._is_uuid(new_row["sprint_id"]):
-                # Try to extract cluster from the fake sprint ID
+                # Try to extract cluster from the fixture sprint ID
                 cluster = "email-automation"
                 if "web-scraping" in new_row["sprint_id"]:
                     cluster = "web-scraping"
@@ -350,7 +349,7 @@ class LiveDBAdapter:
                     cluster = "ai-chatbots"
                 new_row["sprint_id"] = self.resolve_sprint_id(new_row["sprint_id"], cluster)
 
-        # job_feed_id - map fake IDs like "email-automation-1" to real UUIDs
+        # job_feed_id - map fixture IDs like "email-automation-1" to real UUIDs
         for key in ("job_feed_id",):
             if key in new_row and isinstance(new_row[key], str):
                 if not self._is_uuid(new_row[key]):
@@ -424,8 +423,8 @@ class LiveDBAdapter:
         # Clear tracking
         self._created_rows.clear()
         self._created_sprints.clear()
-        self._fake_to_real_sprint.clear()
-        self._fake_to_real_proposal.clear()
+        self._fixture_to_real_sprint.clear()
+        self._fixture_to_real_proposal.clear()
 
     def track_created(self, table: str, row_id: str):
         """Track an externally-created row (e.g. admin API 201) for cleanup."""
