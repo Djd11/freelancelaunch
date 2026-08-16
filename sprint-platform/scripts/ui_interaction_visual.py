@@ -26,11 +26,16 @@ page_label = {"v": "startup"}
 
 
 def start_server():
+    # Log to a file, NOT a pipe: the dev-server request log would fill an
+    # undrained 64KB stdout pipe mid-run and block the server (flaky POSTs
+    # that redirect to the dashboard instead of completing).
+    logf = open(f"{OUT}/server.log", "w")
     proc = subprocess.Popen(
         [sys.executable, "-c",
-         "from app import create_app; create_app().run(host='127.0.0.1', port=5001, debug=False)"],
+         "from app import create_app; "
+         "create_app().run(host='127.0.0.1', port=5001, debug=False, threaded=False)"],
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        stdout=logf, stderr=subprocess.STDOUT,
     )
     import urllib.request
     for _ in range(60):
@@ -138,7 +143,7 @@ def run():
             r = page.request.post(f"{BASE}/sprints/email-automation/start", data={}, max_redirects=0)
             loc = r.headers.get("location", "")
             m = re.search(r"/sprints/([0-9a-f-]{36})$", loc)
-            assert m, f"no sprint UUID in start redirect: {loc!r}"
+            assert m, f"start POST status={r.status} location={loc!r} (auth-gated?)"
             sprint_id = m.group(1)
             sprint_url = f"{BASE}/sprints/{sprint_id}"
             print(f"  sprint created: {sprint_id}")
