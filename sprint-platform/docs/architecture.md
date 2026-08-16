@@ -1,8 +1,8 @@
 # FreelanceLaunch · Sprint Platform — Architecture (v1)
 
-**Status:** New project · **Version:** 1.0 · **Date:** 2026-08-11 · **Owner:** Dhruba
+**Status:** New project · **Version:** 1.1 · **Date:** 2026-08-16 · **Owner:** Dhruba
 **Product truth:** [`./mockups/product-mockup.html`](./mockups/product-mockup.html)
-**Companions:** [`engineering-spec.md`](./engineering-spec.md) · [`../db/schema.sql`](../db/schema.sql) · [`bdd/`](./bdd/)
+**Companions:** [`engineering-spec.md`](./engineering-spec.md) · [`api.md`](./api.md) · [`../db/schema.sql`](../db/schema.sql) · [`bdd/`](./bdd/)
 
 ---
 
@@ -39,8 +39,8 @@ Three pillars:
         ▼
  ┌─────────────────────────────────────────────────────────────────┐
  │ Flask App (blueprints)                                          │
- │   main · sprints · day · contract · proposals · profile          │
- │   mentor · client-filter · admin · pricing (later)               │
+ │   main · sprints · contract · proposals · profile · mentor       │
+ │   clients · admin · auth · pricing (later)                       │
  └───────┬───────────────────┬───────────────────┬─────────────────┘
          ▼                   ▼                   ▼
  ┌──────────────┐   ┌─────────────────┐   ┌───────────────────┐
@@ -75,34 +75,37 @@ Server-rendered Jinja2 views (Tailwind CDN + vanilla JS/Alpine). Screens mirror 
 ### 4.2 Application layer (Flask blueprints)
 | Blueprint | Routes | Purpose |
 |-----------|--------|---------|
-| `main` | `/`, `/sprints` | Landing, sprint picker, request-a-sprint |
-| `sprints` | `/sprints/<id>`, day, complete | Dashboard, phase/day views, day completion + meter uptick |
-| `contract` | `/sprints/<id>/contract[/submit]` | Mock Contract brief + verification gate |
-| `proposals` | `/sprints/<id>/proposals`, submit | First-Bid challenge + engineered proposals |
-| `profile` | `/profile/<user>`, `/profile/me` | Public demand profile + badges + portfolio |
+| `main` | `/`, `/topics`, `/sprints`, `/sprints/request`, `/sprints/<cluster_key>/start` (POST), `/pricing`, `/dashboard/` | Landing, topics nav, sprint picker, request-a-sprint, **enrollment** (sprint + cohort + plan skeleton + async content) |
+| `sprints` | `/sprints/<id>`, `/day/<n>`, `/generation`, `/day/<n>/complete`, `/day/<n>/copywork`, `/complete`, `/badge` | Dashboard, day views, **generation progress (JSON)**, day completion + meter uptick, Gate A submit, explicit sprint completion, badge issuance |
+| `contract` | `/sprints/<id>/contract`, `/contract/submit`, `/contract/add`, `/contract/<id>/complete`, `/case-study` | Mock Contract brief + Gate B, contracts roll-up, Problem/Solution/Result case study |
+| `proposals` | `/sprints/<id>/proposals`, `/proposals/<pid>/submit`, `/proposals/<pid>/respond` | First-Bid challenge, human-initiated submission, **outcome logging** |
+| `profile` | `/profile/<slug>`, `/profile/me` | Public demand profile + badges + portfolio |
 | `mentor` | `/mentor`, `/mentor/turn` | AI mentor chat |
-| `clients` | `/clients/freelancers` | Badge-filtered freelancer search |
-| `admin` | `/admin/*` | Feed curation, cohort creation, peer-review queue |
-| `auth` | `/auth/*` | Signup/login (Supabase Auth) |
+| `clients` | `/clients/freelancers` | Badge-filtered freelancer search (`public_freelancers` view) |
+| `admin` | `/admin/*` — clusters, feed, cohorts, `POST /clusters/<key>/refresh` | Feed curation, cohort creation, **demand refresh + snapshots** |
+| `auth` | `/auth/login` (GET/POST), `/auth/logout` | Session login (Supabase Auth) |
+
+Full endpoint reference: [`api.md`](./api.md).
 
 ### 4.3 Service layer (workers)
 Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and in-thread/cron (plan generation, feed ingest, badge recompute).
 
 | Service | Responsibility |
 |---------|----------------|
-| `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` bucketing, live counters, snapshots |
-| `sprint_planner` | 14-day plan generation (async, DB-backed) |
-| `copywork_engine` | Select/sequence 3 replication projects + gap-fill detection |
-| `gap_fill_engine` | Detect missing nuance from rubric results → Day-5 micro-lesson |
-| `mock_contract_engine` | Anonymized brief match + deadline/constraint enforcement |
-| `verification_service` | Gates A & B: auto-check (code) / peer queue (design, copy) |
+| `llm` | The **one shared LLM fallback chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` |
+| `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
+| `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
+| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — LLM → deterministic job-grounded fallback; **the async worker** (`generate_sprint_content`) + progress count |
+| `copywork_engine` | The 3 replication projects (mockup titles) + `gap_fill_topic` on project 2 |
+| `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
+| `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (all 3 projects done / deliverable URL present) + peer pass via `record()` |
 | `proposal_engine` | Hook templates + proof-from-contract + completeness scoring |
-| `iteration_engine` | Day-14 diagnosis: price/portfolio/niche → remedial micro-course |
+| `iteration_engine` | Diagnosis: price/portfolio/niche from the sprint's own data → remedial micro-course |
 | `unlock_engine` | Meter recompute on day completion + snapshot write |
-| `badge_engine` | Demand-Validated badge issuance + live counters |
-| `mentor_agent` | Job-grounded Socratic RAG chat |
-| `nudge_engine` | Streak + confidence + encouragement on progress marks |
-| `outcome_service` | Contract add/complete; recompute `total_earned`, `avg_contract_value`, etc. |
+| `badge_engine` | Demand-Validated badge issuance (gate B pass + completed sprint, idempotent) |
+| `mentor_agent` | Job-grounded Socratic chat — LLM with grounding check, deterministic fallback |
+| `nudge_engine` | Streak + confidence recompute + encouragement on progress marks |
+| `outcome_service` | Contract add/complete; recompute `total_earned`, `avg_contract_value`, `first_contract_at`, `contracts_completed` |
 
 ### 4.4 Data layer (Supabase)
 `db/schema.sql` — Postgres dual-funnel-free schema (sprint owns outcomes). Auth + Storage beside the DB. Access via service-role client for MVP.
@@ -123,14 +126,19 @@ Client: POST /sprints/request {skill}
 Picker: GET /sprints → job_clusters (live counters)
 ```
 
-### 5.2 Enroll → plan generation (async)
+### 5.2 Enroll → plan skeleton + async content generation
 ```
-User: POST /sprints/new {cluster_key}
+User: POST /sprints/<cluster_key>/start   (POST-only — no GET side effects)
   → resolve cluster (job_count, avg_rate)
-  → create cohort (or join existing active cohort)
+  → join latest active cohort for the cluster, else open a new Cohort #N (14 days)
   → create sprints row + sprint_unlock_snapshots
-  → sprint_planner spawns background thread → 14 sprint_days (DB-backed log)
-  → dashboard: "Day 1 · Phase A · Copy-Work" + meter
+  → create_plan() → 14 sprint_days rows (skeleton, sync — request never waits)
+  → create_projects() → 3 copywork_projects (sync)
+  → background thread: lesson_engine.generate_sprint_content() fills each day's
+    action_payload.lesson + project anatomy (LLM → deterministic fallback); the
+    populated-payload count IS the DB progress log
+  → dashboard: "Day 1 · Phase A · Copy-Work" + meter; polls /sprints/<id>/generation
+    ({status, generated, total}) and hides the spinner at "ready"
 ```
 
 ### 5.3 Day completion → meter uptick + momentum
@@ -144,27 +152,38 @@ User: POST /sprints/<id>/day/<n>/complete
   → UI celebratory uptick banner
 ```
 
-### 5.4 Verification gates
+### 5.4 Verification gates (inline auto-checks)
 ```
-Gate A: 3 copy-work rubrics + gap-fill done → POST contract/gate-a → verification_reviews(gate=A) auto-check → pass → Phase B unlocked
-Gate B: POST contract/submit (deliverable URL) → verification_service auto/peer → verification_reviews(gate=B) pass → Phase C unlocked
+Gate A: POST /sprints/<id>/day/<n>/copywork {rubric_url}
+  → mark copywork_projects.done for the day's project
+  → auto_check_gate_a: all 3 projects done → verification_reviews(gate=A) = pass → Phase B unlocked
+Gate B: POST /sprints/<id>/contract/submit {submission_url}
+  → record pending review, then auto_check_gate_b: deliverable URL present
+  → verification_reviews(gate=B) = pass → Phase C unlocked
+Peer review (design/copy): manual pass written through record() by an admin.
 ```
 
-### 5.5 Proposal submit → outcome counters
+### 5.5 Proposal submit + outcome logging
 ```
 User: POST /sprints/<id>/proposals/<pid>/submit {platform}
-  → proposals.status='submitted', platform recorded
+  → proposals.status='submitted', platform recorded (unverified platform rejected)
   → sprints.proposals_sent += 1 (scoped by sprint_id + user_id)
-  → iteration_engine.diagnose() if proposals_sent >= 5 and responses_received == 0
+User: POST /sprints/<id>/proposals/<pid>/respond {outcome: response|interview|offer}
+  → sprints.responses_received / interviews_held / offers_received += 1
+Proposals page: iteration_engine.diagnose() rendered when proposals_sent >= 5
+  and responses_received == 0 → named bottleneck + remedial micro-course
 ```
 
-### 5.6 Contract add → earnings roll-up
+### 5.6 Contract add/complete → earnings roll-up
 ```
 User: POST /sprints/<id>/contract/add {client, value, hours, platform}
   → contracts row (sprint_id)
-  → outcome_service: contracts_won += 1, total_earned += value,
-    avg_contract_value = total_earned/contracts_won, first_contract_at (if none)
-  → badge page reflects "1 interview · 1 contract"
+  → outcome_service.add_contract: contracts_won += 1, total_earned += value,
+    avg_contract_value = total_earned/contracts_won, first_contract_at (UTC stamp if none)
+User: POST /sprints/<id>/contract/<id>/complete
+  → outcome_service.complete_contract: contracts.status='completed',
+    sprints.contracts_completed += 1
+  → dashboard Contracts & Earnings card + badge page reflect the roll-up
 ```
 
 ### 5.7 Public profile + client filter
@@ -177,18 +196,19 @@ Client: GET /clients/freelancers?cluster=email-automation&within_days=30
 
 ---
 
-## 6. LLM fallback chain (same as v1 — keep in sync with llm_config)
+## 6. LLM fallback chain — `services/llm.py call_llm`
 
 ```
-_call_llm():
-  1. OpenRouter free (no key)
-  2. vision-tool config.json (OPENROUTER_API_KEY)
-  3. env vars (LLM_API_URL / LLM_API_KEY / LLM_MODEL)
-  4. Omniroute local (127.0.0.1:20128, socket probe)
-  5. Hermes / OpenCode.ai (~/.hermes/config.yaml)
-  6. ❌ → deterministic fallback (lessons, proposal templates, mentor "thinking…")
+call_llm(prompt):
+  1. env-configured endpoint (LLM_API_URL / LLM_API_KEY / LLM_MODEL)
+  2. OpenRouter (OPENROUTER_API_KEY / OPENROUTER_MODEL)
+  3. Omniroute local (127.0.0.1:20128, socket probe)
+  4. ❌ → None → caller's deterministic fallback
+     (lesson_engine fallback lessons, mentor guided template, proposal template)
 ```
-The app never 500s on a missing API key.
+Every step is try/except with short timeouts — the app never 500s on a missing key
+or an unreachable provider. Callers validate LLM output (e.g. `mentor_agent._grounded`
+requires the answer to echo the job's terminology).
 
 ---
 
@@ -196,12 +216,12 @@ The app never 500s on a missing API key.
 
 | Job | Trigger | Mechanism |
 |-----|---------|-----------|
-| Sprint plan generation | POST /sprints/new | background thread, DB-backed log + polling |
-| Gap-Fill detection | per copy-work completion | inline (short) |
-| Badge counter recompute | daily cron | `badge_engine` |
-| Feed refresh / demand snapshots | nightly cron | `demand_intelligence` |
-| Verification (auto) | contract submit | inline auto-test |
-| Verification (peer) | contract submit | enqueued review queue |
+| Sprint content generation | `POST /sprints/<cluster_key>/start` | background thread, populated-payload count = DB log, `GET /sprints/<id>/generation` polling |
+| Gap-Fill detection | project 2 anatomy (deterministic in v1) | inline — `gap_fill_topic` on the day view |
+| Badge issuance | `GET /sprints/<id>/badge` (after completion) | `badge_engine`, idempotent (gate B pass + completed) |
+| Feed refresh / demand snapshots | admin `POST /admin/clusters/<key>/refresh` or nightly cron | `demand_intelligence` |
+| Verification (auto) | copy-work submit (Gate A) / contract submit (Gate B) | inline auto-check (`auto_check_gate_a/b`) |
+| Verification (peer) | admin manual pass | `verification_service.record()` |
 
 ---
 

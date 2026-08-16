@@ -12,8 +12,9 @@ source of truth.
 - **Specs** (spec-master + qa-strategy driven):
   - `docs/engineering-spec.md` — product contract, journeys, mechanics
   - `docs/architecture.md` — system design, layers, data flows
+  - `docs/api.md` — endpoint/API reference (synced from `routes/`)
   - `docs/decisions.md` — D1–D8 decisions + rationale
-  - `docs/bdd/` — 8 Gherkin feature files (the future behave suite)
+  - `docs/bdd/` — 11 Gherkin feature files, ported to the behave suite in `tests/features/`
   - `db/schema.sql` — fresh PostgreSQL/Supabase schema
 
 ## Key mechanics (from the mockup)

@@ -1,9 +1,14 @@
 # FreelanceLaunch · Sprint Platform — Engineering Spec (v1)
 
-**Status:** New project · **Version:** 1.0 · **Date:** 2026-08-11 · **Owner:** Dhruba
+**Status:** New project · **Version:** 1.1 · **Date:** 2026-08-16 · **Owner:** Dhruba
 **Product truth:** [`./mockups/product-mockup.html`](./mockups/product-mockup.html) — an 8-screen static walkthrough. This spec is the mockup rendered as behavior.
 **Branch:** `sprint-platform` · **DB:** [`../db/schema.sql`](../db/schema.sql)
-**Companions:** [`architecture.md`](./architecture.md) · [`bdd/`](./bdd/) · [`decisions.md`](./decisions.md)
+**Companions:** [`architecture.md`](./architecture.md) · [`api.md`](./api.md) · [`bdd/`](./bdd/) · [`decisions.md`](./decisions.md)
+
+> **v1.1 (2026-08-16):** synced to the implemented codebase — async content generation with
+> DB-backed progress polling, auto-open cohorts, Gate A/B auto-checks, proposal outcome
+> logging, contract roll-ups, case-study write path, and admin demand refresh. See
+> [`api.md`](./api.md) for the endpoint reference.
 
 ---
 
@@ -53,14 +58,17 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 - **Job Unlock Meter:** `unlocked / total` ("186 / 450 active jobs unlocked") + "+38 postings unlocked so far" chip + 14-bar track.
 - **Today card:** Watch lesson (✓), Replicate the project, Self-check vs rubric → "Open Day N →".
 - **Momentum card:** Day streak 🔥, Confidence n/100, Proposals sent, Contracts, plus a Nudge message.
-- Routes: `GET /sprints/<id>` and phase/day helpers; all state gated by ownership.
+- **Content generation progress:** the 14 day-lessons generate async after enrollment; the dashboard polls `GET /sprints/<id>/generation` (`{status, generated, total}`) and hides the spinner at `ready` (eng-spec §5).
+- **Contracts & Earnings card:** lists recorded contracts (won/completed) with an add-contract form → `POST /sprints/<id>/contract/add`.
+- **Complete sprint button:** explicit `POST /sprints/<id>/complete` (also fired by finishing Day 14).
+- Routes: `GET /sprints/<id>`, `GET /sprints/<id>/generation`, day/complete/copywork helpers; all state gated by ownership.
 
 ### J4 · Day View (`/sprints/<id>/day/<n>`) — Phase A example
 - Day header: "Phase A · Day 4 · Copy-Work · Project 2 — Rebuild the Abandoned-Cart Flow".
 - **Day-complete uptick banner:** shown after completing the day: "🎉 Day 4 complete — +38 postings → 186 of 450 active jobs open to you."
-- **Watch · Lesson:** TwoPanel HTML preview (kinetic text + TTS). No MP4 required in-request; MP4 is a later YouTube-distribution concern.
-- **Copy-Work Task:** trigger / sequence / dynamic block / coupon steps; "Replicate from scratch"; "Pass 3-point rubric" (auto-checked).
-- **Gap-Fill preview card:** auto-detected nuance from the previous project ("mobile responsiveness") → "Day 5 serves a targeted 30-min micro-lesson."
+- **Watch · Lesson:** TwoPanel HTML preview (kinetic text + TTS). No MP4 required in-request; MP4 is a later YouTube-distribution concern. The lesson script + key points are generated per day from the cluster's live job posting (`lesson_engine.lesson_for_day`, LLM with a deterministic job-grounded fallback) and stored in `sprint_days.action_payload.lesson`.
+- **Copy-Work Task:** trigger / sequence / dynamic block / coupon steps rendered from the project's generated `clone_steps`; "Replicate from scratch"; "Pass 3-point rubric" (auto-checked) rendered from the project's generated `rubric`.
+- **Gap-Fill preview card:** auto-detected nuance from the previous project ("mobile responsiveness", carried on copy-work project 2's `gap_fill_topic`) → "Day 5 serves a targeted 30-min micro-lesson."
 - Every Phase A/C/B day renders the correct phase-specific action from `sprint_days.action_type`.
 
 ### J5 · Mock Contract (`/sprints/<id>/contract`) — Phase B
@@ -68,13 +76,17 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 - Requirements + Constraints (deadline, budget, client notes).
 - Steps: execute flow (Days 6–8) → write Problem/Solution/Result case study (Days 9–10).
 - **Verification Gate:** "locks Phase C" — automated flow check + case study written. Submission via `POST /sprints/<id>/contract/submit`; result written to `verification_reviews (gate='B')`.
-- **Anonymization requirement:** `capstone_briefs` stores only `job_feed_id`, never client identity/PII.
+- **Gate B auto-check:** a deliverable URL present → `verification_service.auto_check_gate_b` writes the pass row inline — Phase C unlocks immediately (arch §7 inline auto-test).
+- **Case study (Days 9–10):** `POST /sprints/<id>/case-study` upserts the Problem/Solution/Result write-up; it is stored with `is_draft = not gate_b_passed` — drafts stay internal, and once Gate B passes (a re-save with the pass in place) it is the public profile portfolio item.
+- **Anonymization requirement:** `capstone_briefs` stores only `job_feed_id`, never client identity/PII. The brief is synthesized from the cluster's first active posting (`mock_contract_engine.synthesize`), with a No-500 in-memory default when the feed is empty.
 
 ### J6 · Proposal Builder (`/sprints/<id>/proposals`) — Phase C
 - **First-Bid Challenge:** 0/5 progress bar + table of live jobs (rate + status: Draft / Not started).
 - Proposal Builder card: **Opening hook** ("I see you need a Klaviyo flow that recovers abandoned carts — I just rebuilt exactly that flow…"), **Proof (from your Mock Contract)**, **CTA**.
-- Actions: Copy proposal / Edit. Submission is human-initiated: copy → paste on the platform → confirm → `status='submitted'`, `sprints.proposals_sent += 1`, record `platform`.
+- Actions: Copy proposal / Edit. Submission is human-initiated: copy → paste on the platform → confirm → `status='submitted'`, `sprints.proposals_sent += 1`, record `platform`. Submission on an unverified platform is rejected.
 - "We never auto-submit" — enforced in the UI copy and the API.
+- **Outcome logging:** `POST /sprints/<id>/proposals/<pid>/respond` with `outcome=response|interview|offer` bumps `responses_received` / `interviews_held` / `offers_received` on the sprint.
+- **Iteration diagnosis:** rendered on this page when `proposals_sent ≥ 5` and `responses_received = 0` — `iteration_engine.diagnose` names the bottleneck (price / portfolio / niche) from the sprint's own data.
 
 ### J7 · Demand Profile (`/profile/<user>`, public) — the client loop
 - Public freelancer profile: name, headline ("Freelancer · Email Automation & Web Scraping").
@@ -102,30 +114,33 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 
 ### 4.2 Two verification gates
 - **Gate A (Phase A→B):** Phase B unlocks only when `verification_reviews (sprint, gate='A') = pass` — the 3 copy-work rubrics + gap-fill are auto-checked (code) or peer-checked (design/copy).
+  - **Auto-check trigger:** every `POST /sprints/<id>/day/<n>/copywork` marks that day's copy-work project done and runs `auto_check_gate_a` — all 3 projects done → pass → Phase B unlocks.
 - **Gate B (Phase B→C):** Phase C (job feed + proposals) unlocks only when `verification_reviews (sprint, gate='B') = pass` — the Mock Contract deliverable passes auto/peer review.
+  - **Auto-check trigger:** `POST /sprints/<id>/contract/submit` with a deliverable URL → `auto_check_gate_b` writes the pass row inline.
 - A lock never silently breaks: if a gate is required but absent, the UI shows the lock + the missing item.
 
 ### 4.3 Outcome tracking (sprint-owned)
 - `sprints` carries `proposals_sent, responses_received, interviews_held, offers_received, contracts_won, contracts_completed, total_earned, avg_contract_value, first_contract_at, repeat_clients, is_actively_seeking`.
-- Writes come from: proposal submit (+1 proposals_sent), the proposal iteration loop (responses/interviews), and `contracts` add/complete.
-- The **iteration loop** (Day 14): if `proposals_sent ≥ 5` and `responses_received = 0`, `iteration_engine` diagnoses the bottleneck (price / portfolio / niche) from the sprint's own data and assigns a 2-hour remedial micro-course.
+- Writes come from: proposal submit (+1 `proposals_sent`), `POST .../proposals/<pid>/respond` (+1 response/interview/offer counter), and `POST .../contract/add` + `POST .../contract/<id>/complete` (contracts, earnings, completion count).
+- The **iteration loop**: when `proposals_sent ≥ 5` and `responses_received = 0`, `iteration_engine.diagnose` names the bottleneck (price / portfolio / niche) from the sprint's own data; the diagnosis + remedial micro-course assignment render on the proposals page (no separate Day-14 step).
 
 ### 4.4 Momentum
 - `user_momentum.day_streak` increments per completed day; `confidence` is recomputed by the nudge engine on every progress mark; the Momentum card renders streak · confidence · proposals · contracts.
 - Nudge messages are rule-based + LLM-assisted, scoped to where the user is in the sprint.
 
 ### 4.5 Demand intelligence
-- `demand_intelligence` ingests the curated feed, normalizes postings, clusters by skill, scores clusters (count, rate, growth, keywords), assigns `unlock_day`, caches live counters in `job_clusters`, and snapshots time-series into `demand_snapshots` (powers "↑ from 410").
-- A nightly refresh recomputes counters; the UI reads `job_clusters` (O(1)), never a live query.
+- `demand_intelligence` ingests the curated feed, normalizes postings, clusters by skill, scores clusters (count, rate, growth, keywords), assigns `unlock_day` (`assign_unlock_days`, quantile buckets), caches live counters in `job_clusters`, and snapshots time-series into `demand_snapshots` (powers "↑ from 410").
+- Refresh is an **explicit action** — admin `POST /admin/clusters/<cluster_key>/refresh` runs `assign_unlock_days` + `refresh_cluster(snapshot=True)` (writes a `demand_snapshots` row), or a nightly cron calls the same helpers. Never an implicit read; the UI reads `job_clusters` (O(1)), never a live query.
+- Profile badges read the latest snapshot per cluster for the trend line (`demand_snapshots`), falling back to the `jobs_at_issue` stamped on the badge.
 
 ---
 
 ## 5. LLM & async strategy
-- **All LLM work reuses one fallback chain** (`_call_llm`): OpenRouter free → env config → Omniroute local → Hermes → deterministic fallback. No new provider logic.
-- **Sprint plan generation is async**: background thread, DB-backed progress log, frontend polling (same pattern as v1 `generate_api`).
-- **Mentor** is request-scoped and short (2–4s); 20s timeout + graceful fallback.
-- **Gap-Fill detection** (Phase A) runs once per copy-work completion: flags the missing nuance from rubric results.
-- **Proposal generation** reuses the LLM for hooks but must have a deterministic template fallback (offline-safe).
+- **All LLM work reuses one fallback chain** — `services/llm.py call_llm`: env-configured endpoint (`LLM_API_URL`/`LLM_API_KEY`/`LLM_MODEL`) → OpenRouter (`OPENROUTER_API_KEY`) → Omniroute local (`127.0.0.1:20128`, socket probe) → `None` → deterministic fallback. No new provider logic; every step is try/except with short timeouts.
+- **Sprint plan generation is async (implemented):** at enrollment the skeleton writes synchronously (`sprint_planner.create_plan` → 14 `sprint_days`; `copywork_engine.create_projects` → 3 projects) so the request never waits; `lesson_engine.generate_sprint_content` then fills lesson + project-anatomy payloads on a **background thread**. The count of populated `action_payload.lesson` values IS the DB-backed progress log; the dashboard polls `GET /sprints/<id>/generation` (`{status, generated, total}`) and the spinner hides at `ready`.
+- **Mentor** is request-scoped and short (2–4s); it tries `call_llm`, requires the answer to echo the job's terminology (`_grounded`), and falls back to a deterministic guided template that never hands over the finished answer.
+- **Gap-Fill detection** (Phase A) is deterministic in v1 — the missing nuance lives on copy-work project 2's `gap_fill_topic` and surfaces on the day view before Day 5.
+- **Proposal generation** reuses the LLM for hooks but has a deterministic template fallback (offline-safe).
 
 ---
 
@@ -133,6 +148,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 | Concern | Approach |
 |---------|----------|
 | **RLS** | service-role for MVP; **badge + job counters are public read** pre-launch (the marketing hook) |
+| **Auth** | session cookie `user_id` must reference a real `auth.users` UUID; malformed ids are dropped before any uuid-FK write (22P02 guard), and login refuses non-existent emails |
 | **Badge integrity** | badge valid only if `verification_reviews(gate='B') = pass` AND sprint `status='completed'` |
 | **Anonymization** | `capstone_briefs` stores only `job_feed_id`; never client PII |
 | **Proposal safety** | never auto-submit to third parties; always human copy-paste + confirm + track |
@@ -143,8 +159,8 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 ---
 
 ## 7. Open decisions for the build phase
-1. **Client search surface** (J7 filter): dedicated route (`/clients/freelancers?cluster=&within_days=30`) vs. a section inside the public profile. Recommend the dedicated route + the `public_freelancers` view.
-2. **Cohort creation**: manual (admin creates cohorts) vs. auto-open cohorts on a cadence. Recommend manual for v1.
+1. ✅ **Resolved:** client search surface — dedicated route `GET /clients/freelancers?cluster=&within_days=` powered by the `public_freelancers` view (live DB, `routes/clients.py`).
+2. ✅ **Resolved:** cohort creation — **auto-open on enrollment**: the learner joins the latest active cohort for the cluster, or a new `Cohort #N` (14-day window) is opened for them (`routes/main.py _open_cohort`); admins can still create cohorts manually.
 3. **Payments**: nav shows "Pricing" but no tiers in the mockup. Recommend deferring monetization decisions to a pricing spec, keeping the schema payment-ready (`user_profiles.tier` not yet modeled).
 4. **MP4/YouTube**: mockup shows HTML previews only. Recommend keeping the overnight Remotion pipeline out of v1 scope; revisit for acquisition later.
 
