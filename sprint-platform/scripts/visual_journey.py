@@ -140,11 +140,16 @@ def run():
             shots.append(shot(page, "09_picker"))
 
             page_label["v"] = "start-sprint"
-            page.click("a[href='/sprints/email-automation/start']")
-            page.wait_for_url(re.compile(r"/sprints/[0-9a-f-]{36}$"))
-            sprint_url = page.url
-            sprint_id = sprint_url.rsplit("/", 1)[-1]
+            # max_redirects=0: we need the raw 302's Location (the sprint UUID)
+            # — otherwise the request follows the redirect and Location is gone.
+            r = page.request.post(f"{BASE}/sprints/email-automation/start", data={}, max_redirects=0)
+            loc = r.headers.get("location", "")
+            m = re.search(r"/sprints/([0-9a-f-]{36})$", loc)
+            assert m, f"no sprint UUID in start redirect: {loc!r}"
+            sprint_id = m.group(1)
+            sprint_url = f"{BASE}/sprints/{sprint_id}"
             print(f"  sprint created: {sprint_id}")
+            page.goto(sprint_url)
 
             page_label["v"] = "dashboard"
             page.wait_for_selector("text=Job Unlock Meter")

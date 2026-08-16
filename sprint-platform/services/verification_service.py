@@ -4,6 +4,10 @@ Gate A: Phase A→B (3 copy-work rubrics + gap-fill auto-checked).
 Gate B: Phase B→C (Mock Contract deliverable auto/peer review).
 A lock never silently breaks: if a gate is required but absent, the UI shows
 the lock + the missing item.
+
+auto_check_gate_a / auto_check_gate_b are the deterministic auto-check paths
+(arch §7: "Verification (auto): contract submit → inline auto-test"). Peer
+review (design/copy) is a manual pass written through record() by an admin.
 """
 
 
@@ -36,3 +40,30 @@ def gate_a_passed(sb, sprint_id):
 
 def gate_b_passed(sb, sprint_id):
     return passed(sb, sprint_id, "B")
+
+
+def auto_check_gate_a(sb, sprint_id, submitted_url=None):
+    """Gate A auto-check: all 3 copy-work projects done → pass.
+
+    Called on every copy-work rubric submission. One review row per gate, so
+    the submitted rubric URL is preserved through the pass write.
+    """
+    rows = sb.table("copywork_projects").select("done").eq("sprint_id", sprint_id).execute().data
+    if rows and len(rows) >= 3 and all(bool(r.get("done")) for r in rows):
+        return record(sb, sprint_id, "A", status="pass", verification_type="auto",
+                      submitted_url=submitted_url)
+    return None
+
+
+def auto_check_gate_b(sb, sprint_id):
+    """Gate B auto-check: a deliverable URL is present → pass.
+
+    Called after the Mock Contract deliverable is submitted. Keeps the
+    submitted URL on the pass row.
+    """
+    rows = sb.table("verification_reviews").select("submitted_url") \
+        .eq("sprint_id", sprint_id).eq("gate", "B").limit(1).execute().data
+    if rows and rows[0].get("submitted_url"):
+        return record(sb, sprint_id, "B", status="pass", verification_type="auto",
+                      submitted_url=rows[0]["submitted_url"])
+    return None

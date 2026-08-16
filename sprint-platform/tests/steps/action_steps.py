@@ -47,6 +47,100 @@ def step_proposal_platform(context, platform, path):
     _post(context, path, data={"platform": platform})
 
 
+@when('I add a contract of value {value:d} with {hours:d} hours on platform "{platform}" for sprint "{sid}"')
+def step_add_contract(context, value, hours, platform, sid):
+    _post(context, f"/sprints/{sid}/contract/add", data={
+        "client_name": "Demo Client",
+        "project_title": "Email automation setup",
+        "contract_value": value,
+        "hours_worked": hours,
+        "platform": platform,
+    })
+
+
+@when('I log outcome "{outcome}" for proposal "{pid}" on sprint "{sid}"')
+def step_log_outcome(context, outcome, pid, sid):
+    _post(context, f"/sprints/{sid}/proposals/{pid}/respond", data={"outcome": outcome})
+
+
+@when('I save the case study "{title}" for sprint "{sid}"')
+def step_save_case_study(context, title, sid):
+    _post(context, f"/sprints/{sid}/case-study", data={
+        "title": title,
+        "problem": "Store lost checkouts to cart abandonment.",
+        "solution": "Built a 2-step recovery flow with a dynamic cart summary.",
+        "result": "Recovered 12% of abandoned carts in 4 weeks.",
+    })
+
+
+@then('gate "{gate}" has passed verification for sprint "{sid}"')
+def step_gate_passed(context, gate, sid):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("verification_reviews").select("*") \
+        .eq("sprint_id", real_sprint_id).eq("gate", gate).execute().data
+    assert rows and rows[0].get("status") == "pass", \
+        f"gate {gate} not passed for sprint {sid}: {rows}"
+
+
+def _sprint_row(context, sid):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("sprints").select("*").eq("id", real_sprint_id).execute().data
+    assert rows, f"no sprint {sid}"
+    return rows[0]
+
+
+@then('sprint "{sid}" has contracts_won equal to {n:d}')
+def step_contracts_won(context, sid, n):
+    row = _sprint_row(context, sid)
+    assert int(row.get("contracts_won") or 0) == n, \
+        f"contracts_won={row.get('contracts_won')}, expected {n}"
+
+
+@then('sprint "{sid}" has total_earned equal to {n:d}')
+def step_total_earned(context, sid, n):
+    row = _sprint_row(context, sid)
+    assert int(row.get("total_earned") or 0) == n, \
+        f"total_earned={row.get('total_earned')}, expected {n}"
+
+
+@then('sprint "{sid}" has avg_contract_value equal to {n:d}')
+def step_avg_contract_value(context, sid, n):
+    row = _sprint_row(context, sid)
+    assert int(row.get("avg_contract_value") or 0) == n, \
+        f"avg_contract_value={row.get('avg_contract_value')}, expected {n}"
+
+
+@then('sprint "{sid}" has a first_contract_at timestamp')
+def step_first_contract_at(context, sid):
+    row = _sprint_row(context, sid)
+    assert row.get("first_contract_at"), f"first_contract_at missing: {row.get('first_contract_at')!r}"
+
+
+@then('sprint "{sid}" is completed')
+def step_sprint_completed(context, sid):
+    row = _sprint_row(context, sid)
+    assert row.get("status") == "completed", \
+        f"sprint {sid} status={row.get('status')}, expected completed"
+
+
+@then('sprint "{sid}" has responses_received equal to {n:d}')
+def step_responses_received(context, sid, n):
+    row = _sprint_row(context, sid)
+    assert int(row.get("responses_received") or 0) == n, \
+        f"responses_received={row.get('responses_received')}, expected {n}"
+
+
+@then('a case study titled "{title}" exists for sprint "{sid}"')
+def step_case_study_exists(context, title, sid):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("case_studies").select("*") \
+        .eq("sprint_id", real_sprint_id).eq("title", title).execute().data
+    assert rows, f"no case study {title!r} for sprint {sid}"
+
+
 @when('the sprint reaches day {n}')
 def step_sprint_reaches_day(context, n):
     adapter = get_live_adapter()

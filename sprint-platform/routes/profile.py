@@ -51,6 +51,11 @@ def _badges(sb, user_id):
     clusters = {r["cluster_key"]: r for r in
                 sb.table("job_clusters").select("*").execute().data}
     sprints = {r["id"]: r for r in sb.table("sprints").select("*").execute().data}
+    snapshots = {}
+    # Latest reading per cluster (newest captured_at first → setdefault keeps it).
+    for r in sb.table("demand_snapshots").select("cluster_key,job_count") \
+            .order("captured_at", desc=True).execute().data:
+        snapshots.setdefault(r["cluster_key"], r["job_count"])
     for b in rows:
         sprint_id = b.get("sprint_id")
         gate_b = passed(sb, sprint_id, "B")
@@ -70,6 +75,10 @@ def _badges(sb, user_id):
             "cluster": cluster,
             "sprint": sprint,
             "jobs_at_issue": b.get("jobs_at_issue") or 0,
+            # Trend source: the latest demand_snapshots reading for the cluster
+            # (eng-spec §4.5 'powers "↑ from 410"'), falling back to the
+            # jobs_at_issue stamped on the badge.
+            "trend_from": snapshots.get(key, b.get("jobs_at_issue") or 0),
             "days_ago": _days_ago(b.get("issued_at")),
         })
     return out

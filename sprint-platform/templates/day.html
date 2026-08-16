@@ -5,7 +5,7 @@
     <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
     <div style="padding:26px 0">
       <span class="chip"><span class="dot"></span>Phase {{ day.phase }} · Day {{ day.day_no }} · {{ day.action_type|capitalize }}</span>
-      <h2 style="margin:14px 0 6px">{{ ('Project ' ~ project.project_index ~ ' — ') if project else '' }}{{ project.title if project else day.title }}</h2>
+      <h2 style="margin:14px 0 6px">{{ ('Project ' ~ project.project_index ~ ' — ') if project else '' }}{{ project.title if project and project.title else day.title }}</h2>
       <p class="muted small" style="max-width:640px">{{ project.description if project and project.description else 'Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.' }}</p>
 
       <!-- ═══ DAY-COMPLETE UPTICK BANNER (only when the day is done) ═══ -->
@@ -24,24 +24,36 @@
 
       <div class="grid2" style="margin-top:22px">
         <div class="card">
-          <h3 style="margin-bottom:12px">Watch · Lesson</h3>
-          <div style="background:var(--ink);border-radius:var(--radius);height:180px;display:flex;align-items:center;justify-content:center;color:#E8E5DE;font-size:14px">▶ TwoPanel HTML preview — kinetic text + TTS</div>
+          <h3 style="margin-bottom:12px">🎬 Watch · Lesson</h3>
+          <div class="xs muted" style="margin:-6px 0 10px">TwoPanel HTML preview — kinetic text + TTS</div>
+          <div style="background:var(--ink);border-radius:var(--radius);color:#E8E5DE;font-size:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <span style="font-size:18px">▶</span><b style="font-family:var(--font-display)">{{ lesson.title }}</b>
+            </div>
+            <div style="opacity:.92;line-height:1.55">{{ lesson.script }}</div>
+            {% if lesson.key_points %}
+            <ul style="margin:12px 0 0 18px;opacity:.85">
+              {% for kp in lesson.key_points %}<li style="margin-bottom:4px">{{ kp }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+          </div>
           <div class="divider"></div>
           <div class="check-item"><div class="cbox"></div><div><b>Mark lesson watched</b><div class="xs muted">~5 min</div></div></div>
         </div>
 
         <div class="card">
-          <h3 style="margin-bottom:12px">Copy-Work Task</h3>
+          <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
           <p class="small muted">From a blank account, rebuild the exact flow:</p>
           <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
-            <li>Trigger on <b>Checkout Started</b></li>
-            <li>2-step sequence: 30 min + 24 hr delays</li>
-            <li>Cart summary dynamic block</li>
-            <li>Coupon at step 2 (10% off)</li>
+            {% for step in clone_steps %}<li>{{ step }}</li>{% endfor %}
           </ul>
           <div class="divider"></div>
           <div class="check-item"><div class="cbox"></div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
-          <div class="check-item"><div class="cbox"></div><div><b>Pass 3-point rubric</b><div class="xs muted">auto-checked by verification service</div></div></div>
+          <div class="check-item"><div class="cbox"></div><div><b>Pass 3-point rubric</b><div class="xs muted">auto-checked by verification service</div>
+            <ul class="xs muted" style="margin:6px 0 0 18px;color:var(--ink-2)">
+              {% for r in rubric %}<li>{{ r }}</li>{% endfor %}
+            </ul>
+          </div></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
             <input type="hidden" name="rubric_url" value="">
             <button class="btn btn-p" type="submit">Submit for check</button>
@@ -52,7 +64,7 @@
       {% if gap_fill_topic %}
       <div class="card" style="margin-top:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div><h3>Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
+          <div><h3>🧩 Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
           <span class="badge b-amber">Auto-detected</span>
         </div>
       </div>

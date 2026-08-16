@@ -30,7 +30,9 @@
         </div>
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
-          <a class="btn btn-p btn-sm" href="/sprints/{{ c.cluster_key }}/start">Start sprint</a>
+          <form method="post" action="/sprints/{{ c.cluster_key }}/start">
+            <button class="btn btn-p btn-sm" type="submit">Start sprint</button>
+          </form>
         </div>
       </div>
       {% endfor %}

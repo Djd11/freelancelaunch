@@ -34,3 +34,10 @@ Feature: Landing (mockup screen 1)
     When I GET "/"
     Then the page contains the text "Demand-Validated"
     And the page contains the text "live job count"
+
+  Scenario: Login over HTTP establishes a working session
+    When I POST the login form with email "demo@sprint-platform.local"
+    Then the response redirects to "/sprints"
+    When I GET "/sprints"
+    Then the response status is 200
+    And the page contains the text "Choose your sprint"

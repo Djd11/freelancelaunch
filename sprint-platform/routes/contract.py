@@ -1,32 +1,25 @@
 """
 contract blueprint — Mock Contract brief + verification gate (arch §4.2, eng-spec §3 J5).
+Also the sprint's outcome write paths: contract add/complete (eng-spec §5.6)
+and the Problem/Solution/Result case study (Days 9-10, J5).
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
 
 from routes import require_login, load_sprint, load_brief
 from services.supabase_client import get_supabase
 from services.verification_service import record as record_review
+from services.verification_service import auto_check_gate_b, gate_b_passed
+from services.mock_contract_engine import synthesize as synthesize_brief
+from services.outcome_service import add_contract, complete_contract
 
 contract_bp = Blueprint("contract", __name__)
 
-DEFAULT_BRIEF = {
-    "title": "Set up email automation for my e-commerce brand",
-    "requirements": (
-        "Klaviyo checkout recovery + post-purchase upsell\n"
-        "Segmentation for VIP repeat buyers\n"
-        "Deliverables: flow exports + setup docs\n"
-        "Must be mobile-responsive emails"
-    ),
-    "constraints": {"deadline_days": 4, "budget": 180, "notes": ["Client prefers async updates"]},
-    "acceptance_criteria": ["flow exports present", "setup docs present", "mobile-responsive"],
-    "verification_type": "auto",
-}
 
-
-def _get_job_feed_id(sb, cluster_key):
-    """Get a real job_feed.id for the given cluster."""
-    rows = sb.table("job_feed").select("id").eq("cluster_key", cluster_key).eq("status", "active").limit(1).execute().data
-    return rows[0]["id"] if rows else None
+def _num(value, cast, default):
+    try:
+        return cast(value) if value not in (None, "") else default
+    except (TypeError, ValueError):
+        return default
 
 
 @contract_bp.route("/sprints/<sprint_id>/contract")
@@ -40,15 +33,13 @@ def brief(sprint_id):
         return redirect(url_for("main.dashboard"))
     brief_row = load_brief(sb, sprint_id)
     if not brief_row:
-        # Synthesize a default anonymized brief so the mockup screen always renders.
-        brief_row = dict(DEFAULT_BRIEF)
-        import uuid as _uuid
-        brief_row["id"] = str(_uuid.uuid4())
-        brief_row["sprint_id"] = sprint_id
-        # Get a real job from the job_feed for this cluster
-        job_feed_id = _get_job_feed_id(sb, sprint.get("cluster_key", "email-automation"))
-        brief_row["job_feed_id"] = job_feed_id
-        sb.table("capstone_briefs").insert(brief_row).execute()
+        # Synthesize an anonymized brief from a real job posting so the mockup
+        # screen always renders (No-500). Stores job_feed_id — never client PII.
+        brief_row = synthesize_brief(sb, sprint)
+        if brief_row.get("job_feed_id"):
+            brief_row["sprint_id"] = sprint_id
+            sb.table("capstone_briefs").insert(brief_row).execute()
+        # else: no feed rows exist at all — render the default brief in-memory.
 
     requirements = (brief_row.get("requirements") or "").split("\n")
     constraints = brief_row.get("constraints") or {"deadline_days": 4, "budget": 180, "notes": []}
@@ -56,7 +47,10 @@ def brief(sprint_id):
         constraints = {"deadline_days": 4, "budget": 180, "notes": []}
     brief_row["requirements_list"] = [r for r in requirements if r.strip()]
     brief_row["constraints"] = constraints
-    return render_template("mock_contract.html", sprint=sprint, brief=brief_row)
+
+    case_studies = sb.table("case_studies").select("*").eq("sprint_id", sprint_id).execute().data
+    return render_template("mock_contract.html", sprint=sprint, brief=brief_row,
+                           case_studies=case_studies, gate_b_pass=gate_b_passed(sb, sprint_id))
 
 
 @contract_bp.route("/sprints/<sprint_id>/contract/submit", methods=["POST"])
@@ -75,5 +69,81 @@ def submit(sprint_id):
         return redirect(url_for("contract.brief", sprint_id=sprint_id))
 
     record_review(sb, sprint_id, "B", status="pending", submitted_url=url)
+    # Gate B auto-check (arch §7: contract submit → inline auto-test): a
+    # deliverable URL present → pass → Phase C unlocks.
+    auto_check_gate_b(sb, sprint_id)
     flash("Deliverable submitted — verification service is checking your flow.")
+    return redirect(url_for("contract.brief", sprint_id=sprint_id))
+
+
+@contract_bp.route("/sprints/<sprint_id>/contract/add", methods=["POST"])
+def add(sprint_id):
+    """Record a won contract and roll up earnings on the sprint (eng-spec §5.6)."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("main.dashboard"))
+
+    add_contract(
+        sb, sprint_id, sprint["user_id"],
+        client_name=request.form.get("client_name"),
+        project_title=request.form.get("project_title"),
+        contract_value=_num(request.form.get("contract_value"), float, 0),
+        your_rate=_num(request.form.get("your_rate"), float, None),
+        hours_worked=_num(request.form.get("hours_worked"), int, None),
+        platform=request.form.get("platform"),
+    )
+    flash("Contract recorded — earnings rolled up on your sprint.")
+    return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+
+
+@contract_bp.route("/sprints/<sprint_id>/contract/<contract_id>/complete", methods=["POST"])
+def complete(sprint_id, contract_id):
+    """Mark a contract completed; bumps contracts_completed (eng-spec §4.3)."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("main.dashboard"))
+    complete_contract(sb, sprint_id, contract_id)
+    return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+
+
+@contract_bp.route("/sprints/<sprint_id>/case-study", methods=["POST"])
+def save_case_study(sprint_id):
+    """Write the Problem/Solution/Result case study (Days 9-10). Draft until
+    the Mock Contract passes; then it is the profile portfolio item."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("main.dashboard"))
+
+    title = request.form.get("title", "").strip()
+    if not title:
+        flash("Give the case study a title first.")
+        return redirect(url_for("contract.brief", sprint_id=sprint_id))
+
+    payload = {
+        "sprint_id": sprint_id,
+        "user_id": sprint["user_id"],
+        "title": title,
+        "problem": request.form.get("problem", ""),
+        "solution": request.form.get("solution", ""),
+        "result": request.form.get("result", ""),
+        "is_draft": not gate_b_passed(sb, sprint_id),
+    }
+    existing = sb.table("case_studies").select("id").eq("sprint_id", sprint_id).limit(1).execute().data
+    if existing:
+        sb.table("case_studies").update(payload).eq("id", existing[0]["id"]).execute()
+    else:
+        sb.table("case_studies").insert(payload).execute()
+    flash("Case study saved — it appears on your public profile once the Mock Contract passes.")
     return redirect(url_for("contract.brief", sprint_id=sprint_id))

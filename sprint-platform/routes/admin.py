@@ -145,3 +145,19 @@ def create_cohort():
         return jsonify(resp.data[0]), 201
     flash(f"Cohort \"{resp.data[0].get('name')}\" created.")
     return redirect(url_for("admin.list_cohorts"))
+
+
+@admin_bp.route("/clusters/<cluster_key>/refresh", methods=["POST"])
+def refresh_cluster(cluster_key):
+    """Recompute the cluster's live counters from its feed + write a demand
+    snapshot (eng-spec §4.5). Explicit admin action — never an implicit read."""
+    from services.supabase_client import get_supabase
+    from services.demand_intelligence import refresh_cluster as refresh, assign_unlock_days
+    sb = get_supabase()
+    assigned = assign_unlock_days(sb, cluster_key)
+    result = refresh(sb, cluster_key, snapshot=True)
+    result["unlock_days_assigned"] = assigned
+    if request.is_json:
+        return jsonify(result), 200
+    flash(f"Demand refreshed: {result['job_count']} active postings, {assigned} unlock days assigned.")
+    return redirect(url_for("admin.list_clusters"))

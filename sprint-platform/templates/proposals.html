@@ -63,6 +63,33 @@
           <p class="xs muted" style="margin-top:12px">Proposals are human-initiated — you copy-paste and track. We never auto-submit.</p>
         </div>
       </div>
+
+      {% if diagnosis %}
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <h3>🩺 Iteration diagnosis — <b>{{ diagnosis }}</b></h3>
+            <p class="small muted" style="margin-top:6px">5 proposals sent, no responses yet. The system diagnosed the bottleneck from your sprint data: <b>{{ diagnosis }}</b> — a 2-hour remedial micro-course is assigned.</p>
+          </div>
+          <span class="badge b-amber">Day 14 · iteration loop</span>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if proposals %}
+      <div class="card" style="margin-top:18px">
+        <h3 style="margin-bottom:6px">Log an outcome</h3>
+        <p class="small muted" style="margin-bottom:12px">Did a submitted proposal turn into a response, interview, or offer? Track it on your sprint — outcomes power the Day-14 diagnosis.</p>
+        <form method="post" action="/sprints/{{ sprint.id }}/proposals/{{ proposals[0].proposal_id }}/respond" style="display:flex;gap:10px;flex-wrap:wrap">
+          <select name="outcome" aria-label="Outcome">
+            <option value="response">Response</option>
+            <option value="interview">Interview</option>
+            <option value="offer">Offer</option>
+          </select>
+          <button class="btn btn-ink btn-sm" type="submit">Log outcome</button>
+        </form>
+      </div>
+      {% endif %}
       {% endif %}
     </div>
   </div>

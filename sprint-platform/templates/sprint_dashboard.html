@@ -16,8 +16,47 @@
           <h2 style="margin-top:12px">{{ cluster.icon }} {{ cluster.display_name }} Sprint</h2>
           <p class="small muted" style="margin-top:4px">Training against <b style="color:var(--ink)">{{ cluster.job_count }} active jobs</b> · ${{ cluster.avg_rate }}/hr · {{ cluster.cluster_key }} cluster</p>
         </div>
-        <span class="badge b-amber" style="font-size:13px;padding:8px 14px">Day {{ sprint.current_day }} · Phase {{ sprint.phase }}</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="badge b-amber" style="font-size:13px;padding:8px 14px">Day {{ sprint.current_day }} · Phase {{ sprint.phase }}</span>
+          {% if sprint.status != 'completed' %}
+          <form method="post" action="/sprints/{{ sprint.id }}/complete">
+            <button class="btn btn-o btn-sm" type="submit">Complete sprint</button>
+          </form>
+          {% endif %}
+        </div>
       </div>
+
+      <!-- ═══ CONTENT GENERATION PROGRESS (eng-spec §5: async, DB log, polling) ═══ -->
+      <div id="gen-banner" class="card" style="margin-top:18px;display:none;border:1px solid var(--accent);">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div class="spinner" style="width:22px;height:22px;border:3px solid rgba(0,0,0,.12);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></div>
+          <div style="flex:1">
+            <b style="font-family:var(--font-display)">Generating your sprint content…</b>
+            <p class="small muted" style="margin-top:4px" id="gen-msg">Each day's lesson is being written from your cluster's live job postings.</p>
+          </div>
+          <span class="badge b-amber" id="gen-count">0 / 14</span>
+        </div>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      <script>
+      (function () {
+        var banner = document.getElementById('gen-banner');
+        if (!banner) return;
+        var sprintId = "{{ sprint.id }}";
+        function poll() {
+          fetch('/sprints/' + sprintId + '/generation')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d.status === 'ready') { banner.style.display = 'none'; return; }
+              banner.style.display = 'block';
+              document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
+              setTimeout(poll, 3000);
+            })
+            .catch(function () { setTimeout(poll, 5000); });
+        }
+        poll();
+      })();
+      </script>
 
       <!-- phase lock track -->
       <div class="phases-track">
@@ -84,6 +123,45 @@
           <div class="divider"></div>
           <p class="small"><span class="chip">Nudge</span></p>
           <p class="small muted" style="margin-top:8px">{{ nudge }}</p>
+        </div>
+      </div>
+
+      <!-- outcome tracking: contracts + earnings roll-up (eng-spec §5.6) -->
+      <div class="card" style="margin-top:18px">
+        <div class="kv" style="border:none;padding-bottom:10px"><h3>Contracts &amp; Earnings</h3><span class="badge b-green">{{ sprint.contracts_won }} won · ${{ sprint.total_earned }} earned</span></div>
+        {% if contracts %}
+        <table>
+          <thead><tr><th>Client</th><th>Project</th><th>Value</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for c in contracts %}
+            <tr>
+              <td>{{ c.client_name or '—' }}</td>
+              <td>{{ c.project_title or '—' }}</td>
+              <td>${{ c.contract_value or 0 }}</td>
+              <td>
+                {% if c.status == 'active' %}
+                <form method="post" action="/sprints/{{ sprint.id }}/contract/{{ c.id }}/complete" style="display:inline">
+                  <button class="btn btn-o btn-sm" type="submit">Mark complete</button>
+                </form>
+                {% else %}<span class="badge b-green">completed</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="small muted" style="margin:6px 0 14px">No contracts recorded yet. Log your first one — earnings roll up on the sprint record.</p>
+        {% endif %}
+        <div style="margin-top:14px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:16px">
+          <p class="small" style="font-weight:700;margin-bottom:10px">Record a contract</p>
+          <form method="post" action="/sprints/{{ sprint.id }}/contract/add" style="display:flex;gap:10px;flex-wrap:wrap">
+            <input type="text" name="client_name" placeholder="Client" aria-label="Client name">
+            <input type="text" name="project_title" placeholder="Project" aria-label="Project title">
+            <input type="number" name="contract_value" placeholder="Value $" aria-label="Contract value">
+            <input type="number" name="hours_worked" placeholder="Hours" aria-label="Hours worked">
+            <input type="text" name="platform" placeholder="Platform" aria-label="Platform">
+            <button class="btn btn-p btn-sm" type="submit">Add contract</button>
+          </form>
         </div>
       </div>
     </div>

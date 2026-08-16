@@ -56,6 +56,22 @@
           <div class="check-item" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox"></div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result</div></div></div>
         </div>
       </div>
+
+      <!-- case study (Days 9-10) — Problem / Solution / Result (eng-spec §3 J5) -->
+      <div class="card" style="margin-top:18px">
+        <h3 style="margin-bottom:6px">Case Study · Problem / Solution / Result</h3>
+        <p class="small muted" style="margin-bottom:12px">Write it in client format during Days 9–10. It doubles as your first proposal draft and appears on your public profile.</p>
+        <form method="post" action="/sprints/{{ sprint.id }}/case-study" style="display:grid;gap:10px">
+          <input type="text" name="title" placeholder="Case study title — e.g. Abandoned-Cart Recovery Flow" aria-label="Case study title">
+          <textarea name="problem" rows="2" placeholder="Problem" aria-label="Problem"></textarea>
+          <textarea name="solution" rows="2" placeholder="Solution" aria-label="Solution"></textarea>
+          <textarea name="result" rows="2" placeholder="Result" aria-label="Result"></textarea>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-ink btn-sm" type="submit">Save case study</button>
+            {% if case_studies %}<span class="xs muted">Saved: {{ case_studies | map(attribute='title') | join(', ') }}</span>{% endif %}
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </section>

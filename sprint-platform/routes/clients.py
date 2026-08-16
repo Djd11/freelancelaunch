@@ -1,4 +1,9 @@
-"""clients blueprint — badge-filtered freelancer search (eng-spec §3 J7, arch §5.7)."""
+"""clients blueprint — badge-filtered freelancer search (eng-spec §3 J7, arch §5.7).
+
+Powered by the public_freelancers view (db/schema.sql): badges joined with
+user_profiles (is_public only), job_clusters, and sprints — fresh, verified
+supply only. The view does the filtering; this route applies cluster + recency.
+"""
 import datetime
 from flask import Blueprint, render_template, request
 
@@ -32,36 +37,26 @@ def freelancers():
     except (TypeError, ValueError):
         within_days = 30
 
-    badges = sb.table("badges").select("*").execute().data
+    # public_freelancers already excludes non-public profiles (view WHERE clause).
+    rows = sb.table("public_freelancers").select("*").execute().data
     if cluster_key:
-        badges = [b for b in badges if b.get("cluster_key") == cluster_key]
-    badges = [b for b in badges if _days_ago(b.get("issued_at")) <= within_days]
+        rows = [r for r in rows if r.get("cluster_key") == cluster_key]
+    rows = [r for r in rows if _days_ago(r.get("issued_at")) <= within_days]
 
-    profiles = {r["user_id"]: r for r in sb.table("user_profiles").select("*").execute().data}
-    sprints = {r["id"]: r for r in sb.table("sprints").select("*").execute().data}
-    clusters = {r["cluster_key"]: r for r in sb.table("job_clusters").select("*").execute().data}
-
-    out = []
-    for b in badges:
-        p = profiles.get(b.get("user_id"))
-        if not p or p.get("is_public") is False:
-            continue
-        sprint = sprints.get(b.get("sprint_id"), {})
-        cluster = clusters.get(b.get("cluster_key"), {})
-        out.append({
-            "display_name": p.get("display_name"),
-            "headline": p.get("headline"),
-            "jobs_now": cluster.get("job_count", 0),
-            "days_ago": _days_ago(b.get("issued_at")),
-            "proposals_sent": sprint.get("proposals_sent", 0),
-            "interviews_held": sprint.get("interviews_held", 0),
-            "contracts_won": sprint.get("contracts_won", 0),
-        })
+    freelancers = [{
+        "display_name": r.get("display_name"),
+        "headline": r.get("headline"),
+        "jobs_now": r.get("jobs_now") or 0,
+        "days_ago": _days_ago(r.get("issued_at")),
+        "proposals_sent": r.get("proposals_sent") or 0,
+        "interviews_held": r.get("interviews_held") or 0,
+        "contracts_won": r.get("contracts_won") or 0,
+    } for r in rows]
 
     all_clusters = sb.table("job_clusters").select("cluster_key,display_name").execute().data
     cluster_name = next((c["display_name"] for c in all_clusters if c["cluster_key"] == cluster_key), cluster_key or "any skill")
 
     return render_template(
-        "clients.html", freelancers=out, all_clusters=all_clusters,
+        "clients.html", freelancers=freelancers, all_clusters=all_clusters,
         cluster_key=cluster_key, cluster_name=cluster_name,
     )

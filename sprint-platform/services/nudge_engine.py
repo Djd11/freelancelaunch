@@ -12,6 +12,12 @@ _PHASE_C = ("5 proposals, one diagnosis loop. Send the next one — momentum "
             "compounds at the finish line.")
 
 
+def recompute_confidence(current):
+    """Confidence recompute on a progress mark (eng-spec §4.4: confidence is
+    recomputed by the nudge engine on every progress mark)."""
+    return min(100, (current or 50) + 3)
+
+
 def nudge(sprint, momentum):
     phase = sprint.get("phase", "A")
     if phase == "A":

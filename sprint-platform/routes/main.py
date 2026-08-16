@@ -1,8 +1,14 @@
 """main blueprint — landing, sprint picker, request-a-sprint, pricing (arch §4.2)."""
-from flask import Blueprint, render_template, request, redirect, url_for, g
+import datetime
+import threading
+
+from flask import Blueprint, render_template, request, redirect, url_for, g, current_app
 
 from routes import require_login
 from services.supabase_client import get_supabase
+from services.sprint_planner import create_plan
+from services.copywork_engine import create_projects
+from services.lesson_engine import generate_sprint_content
 
 main_bp = Blueprint("main", __name__)
 
@@ -19,12 +25,34 @@ def _active_clusters(sb):
     return sorted(rows, key=lambda r: (r.get("job_count") or 0), reverse=True)
 
 
+def _open_cohort(sb, cluster_key):
+    """Open a new active cohort for the cluster (arch §5.2: 'create cohort
+    (or join existing active cohort)'). Named Cohort #N by count."""
+    today = datetime.date.today()
+    count = sb.table("cohorts").select("id").eq("cluster_key", cluster_key).execute().data
+    row = sb.table("cohorts").insert({
+        "cluster_key": cluster_key,
+        "name": f"Cohort #{len(count) + 1}",
+        "start_date": today.isoformat(),
+        "end_date": (today + datetime.timedelta(days=13)).isoformat(),
+        "status": "active",
+    }).execute().data[0]
+    return row["id"]
+
+
 @main_bp.route("/")
 def index():
     sb = get_supabase()
     clusters = _active_clusters(sb)
     featured = clusters[0] if clusters else EMPTY_FEATURED
     return render_template("landing.html", featured=featured, clusters=clusters)
+
+
+@main_bp.route("/topics")
+def topics():
+    """Topics nav (eng-spec J1). The topic catalog IS the sprint catalog —
+    route to the demand-validated sprint list (auth-gated)."""
+    return redirect(url_for("main.sprints"))
 
 
 @main_bp.route("/sprints")
@@ -60,8 +88,11 @@ def request_sprint():
     return redirect(url_for("main.sprints"))
 
 
-@main_bp.route("/sprints/<cluster_key>/start", methods=["GET", "POST"])
+@main_bp.route("/sprints/<cluster_key>/start", methods=["POST"])
 def start_sprint(cluster_key):
+    """Enroll: create a sprint for the cluster, join/open a cohort, generate the
+    14-day plan + copy-work projects (eng-spec §5.2). POST-only — a GET must
+    never have side effects."""
     gate = require_login()
     if gate:
         return gate
@@ -72,9 +103,9 @@ def start_sprint(cluster_key):
     cluster = cluster[0]
     user_id = g.user["id"]
 
-    # Join the latest active cohort for this cluster, else start a new one.
+    # Join the latest active cohort for this cluster, else open a new one.
     cohort = sb.table("cohorts").select("*").eq("cluster_key", cluster_key).eq("status", "active").limit(1).execute().data
-    cohort_id = cohort[0]["id"] if cohort else None
+    cohort_id = cohort[0]["id"] if cohort else _open_cohort(sb, cluster_key)
 
     sprint = sb.table("sprints").insert({
         "user_id": user_id,
@@ -85,21 +116,42 @@ def start_sprint(cluster_key):
         "status": "active",
     }).execute().data[0]
 
-    phase_map = {d: "A" for d in range(1, 6)} | {d: "B" for d in range(6, 11)} | {d: "C" for d in range(11, 15)}
-    for d in range(1, 15):
-        phase = phase_map[d]
-        action_type = "copywork" if d < 6 else ("contract" if d <= 8 else ("case-study" if d <= 10 else "proposal"))
-        sb.table("sprint_days").insert({
-            "sprint_id": sprint["id"], "phase": phase, "day_no": d,
-            "title": f"Day {d}", "description": "",
-            "action_type": action_type, "action_payload": {}, "is_done": False,
-        }).execute()
+    # Skeleton first (fast, always works), then LLM content fills in async —
+    # the request never waits on the LLM (eng-spec §5: async generation, DB
+    # progress log, frontend polling). Each sprint_days payload the worker
+    # populates IS the progress the dashboard polls.
+    create_plan(sb, sprint["id"])
+    create_projects(sb, sprint["id"])
     sb.table("sprint_unlock_snapshots").insert({
         "sprint_id": sprint["id"], "user_id": user_id,
         "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
     }).execute()
 
+    app = current_app._get_current_object()
+    threading.Thread(
+        target=_generate_in_background, args=(app, sprint["id"]), daemon=True,
+    ).start()
     return redirect(url_for("sprints.dashboard", sprint_id=sprint["id"]))
+
+
+def _generate_in_background(app, sprint_id):
+    """Background LLM content generation — app context + a dedicated Supabase
+    client (not the shared request-scoped one, so the worker's HTTP/2 traffic
+    never races the request threads — see the journey test's 'Server
+    disconnected' flake)."""
+    with app.app_context():
+        try:
+            from supabase import create_client
+            sb = create_client(
+                app.config.get("SUPABASE_URL") or "",
+                app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+            )
+            generate_sprint_content(sb, sprint_id)
+        except Exception:
+            # No-500: generation must never take the sprint down; the skeleton
+            # + deterministic fallbacks in lesson_engine keep every day usable.
+            import logging
+            logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
 
 
 @main_bp.route("/pricing")

@@ -19,6 +19,9 @@ def _resolve_sprint_id(context, fixture_id, cluster="email-automation", user_fix
 def _get(context, path):
     context.response = context.client.get(path)
     context.page_html = context.response.get_data(as_text=True)
+    # GET endpoints may return JSON (e.g. /generation progress, day-complete)
+    # — parse it so JSON assertion steps work after a GET too.
+    context.last_json = context.response.get_json(silent=True)
     return context.response
 
 

@@ -74,3 +74,8 @@ Feature: Sprint Dashboard (mockup screen 3)
     Given an active sprint "other-sprint" for another user
     When I GET "/sprints/other-sprint"
     Then the response redirects to "/dashboard/"
+
+  Scenario: The dashboard shows the cohort line with its end date
+    When I GET "/sprints/s1"
+    Then the page contains the text "Cohort #12"
+    And the page contains the text "ends 2026-08-23"

@@ -20,6 +20,22 @@ Feature: Day View & Copy-Work (mockup screen 4)
     Then the page contains the text "TwoPanel"
     And the page does not contain the text "MP4"
 
+  Scenario: The lesson content is generated from the cluster's live job posting
+    When I GET "/sprints/s1/day/4"
+    Then the page contains the text "Klaviyo flow setup for store"
+    And the page contains the text "how to"
+
+  Scenario: The day view renders the generated copy-work anatomy (steps + rubric)
+    When I GET "/sprints/s1/day/4"
+    Then the page contains the text "Trigger on Checkout Started"
+    And the page contains the text "auto-checked by verification service"
+
+  Scenario: The content generation progress is reported as a DB-backed count
+    When I GET "/sprints/s1/generation"
+    Then the response status is 200
+    And the JSON has field "total" equal to 14
+    And the JSON path "generated" is an integer
+
   Scenario: A completed day shows the unlock uptick banner
     Given day 4 of sprint "s1" is marked done
     And the meter for sprint "s1" has unlocked 186 of 450 with delta 38
