@@ -1,0 +1,46 @@
+import { createRoot } from "react-dom/client";
+import { Player } from "@remotion/player";
+import { TwoPanelLesson } from "./TwoPanelLesson";
+
+/**
+ * Pre-built browser bundle (static/video/lesson-player.js) — mounted by the
+ * Flask day view. The template sets window.__LESSON_PROPS__ with the day's
+ * lesson (title/script/key_points/voiceover) and this root renders the
+ * @remotion/player <Player> around the TwoPanelLesson composition. Pure
+ * JS playback — no MP4 (docs/decisions.md D8).
+ */
+
+type LessonProps = {
+  title?: string;
+  script?: string;
+  key_points?: string[];
+  voiceover?: { url?: string; duration_seconds?: number };
+};
+
+function mount() {
+  const el = document.getElementById("lesson-player");
+  if (!el) return;
+  const props: LessonProps = (window as any).__LESSON_PROPS__ || {};
+  const duration = Math.max(10, props.voiceover?.duration_seconds || 20);
+  const root = createRoot(el);
+  root.render(
+    <Player
+      component={TwoPanelLesson}
+      inputProps={props as any}
+      durationInFrames={Math.round(duration * 30)}
+      compositionWidth={1920}
+      compositionHeight={1080}
+      fps={30}
+      controls
+      autoPlay
+      loop
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", mount);
+} else {
+  mount();
+}

@@ -20,6 +20,13 @@ Feature: Day View & Copy-Work (mockup screen 4)
     Then the page contains the text "TwoPanel"
     And the page does not contain the text "MP4"
 
+  Scenario: A lesson with a voiceover renders the two-panel video player
+    Given day 4 of sprint "s1" has a generated lesson with a voiceover
+    When I GET "/sprints/s1/day/4"
+    Then the response status is 200
+    And the page contains an element with attribute "data-lesson-player"
+    And the page contains the text "TwoPanel"
+
   Scenario: The lesson content is generated from the cluster's live job posting
     When I GET "/sprints/s1/day/4"
     Then the page contains the text "Klaviyo flow setup for store"

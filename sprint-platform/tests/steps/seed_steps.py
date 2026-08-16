@@ -201,6 +201,29 @@ def step_other_sprint(context, sid):
     seed_sprint(adapter, sid, "email-automation", OTHER_USER_ID, current_day=4)
 
 
+@given('day {n} of sprint "{sid}" has a generated lesson with a voiceover')
+def step_day_lesson_voiceover(context, n, sid):
+    """Seed a generated lesson whose payload carries a voiceover URL + duration
+    (what the async video worker writes) so the day view can render the
+    two-panel lesson player instead of the kinetic-text fallback."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("sprint_days").update({
+        "action_payload": {
+            "lesson": {
+                "title": "Klaviyo flow setup for store: how to rebuild a real flow",
+                "script": "Your target job is 'Klaviyo flow setup for store'. "
+                          "Today you rebuild the smallest real version of what it asks for.",
+                "key_points": ["What the posting literally asks for", "The smallest reproducible piece"],
+                "voiceover": {
+                    "url": "https://example.com/voiceover/lesson.mp3",
+                    "duration_seconds": 42.0,
+                },
+            }
+        },
+    }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
+
+
 @given('day {n} of sprint "{sid}" is marked done')
 def step_day_done(context, n, sid):
     adapter = get_live_adapter()

@@ -13,7 +13,7 @@ source of truth.
   - `docs/engineering-spec.md` — product contract, journeys, mechanics
   - `docs/architecture.md` — system design, layers, data flows
   - `docs/api.md` — endpoint/API reference (synced from `routes/`)
-  - `docs/decisions.md` — D1–D8 decisions + rationale
+  - `docs/decisions.md` — D1–D8 decisions + rationale (D8: two-panel Remotion JS player + edge-tts voiceover in v1, no MP4)
   - `docs/bdd/` — 13 Gherkin feature files, ported to the behave suite in `tests/features/`
   - `db/schema.sql` — fresh PostgreSQL/Supabase schema
 

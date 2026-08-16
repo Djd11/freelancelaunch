@@ -61,7 +61,7 @@ Three pillars:
         ▲
         │  (only the service layer talks to LLM / external)
  ┌──────┴─────────────────────────────┐
- │ External: LLM fallback · edge-tts  │  (Remotion/YouTube deferred)
+ │ External: LLM fallback · edge-tts  │  (Remotion Player in-browser · YouTube deferred)
  └────────────────────────────────────┘
 ```
 
@@ -96,6 +96,7 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 | `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
 | `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
 | `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — LLM → deterministic job-grounded fallback; **the async worker** (`generate_sprint_content`) + progress count |
+| `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
 | `copywork_engine` | The 3 replication projects (mockup titles) + `gap_fill_topic` on project 2 |
 | `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
 | `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (all 3 projects done / deliverable URL present) + peer pass via `record()` |
@@ -111,7 +112,7 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 `db/schema.sql` — Postgres dual-funnel-free schema (sprint owns outcomes). Auth + Storage beside the DB. Access via service-role client for MVP.
 
 ### 4.5 External integrations
-LLM providers (fallback chain), edge-tts (HTML preview voiceover). Remotion/YouTube deferred out of v1.
+LLM providers (fallback chain), edge-tts (two-panel lesson voiceover), and a pre-built Remotion Player bundle (`static/video/lesson-player.js`) served by Flask — the day view plays the composition in-browser (kinetic text + TTS, no MP4). YouTube distribution deferred out of v1.
 
 ---
 
@@ -216,7 +217,7 @@ requires the answer to echo the job's terminology).
 
 | Job | Trigger | Mechanism |
 |-----|---------|-----------|
-| Sprint content generation | `POST /sprints/<cluster_key>/start` | background thread, populated-payload count = DB log, `GET /sprints/<id>/generation` polling |
+| Sprint content generation | `POST /sprints/<cluster_key>/start` | background thread, populated-payload count = DB log, `GET /sprints/<id>/generation` polling; each day's lesson also gets an edge-tts voiceover (`video_engine`) stored in the `voiceovers` Storage bucket |
 | Gap-Fill detection | project 2 anatomy (deterministic in v1) | inline — `gap_fill_topic` on the day view |
 | Badge issuance | `GET /sprints/<id>/badge` (after completion) | `badge_engine`, idempotent (gate B pass + completed) |
 | Feed refresh / demand snapshots | admin `POST /admin/clusters/<key>/refresh` or nightly cron | `demand_intelligence` |

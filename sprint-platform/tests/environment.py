@@ -225,6 +225,21 @@ def before_scenario(context, scenario):
         context.app.config["ADMIN_USER_ID"] = admin_id
     context.db = adapter  # Steps will use adapter.seed_table() and adapter.rows()
 
+    # Restore the demo user's canonical verified platforms — scenarios that
+    # seed user_platforms via seed_table track them for cleanup, and after
+    # cleanup the demo user's upwork/fiverr rows are gone (they're never
+    # re-upserted until before_all re-runs). Any later scenario relying on
+    # the static platforms (e.g. ui-ux proposal submit) then fails with
+    # "platform not verified". Idempotent restore here keeps the suite
+    # order-independent.
+    with context.app.app_context():
+        demo_id = adapter.resolve_user_id(TEST_USER_ID)
+        for platform in ("upwork", "fiverr"):
+            adapter.sb.table("user_platforms").upsert(
+                {"user_id": demo_id, "platform": platform},
+                on_conflict="user_id,platform",
+            ).execute()
+
     context.response = None
     context.page_html = ""
     context.last_json = None

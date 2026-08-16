@@ -228,6 +228,16 @@ def generate_sprint_content(sb, sprint_id):
         lesson = lesson_for_day(sb, sprint, day_row, project)
         new_payload = dict(payload)
         new_payload["lesson"] = lesson
+        # Two-panel voiceover (D8: kinetic text + TTS): generate edge-tts MP3
+        # + duration and store on the lesson. Best-effort — if the TTS/Storage
+        # pipeline can't run, the lesson still renders as kinetic text.
+        try:
+            from services.video_engine import voiceover_for_lesson
+            vo = voiceover_for_lesson(sb, sprint_id, day_row["day_no"], lesson)
+            if vo:
+                new_payload["lesson"]["voiceover"] = vo
+        except Exception:
+            pass
         sb.table("sprint_days").update({"action_payload": new_payload}) \
             .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
 

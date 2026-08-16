@@ -66,7 +66,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 ### J4 · Day View (`/sprints/<id>/day/<n>`) — Phase A example
 - Day header: "Phase A · Day 4 · Copy-Work · Project 2 — Rebuild the Abandoned-Cart Flow".
 - **Day-complete uptick banner:** shown after completing the day: "🎉 Day 4 complete — +38 postings → 186 of 450 active jobs open to you."
-- **Watch · Lesson:** TwoPanel HTML preview (kinetic text + TTS). No MP4 required in-request; MP4 is a later YouTube-distribution concern. The lesson script + key points are generated per day from the cluster's live job posting (`lesson_engine.lesson_for_day`, LLM with a deterministic job-grounded fallback) and stored in `sprint_days.action_payload.lesson`.
+- **Watch · Lesson:** TwoPanel JS player — a pre-built Remotion composition (`static/video/lesson-player.js`) with kinetic text + edge-tts voiceover, played in-browser (no MP4; YouTube distribution is a later concern). The lesson script + key points are generated per day from the cluster's live job posting (`lesson_engine.lesson_for_day`, LLM with a deterministic job-grounded fallback) and stored in `sprint_days.action_payload.lesson`; the async content worker also generates the voiceover (`video_engine` → edge-tts → `voiceovers` Storage bucket) and stores `lesson.voiceover = {url, duration_seconds}`. When no voiceover exists yet, the day view renders the kinetic-text fallback (No-500).
 - **Copy-Work Task:** trigger / sequence / dynamic block / coupon steps rendered from the project's generated `clone_steps`; "Replicate from scratch"; "Pass 3-point rubric" (auto-checked) rendered from the project's generated `rubric`.
 - **Gap-Fill preview card:** auto-detected nuance from the previous project ("mobile responsiveness", carried on copy-work project 2's `gap_fill_topic`) → "Day 5 serves a targeted 30-min micro-lesson."
 - Every Phase A/C/B day renders the correct phase-specific action from `sprint_days.action_type`.
@@ -162,7 +162,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 1. ✅ **Resolved:** client search surface — dedicated route `GET /clients/freelancers?cluster=&within_days=` powered by the `public_freelancers` view (live DB, `routes/clients.py`).
 2. ✅ **Resolved:** cohort creation — **auto-open on enrollment**: the learner joins the latest active cohort for the cluster, or a new `Cohort #N` (14-day window) is opened for them (`routes/main.py _open_cohort`); admins can still create cohorts manually.
 3. **Payments**: nav shows "Pricing" but no tiers in the mockup. Recommend deferring monetization decisions to a pricing spec, keeping the schema payment-ready (`user_profiles.tier` not yet modeled).
-4. **MP4/YouTube**: mockup shows HTML previews only. Recommend keeping the overnight Remotion pipeline out of v1 scope; revisit for acquisition later.
+4. **YouTube distribution**: the two-panel lesson is a JS Remotion Player composition in v1 (no MP4 render). Rendering distributable MP4s for YouTube stays out of v1; revisit for acquisition later.
 
 ---
 

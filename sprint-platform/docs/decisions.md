@@ -11,7 +11,7 @@ Record of the decisions that shaped this new project. Source of truth: `./mockup
 | D5 | Stack | **Flask + Supabase + Jinja2 + Tailwind**, fresh codebase, LLM fallback chain retained. | Proven, $0–15/mo per `cost-efficiency-analysis.md`. |
 | D6 | Gates | **Two verification gates**: A→B (copy-work rubric) and B→C (mock contract). | Mockup shows both: "Unlocks when Phase A passes verification" and the "Verification Gate locks Phase C". |
 | D7 | Outcomes | Proposal/response/interview/contract/earnings counters **live on `sprints`**. | Removes the redundant `freelance_pipeline`; the sprint is the single record. |
-| D8 | Videos | **HTML TwoPanel + TTS previews only** in v1. Remotion/YouTube deferred. | Mockup day view: "TwoPanel HTML preview — kinetic text + TTS (no MP4)". |
+| D8 | Videos | **TwoPanel JS player: Remotion composition + edge-tts voiceover** in v1 (played in-browser, no MP4). YouTube distribution deferred. | Mockup day view: "TwoPanel HTML preview — kinetic text + TTS (no MP4)". Implemented as a pre-built Remotion Player bundle (`static/video/lesson-player.js`) + async edge-tts voiceover in Supabase Storage; kinetic-text fallback when no voiceover yet (No-500). |
 
 ## Superseded docs
 - `web-app/docs/sprint/engineering-spec.md` + `web-app/docs/sprint/architecture.md` (v2 sprint track) — superseded by this project's specs.
