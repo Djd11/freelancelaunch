@@ -130,6 +130,16 @@ def step_redirect(context, path):
     assert loc == path, f"expected Location {path}, got {loc}"
 
 
+@then('the response redirects to the sprint dashboard')
+def step_redirect_sprint_dashboard(context):
+    import re as _re
+    assert context.response.status_code in (301, 302, 303, 307, 308), \
+        f"expected redirect, got {context.response.status_code}"
+    loc = _location(context)
+    assert _re.search(r"/sprints/[0-9a-fA-F-]{36}$", loc), \
+        f"expected redirect to a sprint dashboard, got Location {loc!r}"
+
+
 @then('the page contains the text "{text}"')
 def step_contains(context, text):
     assert text in _html(context), f"page missing text: {text!r}"
@@ -179,6 +189,12 @@ def step_b_not_locked(context):
 def step_json_true(context, field):
     assert context.last_json is not None, "no JSON response"
     assert context.last_json.get(field) is True, f"{field} != true"
+
+
+@then('the JSON has field "{field}" equal to false')
+def step_json_false(context, field):
+    assert context.last_json is not None, "no JSON response"
+    assert context.last_json.get(field) is False, f"{field} != false"
 
 
 @then('the JSON has field "{field}" present')

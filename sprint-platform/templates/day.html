@@ -58,6 +58,12 @@
             <input type="hidden" name="rubric_url" value="">
             <button class="btn btn-p" type="submit">Submit for check</button>
           </form>
+          {% if not day_done %}
+          <div class="divider"></div>
+          <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/complete">
+            <button class="btn btn-ink" type="submit">Mark day {{ day.day_no }} complete →</button>
+          </form>
+          {% endif %}
         </div>
       </div>
 

@@ -14,7 +14,7 @@ source of truth.
   - `docs/architecture.md` — system design, layers, data flows
   - `docs/api.md` — endpoint/API reference (synced from `routes/`)
   - `docs/decisions.md` — D1–D8 decisions + rationale
-  - `docs/bdd/` — 11 Gherkin feature files, ported to the behave suite in `tests/features/`
+  - `docs/bdd/` — 13 Gherkin feature files, ported to the behave suite in `tests/features/`
   - `db/schema.sql` — fresh PostgreSQL/Supabase schema
 
 ## Key mechanics (from the mockup)

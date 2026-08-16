@@ -64,9 +64,20 @@ def chat():
         f"Your target job says: \"{(job_desc or 'an anonymized live posting')[:80]}\" — "
         f"what's one part you're unsure about?"
     )
+    # Replay the last few recorded turns so the chat shows the actual exchange
+    # (the turn endpoint persists to mentor_sessions; the page renders them).
+    sessions = sb.table("mentor_sessions").select("turn_json") \
+        .eq("user_id", g.user["id"]).order("created_at", desc=True).limit(5).execute().data
+    history = []
+    for s in reversed(sessions):
+        for turn in s.get("turn_json") or []:
+            if turn.get("question"):
+                history.append({"role": "user", "text": turn["question"]})
+            if turn.get("answer"):
+                history.append({"role": "mentor", "text": turn["answer"]})
     return render_template("mentor.html", messages=[
         {"role": "mentor", "text": intro, "context": context_line},
-    ])
+    ] + history)
 
 
 @mentor_bp.route("/mentor/turn", methods=["POST"])

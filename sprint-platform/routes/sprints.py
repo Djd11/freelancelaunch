@@ -119,6 +119,11 @@ def complete_day(sprint_id, day_no):
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"ok": False, "error": "not found"}), 404
 
+    # A day number outside 1..14 (or a day with no row) must never advance or
+    # complete the sprint — refuse it (negative-path hardening, api.feature).
+    if not load_day(sb, sprint_id, day_no):
+        return jsonify({"ok": False, "error": "day not found"}), 404
+
     sb.table("sprint_days").update({"is_done": True}).eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
 
     next_day = min(day_no + 1, 14)
