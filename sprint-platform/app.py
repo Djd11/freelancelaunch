@@ -71,6 +71,12 @@ def create_app(test_config=None):
     def inject_globals():
         return {"user": g.get("user")}
 
+    @app.route("/favicon.ico")
+    def favicon():
+        # Chrome requests /favicon.ico regardless of the inline data-URI icon
+        # after form-POST navigations — serve the real file so no 404 shows.
+        return app.send_static_file("favicon.ico")
+
     @app.route("/health")
     def health():
         from services.supabase_client import get_supabase

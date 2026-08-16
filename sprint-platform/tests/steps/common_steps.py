@@ -115,6 +115,18 @@ def step_post_json(context, path, payload):
         get_live_adapter().track_created(table, context.last_json.get("id"))
 
 
+@when('I POST to "{path}" with form data {payload}')
+def step_post_form(context, path, payload):
+    """Browser-form path: application/x-www-form-urlencoded (NOT JSON).
+
+    Covers the exact encoding real <form method="post"> submissions use —
+    the JSON-only suite would stay green while browser forms 415 (Flask ≥2.1
+    request.get_json() raises on form bodies unless silent=True).
+    """
+    data = _json.loads(payload)
+    _post(context, path, data=data)
+
+
 # ── Then: HTTP assertions ──────────────────────────────────────────
 @then('the response status is {n}')
 def step_status(context, n):
