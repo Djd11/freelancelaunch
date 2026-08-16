@@ -71,6 +71,15 @@ def step_ui_has_class(context, cls):
     assert f'class="' in html and f"{cls}" in html, f"page has no element with class {cls!r}"
 
 
+@then('the page does not contain an element with class "{cls}"')
+def step_ui_not_has_class(context, cls):
+    """Negative class check — e.g. a draft case study check-item must NOT
+    carry the 'done' class (profile.html renders it only when not is_draft)."""
+    html = getattr(context, "page_html", "") or (
+        context.response.get_data(as_text=True) if context.response is not None else ""
+    )
+    assert f"{cls}" not in html, f"page unexpectedly has element with class {cls!r}"
+
 @then('the page contains a link to the anchor "{anchor}"')
 def step_ui_has_anchor_link(context, anchor):
     html = getattr(context, "page_html", "") or (

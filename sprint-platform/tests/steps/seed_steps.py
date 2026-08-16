@@ -578,6 +578,27 @@ def step_case_study(context, title):
     }], on_conflict="id")
 
 
+@given('the user has a draft case study "{title}"')
+def step_case_study_draft(context, title):
+    """A case study still in draft (Mock Contract not passed) — the profile
+    check-item must NOT carry the 'done' class for it (profile.html renders
+    the done state only when is_draft is false)."""
+    adapter = get_live_adapter()
+    real_user_id = adapter.resolve_user_id(TEST_USER_ID)
+    sprints = adapter.sb.table("sprints").select("*").eq("user_id", real_user_id).eq("status", "completed").limit(1).execute().data
+    sprint_id = sprints[0]["id"] if sprints else f"cs-fixture-{title}"
+    adapter.seed_table("case_studies", [{
+        "id": f"cs-draft-{abs(hash(title)) % 100000}",
+        "sprint_id": sprint_id,
+        "user_id": real_user_id,
+        "title": title,
+        "problem": "Draft problem statement.",
+        "solution": "Draft solution outline.",
+        "result": "Draft result notes.",
+        "is_draft": True,
+    }], on_conflict="id")
+
+
 # ── mentor ─────────────────────────────────────────────────────────
 @given('the mentor context is job "{job}" with progress {pct}%')
 def step_mentor_context(context, job, pct):

@@ -31,6 +31,26 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
     And the page contains the text "Automated flow check"
     And the page contains the text "Case study written"
 
+  Scenario: Profile badge check-item renders as done
+    Given a badge for user "Maya Chen" on cluster "email-automation" with jobs_at_issue 410
+    When I GET "/profile/maya"
+    Then the response status is 200
+    And the page contains an element with class "check-item done"
+
+  Scenario: Profile case-study check-item renders done when published
+    Given the user has a case study "Abandoned-Cart Recovery Flow"
+    When I GET "/profile/maya"
+    Then the response status is 200
+    And the page contains the text "Abandoned-Cart Recovery Flow"
+    And the page contains an element with class "check-item done"
+
+  Scenario: Profile case-study check-item stays incomplete while draft
+    Given the user has a draft case study "Abandoned-Cart Recovery Flow"
+    When I GET "/profile/maya"
+    Then the response status is 200
+    And the page contains the text "draft — completes with Mock Contract"
+    And the page does not contain an element with class "check-item done"
+
   # ── SUBMIT BUTTONS / FORMS (field-level, not just presence) ────────
   Scenario: Add-contract form submits all five fields and rolls up earnings
     When I add a contract of value 300 with 20 hours on platform "upwork" for sprint "s1"
