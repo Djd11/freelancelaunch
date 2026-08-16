@@ -44,6 +44,12 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
     Then the response status is 302
     And a case study titled "Abandoned-Cart Recovery Flow" exists for sprint "s1"
 
+  Scenario: Contract "Mark complete" CTA finishes the contract and lands on the dashboard
+    When I add a contract of value 300 with 20 hours on platform "upwork" for sprint "s1"
+    And I mark the most recent contract complete for sprint "s1"
+    Then the response redirects to the sprint dashboard
+    And sprint "s1" has contracts_completed equal to 1
+
   Scenario: Proposal outcome select rejects an invalid outcome (no counter bump)
     Given Phase B has passed verification for sprint "s1"
     And a draft proposal "p1" exists for job "email-automation-1" on sprint "s1"

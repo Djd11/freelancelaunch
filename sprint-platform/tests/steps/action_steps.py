@@ -63,6 +63,18 @@ def step_log_outcome(context, outcome, pid, sid):
     _post(context, f"/sprints/{sid}/proposals/{pid}/respond", data={"outcome": outcome})
 
 
+@when('I mark the most recent contract complete for sprint "{sid}"')
+def step_contract_complete(context, sid):
+    """POST to /sprints/<id>/contract/<cid>/complete for the sprint's newest
+    contract (the dashboard "Mark complete" CTA on each active contract row)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("contracts").select("id") \
+        .eq("sprint_id", real_sprint_id).order("created_at", desc=True).limit(1).execute().data
+    assert rows, f"no contracts for sprint {sid} to mark complete"
+    _post(context, f"/sprints/{sid}/contract/{rows[0]['id']}/complete", data={})
+
+
 @when('I save the case study "{title}" for sprint "{sid}"')
 def step_save_case_study(context, title, sid):
     _post(context, f"/sprints/{sid}/case-study", data={
@@ -96,6 +108,13 @@ def step_contracts_won(context, sid, n):
     row = _sprint_row(context, sid)
     assert int(row.get("contracts_won") or 0) == n, \
         f"contracts_won={row.get('contracts_won')}, expected {n}"
+
+
+@then('sprint "{sid}" has contracts_completed equal to {n:d}')
+def step_contracts_completed(context, sid, n):
+    row = _sprint_row(context, sid)
+    assert int(row.get("contracts_completed") or 0) == n, \
+        f"contracts_completed={row.get('contracts_completed')}, expected {n}"
 
 
 @then('sprint "{sid}" has total_earned equal to {n:d}')
