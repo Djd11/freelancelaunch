@@ -126,8 +126,13 @@ h3{font-size:18px;line-height:1.3}
 /* ── Check items ────────────────────────────────────────────────── */
 .check-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border:1px solid var(--hairline);border-radius:var(--radius);margin-bottom:10px;background:var(--surface);transition:border-color .15s,background .15s}
 .check-item.done{background:var(--green-soft);border-color:#CBE0CB}
-.check-item .cbox{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--hairline-strong);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:var(--surface)}
-.check-item.done .cbox{background:var(--green);border-color:var(--green)}
+/* Status indicators, NOT checkboxes: state is set server-side (day done,
+   gate reviews, case-study draft) — never by clicking. Pending = dashed
+   circle with a dot; done = solid green ✓. No empty-square affordance. */
+.check-item .cbox{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--hairline-strong);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:transparent;cursor:default}
+.check-item .cbox::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--hairline-strong)}
+.check-item.done .cbox{background:var(--green);border:1.5px solid var(--green)}
+.check-item.done .cbox::after{display:none}
 
 /* ── Mentor chat ────────────────────────────────────────────────── */
 .chat{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
