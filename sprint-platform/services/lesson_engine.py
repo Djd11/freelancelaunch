@@ -224,6 +224,7 @@ def generate_sprint_content(sb, sprint_id):
                 project = proj[0] if proj else None
             lesson = lesson_for_day(sb, sprint, day_row, project)
             new_payload = dict(payload)
+            new_payload.pop("generation_error", None)  # a successful retry heals the marker
             new_payload["lesson"] = lesson
             # Two-panel voiceover (D8: kinetic text + TTS): generate edge-tts MP3
             # + duration and store on the lesson. Best-effort — if the TTS/Storage

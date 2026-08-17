@@ -35,6 +35,7 @@
             <p class="small muted" style="margin-top:4px" id="gen-msg">Each day's lesson is being written from your cluster's live job postings.</p>
           </div>
           <span class="badge b-amber" id="gen-count">0 / 14</span>
+          <button type="button" id="gen-retry" class="btn btn-p" style="display:none">Retry generation</button>
         </div>
       </div>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
@@ -50,19 +51,43 @@
               if (d.status === 'ready') { banner.style.display = 'none'; return; }
               banner.style.display = 'block';
               if (d.status === 'error') {
-                // LLM-only generation failed — surface it, stop polling.
+                // LLM-only generation failed — surface it with a retry CTA.
                 banner.style.borderColor = '#E3B7B0';
                 banner.querySelector('.spinner').style.display = 'none';
                 banner.querySelector('b').textContent = 'Content generation failed';
                 document.getElementById('gen-msg').textContent = d.error || 'The lesson writer could not be reached. Please try again later.';
                 document.getElementById('gen-count').textContent = '';
+                document.getElementById('gen-retry').style.display = 'inline-block';
                 return;
               }
+              document.getElementById('gen-retry').style.display = 'none';
               document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
               setTimeout(poll, 3000);
             })
             .catch(function () { setTimeout(poll, 5000); });
         }
+        document.getElementById('gen-retry').addEventListener('click', function () {
+          var btn = document.getElementById('gen-retry');
+          btn.disabled = true;
+          btn.textContent = 'Retrying…';
+          fetch('/sprints/' + sprintId + '/generation/retry', { method: 'POST' })
+            .then(function () {
+              // Back to the generating state and keep polling.
+              banner.style.borderColor = 'var(--accent)';
+              banner.querySelector('.spinner').style.display = '';
+              banner.querySelector('b').textContent = 'Generating your sprint content…';
+              document.getElementById('gen-msg').textContent = "Each day's lesson is being written from your cluster's live job postings.";
+              btn.style.display = 'none';
+              btn.disabled = false;
+              btn.textContent = 'Retry generation';
+              poll();
+            })
+            .catch(function () {
+              btn.disabled = false;
+              btn.textContent = 'Retry generation';
+              setTimeout(poll, 3000);
+            });
+        });
         poll();
       })();
       </script>

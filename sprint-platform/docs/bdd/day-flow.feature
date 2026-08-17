@@ -51,6 +51,21 @@ Feature: Day View & Copy-Work (mockup screen 4)
     Then the page contains the text "generation failed"
     And the page does not contain the text "Trigger on Checkout Started"
 
+  Scenario: A failed generation heals when the worker re-runs after the LLM recovers
+    When the content generation worker runs for sprint "s1" with no LLM
+    And the content generation worker runs for sprint "s1"
+    When I GET "/sprints/s1/generation"
+    Then the JSON has field "status" equal to "ready"
+
+  Scenario: The retry endpoint is POST-only — a GET must never restart generation
+    When I GET "/sprints/s1/generation/retry"
+    Then the response status is 405
+
+  Scenario: The retry endpoint restarts generation asynchronously
+    When I POST to "/sprints/s1/generation/retry"
+    Then the response status is 200
+    And the JSON has field "status" equal to "generating"
+
   Scenario: The content generation progress is reported as a DB-backed count
     When I GET "/sprints/s1/generation"
     Then the response status is 200

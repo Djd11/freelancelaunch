@@ -235,6 +235,12 @@ def before_scenario(context, scenario):
     # step; after_scenario restores the real call_llm.
     import services.mentor_agent as ma
     ma.call_llm = _fake_mentor_llm
+    # Default-stub the lesson worker LLM as well, so any background worker
+    # thread spawned during a scenario (enrollment, the generation-retry
+    # endpoint) is deterministic instead of hitting a live provider.
+    import services.lesson_engine as le
+    from tests.steps.action_steps import _fake_generation_llm
+    le.call_llm = _fake_generation_llm
     with context.app.app_context():
         adapter = get_live_adapter()
         # Resolve admin user ID and store in app config for admin check

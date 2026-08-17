@@ -48,6 +48,18 @@ Feature: API Surface & Negative Paths (eng-spec §6, arch §7)
     Then the response status is 404
     And the JSON has field "ok" equal to false
 
+  Scenario: The retry endpoint refuses anonymous users
+    Given I am not logged in
+    When I POST to "/sprints/s1/generation/retry"
+    Then the response status is 302
+    And the response redirects to "/auth/login"
+
+  Scenario: The retry endpoint refuses another user's sprint
+    Given an active sprint "other-sprint" for another user
+    When I POST to "/sprints/other-sprint/generation/retry"
+    Then the response status is 404
+    And the JSON has field "error" equal to "not found"
+
   Scenario: Malformed sprint ids short-circuit instead of crashing
     When I GET "/sprints/not-a-uuid/day/4"
     Then the response status is 302

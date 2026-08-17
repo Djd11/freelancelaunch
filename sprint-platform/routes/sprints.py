@@ -119,6 +119,33 @@ def generation(sprint_id):
     })
 
 
+@sprints_bp.route("/sprints/<sprint_id>/generation/retry", methods=["POST"])
+def retry_generation(sprint_id):
+    """Re-run the async content worker for a sprint whose generation failed.
+
+    POST-only (a GET must never have side effects). Idempotent: the worker
+    only fills empty payloads, so a retry on a healthy sprint is a no-op and a
+    retry after the LLM recovers heals the generation_error markers. Runs on a
+    background thread — the dashboard re-polls /generation for the result.
+    """
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return jsonify({"error": "not found"}), 404
+
+    import threading
+    from flask import current_app
+    from routes.main import _generate_in_background
+    app = current_app._get_current_object()
+    threading.Thread(
+        target=_generate_in_background, args=(app, sprint_id), daemon=True,
+    ).start()
+    return jsonify({"status": "generating", "generated": None, "total": 14})
+
+
 @sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/complete", methods=["POST"])
 def complete_day(sprint_id, day_no):
     gate = require_login()

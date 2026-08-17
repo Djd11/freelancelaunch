@@ -87,6 +87,18 @@ whose `action_payload.lesson` is populated IS the log; polled by the dashboard s
 ```json
 200 {"status": "generating", "generated": 7, "total": 14}
 200 {"status": "ready",      "generated": 14, "total": 14}
+200 {"status": "error",      "error": "No LLM provider answered …", "generated": 0, "total": 14}
+404 {"error": "not found"}
+```
+
+### `POST /sprints/<sprint_id>/generation/retry`
+Re-runs the async content worker for a sprint whose generation failed (idempotent;
+only empty payloads are filled, so a successful retry heals the `generation_error`
+markers). POST-only — a GET must never restart generation. Runs on a background
+thread; the dashboard re-polls `GET /sprints/<id>/generation`.
+
+```json
+200 {"status": "generating", "generated": null, "total": 14}
 404 {"error": "not found"}
 ```
 
