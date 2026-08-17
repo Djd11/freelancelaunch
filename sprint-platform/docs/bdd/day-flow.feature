@@ -27,6 +27,12 @@ Feature: Day View & Copy-Work (mockup screen 4)
     And the page contains an element with attribute "data-lesson-player"
     And the page contains the text "TwoPanel"
 
+  Scenario: A voiceover lesson still renders its content as readable text
+    Given day 4 of sprint "s1" has a generated lesson with a voiceover
+    When I GET "/sprints/s1/day/4"
+    Then the page contains an element with attribute "data-lesson-content"
+    And the lesson content is readable on the page outside the player JSON
+
   Scenario: The lesson content is generated from the cluster's live job posting
     When I GET "/sprints/s1/day/4"
     Then the page contains the text "Klaviyo flow setup for store"

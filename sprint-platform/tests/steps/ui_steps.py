@@ -47,6 +47,26 @@ def step_ui_no_dead_links(context):
     assert 'href="#"' not in html, 'page contains a dead link href="#"'
 
 
+@then('the lesson content is readable on the page outside the player JSON')
+def step_ui_lesson_readable(context):
+    """The lesson's script + key points must be server-rendered as readable
+    text on the day view — a voiceover lesson previously rendered ONLY the JS
+    player, whose kinetic text reveals a word or two at a time, so the learner
+    found no meaningful content without playing the whole video.
+
+    The player's data lives in window.__LESSON_PROPS__ inside <script> tags —
+    strip them so this asserts real rendered content, not the JSON blob."""
+    html = getattr(context, "page_html", "") or (
+        context.response.get_data(as_text=True) if context.response is not None else ""
+    )
+    stripped = re.sub(r"<script.*?</script>", "", html, flags=re.DOTALL)
+    assert "data-lesson-content" in stripped, "no readable lesson block on the day view"
+    assert "What the posting literally asks for" in stripped, \
+        "key points not rendered as readable text"
+    assert "Today you rebuild the smallest real version" in stripped, \
+        "lesson script not rendered as readable text"
+
+
 @then('the page contains an element with id "{eid}"')
 def step_ui_has_id(context, eid):
     html = getattr(context, "page_html", "") or (

@@ -32,6 +32,19 @@
             window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover} | tojson }};
           </script>
           <script src="/static/video/lesson-player.js"></script>
+          <!-- Readable lesson content: the player reveals the script word-by-word
+               over the voiceover duration, so the lesson must ALSO be readable as
+               plain text — otherwise a voiceover day looks empty until the video
+               plays through (fix: voiceover lessons rendered no readable content). -->
+          <div data-lesson-content style="margin-top:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+            <b style="font-family:var(--font-display);font-size:15px">{{ lesson.title }}</b>
+            <p class="small" style="margin-top:8px;line-height:1.6;color:var(--ink-2)">{{ lesson.script }}</p>
+            {% if lesson.key_points %}
+            <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
+              {% for kp in lesson.key_points %}<li style="margin-bottom:4px">{{ kp }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+          </div>
           {% else %}
           <div style="background:var(--ink);border-radius:var(--radius);color:#E8E5DE;font-size:14px;padding:18px 20px">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
