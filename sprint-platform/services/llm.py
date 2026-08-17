@@ -1,14 +1,16 @@
 """
-llm — the one shared LLM fallback chain (architecture.md §6, eng-spec §5).
+llm — the one shared LLM provider chain (architecture.md §6, eng-spec §5).
 
 call_llm() tries, in order:
   1. env-configured endpoint  (LLM_API_URL / LLM_API_KEY / LLM_MODEL)
   2. OpenRouter               (OPENROUTER_API_KEY)
   3. Omniroute local          (127.0.0.1:20128, socket probe)
-  4. ❌ → None (caller falls back to deterministic output)
+  4. ❌ → None (caller raises LLMGenerationError — content is LLM-only,
+     there is no deterministic content fallback; failures surface visibly).
 
-Every step is wrapped in try/except with short timeouts — the app never 500s
-on a missing key or an unreachable provider (No-500 philosophy).
+Every step is wrapped in try/except with short timeouts so a missing key or
+an unreachable provider never crashes a request — it becomes a visible
+generation error instead of silent template content.
 """
 import json
 import os
@@ -16,10 +18,23 @@ import socket
 import urllib.request
 
 
+class LLMGenerationError(RuntimeError):
+    """Raised when no provider answered or the output was unusable.
+
+    Content generation is LLM-only: callers must NOT substitute deterministic
+    templates. This exception surfaces the failure so the UI can show it.
+    """
+
+
+# Cloudflare fronting Zen/OpenRouter blocks default urllib signatures (HTTP 1010)
+# — send a browser User-Agent so the app's LLM calls are not rejected.
+_BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+
+
 def _post_json(url, payload, headers, timeout):
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", **headers},
+        headers={"Content-Type": "application/json", "User-Agent": _BROWSER_UA, **headers},
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))

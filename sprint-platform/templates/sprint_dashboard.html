@@ -49,6 +49,15 @@
             .then(function (d) {
               if (d.status === 'ready') { banner.style.display = 'none'; return; }
               banner.style.display = 'block';
+              if (d.status === 'error') {
+                // LLM-only generation failed — surface it, stop polling.
+                banner.style.borderColor = '#E3B7B0';
+                banner.querySelector('.spinner').style.display = 'none';
+                banner.querySelector('b').textContent = 'Content generation failed';
+                document.getElementById('gen-msg').textContent = d.error || 'The lesson writer could not be reached. Please try again later.';
+                document.getElementById('gen-count').textContent = '';
+                return;
+              }
               document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
               setTimeout(poll, 3000);
             })

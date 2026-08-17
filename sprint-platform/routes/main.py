@@ -148,8 +148,10 @@ def _generate_in_background(app, sprint_id):
             )
             generate_sprint_content(sb, sprint_id)
         except Exception:
-            # No-500: generation must never take the sprint down; the skeleton
-            # + deterministic fallbacks in lesson_engine keep every day usable.
+            # Generation must never take the sprint down. Content is LLM-only,
+            # so the worker itself stamps a visible generation_error on a day
+            # payload before re-raising (see lesson_engine) — the dashboard
+            # /generation poll and the day view surface it, never a template.
             import logging
             logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
 

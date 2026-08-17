@@ -21,7 +21,7 @@
 - **Malformed ids never 500.** Non-UUID sprint ids short-circuit to the not-found redirect.
 - **Admin:** all `/admin/*` routes require `role=admin` auth metadata (or the
   `ADMIN_USER_ID` test config). JSON requests get `403 {"error": "Admin access required"}`.
-- **No-500 philosophy:** LLM-backed endpoints degrade to deterministic fallbacks; DB errors
+- **No-500 philosophy:** requests never crash; LLM-backed endpoints surface visible errors (content is LLM-only — `generation_error` on the day payload, 503 on the mentor turn); DB errors
   on background work are logged, never surfaced to the request.
 
 ---
@@ -103,7 +103,7 @@ momentum (streak + confidence). Completing Day 14 stamps `status=completed`.
 
 ### `POST /mentor/turn`
 Body: JSON `{"question": "..."}` (or form field). Returns a Socratic, job-grounded
-answer — LLM first, deterministic guided template as fallback.
+answer — LLM-only; unavailable/unusable output returns 503 with a visible error (no deterministic template).
 
 ```json
 200 {"answer": "...", "guided": true, "grounded_in": ["klaviyo", "checkout recovery"]}

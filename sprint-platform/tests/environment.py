@@ -215,9 +215,26 @@ def _seed_static_data(adapter: LiveDBAdapter):
         ).execute()
 
 
+def _fake_mentor_llm(prompt, timeout=3):
+    """Deterministic stand-in for the mentor LLM — echoes the target job's
+    exact wording so the grounding gate passes and answers stay stable (the
+    app is LLM-only; the stub replaces the live provider in tests)."""
+    import re
+    m = re.search(r"job posting says: (['\"])(.*?)\1", prompt or "", re.DOTALL)
+    desc = m.group(2) if m else ""
+    return (f"Work from the posting's own words: \"{desc}\" — what's the "
+            "smallest piece you can rebuild today, and how will you verify it?")
+
+
 def before_scenario(context, scenario):
     # Get fresh adapter for this scenario (cleans up previous scenario)
     reset_live_adapter()
+    # Default-stub the mentor LLM with a grounded fake so every /mentor/turn
+    # scenario is deterministic (no live provider). Scenarios that need the
+    # LLM unavailable override this via the "LLM fallback chain returns None"
+    # step; after_scenario restores the real call_llm.
+    import services.mentor_agent as ma
+    ma.call_llm = _fake_mentor_llm
     with context.app.app_context():
         adapter = get_live_adapter()
         # Resolve admin user ID and store in app config for admin check
@@ -256,14 +273,16 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     # Clean up scenario-specific data
     reset_live_adapter()
-    # Restore content-generation module globals that worker-run steps may have
-    # patched (content-quality.feature forces deterministic fallbacks) so a
-    # later scenario in the same process never inherits a patched call_llm.
+    # Restore content-generation module globals that worker/mentor steps may
+    # have patched (worker tests stub call_llm, mentor tests stub call_llm) so
+    # a later scenario in the same process never inherits a patched call_llm.
     import services.lesson_engine as le
     import services.video_engine as ve
+    import services.mentor_agent as ma
     from services.llm import call_llm
     from services.video_engine import voiceover_for_lesson as _real_vo
     le.call_llm = call_llm
+    ma.call_llm = call_llm
     ve.voiceover_for_lesson = _real_vo
 
 

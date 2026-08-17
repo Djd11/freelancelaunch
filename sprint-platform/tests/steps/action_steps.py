@@ -29,17 +29,71 @@ def step_copywork_submit(context, day, sid, url):
     _post(context, f"/sprints/{sid}/day/{day}/copywork", data={"rubric_url": url})
 
 
+def _fake_generation_llm(prompt, timeout=15):
+    """Deterministic stand-in for the LLM in worker tests — returns the same
+    job-grounded JSON shape the real model produces (content is LLM-only in the
+    app; the stub keeps assertions stable without a live provider)."""
+    import json
+    import re
+    m = re.search(r'Cluster job posting: "([^"]+)"', prompt or "")
+    job_title = m.group(1) if m else "the target job"
+    if "micro-lesson" in (prompt or ""):
+        fm = re.search(r"Gap-fill focus: ([^.]+)\.", prompt or "")
+        focus = fm.group(1).strip() if fm else None
+        if focus:
+            script = (f"Today's micro-lesson fixes {focus} for {job_title}: rebuild the piece "
+                      f"with {focus} done properly, then re-check it against the posting.")
+        else:
+            script = (f"Your target job is {job_title}. Today you rebuild the smallest real "
+                      "version of exactly what the posting asks for — matching its wording.")
+        return json.dumps({
+            "title": f"{job_title}: how to copy it",
+            "script": script,
+            "key_points": [f"What the posting literally asks for in {job_title}",
+                            focus or "The smallest reproducible piece you can build today"],
+        })
+    im = re.search(r"project (\d) of 3", prompt or "")
+    index = int(im.group(1)) if im else 1
+    return json.dumps({
+        "title": f"Rebuild the core flow for {job_title}",
+        "clone_steps": ["Trigger on Checkout Started",
+                         "2-step sequence: 30 min + 24 hr delays",
+                         "Cart summary dynamic block"],
+        "rubric": ["Flow is built from a blank account",
+                   "Trigger + dynamic block are present",
+                   "Deliverable matches the brief's acceptance criteria"],
+        "gap_fill_topic": "mobile responsiveness" if index == 2 else None,
+    })
+
+
 @when('the content generation worker runs for sprint "{sid}"')
 def step_worker_run(context, sid):
-    """Run the async content worker synchronously, forcing the deterministic
-    fallbacks (no real LLM/TTS in tests) so assertions are stable."""
+    """Run the async content worker synchronously with a stubbed LLM returning
+    job-grounded JSON (no real LLM/TTS in tests) so assertions are stable."""
     import services.lesson_engine as le
     import services.video_engine as ve
-    le.call_llm = lambda *a, **k: None
+    le.call_llm = _fake_generation_llm
     ve.voiceover_for_lesson = lambda *a, **k: None
     adapter = get_live_adapter()
     real_sprint_id = adapter.resolve_sprint_id(sid)
     le.generate_sprint_content(adapter.sb, real_sprint_id)
+
+
+@when('the content generation worker runs for sprint "{sid}" with no LLM')
+def step_worker_run_no_llm(context, sid):
+    """Run the worker with the LLM unavailable — generation must fail visibly
+    (generation_error stamp), never fall back to template content."""
+    import services.lesson_engine as le
+    import services.video_engine as ve
+    from services.llm import LLMGenerationError
+    le.call_llm = lambda *a, **k: None
+    ve.voiceover_for_lesson = lambda *a, **k: None
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    try:
+        le.generate_sprint_content(adapter.sb, real_sprint_id)
+    except LLMGenerationError:
+        pass  # expected — the failure is recorded on the day payload
 
 
 @when('I submit the contract form to "{path}" with no data')

@@ -33,11 +33,11 @@ Feature: AI Mentor (mockup screen 8)
     Then the response status is 302
     And the response redirects to "/auth/login"
 
-  Scenario: A mentor turn degrades gracefully when the LLM is unavailable
+  Scenario: A mentor turn surfaces an error when the LLM is unavailable
     Given the LLM fallback chain returns None
     When I POST to "/mentor/turn" with JSON {"question": "Where do I start?"}
-    Then the response status is 200
-    And the JSON has field "answer" present
+    Then the response status is 503
+    And the JSON has field "error" present
 
   Scenario: Mentor sessions are scoped to the user's sprint and target job
     When I POST to "/mentor/turn" with JSON {"question": "How do I segment VIP buyers?"}

@@ -22,7 +22,7 @@ Three pillars:
 | # | Principle | Consequence |
 |---|-----------|-------------|
 | 1 | **Free-tier economics** | Everything on $0–15/mo: Render free, Supabase free, OpenRouter free models, local HTML previews |
-| 2 | **No-500 philosophy** | Every user-facing path degrades gracefully (fallback lessons, async generation, deterministic proposal templates, "thinking…" mentor fallback) |
+| 2 | **No-500 philosophy** | Requests never crash. Generated content is LLM-only: LLM failure surfaces a visible error (`generation_error` on the day payload, 503 on the mentor turn) — never template content. Async generation, deterministic proposal templates, and the "thinking…" loading state stay. |
 | 3 | **Cohort amortization** | Generate one sprint plan per cluster; users in a cohort share content, each keeps their own day counter |
 | 4 | **Sprint owns the outcome** | `sprints` is the single source of truth for proposals → contracts → earnings. No separate pipeline module |
 | 5 | **Async generation** | Long LLM work is backgrounded, DB-persisted, and polled — never blocks a request |
@@ -61,7 +61,7 @@ Three pillars:
         ▲
         │  (only the service layer talks to LLM / external)
  ┌──────┴─────────────────────────────┐
- │ External: LLM fallback · edge-tts  │  (Remotion Player in-browser · YouTube deferred)
+ │ External: LLM provider chain · edge-tts  │  (Remotion Player in-browser · YouTube deferred)
  └────────────────────────────────────┘
 ```
 
@@ -92,19 +92,19 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 
 | Service | Responsibility |
 |---------|----------------|
-| `llm` | The **one shared LLM fallback chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` |
+| `llm` | The **one shared LLM provider chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` → callers raise `LLMGenerationError` (content is LLM-only) |
 | `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
 | `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
-| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — LLM → deterministic **job-grounded** fallback; **the async worker** (`generate_sprint_content`) + progress count. Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
+| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — **LLM-only** (no deterministic content); **the async worker** (`generate_sprint_content`) + progress count; on LLM failure stamps a visible `generation_error` on a day payload (never template content). Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
 | `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
-| `copywork_engine` | Seeds the 3 replication-project **skeleton** (job-grounded titles/source via `lesson_engine._project_fallback`, empty `clone_steps`/`rubric`) + `gap_fill_topic` on project 2 — the worker fills the anatomy so content matches the learner's actual cluster, not a hard-coded email template |
+| `copywork_engine` | Seeds the 3 replication-project placeholder **skeleton** (mockup titles/source, empty `clone_steps`/`rubric`) + `gap_fill_topic` on project 2 — the worker fills the anatomy via LLM so content matches the learner's actual cluster, not a hard-coded email template |
 | `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
 | `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (3 projects done + valid submitted URLs / valid deliverable URL + case study saved) + peer pass via `record()` |
 | `proposal_engine` | Hook templates + proof-from-contract + completeness scoring |
 | `iteration_engine` | Diagnosis: price/portfolio/niche from the sprint's own data → remedial micro-course |
 | `unlock_engine` | Meter recompute on day completion + snapshot write |
 | `badge_engine` | Demand-Validated badge issuance (gate B pass + completed sprint, idempotent) |
-| `mentor_agent` | Job-grounded Socratic chat — LLM with grounding check, deterministic fallback |
+| `mentor_agent` | Job-grounded Socratic chat — LLM-only with grounding check; ungrounded or unavailable → visible error, never a canned answer |
 | `nudge_engine` | Streak + confidence recompute + encouragement on progress marks |
 | `outcome_service` | Contract add/complete; recompute `total_earned`, `avg_contract_value`, `first_contract_at`, `contracts_completed` |
 
@@ -112,7 +112,7 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 `db/schema.sql` — Postgres dual-funnel-free schema (sprint owns outcomes). Auth + Storage beside the DB. Access via service-role client for MVP.
 
 ### 4.5 External integrations
-LLM providers (fallback chain), edge-tts (two-panel lesson voiceover), and a pre-built Remotion Player bundle (`static/video/lesson-player.js`) served by Flask — the day view plays the composition in-browser (kinetic text + TTS, no MP4). YouTube distribution deferred out of v1.
+LLM providers (provider chain — availability redundancy only, no deterministic content), edge-tts (two-panel lesson voiceover), and a pre-built Remotion Player bundle (`static/video/lesson-player.js`) served by Flask — the day view plays the composition in-browser (kinetic text + TTS, no MP4). YouTube distribution deferred out of v1.
 
 ---
 
@@ -134,13 +134,15 @@ User: POST /sprints/<cluster_key>/start   (POST-only — no GET side effects)
   → join latest active cohort for the cluster, else open a new Cohort #N (14 days)
   → create sprints row + sprint_unlock_snapshots
   → create_plan() → 14 sprint_days rows (skeleton, sync — request never waits)
-  → create_projects() → 3 copywork_projects skeleton (sync; job-grounded title/source,
-    empty anatomy)
+  → create_projects() → 3 copywork_projects placeholder skeleton (sync; mockup
+    titles/source, empty anatomy)
   → background thread: lesson_engine.generate_sprint_content() fills each day's
-    action_payload.lesson + project anatomy (LLM → deterministic job-grounded
-    fallback); the populated-payload count IS the DB progress log
+    action_payload.lesson + project anatomy (LLM-only — no deterministic content;
+    on failure stamps a visible generation_error on a day payload); the
+    populated-payload count IS the DB progress log
   → dashboard: "Day 1 · Phase A · Copy-Work" + meter; polls /sprints/<id>/generation
-    ({status, generated, total}) and hides the spinner at "ready"
+    ({status, generated, total}) and hides the spinner at "ready"; on
+    generation_error the poll shows "Content generation failed"
 ```
 
 ### 5.3 Day completion → meter uptick + momentum
@@ -198,19 +200,21 @@ Client: GET /clients/freelancers?cluster=email-automation&within_days=30
 
 ---
 
-## 6. LLM fallback chain — `services/llm.py call_llm`
+## 6. LLM provider chain — `services/llm.py call_llm`
 
 ```
 call_llm(prompt):
   1. env-configured endpoint (LLM_API_URL / LLM_API_KEY / LLM_MODEL)
   2. OpenRouter (OPENROUTER_API_KEY / OPENROUTER_MODEL)
   3. Omniroute local (127.0.0.1:20128, socket probe)
-  4. ❌ → None → caller's deterministic fallback
-     (lesson_engine fallback lessons, mentor guided template, proposal template)
+  4. ❌ → None → caller raises LLMGenerationError → the UI surfaces a visible
+     error (generation_error on the day payload / 503 on the mentor turn)
 ```
-Every step is try/except with short timeouts — the app never 500s on a missing key
-or an unreachable provider. Callers validate LLM output (e.g. `mentor_agent._grounded`
-requires the answer to echo the job's terminology).
+Every step is try/except with short timeouts. **Content is LLM-only: there is no
+deterministic content fallback.** Provider redundancy exists for availability
+only — a missing key or unreachable provider becomes a visible generation error,
+never silent template content. Callers validate LLM output (e.g. `mentor_agent._grounded`
+requires the answer to echo the job's terminology) and raise on failure.
 
 ---
 

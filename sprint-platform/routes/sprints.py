@@ -74,20 +74,20 @@ def day(sprint_id, day_no):
     gap_fill_topic = project.get("gap_fill_topic") if project else None
     pct = int(round((meter["unlocked_count"] / meter["total_in_cluster"] * 100))) if meter.get("total_in_cluster") else 0
 
-    # Generated lesson content (async worker) with the deterministic fallback
-    # when the worker hasn't finished yet (eng-spec §5 No-500).
-    from services.lesson_engine import lesson_for_day
-    lesson = payload.get("lesson") or lesson_for_day(sb, sprint, day_row, project)
-    # Generated project anatomy — fall back to the mockup defaults.
-    from services.lesson_engine import DEFAULT_STEPS, DEFAULT_RUBRIC
-    clone_steps = (project or {}).get("clone_steps") or DEFAULT_STEPS
-    rubric = (project or {}).get("rubric") or DEFAULT_RUBRIC
+    # LLM-only content (async worker): render exactly what the worker wrote. If
+    # this day's payload is still empty the page shows a "generating" notice;
+    # if generation failed the worker stamped a visible generation_error.
+    from services.lesson_engine import generation_error
+    lesson = payload.get("lesson")
+    gen_error = payload.get("generation_error") or generation_error(sb, sprint_id)
+    clone_steps = (project or {}).get("clone_steps") or []
+    rubric = (project or {}).get("rubric") or []
 
     return render_template(
         "day.html",
         sprint=sprint, day=day_row, project=project, meter=meter,
         day_done=bool(day_row.get("is_done")), gap_fill_topic=gap_fill_topic, pct=pct,
-        lesson=lesson, clone_steps=clone_steps, rubric=rubric,
+        lesson=lesson, gen_error=gen_error, clone_steps=clone_steps, rubric=rubric,
     )
 
 
@@ -102,8 +102,16 @@ def generation(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
-    from services.lesson_engine import generation_progress
+    from services.lesson_engine import generation_progress, generation_error
     generated, total = generation_progress(sb, sprint_id)
+    err = generation_error(sb, sprint_id)
+    if err:
+        return jsonify({
+            "status": "error",
+            "error": err,
+            "generated": generated,
+            "total": total,
+        })
     return jsonify({
         "status": "ready" if generated >= total else "generating",
         "generated": generated,

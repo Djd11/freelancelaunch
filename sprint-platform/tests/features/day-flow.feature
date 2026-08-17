@@ -34,14 +34,22 @@ Feature: Day View & Copy-Work (mockup screen 4)
     And the lesson content is readable on the page outside the player JSON
 
   Scenario: The lesson content is generated from the cluster's live job posting
-    When I GET "/sprints/s1/day/4"
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/4"
     Then the page contains the text "Klaviyo flow setup for store"
     And the page contains the text "how to"
 
   Scenario: The day view renders the generated copy-work anatomy (steps + rubric)
-    When I GET "/sprints/s1/day/4"
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/4"
     Then the page contains the text "Trigger on Checkout Started"
     And the page contains the text "auto-checked by verification service"
+
+  Scenario: A day whose content generation failed shows a visible error, never template content
+    When the content generation worker runs for sprint "s1" with no LLM
+    When I GET "/sprints/s1/day/4"
+    Then the page contains the text "generation failed"
+    And the page does not contain the text "Trigger on Checkout Started"
 
   Scenario: The content generation progress is reported as a DB-backed count
     When I GET "/sprints/s1/generation"

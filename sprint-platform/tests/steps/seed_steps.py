@@ -676,4 +676,7 @@ def step_job_desc(context, term):
 
 @given('the LLM fallback chain returns None')
 def step_llm_none(context):
-    pass  # mentor_agent always uses its deterministic fallback path
+    # LLM-only mentor: force the provider to be unavailable so the turn
+    # endpoint surfaces a visible error (503) instead of canned content.
+    import services.mentor_agent as ma
+    ma.call_llm = lambda *a, **k: None

@@ -26,7 +26,17 @@
         <div class="card">
           <h3 style="margin-bottom:12px">🎬 Watch · Lesson</h3>
           <div class="xs muted" style="margin:-6px 0 10px">TwoPanel HTML preview — kinetic text + TTS</div>
-          {% if lesson.voiceover and lesson.voiceover.url %}
+          {% if gen_error %}
+          <div style="padding:18px 20px;background:var(--red-soft, #FBE9E7);border:1px solid #E3B7B0;border-radius:var(--radius)">
+            <b style="font-family:var(--font-display)">Lesson generation failed</b>
+            <p class="small muted" style="margin-top:6px">{{ gen_error }}</p>
+          </div>
+          {% elif not lesson %}
+          <div style="padding:18px 20px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+            <b style="font-family:var(--font-display)">Generating your lesson…</b>
+            <p class="small muted" style="margin-top:6px">Each day's lesson is written from your cluster's live job postings.</p>
+          </div>
+          {% elif lesson.voiceover and lesson.voiceover.url %}
           <div id="lesson-player" data-lesson-player="true" style="width:100%;aspect-ratio:16/9;background:var(--ink);border-radius:var(--radius);overflow:hidden"></div>
           <script>
             window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover} | tojson }};
@@ -36,7 +46,7 @@
                over the voiceover duration, so the lesson must ALSO be readable as
                plain text — otherwise a voiceover day looks empty until the video
                plays through (fix: voiceover lessons rendered no readable content). -->
-          <div data-lesson-content style="margin-top:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+          <div data-lesson-content="true" style="margin-top:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
             <b style="font-family:var(--font-display);font-size:15px">{{ lesson.title }}</b>
             <p class="small" style="margin-top:8px;line-height:1.6;color:var(--ink-2)">{{ lesson.script }}</p>
             {% if lesson.key_points %}
@@ -65,9 +75,15 @@
         <div class="card">
           <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
           <p class="small muted">From a blank account, rebuild the exact flow:</p>
+          {% if gen_error %}
+          <p class="small" style="color:var(--ink-2);margin-top:10px">Project anatomy failed to generate ({{ gen_error }}).</p>
+          {% elif not clone_steps %}
+          <p class="small muted" style="margin-top:10px">Project anatomy is being generated…</p>
+          {% else %}
           <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
             {% for step in clone_steps %}<li>{{ step }}</li>{% endfor %}
           </ul>
+          {% endif %}
           <div class="divider"></div>
           <div class="check-item"><div class="cbox"></div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
           <div class="check-item"><div class="cbox"></div><div><b>Pass 3-point rubric</b><div class="xs muted">auto-checked by verification service</div>

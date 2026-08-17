@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, g, jso
 from routes import require_login, load_sprint
 from services.supabase_client import get_supabase
 from services.mentor_agent import answer as mentor_answer
+from services.llm import LLMGenerationError
 
 mentor_bp = Blueprint("mentor", __name__)
 
@@ -94,7 +95,12 @@ def turn():
 
     sprint, job, job_id = _context(sb, g.user["id"])
     job_desc = job.get("description") or "" if job else ""
-    result = mentor_answer(question, job_desc)
+    try:
+        result = mentor_answer(question, job_desc)
+    except LLMGenerationError as exc:
+        # LLM-only mentor: no deterministic template. Surface the failure
+        # visibly (503) instead of answering with canned content.
+        return jsonify({"error": str(exc), "guided": True}), 503
 
     # Record the session scoped to the user's sprint + target job.
     sb.table("mentor_sessions").insert({
