@@ -1,4 +1,6 @@
 """Action + verify steps — form submissions, DB-state assertions, iteration diagnosis."""
+import json
+
 from behave import when, then
 
 from tests.live_db_adapter import get_live_adapter, TEST_USER_ID, get_static_job_id
@@ -25,6 +27,19 @@ def step_request_sprint(context, skill):
 @when('I submit the copy-work task for day {day} of sprint "{sid}" with rubric_url "{url}"')
 def step_copywork_submit(context, day, sid, url):
     _post(context, f"/sprints/{sid}/day/{day}/copywork", data={"rubric_url": url})
+
+
+@when('the content generation worker runs for sprint "{sid}"')
+def step_worker_run(context, sid):
+    """Run the async content worker synchronously, forcing the deterministic
+    fallbacks (no real LLM/TTS in tests) so assertions are stable."""
+    import services.lesson_engine as le
+    import services.video_engine as ve
+    le.call_llm = lambda *a, **k: None
+    ve.voiceover_for_lesson = lambda *a, **k: None
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    le.generate_sprint_content(adapter.sb, real_sprint_id)
 
 
 @when('I submit the contract form to "{path}" with no data')
@@ -123,6 +138,31 @@ def step_project_has_url(context, n, sid, url):
         .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
     assert rows and rows[0].get("submitted_url") == url, \
         f"copy-work project {n} submitted_url={rows[0].get('submitted_url') if rows else None!r}, expected {url!r}"
+
+
+@then('copy-work project {n} for sprint "{sid}" has a title mentioning "{text}"')
+def step_project_title_mentions(context, n, sid, text):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("title") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
+    assert rows, f"no copy-work project {n} for sprint {sid}"
+    assert text in rows[0].get("title", ""), \
+        f"project {n} title {rows[0].get('title')!r} does not mention {text!r}"
+
+
+@then('day {n} of sprint "{sid}" has a lesson mentioning "{text}"')
+def step_day_lesson_mentions(context, n, sid, text):
+    """Assert the worker stored a lesson whose content mentions the text —
+    e.g. the Day 5 gap-fill micro-lesson targeting the flagged nuance."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("sprint_days").select("action_payload") \
+        .eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute().data
+    assert rows, f"no day {n} row for sprint {sid}"
+    lesson = (rows[0].get("action_payload") or {}).get("lesson") or {}
+    blob = json.dumps(lesson)
+    assert text in blob, f"day {n} lesson missing {text!r}: {blob}"
 
 
 def _sprint_row(context, sid):

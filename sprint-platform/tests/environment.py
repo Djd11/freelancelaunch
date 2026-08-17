@@ -256,6 +256,15 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     # Clean up scenario-specific data
     reset_live_adapter()
+    # Restore content-generation module globals that worker-run steps may have
+    # patched (content-quality.feature forces deterministic fallbacks) so a
+    # later scenario in the same process never inherits a patched call_llm.
+    import services.lesson_engine as le
+    import services.video_engine as ve
+    from services.llm import call_llm
+    from services.video_engine import voiceover_for_lesson as _real_vo
+    le.call_llm = call_llm
+    ve.voiceover_for_lesson = _real_vo
 
 
 def after_all(context):

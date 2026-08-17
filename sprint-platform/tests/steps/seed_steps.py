@@ -11,7 +11,10 @@ PROJECT_TITLES = {
     2: "Rebuild the Abandoned-Cart Flow",
     3: "Rebuild the Post-Purchase Upsell Flow",
 }
-DAY_TO_PROJECT = {2: 1, 3: 2, 4: 2}
+# Day → copy-work project index. MUST mirror routes/sprints.py + lesson_engine.py:
+# project 1 spans days 2-3, project 2 = day 4, project 3 = day 5 (all four
+# Phase A copy-work days must map, or Gate A can never pass through the UI).
+DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
 
 
 def _phase_for(day):
@@ -157,6 +160,26 @@ def step_cluster_postings(context, key, n):
 
     # The job_feed is pre-seeded by environment.py for email-automation
     # This step is mainly for other clusters; skip if already seeded
+
+
+@given('job cluster "{key}" has a posting titled "{title}"')
+def step_cluster_posting(context, key, title):
+    """Seed one live posting for a non-email cluster so content generation can
+    ground lessons/projects in a real posting (content-quality.feature)."""
+    adapter = get_live_adapter()
+    adapter.seed_table("job_feed", [{
+        "cluster_key": key,
+        "title": title,
+        "source": "curated",
+        "source_url": f"https://example.com/jobs/{key}",
+        "description": f"Anonymized real job posting — {title}.",
+        "skills": [key],
+        "rate": 150,
+        "experience_needed": "intermediate",
+        "review_count": 0,
+        "unlock_day": 1,
+        "status": "active",
+    }])
 
 
 @given('job cluster "{key}" has current job_count {n}')
@@ -386,6 +409,7 @@ def step_project_url_removed(context, n, sid):
     adapter.sb.table("copywork_projects").update({
         "submitted_url": None,
     }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
 
 
 # ── capstone brief ─────────────────────────────────────────────────

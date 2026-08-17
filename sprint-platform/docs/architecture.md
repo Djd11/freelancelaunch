@@ -95,9 +95,9 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 | `llm` | The **one shared LLM fallback chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` |
 | `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
 | `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
-| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — LLM → deterministic job-grounded fallback; **the async worker** (`generate_sprint_content`) + progress count |
+| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — LLM → deterministic **job-grounded** fallback; **the async worker** (`generate_sprint_content`) + progress count. Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
 | `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
-| `copywork_engine` | The 3 replication projects (mockup titles) + `gap_fill_topic` on project 2 |
+| `copywork_engine` | Seeds the 3 replication-project **skeleton** (job-grounded titles/source via `lesson_engine._project_fallback`, empty `clone_steps`/`rubric`) + `gap_fill_topic` on project 2 — the worker fills the anatomy so content matches the learner's actual cluster, not a hard-coded email template |
 | `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
 | `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (3 projects done + valid submitted URLs / valid deliverable URL + case study saved) + peer pass via `record()` |
 | `proposal_engine` | Hook templates + proof-from-contract + completeness scoring |
@@ -134,10 +134,11 @@ User: POST /sprints/<cluster_key>/start   (POST-only — no GET side effects)
   → join latest active cohort for the cluster, else open a new Cohort #N (14 days)
   → create sprints row + sprint_unlock_snapshots
   → create_plan() → 14 sprint_days rows (skeleton, sync — request never waits)
-  → create_projects() → 3 copywork_projects (sync)
+  → create_projects() → 3 copywork_projects skeleton (sync; job-grounded title/source,
+    empty anatomy)
   → background thread: lesson_engine.generate_sprint_content() fills each day's
-    action_payload.lesson + project anatomy (LLM → deterministic fallback); the
-    populated-payload count IS the DB progress log
+    action_payload.lesson + project anatomy (LLM → deterministic job-grounded
+    fallback); the populated-payload count IS the DB progress log
   → dashboard: "Day 1 · Phase A · Copy-Work" + meter; polls /sprints/<id>/generation
     ({status, generated, total}) and hides the spinner at "ready"
 ```

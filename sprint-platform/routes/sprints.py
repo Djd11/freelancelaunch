@@ -15,7 +15,9 @@ from services.nudge_engine import nudge as nudge_for, recompute_confidence
 sprints_bp = Blueprint("sprints", __name__)
 
 # Day → copy-work project index (1-based). Mockup: Day 4 = Project 2 (Abandoned-Cart).
-DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2}
+# All four Phase A copy-work days (2-5) must map — project 3 lives on Day 5, or
+# Gate A can never pass through the real day flow (content-quality C1).
+DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
 
 
 @sprints_bp.route("/sprints/<sprint_id>")

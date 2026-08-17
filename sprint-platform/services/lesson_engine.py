@@ -41,7 +41,8 @@ DEFAULT_RUBRIC = [
 ]
 
 # Day → copy-work project index (1-based). Mirrors routes/sprints.DAY_TO_PROJECT.
-DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2}
+# Every Phase A copy-work day (2-5) must map so project 3 is reachable.
+DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
 
 
 def _excerpt(text, limit=220):
@@ -135,7 +136,32 @@ def _project_prompt(job, project_index):
 
 
 def _project_fallback(job, project_index):
-    """Deterministic project anatomy — mirrors the mockup's project titles."""
+    """Deterministic project anatomy — grounded in the cluster's live job
+    posting when one exists (mirrors _fallback_lesson); mockup defaults only
+    when the feed is empty (No-500). A paying learner in ANY cluster must get
+    copy-work tasks for THEIR job, not a hard-coded email template (fix H1)."""
+    if job:
+        job_title = (job or {}).get("title") or "the target job"
+        excerpt = _excerpt((job or {}).get("description") or "")
+        focus = {
+            1: "the core flow",
+            2: "the recovery loop",
+            3: "the full journey",
+        }.get(project_index, f"project {project_index}")
+        return {
+            "title": f"Rebuild {focus} for {job_title}",
+            "clone_steps": [
+                f"Trigger on exactly what the posting names ({excerpt or job_title})",
+                "Build the smallest real version from a blank account",
+                "Match the posting's own terminology",
+            ],
+            "rubric": [
+                "Flow is built from a blank account",
+                "Trigger + core structure are present",
+                "Deliverable matches the posting's acceptance criteria",
+            ],
+            "gap_fill_topic": "mobile responsiveness" if project_index == 2 else None,
+        }
     titles = {
         1: "Rebuild the Checkout Welcome Flow",
         2: "Rebuild the Abandoned-Cart Flow",
@@ -164,13 +190,49 @@ def _parse_project(text, fallback):
 
 # ─── Generation (per day / per project) ───────────────────────────────
 
-def lesson_for_day(sb, sprint, day_row, project):
+def _gap_fill_topic(sb, sprint_id):
+    """The nuance flagged on any copy-work project of the sprint — Day 5's
+    targeted micro-lesson focus (eng-spec J4, research: Day 5 = The Gap Fill)."""
+    rows = sb.table("copywork_projects").select("gap_fill_topic") \
+        .eq("sprint_id", sprint_id).execute().data
+    for r in rows:
+        if r.get("gap_fill_topic"):
+            return r["gap_fill_topic"]
+    return None
+
+
+def _gap_fill_lesson(job, topic):
+    """Deterministic 30-min micro-lesson that fixes exactly the flagged nuance
+    (research: 'Day 5: The Gap Fill … targeted micro-lesson to fix it')."""
+    job_title = (job or {}).get("title") or "the target job"
+    return {
+        "title": f"Gap-Fill: {topic}",
+        "script": (
+            f"Your copy-work flagged {topic} as the missing nuance. Today's "
+            f"30-min micro-lesson fixes exactly that: rebuild the {job_title} "
+            f"piece with {topic} done properly — then re-check it against the "
+            "posting's own wording."
+        ),
+        "key_points": [
+            f"What {topic} means for {job_title}",
+            "How to verify the fix in your rebuild",
+            f"Where {topic} shows up in the posting",
+        ],
+    }
+
+
+def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
     """Generate the day's Watch · Lesson content (LLM → deterministic fallback).
 
     Returns a dict {"title", "script", "key_points"} ready to store in
-    sprint_days.action_payload.lesson.
+    sprint_days.action_payload.lesson. Day 5 is the targeted gap-fill
+    micro-lesson on the flagged nuance when one exists.
     """
     job = _top_job(sb, sprint.get("cluster_key"))
+    if day_row.get("day_no") == 5 and not gap_fill_topic:
+        gap_fill_topic = _gap_fill_topic(sb, sprint.get("id"))
+    if gap_fill_topic:
+        return _gap_fill_lesson(job, gap_fill_topic)
     project_title = (project or {}).get("title") or day_row.get("title") or ""
     fallback = _fallback_lesson(job, day_row.get("day_no"), day_row.get("action_type"), project_title)
     try:
