@@ -95,6 +95,36 @@ def step_gate_passed(context, gate, sid):
         f"gate {gate} not passed for sprint {sid}: {rows}"
 
 
+@then('gate "{gate}" has not passed verification for sprint "{sid}"')
+def step_gate_not_passed(context, gate, sid):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("verification_reviews").select("*") \
+        .eq("sprint_id", real_sprint_id).eq("gate", gate).execute().data
+    assert not rows or rows[0].get("status") != "pass", \
+        f"gate {gate} unexpectedly passed for sprint {sid}: {rows}"
+
+
+@then('copy-work project {n} for sprint "{sid}" is not marked done')
+def step_project_not_done(context, n, sid):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("done") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
+    assert rows and not rows[0].get("done"), \
+        f"copy-work project {n} unexpectedly done for sprint {sid}: {rows}"
+
+
+@then('copy-work project {n} for sprint "{sid}" has submitted_url "{url}"')
+def step_project_has_url(context, n, sid, url):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("submitted_url") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
+    assert rows and rows[0].get("submitted_url") == url, \
+        f"copy-work project {n} submitted_url={rows[0].get('submitted_url') if rows else None!r}, expected {url!r}"
+
+
 def _sprint_row(context, sid):
     adapter = get_live_adapter()
     real_sprint_id = adapter.resolve_sprint_id(sid)

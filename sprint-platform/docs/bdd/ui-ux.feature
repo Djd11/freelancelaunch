@@ -108,11 +108,11 @@ Feature: UI/UX — every page's CTAs work end to end (no dead ends, no fake func
     Then the response status is 200
     And the page contains the text "Submit deliverable for verification"
     And the page contains the text "Save case study"
+    When I save the case study "Abandoned-Cart Recovery Flow" for sprint "s1"
+    Then a case study titled "Abandoned-Cart Recovery Flow" exists for sprint "s1"
     When I submit the contract form to "/sprints/s1/contract/submit" with submission_url "https://dropbox.com/x"
     Then the response status is 302
     And gate "B" has passed verification for sprint "s1"
-    When I save the case study "Abandoned-Cart Recovery Flow" for sprint "s1"
-    Then a case study titled "Abandoned-Cart Recovery Flow" exists for sprint "s1"
 
   # ── PROPOSALS ─────────────────────────────────────────────────────
   Scenario: Proposals — the locked page links to the Mock Contract

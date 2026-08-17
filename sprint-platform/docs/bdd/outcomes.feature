@@ -17,7 +17,8 @@ Feature: Outcome Tracking, Verification Auto-Check & Sprint Completion (eng-spec
     And gate "A" has passed verification for sprint "s1"
 
   Scenario: Gate B auto-passes when the deliverable is submitted and Phase C unlocks
-    When I submit the contract form to "/sprints/s1/contract/submit" with submission_url "https://dropbox.com/x"
+    When I save the case study "Abandoned-Cart Recovery Flow" for sprint "s1"
+    And I submit the contract form to "/sprints/s1/contract/submit" with submission_url "https://dropbox.com/x"
     Then the response status is 302
     And gate "B" has passed verification for sprint "s1"
     When I GET "/sprints/s1/proposals"

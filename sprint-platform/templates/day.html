@@ -63,7 +63,8 @@
             </ul>
           </div></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
-            <input type="hidden" name="rubric_url" value="">
+            <label class="xs muted" for="rubric_url" style="display:block;margin-bottom:6px">Link to your rebuilt flow (required)</label>
+            <input type="url" id="rubric_url" name="rubric_url" required placeholder="https://github.com/you/flow" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;margin-bottom:8px">
             <button class="btn btn-p" type="submit">Submit for check</button>
           </form>
           {% if not day_done %}

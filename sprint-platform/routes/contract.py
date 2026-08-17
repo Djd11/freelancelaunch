@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from routes import require_login, load_sprint, load_brief
 from services.supabase_client import get_supabase
 from services.verification_service import record as record_review
-from services.verification_service import auto_check_gate_b, gate_b_passed
+from services.verification_service import auto_check_gate_b, gate_b_passed, is_valid_url
 from services.mock_contract_engine import synthesize as synthesize_brief
 from services.outcome_service import add_contract, complete_contract
 
@@ -67,10 +67,13 @@ def submit(sprint_id):
     if not url:
         flash("Paste a link to your deliverable before submitting.")
         return redirect(url_for("contract.brief", sprint_id=sprint_id))
+    if not is_valid_url(url):
+        flash("That doesn't look like a valid link — paste the full URL (starting with http:// or https://).")
+        return redirect(url_for("contract.brief", sprint_id=sprint_id))
 
     record_review(sb, sprint_id, "B", status="pending", submitted_url=url)
-    # Gate B auto-check (arch §7: contract submit → inline auto-test): a
-    # deliverable URL present → pass → Phase C unlocks.
+    # Gate B auto-check (arch §7: contract submit → inline auto-test): a valid
+    # deliverable URL + a saved case study → pass → Phase C unlocks.
     auto_check_gate_b(sb, sprint_id)
     flash("Deliverable submitted — verification service is checking your flow.")
     return redirect(url_for("contract.brief", sprint_id=sprint_id))

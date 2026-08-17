@@ -1,13 +1,13 @@
 """sprints blueprint — dashboard, day view, day completion, verification, badge (arch §4.2)."""
 import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify, flash
 
 from routes import (require_login, load_cluster, load_sprint, load_cohort,
                     load_meter, load_momentum, load_day, load_project, phase_a_done_days)
 from services.supabase_client import get_supabase
 from services.verification_service import gate_a_passed, gate_b_passed, record as record_review
-from services.verification_service import auto_check_gate_a
+from services.verification_service import auto_check_gate_a, is_valid_url
 from services.unlock_engine import recompute
 from services.badge_engine import issue as issue_badge
 from services.nudge_engine import nudge as nudge_for, recompute_confidence
@@ -166,16 +166,23 @@ def submit_copywork(sprint_id, day_no):
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
 
-    rubric_url = request.form.get("rubric_url", "")
-    record_review(sb, sprint_id, "A", status="pending", submitted_url=rubric_url or None)
+    rubric_url = request.form.get("rubric_url", "").strip()
+    if not rubric_url:
+        flash("Paste a link to your rebuilt flow before submitting.")
+        return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
+    if not is_valid_url(rubric_url):
+        flash("That doesn't look like a valid link — paste the full URL (starting with http:// or https://).")
+        return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
+    record_review(sb, sprint_id, "A", status="pending", submitted_url=rubric_url)
 
-    # Mark the day's copy-work project done, then auto-check Gate A: all 3
-    # projects done → pass → Phase B unlocks (eng-spec §4.2).
+    # Mark the day's copy-work project done (storing the submitted URL on the
+    # project row), then auto-check Gate A: all 3 projects done with URLs →
+    # pass → Phase B unlocks (eng-spec §4.2).
     project_index = DAY_TO_PROJECT.get(day_no)
     if project_index:
-        sb.table("copywork_projects").update({"done": True}) \
+        sb.table("copywork_projects").update({"done": True, "submitted_url": rubric_url}) \
             .eq("sprint_id", sprint_id).eq("project_index", project_index).execute()
-    auto_check_gate_a(sb, sprint_id, submitted_url=rubric_url or None)
+    auto_check_gate_a(sb, sprint_id, submitted_url=rubric_url)
     return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
 
 

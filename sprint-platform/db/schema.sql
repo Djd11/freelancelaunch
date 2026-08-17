@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS sprint_days (
     action_type TEXT NOT NULL CHECK (action_type IN ('setup','copywork','gapfill','contract','case-study','proposal')),
     action_payload JSONB DEFAULT '{}',
     is_done BOOLEAN DEFAULT FALSE,
+    lesson_watched BOOLEAN NOT NULL DEFAULT FALSE,  -- "Mark lesson watched" check-item state
     completed_at TIMESTAMPTZ,
     UNIQUE(sprint_id, day_no)
 );
@@ -162,6 +163,7 @@ CREATE TABLE IF NOT EXISTS copywork_projects (
     rubric JSONB DEFAULT '[]',            -- 3 acceptance criteria (auto-checkable)
     gap_fill_topic TEXT,                  -- nuance flagged → Day 5 micro-lesson
     done BOOLEAN DEFAULT FALSE,
+    submitted_url TEXT,                   -- learner's build link (Gate A evidence)
     UNIQUE(sprint_id, project_index)
 );
 

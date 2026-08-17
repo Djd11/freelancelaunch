@@ -369,9 +369,23 @@ def step_projects_done(context, a, b, c, sid):
     real_sprint_id = adapter.resolve_sprint_id(sid)
     done = {int(a), int(b), int(c)}
     for idx in done:
+        # A project is only credibly "done" when the learner submitted a link to
+        # the replica — Gate A checks both done and submitted_url (fix #5).
         adapter.sb.table("copywork_projects").update({
             "done": True,
+            "submitted_url": f"https://github.com/me/project-{idx}",
         }).eq("sprint_id", real_sprint_id).eq("project_index", idx).execute()
+
+
+@given('copy-work project {n} for sprint "{sid}" has its submitted URL removed')
+def step_project_url_removed(context, n, sid):
+    """Strip a done project's submitted URL so negative Gate A paths can prove
+    the gate requires evidence, not just a done flag (fix #5)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("copywork_projects").update({
+        "submitted_url": None,
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
 
 
 # ── capstone brief ─────────────────────────────────────────────────

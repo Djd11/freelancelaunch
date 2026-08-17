@@ -67,7 +67,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 - Day header: "Phase A · Day 4 · Copy-Work · Project 2 — Rebuild the Abandoned-Cart Flow".
 - **Day-complete uptick banner:** shown after completing the day: "🎉 Day 4 complete — +38 postings → 186 of 450 active jobs open to you."
 - **Watch · Lesson:** TwoPanel JS player — a pre-built Remotion composition (`static/video/lesson-player.js`) with kinetic text + edge-tts voiceover, played in-browser (no MP4; YouTube distribution is a later concern). The lesson script + key points are generated per day from the cluster's live job posting (`lesson_engine.lesson_for_day`, LLM with a deterministic job-grounded fallback) and stored in `sprint_days.action_payload.lesson`; the async content worker also generates the voiceover (`video_engine` → edge-tts → `voiceovers` Storage bucket) and stores `lesson.voiceover = {url, duration_seconds}`. When no voiceover exists yet, the day view renders the kinetic-text fallback (No-500).
-- **Copy-Work Task:** trigger / sequence / dynamic block / coupon steps rendered from the project's generated `clone_steps`; "Replicate from scratch"; "Pass 3-point rubric" (auto-checked) rendered from the project's generated `rubric`.
+- **Copy-Work Task:** trigger / sequence / dynamic block / coupon steps rendered from the project's generated `clone_steps`; "Replicate from scratch"; "Pass 3-point rubric" (auto-checked) rendered from the project's generated `rubric`. Submission requires a **valid http(s) link to the rebuilt flow** — an empty or scheme-less URL is rejected and never marks the project done.
 - **Gap-Fill preview card:** auto-detected nuance from the previous project ("mobile responsiveness", carried on copy-work project 2's `gap_fill_topic`) → "Day 5 serves a targeted 30-min micro-lesson."
 - Every Phase A/C/B day renders the correct phase-specific action from `sprint_days.action_type`.
 
@@ -76,7 +76,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 - Requirements + Constraints (deadline, budget, client notes).
 - Steps: execute flow (Days 6–8) → write Problem/Solution/Result case study (Days 9–10).
 - **Verification Gate:** "locks Phase C" — automated flow check + case study written. Submission via `POST /sprints/<id>/contract/submit`; result written to `verification_reviews (gate='B')`.
-- **Gate B auto-check:** a deliverable URL present → `verification_service.auto_check_gate_b` writes the pass row inline — Phase C unlocks immediately (arch §7 inline auto-test).
+- **Gate B auto-check:** a **valid** deliverable URL (http/https) on the review row **plus a saved case study** → `verification_service.auto_check_gate_b` writes the pass row inline — Phase C unlocks immediately (arch §7 inline auto-test).
 - **Case study (Days 9–10):** `POST /sprints/<id>/case-study` upserts the Problem/Solution/Result write-up; it is stored with `is_draft = not gate_b_passed` — drafts stay internal, and once Gate B passes (a re-save with the pass in place) it is the public profile portfolio item.
 - **Anonymization requirement:** `capstone_briefs` stores only `job_feed_id`, never client identity/PII. The brief is synthesized from the cluster's first active posting (`mock_contract_engine.synthesize`), with a No-500 in-memory default when the feed is empty.
 
@@ -114,9 +114,9 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 
 ### 4.2 Two verification gates
 - **Gate A (Phase A→B):** Phase B unlocks only when `verification_reviews (sprint, gate='A') = pass` — the 3 copy-work rubrics + gap-fill are auto-checked (code) or peer-checked (design/copy).
-  - **Auto-check trigger:** every `POST /sprints/<id>/day/<n>/copywork` marks that day's copy-work project done and runs `auto_check_gate_a` — all 3 projects done → pass → Phase B unlocks.
+  - **Auto-check trigger:** every `POST /sprints/<id>/day/<n>/copywork` requires a **valid http(s) rubric URL**; it marks that day's copy-work project done (storing the URL as `submitted_url` evidence) and runs `auto_check_gate_a` — all 3 projects done **and each with a valid submitted URL** → pass → Phase B unlocks.
 - **Gate B (Phase B→C):** Phase C (job feed + proposals) unlocks only when `verification_reviews (sprint, gate='B') = pass` — the Mock Contract deliverable passes auto/peer review.
-  - **Auto-check trigger:** `POST /sprints/<id>/contract/submit` with a deliverable URL → `auto_check_gate_b` writes the pass row inline.
+  - **Auto-check trigger:** `POST /sprints/<id>/contract/submit` with a **valid** deliverable URL (http/https) **and a saved case study** → `auto_check_gate_b` writes the pass row inline.
 - A lock never silently breaks: if a gate is required but absent, the UI shows the lock + the missing item.
 
 ### 4.3 Outcome tracking (sprint-owned)

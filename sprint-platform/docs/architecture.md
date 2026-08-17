@@ -99,7 +99,7 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 | `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
 | `copywork_engine` | The 3 replication projects (mockup titles) + `gap_fill_topic` on project 2 |
 | `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
-| `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (all 3 projects done / deliverable URL present) + peer pass via `record()` |
+| `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (3 projects done + valid submitted URLs / valid deliverable URL + case study saved) + peer pass via `record()` |
 | `proposal_engine` | Hook templates + proof-from-contract + completeness scoring |
 | `iteration_engine` | Diagnosis: price/portfolio/niche from the sprint's own data → remedial micro-course |
 | `unlock_engine` | Meter recompute on day completion + snapshot write |
@@ -155,11 +155,11 @@ User: POST /sprints/<id>/day/<n>/complete
 
 ### 5.4 Verification gates (inline auto-checks)
 ```
-Gate A: POST /sprints/<id>/day/<n>/copywork {rubric_url}
-  → mark copywork_projects.done for the day's project
-  → auto_check_gate_a: all 3 projects done → verification_reviews(gate=A) = pass → Phase B unlocked
-Gate B: POST /sprints/<id>/contract/submit {submission_url}
-  → record pending review, then auto_check_gate_b: deliverable URL present
+Gate A: POST /sprints/<id>/day/<n>/copywork {rubric_url (valid http(s), required)}
+  → mark copywork_projects.done + submitted_url for the day's project
+  → auto_check_gate_a: all 3 projects done AND each has a valid submitted URL → verification_reviews(gate=A) = pass → Phase B unlocked
+Gate B: POST /sprints/<id>/contract/submit {submission_url (valid http(s), required)}
+  → record pending review, then auto_check_gate_b: valid deliverable URL + a saved case study
   → verification_reviews(gate=B) = pass → Phase C unlocked
 Peer review (design/copy): manual pass written through record() by an admin.
 ```
