@@ -39,6 +39,13 @@ Feature: AI Mentor (mockup screen 8)
     Then the response status is 503
     And the JSON has field "error" present
 
+  Scenario: A mentor turn references the learner's earlier exchange
+    Given the target job description mentions "dynamic cart summary"
+    When I POST to "/mentor/turn" with JSON {"question": "What does dynamic cart summary mean?"}
+    Then the response status is 200
+    When I POST to "/mentor/turn" with JSON {"question": "How do I build it?"}
+    Then the JSON has field "answer" containing "cart summary"
+
   Scenario: Mentor sessions are scoped to the user's sprint and target job
     When I POST to "/mentor/turn" with JSON {"question": "How do I segment VIP buyers?"}
     Then a mentor session exists for sprint "s1" and job "email-automation-1"

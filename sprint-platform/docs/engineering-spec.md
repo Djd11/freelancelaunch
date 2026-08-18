@@ -84,7 +84,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 
 ### J6 · Proposal Builder (`/sprints/<id>/proposals`) — Phase C
 - **First-Bid Challenge:** 0/5 progress bar + table of live jobs (rate + status: Draft / Not started).
-- Proposal Builder card: **Opening hook** ("I see you need a Klaviyo flow that recovers abandoned carts — I just rebuilt exactly that flow…"), **Proof (from your Mock Contract)**, **CTA**.
+- Proposal Builder card: **LLM-engineered** per sprint from the cluster's live postings + the Mock Contract proof — an opening hook that starts with "I see you need…", a proof sentence referencing the Mock Contract, and a CTA. Filled asynchronously (`proposal_engine.fill_drafts`, one batched call); the page shows generating/error states (score = -1 marks a failed draft — LLM-only, no templates, decision D9).
 - Actions: Copy proposal / Edit. Submission is human-initiated: copy → paste on the platform → confirm → `status='submitted'`, `sprints.proposals_sent += 1`, record `platform`. Submission on an unverified platform is rejected.
 - "We never auto-submit" — enforced in the UI copy and the API.
 - **Outcome logging:** `POST /sprints/<id>/proposals/<pid>/respond` with `outcome=response|interview|offer` bumps `responses_received` / `interviews_held` / `offers_received` on the sprint.
@@ -140,9 +140,9 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 ## 5. LLM & async strategy
 - **All LLM work reuses one provider chain** — `services/llm.py call_llm`: env-configured endpoint (`LLM_API_URL`/`LLM_API_KEY`/`LLM_MODEL`) → OpenRouter (`OPENROUTER_API_KEY`) → Omniroute local (`127.0.0.1:20128`, socket probe) → `None` → `LLMGenerationError` → **visible error** (day payload `generation_error` / mentor 503). Content is LLM-only: no deterministic content fallback exists (decision D9); the chain is availability redundancy only.
 - **Sprint plan generation is async (implemented):** at enrollment the skeleton writes synchronously (`sprint_planner.create_plan` → 14 `sprint_days`; `copywork_engine.create_projects` → 3 projects) so the request never waits; `lesson_engine.generate_sprint_content` then fills lesson + project-anatomy payloads on a **background thread**. The count of populated `action_payload.lesson` values IS the DB-backed progress log; the dashboard polls `GET /sprints/<id>/generation` (`{status, generated, total}`) and the spinner hides at `ready`.
-- **Mentor** is request-scoped and short (2–4s); it calls `call_llm`, requires the answer to echo the job's terminology (`_grounded`), and on failure/unusable output raises → the turn endpoint returns **503 with a visible error** — no deterministic guided template.
+- **Mentor** is request-scoped (~30s timeout); it calls `call_llm` with the learner's **prior turns threaded in** (conversation memory), requires the answer to echo the job's terminology (`_grounded`), and on failure/unusable output raises → the turn endpoint returns **503 with a visible error** — no deterministic guided template.
 - **Gap-Fill detection** (Phase A) is deterministic in v1 — the missing nuance lives on copy-work project 2's `gap_fill_topic`, surfaces on the day view before Day 5, and **Day 5's generated lesson is the targeted 30-min micro-lesson on that nuance** — the topic is passed to the LLM prompt (`lesson_engine.lesson_for_day`), LLM-only.
-- **Proposal generation** remains deterministic hook templates in v1 (no LLM) — unchanged by the LLM-only content decision (D9); proposals are generated from the live job feed with job-specific hooks + proof from the mock contract.
+- **Proposal generation is LLM-only** like all content: `proposal_engine.generate_drafts` seeds skeleton rows synchronously, the async `fill_drafts` writes each engineered body from one batched LLM call grounded in the job postings + Mock Contract proof; on LLM failure drafts are marked `score = -1` and the page surfaces the error (retried on the next load).
 
 ---
 

@@ -35,9 +35,28 @@ def _fake_generation_llm(prompt, timeout=15):
     app; the stub keeps assertions stable without a live provider)."""
     import json
     import re
-    m = re.search(r'Cluster job posting: "([^"]+)"', prompt or "")
+    # Match various prompt formats for extracting the job title
+    m = (re.search(r'Cluster job posting: "([^"]+)"', prompt or "")
+          or re.search(r'The sprint is for: "([^"]+)"', prompt or "")
+          or re.search(r'The job title is: "([^"]+)"', prompt or "")
+          or re.search(r'The job posting says: "([^"]+)"', prompt or ""))
     job_title = m.group(1) if m else "the target job"
-    if "micro-lesson" in (prompt or ""):
+    # Project anatomy requests (contain 'project N of 3')
+    im = re.search(r"project (\d) of 3", prompt or "")
+    if im:
+        index = int(im.group(1))
+        return json.dumps({
+            "title": f"Rebuild the core flow for {job_title}",
+            "clone_steps": ["Trigger on Checkout Started",
+                             "2-step sequence: 30 min + 24 hr delays",
+                             "Cart summary dynamic block"],
+            "rubric": ["Flow is built from a blank account",
+                       "Trigger + dynamic block are present",
+                       "Deliverable matches the brief's acceptance criteria"],
+            "gap_fill_topic": "mobile responsiveness" if index == 2 else None,
+        })
+    # Gap-fill micro-lesson (day 5 with a flagged nuance)
+    if "Gap-fill focus" in (prompt or ""):
         fm = re.search(r"Gap-fill focus: ([^.]+)\.", prompt or "")
         focus = fm.group(1).strip() if fm else None
         if focus:
@@ -48,21 +67,27 @@ def _fake_generation_llm(prompt, timeout=15):
                       "version of exactly what the posting asks for — matching its wording.")
         return json.dumps({
             "title": f"{job_title}: how to copy it",
+            "objective": f"Rebuild the smallest real version of what the posting asks for.",
             "script": script,
             "key_points": [f"What the posting literally asks for in {job_title}",
                             focus or "The smallest reproducible piece you can build today"],
+            "pitfalls": ["Copying a generic template instead of the posting's exact flow",
+                          "Skipping the dynamic cart block the client names"],
         })
-    im = re.search(r"project (\d) of 3", prompt or "")
-    index = int(im.group(1)) if im else 1
+    # Regular day lesson (setup, copywork, contract, case-study, proposals)
     return json.dumps({
-        "title": f"Rebuild the core flow for {job_title}",
-        "clone_steps": ["Trigger on Checkout Started",
-                         "2-step sequence: 30 min + 24 hr delays",
-                         "Cart summary dynamic block"],
-        "rubric": ["Flow is built from a blank account",
-                   "Trigger + dynamic block are present",
-                   "Deliverable matches the brief's acceptance criteria"],
-        "gap_fill_topic": "mobile responsiveness" if index == 2 else None,
+        "title": f"Day lesson for {job_title}",
+        "objective": f"Complete the day's task for {job_title}.",
+        "script": (f"In this lesson you will learn how to handle {job_title}. "
+                    "Step 1: Open the tool and set up the trigger. "
+                    "Step 2: Add the required blocks or steps in sequence. "
+                    "Step 3: Configure the dynamic content using the posting's terminology. "
+                    "Step 4: Test with a sample before going live."),
+        "key_points": ["Use the exact trigger from the job posting",
+                        "Follow the step-by-step build sequence",
+                        "Test before publishing"],
+        "pitfalls": ["Skipping the test step",
+                      "Using the wrong trigger for this flow type"],
     })
 
 
@@ -94,6 +119,57 @@ def step_worker_run_no_llm(context, sid):
         le.generate_sprint_content(adapter.sb, real_sprint_id)
     except LLMGenerationError:
         pass  # expected — the failure is recorded on the day payload
+
+
+def _fake_proposals_llm(prompt, timeout=90):
+    """Deterministic stand-in for the LLM in proposal-fill tests — returns the
+    batched JSON array of engineered drafts the real model produces."""
+    import json
+    import re
+    titles = re.findall(r'- "([^"]+)"', prompt or "")
+    out = []
+    for t in titles:
+        out.append({
+            "job_title": t,
+            "hook": f"I see you need {t} handled — I just rebuilt a matching flow for a Mock Contract.",
+            "proof": "I completed a Mock Contract brief in this niche and passed a 3-point checklist.",
+            "cta": "Happy to run a quick scope call this week.",
+            "score": 85,
+        })
+    return json.dumps(out)
+
+
+def _seed_and_fill_proposals(adapter, sid, llm):
+    """Seed the skeleton drafts (as the proposals route does), then run the
+    fill worker synchronously so state is deterministic before assertions —
+    avoids racing the route's background fill thread."""
+    import services.proposal_engine as pe
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    sprint_rows = adapter.sb.table("sprints").select("*").eq("id", real_sprint_id).limit(1).execute().data
+    sprint = sprint_rows[0]
+    pe.call_llm = llm
+    pe.generate_drafts(adapter.sb, sprint, sprint.get("cluster_key"), sprint.get("user_id"))
+    return pe, real_sprint_id
+
+
+@when('the proposal drafts are generated for sprint "{sid}"')
+def step_proposal_fill(context, sid):
+    """Synchronously run the proposal fill worker with a stubbed LLM so the
+    engineered drafts are ready before assertions (LLM-only, no templates)."""
+    pe, real_sprint_id = _seed_and_fill_proposals(get_live_adapter(), sid, _fake_proposals_llm)
+    pe.fill_drafts(get_live_adapter().sb, real_sprint_id)
+
+
+@when('the proposal drafts are generated for sprint "{sid}" with no LLM')
+def step_proposal_fill_no_llm(context, sid):
+    """Run the proposal fill with the LLM unavailable — drafts must be marked
+    failed (score=-1) and the page must surface the error, never a template."""
+    from services.llm import LLMGenerationError
+    pe, real_sprint_id = _seed_and_fill_proposals(get_live_adapter(), sid, lambda *a, **k: None)
+    try:
+        pe.fill_drafts(get_live_adapter().sb, real_sprint_id)
+    except LLMGenerationError:
+        pass  # expected — drafts are marked score=-1 for the page to surface
 
 
 @when('I submit the contract form to "{path}" with no data')
@@ -217,6 +293,64 @@ def step_day_lesson_mentions(context, n, sid, text):
     lesson = (rows[0].get("action_payload") or {}).get("lesson") or {}
     blob = json.dumps(lesson)
     assert text in blob, f"day {n} lesson missing {text!r}: {blob}"
+
+
+def _day_lesson(adapter, sid, n):
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("sprint_days").select("action_payload") \
+        .eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute().data
+    assert rows, f"no day {n} row for sprint {sid}"
+    lesson = (rows[0].get("action_payload") or {}).get("lesson") or {}
+    assert lesson, f"day {n} has no generated lesson for sprint {sid}"
+    return lesson
+
+
+@then('day {n} of sprint "{sid}" has a lesson with at least {k} key points')
+def step_day_lesson_key_points(context, n, sid, k):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    kps = lesson.get("key_points") or []
+    assert len(kps) >= int(k), f"day {n} lesson has {len(kps)} key points, expected >= {k}"
+
+
+@then('day {n} of sprint "{sid}" has a lesson with a script longer than {m} characters')
+def step_day_lesson_script_len(context, n, sid, m):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    assert len(lesson.get("script") or "") > int(m), f"day {n} lesson script too short"
+
+
+@then('day {n} of sprint "{sid}" has a lesson with an objective')
+def step_day_lesson_objective(context, n, sid):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    assert (lesson.get("objective") or "").strip(), f"day {n} lesson has no objective"
+
+
+@then('day {n} of sprint "{sid}" has a lesson mentioning a pitfall')
+def step_day_lesson_pitfall(context, n, sid):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    assert (lesson.get("pitfalls") or []), f"day {n} lesson has no pitfalls"
+
+
+@then('copy-work project {p} for sprint "{sid}" has between {lo} and {hi} clone steps')
+def step_project_clone_count(context, p, sid, lo, hi):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("clone_steps") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(p)).execute().data
+    assert rows, f"no copy-work project {p} for sprint {sid}"
+    steps = rows[0].get("clone_steps") or []
+    assert int(lo) <= len(steps) <= int(hi), \
+        f"project {p} has {len(steps)} clone steps, expected {lo}-{hi}"
+
+
+@then('copy-work project {p} for sprint "{sid}" has exactly {n} rubric items')
+def step_project_rubric_count(context, p, sid, n):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("rubric") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(p)).execute().data
+    assert rows, f"no copy-work project {p} for sprint {sid}"
+    rubric = rows[0].get("rubric") or []
+    assert len(rubric) == int(n), f"project {p} has {len(rubric)} rubric items, expected {n}"
 
 
 def _sprint_row(context, sid):

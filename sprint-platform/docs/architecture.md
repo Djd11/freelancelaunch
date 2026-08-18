@@ -95,16 +95,16 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 | `llm` | The **one shared LLM provider chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` → callers raise `LLMGenerationError` (content is LLM-only) |
 | `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
 | `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
-| `lesson_engine` | Per-day lesson + project anatomy (clone steps/rubric) — **LLM-only** (no deterministic content); **the async worker** (`generate_sprint_content`) + progress count; on LLM failure stamps a visible `generation_error` on a day payload (never template content). Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
+| `lesson_engine` | Per-day lesson (title/objective/script/key_points/pitfalls) + project anatomy (clone steps/rubric) — **LLM-only** (no deterministic content); **the async worker** (`generate_sprint_content`) + progress count; on LLM failure stamps a visible `generation_error` on a day payload (never template content). Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
 | `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
 | `copywork_engine` | Seeds the 3 replication-project placeholder **skeleton** (mockup titles/source, empty `clone_steps`/`rubric`) + `gap_fill_topic` on project 2 — the worker fills the anatomy via LLM so content matches the learner's actual cluster, not a hard-coded email template |
 | `mock_contract_engine` | Anonymized brief synthesis from the cluster's first active posting (No-500 default) |
 | `verification_service` | Gates A & B: `auto_check_gate_a/b` inline auto-tests (3 projects done + valid submitted URLs / valid deliverable URL + case study saved) + peer pass via `record()` |
-| `proposal_engine` | Hook templates + proof-from-contract + completeness scoring |
+| `proposal_engine` | LLM-engineered proposal drafts from the live job feed + Mock Contract proof (async fill; `score = -1` marks LLM failure — LLM-only, no templates) |
 | `iteration_engine` | Diagnosis: price/portfolio/niche from the sprint's own data → remedial micro-course |
 | `unlock_engine` | Meter recompute on day completion + snapshot write |
 | `badge_engine` | Demand-Validated badge issuance (gate B pass + completed sprint, idempotent) |
-| `mentor_agent` | Job-grounded Socratic chat — LLM-only with grounding check; ungrounded or unavailable → visible error, never a canned answer |
+| `mentor_agent` | Job-grounded Socratic chat — LLM-only with grounding check and conversation memory (prior turns threaded into the prompt); ungrounded or unavailable → visible error, never a canned answer |
 | `nudge_engine` | Streak + confidence recompute + encouragement on progress marks |
 | `outcome_service` | Contract add/complete; recompute `total_earned`, `avg_contract_value`, `first_contract_at`, `contracts_completed` |
 

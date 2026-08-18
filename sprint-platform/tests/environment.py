@@ -215,13 +215,19 @@ def _seed_static_data(adapter: LiveDBAdapter):
         ).execute()
 
 
-def _fake_mentor_llm(prompt, timeout=3):
+def _fake_mentor_llm(prompt, timeout=30):
     """Deterministic stand-in for the mentor LLM — echoes the target job's
-    exact wording so the grounding gate passes and answers stay stable (the
-    app is LLM-only; the stub replaces the live provider in tests)."""
+    exact wording so the grounding gate passes and answers stay stable. When
+    the prompt carries earlier turns (mentor memory), the answer references
+    the learner's earlier question so memory is observable in tests."""
     import re
     m = re.search(r"job posting says: (['\"])(.*?)\1", prompt or "", re.DOTALL)
     desc = m.group(2) if m else ""
+    h = re.search(r"learner asked: (['\"])(.*?)\1", prompt or "", re.DOTALL)
+    earlier = h.group(2) if h else ""
+    if earlier and "Earlier in this conversation" in (prompt or ""):
+        return (f"Earlier you asked about \"{earlier}\" — keep going from there. "
+                f"Re-read the posting: \"{desc}\". What's the smallest piece to rebuild today?")
     return (f"Work from the posting's own words: \"{desc}\" — what's the "
             "smallest piece you can rebuild today, and how will you verify it?")
 
@@ -239,8 +245,12 @@ def before_scenario(context, scenario):
     # thread spawned during a scenario (enrollment, the generation-retry
     # endpoint) is deterministic instead of hitting a live provider.
     import services.lesson_engine as le
-    from tests.steps.action_steps import _fake_generation_llm
+    from tests.steps.action_steps import _fake_generation_llm, _fake_proposals_llm
     le.call_llm = _fake_generation_llm
+    # Default-stub the proposal fill LLM so the proposals route's background
+    # fill thread is deterministic too.
+    import services.proposal_engine as pe
+    pe.call_llm = _fake_proposals_llm
     with context.app.app_context():
         adapter = get_live_adapter()
         # Resolve admin user ID and store in app config for admin check
@@ -285,10 +295,12 @@ def after_scenario(context, scenario):
     import services.lesson_engine as le
     import services.video_engine as ve
     import services.mentor_agent as ma
+    import services.proposal_engine as pe
     from services.llm import call_llm
     from services.video_engine import voiceover_for_lesson as _real_vo
     le.call_llm = call_llm
     ma.call_llm = call_llm
+    pe.call_llm = call_llm
     ve.voiceover_for_lesson = _real_vo
 
 

@@ -48,17 +48,90 @@ def _top_job(sb, cluster_key):
 def _lesson_prompt(job, day, action_type, project_title, gap_fill_topic=None):
     job_title = (job or {}).get("title") or "the target job"
     excerpt = _excerpt((job or {}).get("description") or "")
+
+    # Day 1 (setup): orientation lesson — what the sprint is about, tools needed,
+    # what the learner will build across the 14 days. NOT a copy-work task.
+    if action_type == "setup":
+        prompt = (
+            "You write an orientation lesson for Day 1 of a 14-day freelancer sprint. "
+            f"The sprint is for: \"{job_title}\". "
+            f"The job posting says: \"{excerpt}\". "
+            "Write a lesson that covers: (1) what the learner will build by the end of "
+            "the sprint, (2) the tools/platforms they need (e.g. Klaviyo, Shopify), "
+            "(3) what copy-work means and how the 14 days are structured (Phase A: "
+            "copy-work replication, Phase B: mock contract, Phase C: proposals), "
+            "(4) one quick win they can do today to get started. "
+            'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+        )
+        return prompt
+
+    # Copy-work days (2-5): step-by-step build instructions
+    if action_type == "copywork":
+        prompt = (
+            "You write a step-by-step build lesson for a freelancer sprint. "
+            f"The job title is: \"{job_title}\". "
+            f"The job posting says: \"{excerpt}\". "
+            f"Day {day}, Project: {project_title}. "
+            "Write a lesson that teaches the learner to rebuild this exact flow. "
+            "The script MUST include: (1) the specific trigger to use (e.g. 'Checkout "
+            "Started', 'Fulfilled Order'), (2) the exact blocks/steps to add in order, "
+            "(3) the specific Klaviyo variable syntax to use (e.g. {{ event.line_items }}), "
+            "(4) how to test it before going live. "
+            "Be concrete and actionable — the learner should be able to follow along "
+            "click-by-click. Use Klaviyo's actual feature names and variable syntax. "
+            'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+        )
+        if gap_fill_topic:
+            prompt += f" Gap-fill focus: {gap_fill_topic}."
+        return prompt
+
+    # Contract days (6-8): executing the mock contract
+    if action_type == "contract":
+        prompt = (
+            "You write a lesson for executing a mock client contract in a freelancer sprint. "
+            f"The job title is: \"{job_title}\". "
+            f"The job posting says: \"{excerpt}\". "
+            f"Day {day}, working on the mock contract deliverable. "
+            "Write a lesson that teaches the learner to execute the contract step by step: "
+            "what to build, how to structure the deliverable, what documentation to write. "
+            "Be concrete — reference specific Klaviyo features, Shopify integrations, and "
+            "deliverable formats the client would expect. "
+            'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+        )
+        return prompt
+
+    # Case-study days (9-10): writing the case study
+    if action_type == "case-study":
+        prompt = (
+            "You write a lesson for writing a professional case study in a freelancer sprint. "
+            f"The job title is: \"{job_title}\". "
+            f"The job posting says: \"{excerpt}\". "
+            f"Day {day}, the learner writes their Problem / Solution / Result case study. "
+            "Write a lesson that teaches: (1) how to frame the client's problem using "
+            "the job posting's terminology, (2) how to describe the solution they built, "
+            "(3) how to quantify results (even estimated ones), (4) the structure that "
+            "clients want to see. This case study becomes their portfolio piece. "
+            'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+        )
+        return prompt
+
+    # Proposal days (11-14): building and sending proposals
     prompt = (
-        "You generate one micro-lesson for a 14-day freelancer sprint. "
-        f"Cluster job posting: \"{job_title}\". "
-        f"Posting text: \"{excerpt}\". "
-        f"Day {day} ({action_type}). Project: {project_title}. "
-        "Write a 100-150 word lesson script that teaches the learner to rebuild "
-        "exactly what the posting asks, using the posting's own terminology. "
-        'Reply with JSON only: {"title": "...", "script": "...", "key_points": ["...", "..."]}.'
+        "You write a lesson for sending proposals to live job postings in a freelancer sprint. "
+        f"The job title is: \"{job_title}\". "
+        f"The job posting says: \"{excerpt}\". "
+        f"Day {day}, the learner sends proposals to real clients. "
+        "Write a lesson that teaches: (1) how to write an opening hook that references "
+        "the job posting's specific needs, (2) how to include proof from their mock "
+        "contract and case study, (3) how to personalize each proposal, (4) what to "
+        "do after sending (track, follow up). "
+        'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
+        '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
     )
-    if gap_fill_topic:
-        prompt += f" Gap-fill focus: {gap_fill_topic}."
     return prompt
 
 
@@ -83,22 +156,37 @@ def _parse_json(text):
         return None
     return {
         "title": str(data.get("title") or "").strip(),
+        "objective": str(data.get("objective") or "").strip(),
         "script": str(data.get("script") or "").strip(),
         "key_points": [str(k) for k in (data.get("key_points") or []) if str(k).strip()],
+        "pitfalls": [str(p) for p in (data.get("pitfalls") or []) if str(p).strip()],
     }
 
 
 def _project_prompt(job, project_index):
     job_title = (job or {}).get("title") or "the target job"
     excerpt = _excerpt((job or {}).get("description") or "")
+    # Different project types for variety across the 3 copy-work projects
+    project_focus = {
+        1: "the core flow (e.g. welcome series, main automation)",
+        2: "the recovery flow (e.g. abandoned cart, winback)",
+        3: "the post-purchase flow (e.g. upsell, review request)",
+    }
+    focus = project_focus.get(project_index, "the main automation")
     return (
         "You design a copy-work replication task for a freelancer sprint. "
-        f"Cluster job posting: \"{job_title}\". Posting text: \"{excerpt}\". "
-        f"Design replication project {project_index} of 3: an exact clone of the "
-        "anatomy the posting describes. "
+        f"The job posting says: \"{excerpt}\". "
+        f"Design replication project {project_index} of 3: {focus}. "
+        "The clone_steps must be specific actions the learner takes in Klaviyo "
+        "(e.g. 'Create flow with Checkout Started trigger', 'Add email step with "
+        "dynamic cart block using {{ event.line_items }}', 'Set delay to 30 minutes'). "
+        "Each step must name the exact feature, trigger, or variable to use. "
+        "The rubric must be auto-checkable pass/fail criteria (e.g. 'Flow triggers "
+        "on Checkout Started', 'Email contains dynamic cart summary block', "
+        "'Renders correctly on mobile'). "
         'Reply with JSON only: {"title": "...", "clone_steps": ["...", "..."], '
         '"rubric": ["...", "...", "..."], "gap_fill_topic": "..." or null}. '
-        "clone_steps = 3-5 concrete build steps; rubric = 3 auto-checkable acceptance criteria."
+        "clone_steps = 4-5 concrete build steps; rubric = 3 acceptance criteria."
     )
 
 
@@ -145,7 +233,7 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
         gap_fill_topic = _gap_fill_topic(sb, sprint.get("id"))
     project_title = (project or {}).get("title") or day_row.get("title") or ""
     text = call_llm(_lesson_prompt(job, day_row.get("day_no"), day_row.get("action_type"),
-                                   project_title, gap_fill_topic), timeout=15)
+                                   project_title, gap_fill_topic), timeout=90)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the day's lesson")
     parsed = _parse_json(text)
@@ -153,15 +241,17 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
         raise LLMGenerationError("LLM returned an unusable lesson (missing script)")
     return {
         "title": parsed["title"],
+        "objective": parsed["objective"] or "",
         "script": parsed["script"],
         "key_points": parsed["key_points"] or [],
+        "pitfalls": parsed["pitfalls"] or [],
     }
 
 
 def project_anatomy(sb, sprint, project_index):
     """Generate one copy-work project's clone_steps + rubric (LLM-only)."""
     job = _top_job(sb, sprint.get("cluster_key"))
-    text = call_llm(_project_prompt(job, project_index), timeout=15)
+    text = call_llm(_project_prompt(job, project_index), timeout=90)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the project anatomy")
     return _parse_project(text)
@@ -247,13 +337,27 @@ def generate_sprint_content(sb, sprint_id):
             row = existing[0]
             if row.get("clone_steps"):
                 continue  # anatomy already generated
-            anatomy = project_anatomy(sb, sprint, index)
-            sb.table("copywork_projects").update({
-                "title": anatomy["title"],
-                "clone_steps": anatomy["clone_steps"],
-                "rubric": anatomy["rubric"],
-                "gap_fill_topic": anatomy["gap_fill_topic"],
-            }).eq("sprint_id", sprint_id).eq("project_index", index).execute()
+            # Retry logic: try up to 3 times for each project anatomy.
+            # A single failure must not stop the other projects from generating.
+            for attempt in range(3):
+                try:
+                    anatomy = project_anatomy(sb, sprint, index)
+                    if anatomy.get("clone_steps") and anatomy.get("rubric"):
+                        sb.table("copywork_projects").update({
+                            "title": anatomy["title"],
+                            "clone_steps": anatomy["clone_steps"],
+                            "rubric": anatomy["rubric"],
+                            "gap_fill_topic": anatomy["gap_fill_topic"],
+                        }).eq("sprint_id", sprint_id).eq("project_index", index).execute()
+                        break  # success, move to next project
+                except (LLMGenerationError, Exception) as exc:
+                    if attempt == 2:
+                        # All retries failed — log but don't crash the worker.
+                        # The UI shows "Project anatomy is being generated…"
+                        # and a retry will heal it.
+                        import logging
+                        logging.getLogger(__name__).warning(
+                            "project anatomy failed for %s project %d: %s", sprint_id, index, exc)
     except LLMGenerationError as exc:
         # LLM-only: never substitute templates — record the failure so the UI
         # surfaces it, then propagate for logging.

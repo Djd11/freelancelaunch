@@ -95,8 +95,19 @@ def turn():
 
     sprint, job, job_id = _context(sb, g.user["id"])
     job_desc = job.get("description") or "" if job else ""
+    # Prior turns (most recent few) so the mentor can reference the learner's
+    # earlier exchange instead of answering each question in a vacuum.
+    history = []
+    sessions = sb.table("mentor_sessions").select("turn_json") \
+        .eq("user_id", g.user["id"]).order("created_at", desc=True).limit(3).execute().data
+    for s in reversed(sessions):
+        for turn in s.get("turn_json") or []:
+            if turn.get("question"):
+                history.append({"role": "user", "text": turn["question"]})
+            if turn.get("answer"):
+                history.append({"role": "mentor", "text": turn["answer"]})
     try:
-        result = mentor_answer(question, job_desc)
+        result = mentor_answer(question, job_desc, history=history)
     except LLMGenerationError as exc:
         # LLM-only mentor: no deterministic template. Surface the failure
         # visibly (503) instead of answering with canned content.

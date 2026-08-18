@@ -133,7 +133,9 @@ Feature: UI/UX — every page's CTAs work end to end (no dead ends, no fake func
 
   Scenario: Proposals — the Copy proposal CTA is wired, no dead links remain
     Given Phase B has passed verification for sprint "s1"
-    When I GET "/sprints/s1/proposals"
+    And the user has a verified platform "upwork"
+    When the proposal drafts are generated for sprint "s1"
+    And I GET "/sprints/s1/proposals"
     Then the page contains an element with attribute "data-copy-proposal"
     And the page does not contain any dead link
 

@@ -38,12 +38,13 @@ Feature: Day View & Copy-Work (mockup screen 4)
     And I GET "/sprints/s1/day/4"
     Then the page contains the text "Klaviyo flow setup for store"
     And the page contains the text "how to"
+    And the page contains the text "Common pitfalls"
 
   Scenario: The day view renders the generated copy-work anatomy (steps + rubric)
     When the content generation worker runs for sprint "s1"
     And I GET "/sprints/s1/day/4"
     Then the page contains the text "Trigger on Checkout Started"
-    And the page contains the text "auto-checked by verification service"
+    And the page contains the text "rubric verified at Gate A"
 
   Scenario: A day whose content generation failed shows a visible error, never template content
     When the content generation worker runs for sprint "s1" with no LLM

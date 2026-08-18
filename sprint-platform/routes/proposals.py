@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, g
 from routes import require_login, load_sprint, load_cluster
 from services.supabase_client import get_supabase
 from services.verification_service import gate_b_passed
-from services.proposal_engine import generate_drafts, list_proposals, verified_platforms, template as proposal_template
+from services.proposal_engine import (SCORE_ERROR, generate_drafts, fill_drafts,
+                                      list_proposals, verified_platforms)
 from services.iteration_engine import diagnose
 
 proposals_bp = Blueprint("proposals", __name__)
@@ -34,9 +35,30 @@ def index(sprint_id):
 
     cluster = load_cluster(sb, sprint["cluster_key"])
     generate_drafts(sb, sprint, sprint["cluster_key"], sprint["user_id"])
+    # LLM bodies fill asynchronously — the page shows generating/error states
+    # and each load re-fills any failed drafts (self-healing retry).
+    import threading
+    from flask import current_app
+    app = current_app._get_current_object()
+    threading.Thread(
+        target=_fill_in_background, args=(app, sprint["id"], sprint["cluster_key"]), daemon=True,
+    ).start()
     proposals = list_proposals(sb, sprint, sprint["cluster_key"])
     submitted_count = sum(1 for p in proposals if p["status"] == "submitted")
     verified = verified_platforms(sb, sprint["user_id"])
+
+    # The Proposal Builder card is the first draft's engineered body (capstone
+    # job), with explicit generating / failed states while the LLM fills it.
+    first = next((p for p in proposals if p.get("template_body")), None) or (proposals[0] if proposals else None)
+    if first and first.get("template_body"):
+        proposal_text = first["template_body"]
+        proposal_state = "ready"
+    elif first and first.get("score") == SCORE_ERROR:
+        proposal_text = None
+        proposal_state = "error"
+    else:
+        proposal_text = None
+        proposal_state = "generating"
 
     # The iteration loop (eng-spec §4.3): 5 proposals sent, 0 responses →
     # diagnose the bottleneck from the sprint's own data. Rendered on the page
@@ -48,10 +70,28 @@ def index(sprint_id):
     return render_template(
         "proposals.html", sprint=sprint, proposals=proposals,
         submitted_count=submitted_count,
-        template=proposal_template(sprint, cluster),
+        proposal_text=proposal_text, proposal_state=proposal_state,
         verified_platform=verified[0] if verified else "upwork",
         diagnosis=diagnosis,
     )
+
+
+def _fill_in_background(app, sprint_id, cluster_key):
+    """Background LLM proposal fill — app context + dedicated Supabase client
+    (same pattern as the lesson worker; never blocks the proposals request)."""
+    with app.app_context():
+        try:
+            from supabase import create_client
+            sb = create_client(
+                app.config.get("SUPABASE_URL") or "",
+                app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+            )
+            fill_drafts(sb, sprint_id, cluster_key)
+        except Exception:
+            # LLM-only: fill_drafts already marked failed drafts (score=-1) so
+            # the page surfaces the error; log the failure for diagnosis.
+            import logging
+            logging.getLogger(__name__).exception("proposal fill failed for %s", sprint_id)
 
 
 @proposals_bp.route("/sprints/<sprint_id>/proposals/<proposal_id>/submit", methods=["POST"])

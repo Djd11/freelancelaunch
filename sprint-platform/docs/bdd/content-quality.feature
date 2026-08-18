@@ -34,3 +34,15 @@ Feature: Day Content Quality — completable Phase A, job-grounded copy-work, Da
     Given copy-work project 2 for sprint "s1" flagged gap-fill topic "mobile responsiveness"
     When the content generation worker runs for sprint "s1"
     Then day 5 of sprint "s1" has a lesson mentioning "mobile responsiveness"
+
+  Scenario: Generated lessons carry real instructional structure
+    When the content generation worker runs for sprint "s1"
+    Then day 2 of sprint "s1" has a lesson with at least 2 key points
+    And day 2 of sprint "s1" has a lesson with a script longer than 80 characters
+    And day 2 of sprint "s1" has a lesson with an objective
+    And day 2 of sprint "s1" has a lesson mentioning a pitfall
+
+  Scenario: Generated project anatomy carries a complete rubric and clone steps
+    When the content generation worker runs for sprint "s1"
+    Then copy-work project 1 for sprint "s1" has between 3 and 5 clone steps
+    And copy-work project 1 for sprint "s1" has exactly 3 rubric items

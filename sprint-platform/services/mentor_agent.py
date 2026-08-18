@@ -28,16 +28,26 @@ def _extract_terms(job_description):
     return terms
 
 
-def _build_prompt(question, job_description, terms):
-    return (
+def _build_prompt(question, job_description, terms, history=None):
+    prompt = (
         "You are a Socratic mentor for a freelancer completing a 14-day sprint. "
         "The learner's target job posting says: "
-        f"{job_description!r} "
-        f"The learner asked: {question!r}. "
+        f"{job_description!r}. "
+    )
+    if history:
+        prompt += "Earlier in this conversation:\n"
+        for turn in history:
+            if turn.get("role") == "user":
+                prompt += f"- learner asked: {turn.get('text', '')!r}\n"
+            elif turn.get("role") == "mentor":
+                prompt += f"- you answered: {turn.get('text', '')!r}\n"
+    prompt += (
+        f"The learner now asks: {question!r}. "
         "Reply with guiding questions and hints that use the job posting's exact "
         "terminology. Never provide the finished implementation — coach the learner "
         "to discover it. Keep it under 120 words."
     )
+    return prompt
 
 
 def _grounded(candidate, terms):
@@ -49,15 +59,16 @@ def _grounded(candidate, terms):
     return (not terms) or any(t in lowered for t in terms)
 
 
-def answer(question, job_description=None):
+def answer(question, job_description=None, history=None):
     """Return a guided, job-grounded LLM answer. Never hands over the finished
     answer. Raises LLMGenerationError when no provider answered or the answer
     failed the grounding gate — the route surfaces a visible error (LLM-only,
-    no deterministic template)."""
+    no deterministic template). history is a list of {"role", "text"} prior
+    turns so the mentor can reference the learner's earlier exchange."""
     job_description = job_description or ""
     terms = _extract_terms(job_description)
 
-    candidate = call_llm(_build_prompt(question, job_description, terms))
+    candidate = call_llm(_build_prompt(question, job_description, terms, history), timeout=30)
     if not candidate:
         raise LLMGenerationError("No LLM provider answered the mentor turn")
     if not _grounded(candidate, terms):

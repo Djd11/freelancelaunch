@@ -20,9 +20,16 @@ Feature: Proposal Builder & First-Bid Challenge (mockup screen 6)
   Scenario: A proposal template is generated with job-specific hooks and proof from the mock contract
     Given a capstone brief for sprint "s1" exists
     And the user has a verified platform "upwork"
-    When I GET "/sprints/s1/proposals"
+    When the proposal drafts are generated for sprint "s1"
+    And I GET "/sprints/s1/proposals"
     Then the page contains the text "I see you need"
     And the page contains the text "Mock Contract"
+
+  Scenario: A proposal whose generation failed surfaces a visible error, never a template
+    And the user has a verified platform "upwork"
+    When the proposal drafts are generated for sprint "s1" with no LLM
+    And I GET "/sprints/s1/proposals"
+    Then the page contains the text "Proposal generation failed"
 
   Scenario: First-Bid challenge tracks progress out of 5
     Given the user has a verified platform "upwork"
