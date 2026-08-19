@@ -8,7 +8,7 @@ import re
 
 from behave import when, then
 
-from tests.steps.common_steps import _get, _post
+from tests.steps.common_steps import _get, _post, _html
 
 _UUID_RE = r"[0-9a-fA-F-]{36}"
 
@@ -140,3 +140,62 @@ def step_ui_post_form_json(context, path, payload):
         .eq(lookup_field, lookup_value).limit(5).execute().data
     for row in rows:
         get_live_adapter().track_created(table, row.get("id"))
+
+
+# ── Then: check-item state (scoped to the labelled item, not page-wide) ─────
+def _check_item_state(html, label, cls):
+    """True when the .check-item that wraps <b>{label}</b> carries the {cls} class.
+
+    The check-item markup is `<div class="check-item[ done] ...><div class="cbox">…
+    </div><div><b>LABEL</b>…` — find the label, walk back to the nearest preceding
+    `class="check-item…"` within a sane window, and read its token set."""
+    needle = '<b>{}</b>'.format(label)
+    idx = html.find(needle)
+    if idx == -1:
+        idx = html.find(label)
+    if idx == -1:
+        return False
+    ci = html.rfind('class="check-item', 0, idx)
+    if ci == -1 or idx - ci > 800:
+        return False
+    q = html.find('"', ci + len('class="'))
+    if q == -1:
+        return False
+    return cls in html[ci:q].split()
+
+
+@then('the check-item "{label}" is marked done')
+def step_check_item_done(context, label):
+    assert _check_item_state(_html(context), label, "done"), \
+        f'check-item "{label}" is not marked done'
+
+
+@then('the check-item "{label}" is not marked done')
+def step_check_item_not_done(context, label):
+    assert not _check_item_state(_html(context), label, "done"), \
+        f'check-item "{label}" is unexpectedly marked done'
+
+
+# ── Then: rubric auto-check checkboxes (fix #7) ────────────────────────────
+@then('the page contains at least {n:d} rubric checkboxes')
+def step_at_least_n_checkboxes(context, n):
+    total = _html(context).count('type="checkbox"')
+    assert total >= n, f"expected at least {n} rubric checkboxes, got {total}"
+
+
+@then('the rubric checkboxes are all checked')
+def step_checkboxes_all_checked(context):
+    html = _html(context)
+    total = html.count('type="checkbox"')
+    assert total > 0, "no rubric checkboxes found"
+    checked = len(re.findall(r'type="checkbox"[^>]*\bchecked', html))
+    assert checked == total, f"expected all {total} checkboxes checked, only {checked} are"
+
+
+@then('the rubric checkboxes are not checked')
+def step_checkboxes_none_checked(context):
+    html = _html(context)
+    total = html.count('type="checkbox"')
+    assert total > 0, "no rubric checkboxes found"
+    checked = len(re.findall(r'type="checkbox"[^>]*\bchecked', html))
+    assert checked == 0, f"expected 0 checked checkboxes, got {checked}"

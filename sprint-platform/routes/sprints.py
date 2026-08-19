@@ -41,12 +41,20 @@ def dashboard(sprint_id):
     nudge = nudge_for(sprint, momentum)
     contracts = sb.table("contracts").select("*").eq("sprint_id", sprint_id).execute().data
 
+    # Today-card check-items: Watch lesson ← today's lesson_watched (eng-spec J4);
+    # Replicate ← today's copy-work project.done; Self-check ← Gate A (auto-check).
+    today_payload = today.get("action_payload") or {}
+    today_project_index = today_payload.get("project_index") or DAY_TO_PROJECT.get(today.get("day_no"))
+    today_project = load_project(sb, sprint_id, today_project_index)
+    gate_a = gate_a_passed(sb, sprint_id)
+
     return render_template(
         "sprint_dashboard.html",
         sprint=sprint, cluster=cluster, cohort=cohort, meter=meter,
         momentum=momentum, today=today, phase_a_days=phase_a_days,
-        gate_a_pass=gate_a_passed(sb, sprint_id),
-        gate_b_pass=gate_b_passed(sb, sprint_id),
+        gate_a_pass=gate_a, gate_b_pass=gate_b_passed(sb, sprint_id),
+        today_lesson_watched=bool(today.get("lesson_watched")),
+        today_project_done=bool(today_project and today_project.get("done")),
         nudge=nudge, contracts=contracts,
     )
 
@@ -77,18 +85,50 @@ def day(sprint_id, day_no):
     # LLM-only content (async worker): render exactly what the worker wrote. If
     # this day's payload is still empty the page shows a "generating" notice;
     # if generation failed the worker stamped a visible generation_error.
-    from services.lesson_engine import generation_error
-    lesson = payload.get("lesson")
-    gen_error = payload.get("generation_error") or generation_error(sb, sprint_id)
+    from services.lesson_engine import generation_error, clean_lesson
+    lesson = clean_lesson(payload.get("lesson"))
+    # A day that ALREADY has content renders it — a failure elsewhere in the
+    # sprint (generation_error is sprint-wide, stamped on the first empty day)
+    # must not hide this day's valid lesson. Only days still waiting on the
+    # worker surface the sprint-wide failure instead of endless "generating".
+    gen_error = payload.get("generation_error")
+    if not lesson and not gen_error:
+        gen_error = generation_error(sb, sprint_id)
     clone_steps = (project or {}).get("clone_steps") or []
     rubric = (project or {}).get("rubric") or []
+    submitted_url = (project or {}).get("submitted_url")
+    project_submitted = bool(project and is_valid_url(submitted_url))
 
     return render_template(
         "day.html",
         sprint=sprint, day=day_row, project=project, meter=meter,
         day_done=bool(day_row.get("is_done")), gap_fill_topic=gap_fill_topic, pct=pct,
         lesson=lesson, gen_error=gen_error, clone_steps=clone_steps, rubric=rubric,
+        lesson_watched=bool(day_row.get("lesson_watched")),
+        project_done=bool(project and project.get("done")),
+        gate_a_pass=gate_a_passed(sb, sprint_id),
+        project_submitted=project_submitted,
     )
+
+
+@sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/watched", methods=["POST"])
+def mark_watched(sprint_id, day_no):
+    """Toggle sprint_days.lesson_watched — the day-view 'Mark lesson watched'
+    check-item (eng-spec J4). Plain-form POST, redirect back to the day view."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("main.dashboard"))
+    day_row = load_day(sb, sprint_id, day_no)
+    if not day_row:
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+    new_state = not bool(day_row.get("lesson_watched"))
+    sb.table("sprint_days").update({"lesson_watched": new_state}) \
+        .eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
+    return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
 
 
 @sprints_bp.route("/sprints/<sprint_id>/generation")
@@ -185,9 +225,11 @@ def complete_day(sprint_id, day_no):
         "user_id": sprint["user_id"], "day_streak": streak, "confidence": confidence,
     }, on_conflict="user_id").execute()
 
-    # Browser form POST → redirect so the user never sees raw JSON.
-    # API callers that need the meter/momentum payload can read the JSON
-    # error-path responses (404) instead.
+    # Dual-mode (eng-spec J3): AJAX/API callers (X-Requested-With) get the
+    # meter payload as JSON so the journey can read meter.newly_unlocked;
+    # browser form POSTs get a PRG redirect so the user never sees raw JSON.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"ok": True, "meter": meter, "next_day": next_day})
     if day_no >= 14:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
     return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=next_day))

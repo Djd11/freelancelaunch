@@ -139,6 +139,11 @@ def create_app(test_config=None):
         if not text:
             return markupsafe.Markup("")
 
+        # Some generated lessons store literal escape sequences ("\\n") instead
+        # of real line breaks (the model double-escaped the JSON). Normalize
+        # them first so line-based parsing below actually splits on paragraphs.
+        text = str(text).replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")
+
         lines = text.split("\n")
         html_parts = []
         in_ol = False

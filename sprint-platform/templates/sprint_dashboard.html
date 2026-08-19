@@ -142,9 +142,9 @@
         <div class="card">
           <div class="kv" style="border:none;padding-bottom:12px"><h3>Today · Day {{ sprint.current_day }}</h3><span class="badge b-amber">{{ today.action_type|capitalize }} · Project {{ today.action_payload.project_index if today.action_payload and today.action_payload.project_index is defined else 1 }} of 3</span></div>
           <p class="small muted">{{ today.description or 'Complete today\'s action to unlock the next batch of live job postings.' }}</p>
-          <div style="margin-top:16px" class="check-item done"><div class="cbox">✓</div><div><b>Watch lesson</b><div class="xs muted">Learn the flow anatomy (5 min)</div></div></div>
-          <div class="check-item"><div class="cbox"></div><div><b>Replicate the project</b><div class="xs muted">Rebuild from a blank canvas (~35 min)</div></div></div>
-          <div class="check-item"><div class="cbox"></div><div><b>Self-check vs rubric</b><div class="xs muted">3 acceptance criteria (~10 min)</div></div></div>
+          <div style="margin-top:16px" class="check-item{{ ' done' if today_lesson_watched else '' }}"><div class="cbox">{{ '✓' if today_lesson_watched else '' }}</div><div><b>Watch lesson</b><div class="xs muted">Learn the flow anatomy (5 min)</div></div></div>
+          <div class="check-item{{ ' done' if today_project_done else '' }}"><div class="cbox">{{ '✓' if today_project_done else '' }}</div><div><b>Replicate the project</b><div class="xs muted">Rebuild from a blank canvas (~35 min)</div></div></div>
+          <div class="check-item{{ ' done' if gate_a_pass else '' }}"><div class="cbox">{{ '✓' if gate_a_pass else '' }}</div><div><b>Self-check vs rubric</b><div class="xs muted">3 acceptance criteria (~10 min)</div></div></div>
           <a class="btn btn-p" href="/sprints/{{ sprint.id }}/day/{{ sprint.current_day }}" style="margin-top:8px">Open Day {{ sprint.current_day }} →</a>
         </div>
 

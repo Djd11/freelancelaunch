@@ -24,6 +24,13 @@ def step_request_sprint(context, skill):
     _post(context, "/sprints/request", data={"skill": skill})
 
 
+@when('I mark the lesson watched for day {day} of sprint "{sid}"')
+def step_mark_watched(context, day, sid):
+    """Browser-form POST to the /watched toggle (plain, urlencoded — never JSON),
+    mirroring day.html's plain-form pattern; the route redirects back to the day view."""
+    _post(context, f"/sprints/{sid}/day/{day}/watched", data={})
+
+
 @when('I submit the copy-work task for day {day} of sprint "{sid}" with rubric_url "{url}"')
 def step_copywork_submit(context, day, sid, url):
     _post(context, f"/sprints/{sid}/day/{day}/copywork", data={"rubric_url": url})

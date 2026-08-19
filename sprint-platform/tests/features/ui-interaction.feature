@@ -18,10 +18,13 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
     And the page contains the text "Pass 3-point rubric"
 
   Scenario: Dashboard check-item reflects the Watch-lesson done state
+    Given I am on day 4 of sprint "s1"
+    And day 4 of sprint "s1" has the lesson marked watched
     When I GET "/sprints/s1"
     Then the response status is 200
     And the page contains the text "Watch lesson"
     And the page contains an element with class "check-item done"
+    And the check-item "Watch lesson" is marked done
     And the page contains the text "Replicate the project"
     And the page contains the text "Self-check vs rubric"
 

@@ -52,8 +52,8 @@
         <h3 style="margin-bottom:6px">Verification Gate — locks Phase C</h3>
         <p class="small muted">Your Mock Contract must pass review before you can enter the job-feed stage. This is what makes your badge credible to clients.</p>
         <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
-          <div class="check-item" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox"></div><div><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div></div>
-          <div class="check-item" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox"></div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result</div></div></div>
+          <div class="check-item{{ ' done' if gate_b_pass else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if gate_b_pass else '' }}</div><div><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div></div>
+          <div class="check-item{{ ' done' if case_studies else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if case_studies else '' }}</div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result</div></div></div>
         </div>
       </div>
 

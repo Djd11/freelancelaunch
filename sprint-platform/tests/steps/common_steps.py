@@ -25,12 +25,14 @@ def _get(context, path):
     return context.response
 
 
-def _post(context, path, data=None, json=None):
+def _post(context, path, data=None, json=None, headers=None):
     kwargs = {}
     if json is not None:
         kwargs["json"] = json
     elif data is not None:
         kwargs["data"] = data
+    if headers:
+        kwargs["headers"] = headers
     context.response = context.client.post(path, **kwargs)
     context.page_html = context.response.get_data(as_text=True)
     context.last_json = context.response.get_json(silent=True)

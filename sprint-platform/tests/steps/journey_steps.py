@@ -56,7 +56,11 @@ def step_journey_proposals(context):
 
 @when('I complete day {n} of the journey sprint')
 def step_journey_complete_day(context, n):
-    _post(context, f"/sprints/{_journey_sprint_id(context)}/day/{int(n)}/complete", data={})
+    # Models the AJAX/API client of the dual-mode day-complete endpoint
+    # (eng-spec J3): browser form POSTs redirect (PRG), API callers that want
+    # the meter payload send X-Requested-With and receive JSON.
+    _post(context, f"/sprints/{_journey_sprint_id(context)}/day/{int(n)}/complete",
+          data={}, headers={"X-Requested-With": "XMLHttpRequest"})
 
 
 @when('I submit copy-work for day {n} of the journey sprint with rubric_url "{url}"')

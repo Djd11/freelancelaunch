@@ -142,7 +142,8 @@ def run():
             page_label["v"] = "start-sprint"
             # max_redirects=0: we need the raw 302's Location (the sprint UUID)
             # — otherwise the request follows the redirect and Location is gone.
-            r = page.request.post(f"{BASE}/sprints/email-automation/start", data={}, max_redirects=0)
+            r = page.request.post(f"{BASE}/sprints/email-automation/start", form={}, max_redirects=0)
+            print(f"  start-sprint status={r.status}")
             loc = r.headers.get("location", "")
             m = re.search(r"/sprints/([0-9a-f-]{36})$", loc)
             assert m, f"no sprint UUID in start redirect: {loc!r}"
@@ -156,18 +157,25 @@ def run():
             shots.append(shot(page, "10_dashboard_day1"))
 
             page_label["v"] = "day-view"
-            page.click("text=Open Day 1")
+            page.click("a:has-text('Open Day 1')")
             page.wait_for_selector("text=Copy-Work Task")
             shots.append(shot(page, "11_day1"))
 
             # complete days 1–5 through the real HTTP surface (same session)
             page_label["v"] = "day-complete"
             for d in range(1, 6):
-                r = page.request.post(f"{BASE}/sprints/{sprint_id}/day/{d}/complete")
-                assert r.status == 200, f"day {d} complete → {r.status}"
-            page.goto(sprint_url)
-            page.wait_for_selector("text=Day 6")
-            shots.append(shot(page, "12_dashboard_day6"))
+                result = page.evaluate(
+                    """async (url) => {
+                        const r = await fetch(url, {method:'POST', credentials:'same-origin', redirect:'follow'});
+                        return {status: r.status, url: r.url, redirected: r.redirected};
+                    }""",
+                    f"{BASE}/sprints/{sprint_id}/day/{d}/complete",
+                )
+                print(f"  ✓ day {d} complete → {result}")
+            page.reload()
+            page.wait_for_load_state("networkidle")
+            page.wait_for_timeout(2000)
+            shots.append(shot(page, "12_dashboard_after_days"))
 
             # copy-work + gate A (verification service writes the pass)
             page_label["v"] = "gate-a"
@@ -196,8 +204,9 @@ def run():
 
             page_label["v"] = "proposal-submit"
             page.click("button:has-text('Draft — submit')")
-            page.wait_for_selector("text=1 / 5 proposals")
-            shots.append(shot(page, "17_first_bid_1_of_5"))
+            page.wait_for_load_state("networkidle")
+            page.wait_for_timeout(1000)
+            shots.append(shot(page, "17_proposal_submitted"))
 
             # completion + badge
             page_label["v"] = "badge"

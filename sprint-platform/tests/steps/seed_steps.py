@@ -262,6 +262,31 @@ def step_day_done(context, n, sid):
     }).eq("id", real_sprint_id).execute()
 
 
+@given('day {n} of sprint "{sid}" has the lesson marked watched')
+def step_day_lesson_watched(context, n, sid):
+    """Mark a single day's lesson as watched WITHOUT advancing current_day or
+    marking the whole day done — drives the day-view + dashboard 'Watch lesson'
+    check-item (eng-spec J4 / fix #1, #2)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("sprint_days").update({
+        "lesson_watched": True,
+    }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
+
+
+@given('copy-work project {n} for sprint "{sid}" has a 3-point rubric')
+def step_project_rubric(context, n, sid):
+    """Attach the canonical 3-point rubric to a project so the day view renders
+    its auto-check checkboxes (fix #7)."""
+    from services.copywork_engine import PROJECTS
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rubric = PROJECTS[int(n) - 1]["rubric"]
+    adapter.sb.table("copywork_projects").update({
+        "rubric": rubric,
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
+
 @given('the meter for sprint "{sid}" has unlocked {unlocked} of {total} with delta {delta}')
 def step_meter(context, sid, unlocked, total, delta):
     adapter = get_live_adapter()

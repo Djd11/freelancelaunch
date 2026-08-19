@@ -149,17 +149,50 @@ def _load_json_object(text):
     return data if isinstance(data, dict) else None
 
 
+def _clean_escapes(value):
+    """Undo double-escaped LLM JSON string fields.
+
+    The model sometimes writes literal ``\\n``/``\\t`` characters inside the
+    JSON string values instead of real control characters. ``json.loads``
+    keeps those literal backslashes, so a script arrives as one flat string
+    of ``\\n`` sequences and renders as raw text. Normalize them to real
+    newlines/tabs so ``format_script`` can split on line breaks.
+    """
+    if not isinstance(value, str):
+        return value
+    return value.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")
+
+
+def clean_lesson(lesson):
+    """Return a copy of a generated lesson with literal escape sequences
+    normalized. New content is already clean (``_parse_json`` normalizes);
+    this heals already-stored rows so the day view's readable text AND the
+    two-panel player props never show raw ``\\n``."""
+    if not lesson:
+        return lesson
+    clean = {
+        "title": _clean_escapes(lesson.get("title")),
+        "objective": _clean_escapes(lesson.get("objective")),
+        "script": _clean_escapes(lesson.get("script")),
+        "key_points": [_clean_escapes(k) for k in (lesson.get("key_points") or [])],
+        "pitfalls": [_clean_escapes(p) for p in (lesson.get("pitfalls") or [])],
+    }
+    if lesson.get("voiceover"):
+        clean["voiceover"] = lesson["voiceover"]
+    return clean
+
+
 def _parse_json(text):
     """Lesson-shape parser — title/script/key_points from the raw LLM dict."""
     data = _load_json_object(text)
     if not data:
         return None
     return {
-        "title": str(data.get("title") or "").strip(),
-        "objective": str(data.get("objective") or "").strip(),
-        "script": str(data.get("script") or "").strip(),
-        "key_points": [str(k) for k in (data.get("key_points") or []) if str(k).strip()],
-        "pitfalls": [str(p) for p in (data.get("pitfalls") or []) if str(p).strip()],
+        "title": _clean_escapes(str(data.get("title") or "")).strip(),
+        "objective": _clean_escapes(str(data.get("objective") or "")).strip(),
+        "script": _clean_escapes(str(data.get("script") or "")).strip(),
+        "key_points": [_clean_escapes(str(k)) for k in (data.get("key_points") or []) if str(k).strip()],
+        "pitfalls": [_clean_escapes(str(p)) for p in (data.get("pitfalls") or []) if str(p).strip()],
     }
 
 
@@ -197,10 +230,10 @@ def _parse_project(text):
     if not data or not data.get("title"):
         raise LLMGenerationError("LLM returned unparseable project anatomy")
     return {
-        "title": str(data.get("title") or "").strip(),
-        "clone_steps": [str(s) for s in (data.get("clone_steps") or []) if str(s).strip()],
-        "rubric": [str(r) for r in (data.get("rubric") or []) if str(r).strip()],
-        "gap_fill_topic": data.get("gap_fill_topic"),
+        "title": _clean_escapes(str(data.get("title") or "")).strip(),
+        "clone_steps": [_clean_escapes(str(s)) for s in (data.get("clone_steps") or []) if str(s).strip()],
+        "rubric": [_clean_escapes(str(r)) for r in (data.get("rubric") or []) if str(r).strip()],
+        "gap_fill_topic": _clean_escapes(data.get("gap_fill_topic")),
     }
 
 
