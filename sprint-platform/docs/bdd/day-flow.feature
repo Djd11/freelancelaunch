@@ -97,6 +97,17 @@ Feature: Day View & Copy-Work (mockup screen 4)
     When I GET "/sprints/s1"
     Then Phase B is not locked
 
+  Scenario: Lesson scripts render with semantic HTML for readability
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/2"
+    Then the page contains the tag "<ol" to indicate a numbered step list
+    And the page does not contain raw markdown asterisks in the lesson script
+
+  Scenario: Lesson scripts render with bold emphasis for key terms
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/2"
+    Then the page contains the tag "<b>" in the lesson content area
+
   Scenario: A day view for a missing sprint redirects to the dashboard
     When I GET "/sprints/does-not-exist/day/4"
     Then the response redirects to "/dashboard/"

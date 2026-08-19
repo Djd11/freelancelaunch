@@ -122,6 +122,90 @@ def create_app(test_config=None):
             return ""
         return str(value)[:10]
 
+    @app.template_filter("format_script")
+    def format_script(text):
+        """Render a lesson script as readable HTML.
+
+        The LLM produces scripts with:
+        - Numbered steps: ``1. Step text``
+        - Bold: ``**text**``
+        - Sub-bullets: ``- item``
+        - Paragraph breaks: blank lines
+
+        This filter converts them to semantic HTML so the page is
+        scannable instead of a wall of unformatted text.
+        """
+        import re, markupsafe
+        if not text:
+            return markupsafe.Markup("")
+
+        lines = text.split("\n")
+        html_parts = []
+        in_ol = False
+        in_ul = False
+
+        def close_lists():
+            nonlocal in_ol, in_ul
+            parts = []
+            if in_ol:
+                parts.append("</ol>")
+                in_ol = False
+            if in_ul:
+                parts.append("</ul>")
+                in_ul = False
+            return parts
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Blank line → paragraph break
+            if not stripped:
+                html_parts.extend(close_lists())
+                html_parts.append("<br>")
+                continue
+
+            # Numbered step: "1. Step text" or "10. Step text"
+            ol_match = re.match(r"^(\d+)\.\s+(.+)$", stripped)
+            if ol_match:
+                if in_ul:
+                    html_parts.extend(close_lists())
+                if not in_ol:
+                    html_parts.append("<ol style='margin:8px 0 8px 20px;padding:0'>")
+                    in_ol = True
+                step_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", ol_match.group(2))
+                html_parts.append(f"<li style='margin-bottom:6px;line-height:1.5'>{step_text}</li>")
+                continue
+
+            # Sub-bullet: "- item" or "* item"
+            ul_match = re.match(r"^[-*]\s+(.+)$", stripped)
+            if ul_match:
+                html_parts.extend(close_lists())
+                if not in_ul:
+                    html_parts.append("<ul style='margin:4px 0 4px 20px;padding:0'>")
+                    in_ul = True
+                bullet_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", ul_match.group(1))
+                html_parts.append(f"<li style='margin-bottom:3px;line-height:1.5'>{bullet_text}</li>")
+                continue
+
+            # Indented sub-step (e.g. "  - item" or "  * item")
+            indented_match = re.match(r"^\s{2,}[-*]\s+(.+)$", line)
+            if indented_match:
+                html_parts.extend(close_lists())
+                if not in_ul:
+                    html_parts.append("<ul style='margin:4px 0 4px 36px;padding:0'>")
+                    in_ul = True
+                bullet_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", indented_match.group(1))
+                html_parts.append(f"<li style='margin-bottom:2px;line-height:1.5;list-style:circle'>{bullet_text}</li>")
+                continue
+
+            # Plain paragraph text
+            html_parts.extend(close_lists())
+            para_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", stripped)
+            html_parts.append(f"<p style='margin:6px 0;line-height:1.6'>{para_text}</p>")
+
+        html_parts.extend(close_lists())
+        return markupsafe.Markup("\n".join(html_parts))
+
     return app
 
 

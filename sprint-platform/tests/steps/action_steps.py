@@ -75,14 +75,17 @@ def _fake_generation_llm(prompt, timeout=15):
                           "Skipping the dynamic cart block the client names"],
         })
     # Regular day lesson (setup, copywork, contract, case-study, proposals)
+    # The script uses markdown-style numbered steps and bold emphasis so the
+    # format_script Jinja2 filter converts them to <ol>/<b> HTML for readability.
     return json.dumps({
         "title": f"Day lesson for {job_title}",
         "objective": f"Complete the day's task for {job_title}.",
-        "script": (f"In this lesson you will learn how to handle {job_title}. "
-                    "Step 1: Open the tool and set up the trigger. "
-                    "Step 2: Add the required blocks or steps in sequence. "
-                    "Step 3: Configure the dynamic content using the posting's terminology. "
-                    "Step 4: Test with a sample before going live."),
+        "script": (
+            f"In this lesson you will learn how to handle **{job_title}**.\n"
+            "1. **Open the tool** and navigate to the flow builder.\n"
+            "2. **Set the trigger** using the metric from the posting.\n"
+            "3. **Add the email step** and configure dynamic content.\n"
+            "4. **Test with a sample** before going live."),
         "key_points": ["Use the exact trigger from the job posting",
                         "Follow the step-by-step build sequence",
                         "Test before publishing"],

@@ -179,6 +179,38 @@ def step_contains_link(context, path):
         f"page missing link to {path!r}"
 
 
+@then('the page contains the tag "{tag}" to indicate a numbered step list')
+def step_contains_ol_tag(context, tag):
+    html = _html(context)
+    # Extract only the lesson content area (data-lesson-content block) to
+    # avoid false matches from other HTML on the page.
+    import re as _re
+    m = _re.search(r'data-lesson-content.*?</div>', html, _re.DOTALL)
+    lesson_html = m.group(0) if m else html
+    assert tag in lesson_html, f"lesson content missing tag {tag!r}"
+
+
+@then('the page does not contain raw markdown asterisks in the lesson script')
+def step_no_raw_asterisks(context):
+    import re as _re
+    html = _html(context)
+    m = _re.search(r'data-lesson-content.*?</div>', html, _re.DOTALL)
+    lesson_html = m.group(0) if m else html
+    # Check for **word** patterns (raw markdown bold) — should have been
+    # converted to <b>word</b> by the format_script filter.
+    assert not _re.search(r'\*\*[A-Za-z].*?\*\*', lesson_html), \
+        "lesson content still contains raw markdown asterisks"
+
+
+@then('the page contains the tag "{tag}" in the lesson content area')
+def step_contains_tag_in_lesson(context, tag):
+    import re as _re
+    html = _html(context)
+    m = _re.search(r'data-lesson-content.*?</div>', html, _re.DOTALL)
+    lesson_html = m.group(0) if m else html
+    assert tag in lesson_html, f"lesson content missing tag {tag!r}"
+
+
 @then('the page contains a link to start a sprint for "{key}"')
 def step_contains_start_link(context, key):
     assert f'/sprints/{key}/start' in _html(context), f"missing start link for {key}"

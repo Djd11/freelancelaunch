@@ -49,7 +49,7 @@
           <div data-lesson-content="true" style="margin-top:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
             <b style="font-family:var(--font-display);font-size:15px">{{ lesson.title }}</b>
             {% if lesson.objective %}<p class="xs muted" style="margin-top:4px"><b>Objective:</b> {{ lesson.objective }}</p>{% endif %}
-            <p class="small" style="margin-top:8px;line-height:1.6;color:var(--ink-2)">{{ lesson.script }}</p>
+            <div class="small" style="margin-top:8px;color:var(--ink-2)">{{ lesson.script|format_script }}</div>
             {% if lesson.key_points %}
             <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
               {% for kp in lesson.key_points %}<li style="margin-bottom:4px">{{ kp }}</li>{% endfor %}
@@ -68,7 +68,7 @@
               <span style="font-size:18px">▶</span><b style="font-family:var(--font-display)">{{ lesson.title }}</b>
             </div>
             {% if lesson.objective %}<div class="xs" style="opacity:.7;margin-bottom:8px"><b>Objective:</b> {{ lesson.objective }}</div>{% endif %}
-            <div style="opacity:.92;line-height:1.55">{{ lesson.script }}</div>
+            <div style="opacity:.92">{{ lesson.script|format_script }}</div>
             {% if lesson.key_points %}
             <ul style="margin:12px 0 0 18px;opacity:.85">
               {% for kp in lesson.key_points %}<li style="margin-bottom:4px">{{ kp }}</li>{% endfor %}
