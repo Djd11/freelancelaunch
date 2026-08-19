@@ -63,11 +63,10 @@ Feature: Sprint Dashboard (mockup screen 3)
     And the page contains the text "Proposals sent"
     And the page contains the text "Contracts"
 
-  Scenario: Completing a day returns a celebratory meter uptick
+  Scenario: Completing a day advances to the next day and unlocks job postings
     When I POST to "/sprints/s1/day/4/complete"
-    Then the response status is 200
-    And the JSON has field "ok" equal to true
-    And the JSON path "meter.newly_unlocked" is an integer
+    Then the response status is 302
+    And the response redirects to a day page
     And the sprint "s1" is now on day 5
 
   Scenario: A sprint that is not yours is never served

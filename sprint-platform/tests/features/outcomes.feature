@@ -33,8 +33,8 @@ Feature: Outcome Tracking, Verification Auto-Check & Sprint Completion (eng-spec
 
   Scenario: Completing day 14 completes the sprint
     When I POST to "/sprints/s1/day/14/complete"
-    Then the response status is 200
-    And the JSON has field "ok" equal to true
+    Then the response status is 302
+    And the response redirects to the sprint dashboard
     And sprint "s1" is completed
 
   Scenario: The iteration loop surfaces a diagnosis after 5 proposals with no responses

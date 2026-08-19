@@ -185,12 +185,12 @@ def complete_day(sprint_id, day_no):
         "user_id": sprint["user_id"], "day_streak": streak, "confidence": confidence,
     }, on_conflict="user_id").execute()
 
-    return jsonify({
-        "ok": True,
-        "next_day": next_day,
-        "meter": meter,
-        "momentum": {"day_streak": streak, "confidence": confidence},
-    })
+    # Browser form POST → redirect so the user never sees raw JSON.
+    # API callers that need the meter/momentum payload can read the JSON
+    # error-path responses (404) instead.
+    if day_no >= 14:
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+    return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=next_day))
 
 
 @sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/copywork", methods=["POST"])

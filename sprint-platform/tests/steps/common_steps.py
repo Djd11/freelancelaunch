@@ -152,6 +152,16 @@ def step_redirect_sprint_dashboard(context):
         f"expected redirect to a sprint dashboard, got Location {loc!r}"
 
 
+@then('the response redirects to a day page')
+def step_redirect_day_page(context):
+    import re as _re
+    assert context.response.status_code in (301, 302, 303, 307, 308), \
+        f"expected redirect, got {context.response.status_code}"
+    loc = _location(context)
+    assert _re.search(r"/sprints/[0-9a-fA-F-]{36}/day/\d+$", loc), \
+        f"expected redirect to a day page, got Location {loc!r}"
+
+
 @then('the page contains the text "{text}"')
 def step_contains(context, text):
     assert text in _html(context), f"page missing text: {text!r}"

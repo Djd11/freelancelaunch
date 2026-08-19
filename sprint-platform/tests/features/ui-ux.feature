@@ -98,8 +98,8 @@ Feature: UI/UX — every page's CTAs work end to end (no dead ends, no fake func
     When I GET "/sprints/s1/day/4"
     Then the page contains the text "Mark day 4 complete"
     When I POST to "/sprints/s1/day/4/complete"
-    Then the response status is 200
-    And the JSON has field "ok" equal to true
+    Then the response status is 302
+    And the response redirects to a day page
     And the sprint "s1" is now on day 5
 
   # ── MOCK CONTRACT ─────────────────────────────────────────────────
