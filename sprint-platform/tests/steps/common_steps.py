@@ -129,6 +129,23 @@ def step_post_form(context, path, payload):
     _post(context, path, data=data)
 
 
+@when('I submit the day complete form for day {n} of sprint "{sid}"')
+def step_day_complete_form(context, n, sid):
+    """The browser-form POST of the day view's 'Mark day N complete' button
+    (eng-spec J3 PRG path): no X-Requested-With, so the route redirects to the
+    next day instead of returning the meter JSON."""
+    _post(context, f"/sprints/{sid}/day/{int(n)}/complete", data={})
+
+
+@when('I follow the redirect')
+def step_follow_redirect(context):
+    """Follow the Location header of the previous response so the next
+    assertions validate the page that a real browser lands on."""
+    loc = _location(context)
+    assert loc, "no Location header to follow"
+    _get(context, loc)
+
+
 # ── Then: HTTP assertions ──────────────────────────────────────────
 @then('the response status is {n}')
 def step_status(context, n):
@@ -152,6 +169,17 @@ def step_redirect_sprint_dashboard(context):
     loc = _location(context)
     assert _re.search(r"/sprints/[0-9a-fA-F-]{36}$", loc), \
         f"expected redirect to a sprint dashboard, got Location {loc!r}"
+
+
+@then('sprint "{sid}" is on day {n}')
+def step_sprint_on_day(context, sid, n):
+    adapter = get_live_adapter()
+    real_sid = adapter.resolve_sprint_id(sid, resolve_only=True)
+    rows = adapter.sb.table("sprints").select("current_day") \
+        .eq("id", real_sid).execute().data
+    assert rows, f"no sprint row for fixture {sid!r}"
+    assert rows[0]["current_day"] == int(n), \
+        f"sprint {sid} current_day={rows[0]['current_day']}, expected {n}"
 
 
 @then('the response redirects to a day page')

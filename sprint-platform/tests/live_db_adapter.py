@@ -254,11 +254,15 @@ class LiveDBAdapter:
             real_id = sprint["id"]
             self._created_sprints.append(real_id)
 
-            # Create 14 sprint_days
+            # Create 14 sprint_days — action_type must mirror the app's
+            # sprint_planner.action_for (day 1 = setup, 2-5 copywork, 6-8
+            # contract, 9-10 case-study, 11-14 proposal) so the fixture's day
+            # content matches what a real enrolled sprint renders.
+            from services.sprint_planner import action_for
             phase_map = {d: "A" for d in range(1, 6)} | {d: "B" for d in range(6, 11)} | {d: "C" for d in range(11, 15)}
             for d in range(1, 15):
                 phase = phase_map[d]
-                action_type = "copywork" if d < 6 else ("contract" if d <= 8 else ("case-study" if d <= 10 else "proposal"))
+                action_type = action_for(d)
                 self.sb.table("sprint_days").insert({
                     "sprint_id": real_id, "phase": phase, "day_no": d,
                     "title": f"Day {d}", "description": "",

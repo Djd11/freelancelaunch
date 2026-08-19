@@ -15,6 +15,31 @@ Feature: Day View & Copy-Work (mockup screen 4)
     And the page contains the text "Copy-Work"
     And the page contains the text "Rebuild the Abandoned-Cart Flow"
 
+  Scenario: Day 1 loads with the correct setup-day content
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/1"
+    Then the response status is 200
+    And the page contains the text "Phase A · Day 1 · Setup"
+    And the page contains the text "Day 1"
+    And the page contains the text "Day lesson for Klaviyo flow setup for store"
+    And the page contains the text "In this lesson you will learn how to handle"
+    And the page contains the text "Mark day 1 complete"
+    And the page does not contain the text "Trigger on Checkout Started"
+
+  Scenario: Submitting day 1 advances to day 2 with the copy-work content loaded
+    When the content generation worker runs for sprint "s1"
+    And I submit the day complete form for day 1 of sprint "s1"
+    Then the response redirects to a day page
+    And sprint "s1" is on day 2
+    When I follow the redirect
+    Then the response status is 200
+    And the page contains the text "Phase A · Day 2 · Copywork"
+    And the page contains the text "Copy-Work Task"
+    And the page contains the text "Project 1 — Rebuild the core flow for"
+    And the page contains the text "Trigger on Checkout Started"
+    And the page contains the text "Mark day 2 complete"
+    And the page does not contain the text "Mark day 1 complete"
+
   Scenario: The lesson renders as an HTML preview with TTS, not an MP4
     When I GET "/sprints/s1/day/4"
     Then the page contains the text "TwoPanel"
