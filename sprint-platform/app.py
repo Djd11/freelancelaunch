@@ -14,11 +14,17 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
+
+
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_object("config.Config")
     if test_config:
         app.config.update(test_config)
+    csrf.init_app(app)
 
     from routes.main import main_bp
     from routes.sprints import sprints_bp

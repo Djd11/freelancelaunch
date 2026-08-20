@@ -81,6 +81,7 @@
                   {% if p.status == 'submitted' %}<span class="badge b-green">Submitted</span>
                   {% elif p.status == 'draft' %}
                     <form method="post" action="/sprints/{{ sprint.id }}/proposals/{{ p.proposal_id }}/submit" style="display:inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <input type="hidden" name="platform" value="{{ verified_platform }}">
                       <button class="btn btn-p btn-sm" type="submit">Draft — submit</button>
                     </form>
@@ -112,6 +113,7 @@
         <h3 style="margin-bottom:6px">Log an outcome</h3>
         <p class="small muted" style="margin-bottom:12px">Did a submitted proposal turn into a response, interview, or offer? Track it on your sprint — outcomes power the Day-14 diagnosis.</p>
         <form method="post" action="/sprints/{{ sprint.id }}/proposals/{{ proposals[0].proposal_id }}/respond" style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="outcome" aria-label="Outcome">
             <option value="response">Response</option>
             <option value="interview">Interview</option>

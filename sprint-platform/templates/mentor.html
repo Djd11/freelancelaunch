@@ -20,6 +20,7 @@
         </div>
         {% endfor %}
         <form class="chat-input" method="post" action="/mentor/turn">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="text" name="question" placeholder="Ask about your target job or your progress…" aria-label="Question for mentor">
           <button class="btn btn-p" type="submit">Send</button>
         </form>
@@ -32,12 +33,13 @@
 <script>
 document.querySelector('.chat-input').addEventListener('submit', function (e) {
   e.preventDefault();
-  const input = this.querySelector('input');
+  const input = this.querySelector('input[name="question"]');
   const q = input.value.trim();
   if (!q) return;
+  const csrfToken = this.querySelector('input[name="csrf_token"]').value;
   fetch('/mentor/turn', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
     body: JSON.stringify({question: q}),
   }).then(r => r.json()).then(data => {
     location.reload();

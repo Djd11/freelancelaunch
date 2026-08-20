@@ -20,6 +20,7 @@
           <span class="badge b-amber" style="font-size:13px;padding:8px 14px">Day {{ sprint.current_day }} · Phase {{ sprint.phase }}</span>
           {% if sprint.status != 'completed' %}
           <form method="post" action="/sprints/{{ sprint.id }}/complete">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-o btn-sm" type="submit">Complete sprint</button>
           </form>
           {% endif %}
@@ -70,7 +71,7 @@
           var btn = document.getElementById('gen-retry');
           btn.disabled = true;
           btn.textContent = 'Retrying…';
-          fetch('/sprints/' + sprintId + '/generation/retry', { method: 'POST' })
+          fetch('/sprints/' + sprintId + '/generation/retry', { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('input[name="csrf_token"]') ? document.querySelector('input[name="csrf_token"]').value : '' } })
             .then(function () {
               // Back to the generating state and keep polling.
               banner.style.borderColor = 'var(--accent)';
@@ -186,6 +187,7 @@
               <td>
                 {% if c.status == 'active' %}
                 <form method="post" action="/sprints/{{ sprint.id }}/contract/{{ c.id }}/complete" style="display:inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-o btn-sm" type="submit">Mark complete</button>
                 </form>
                 {% else %}<span class="badge b-green">completed</span>{% endif %}
@@ -200,6 +202,7 @@
         <div style="margin-top:14px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:16px">
           <p class="small" style="font-weight:700;margin-bottom:10px">Record a contract</p>
           <form method="post" action="/sprints/{{ sprint.id }}/contract/add" style="display:flex;gap:10px;flex-wrap:wrap">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="client_name" placeholder="Client" aria-label="Client name">
             <input type="text" name="project_title" placeholder="Project" aria-label="Project title">
             <input type="number" name="contract_value" placeholder="Value $" aria-label="Contract value">

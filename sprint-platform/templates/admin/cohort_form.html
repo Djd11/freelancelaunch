@@ -8,6 +8,7 @@
 
 <div class="card" style="max-width:560px">
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="grid2">
       <div class="field">
         <label for="cluster_key">Cluster key</label>

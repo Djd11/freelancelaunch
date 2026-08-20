@@ -84,6 +84,7 @@
           {% endif %}
           <div class="divider"></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/watched" style="margin:0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="check-item{{ ' done' if lesson_watched else '' }}" style="width:100%;text-align:left;background:none;border:0;cursor:pointer;font:inherit;padding:0;display:flex;align-items:flex-start;gap:12px">
               <div class="cbox">{{ '✓' if lesson_watched else '' }}</div>
               <div><b>Mark lesson watched</b><div class="xs muted">~5 min</div></div>
@@ -111,6 +112,7 @@
             </div>
           </div></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label class="xs muted" for="rubric_url" style="display:block;margin-bottom:6px">Link to your rebuilt flow (required)</label>
             <input type="url" id="rubric_url" name="rubric_url" required placeholder="https://github.com/you/flow" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;margin-bottom:8px">
             <button class="btn btn-p" type="submit">Submit for check</button>
@@ -118,6 +120,7 @@
           {% if not day_done %}
           <div class="divider"></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/complete">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-ink" type="submit">Mark day {{ day.day_no }} complete →</button>
           </form>
           {% endif %}

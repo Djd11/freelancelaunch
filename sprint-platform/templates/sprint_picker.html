@@ -31,6 +31,7 @@
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
           <form method="post" action="/sprints/{{ c.cluster_key }}/start">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-p btn-sm" type="submit">Start sprint</button>
           </form>
         </div>
@@ -44,6 +45,7 @@
       <h3 style="margin-bottom:6px">Request a sprint</h3>
       <p class="small muted" style="margin-bottom:16px">Tell us the skill — we curate the live demand feed before we build it.</p>
       <form method="post" action="/sprints/request">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div style="display:flex;gap:10px">
           <input type="text" name="skill" placeholder="e.g. notion-automation" aria-label="Skill to request">
           <button class="btn btn-ink" type="submit">Request</button>
