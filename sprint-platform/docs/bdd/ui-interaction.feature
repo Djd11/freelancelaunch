@@ -33,7 +33,9 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
     And the page contains a link to "/sprints/s1/day/1"
     And the page contains a link to "/sprints/s1/day/2"
     And the page contains a link to "/sprints/s1/day/3"
-    And the page contains the text "review any day"
+    And the page contains a link to "/sprints/s1/day/4"
+    And the page contains a link to "/sprints/s1/day/5"
+    And the page does not contain the text "review any day"
 
   Scenario: Completed day 1 is navigable from the dashboard
     Given day 1 of sprint "s1" is completed

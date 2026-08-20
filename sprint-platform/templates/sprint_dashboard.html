@@ -106,7 +106,7 @@
                  title="Day {{ i }}{{ ' — completed' if day_done_map.get(i) else (' — current' if i == phase_a_days + 1 else '') }}"></a>
             {% endfor %}
           </div>
-          <p class="xs muted" style="margin-top:6px">{{ phase_a_days }} / 5 days — <a href="/sprints/{{ sprint.id }}/day/{{ phase_a_days + 1 if phase_a_days < 5 else 5 }}" style="color:var(--accent-ink)">review any day</a></p>
+          <p class="xs muted" style="margin-top:6px">{{ phase_a_days }} / 5 days</p>
         </div>
         <div class="phase {{ 'active' if sprint.phase == 'B' else 'locked' }}" data-phase="B">
           <div class="phead"><span class="tag">Phase B · Days 6–10</span>{% if not gate_a_pass %}<span class="lock-ic" title="Locked">🔒</span>{% endif %}</div>
