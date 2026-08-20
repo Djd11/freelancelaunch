@@ -217,6 +217,31 @@ def create_app(test_config=None):
         html_parts.extend(close_lists())
         return markupsafe.Markup("\n".join(html_parts))
 
+    @app.template_filter("strip_markdown")
+    def strip_markdown(text):
+        """Strip markdown formatting from a lesson script for the video player.
+
+        Removes ``**bold**``, numbered step prefixes (``1. ``), bullet
+        prefixes (``- `` / ``* ``), and extra whitespace — producing clean
+        plain text that the Remotion kinetic-text player can render
+        without showing raw markup characters.
+        """
+        import re
+        if not text:
+            return ""
+        t = str(text)
+        # Normalize escaped newlines (LLM double-escape)
+        t = t.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")
+        # Strip bold markers
+        t = re.sub(r"\*\*(.+?)\*\*", r"\1", t)
+        # Strip numbered step prefixes: "1. " or "10. "
+        t = re.sub(r"^\d+\.\s+", "", t, flags=re.MULTILINE)
+        # Strip bullet prefixes: "- " or "* "
+        t = re.sub(r"^[-*]\s+", "", t, flags=re.MULTILINE)
+        # Collapse multiple blank lines
+        t = re.sub(r"\n{3,}", "\n\n", t)
+        return t.strip()
+
     return app
 
 

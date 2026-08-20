@@ -15,6 +15,18 @@ import { useCurrentFrame, interpolate, Easing, Audio } from "remotion";
 
 const FPS = 30;
 
+/** Strip markdown formatting from script text for clean video rendering. */
+function stripMarkdown(text: string): string {
+  if (!text) return "";
+  let t = text
+    .replace(/\*\*(.+?)\*\*/g, "$1")  // **bold** → bold
+    .replace(/^\d+\.\s+/gm, "")          // 1. Step → Step
+    .replace(/^[-*]\s+/gm, "")            // - item → item
+    .replace(/\n{3,}/g, "\n\n")          // collapse blank lines
+    .trim();
+  return t;
+}
+
 export const TwoPanelLesson = ({
   title = "Lesson",
   script = "",
@@ -25,7 +37,8 @@ export const TwoPanelLesson = ({
   const durationFrames = Math.max(300, Math.round((voiceover?.duration_seconds || 20) * FPS));
   const progress = Math.min(1, frame / durationFrames);
 
-  const sentences = String(script || "")
+  const cleanScript = stripMarkdown(String(script || ""));
+  const sentences = cleanScript
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);

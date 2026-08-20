@@ -39,7 +39,7 @@
           {% elif lesson.voiceover and lesson.voiceover.url %}
           <div id="lesson-player" data-lesson-player="true" style="width:100%;aspect-ratio:16/9;background:var(--ink);border-radius:var(--radius);overflow:hidden"></div>
           <script>
-            window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover} | tojson }};
+            window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script|strip_markdown, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover} | tojson }};
           </script>
           <script src="/static/video/lesson-player.js"></script>
           <!-- Readable lesson content: the player reveals the script word-by-word
