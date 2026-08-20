@@ -58,9 +58,9 @@ export const TwoPanelLesson = ({
 
   const activePoint = Math.min(key_points.length - 1, Math.max(0, pointsVisible - 1));
 
-  // ── Auto-scroll: incremental offset so text starts at bottom ──
+  // ── Auto-scroll: text flows top→bottom, scrolls up when content overflows ──
   const visibleWords = scriptWords.slice(0, Math.max(0, scriptVisible));
-  // Character-based word-per-line estimate for accurate scroll pacing.
+  // Character-based word-per-line estimate.
   // Font 34px system-ui → ~18px per char. Container width ≈ 1120px.
   const charWidthPx = 18;
   const containerWidth = 1120;
@@ -71,8 +71,10 @@ export const TwoPanelLesson = ({
   const lineHeightPx = 51; // 34px × 1.5
   const linesShown = visibleWords.length > 0 ? Math.ceil(visibleWords.length / wordsPerLine) : 0;
   const scriptAreaHeight = 1080 - 80/*top pad*/ - 70/*title h*/ - 30/*gap*/ - 80/*bottom pad*/;
+  // Start scrolling when content reaches 70% of viewport, then grow linearly.
+  const scrollThreshold = scriptAreaHeight * 0.7;
   const totalContentHeight = linesShown * lineHeightPx;
-  const scrollOffset = Math.max(0, totalContentHeight - scriptAreaHeight);
+  const scrollOffset = Math.max(0, totalContentHeight - scrollThreshold);
 
   const C = {
     bg: "#0f172a",
@@ -93,8 +95,8 @@ export const TwoPanelLesson = ({
         <div style={{ fontSize: 58, fontWeight: 700, opacity: titleDone, transform: `translateY(${(1 - titleDone) * 24}px)`, flexShrink: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>
           {title}
         </div>
-        {/* Task 2: Text anchored at bottom, scrolls up incrementally */}
-        <div style={{ fontSize: 34, lineHeight: 1.5, color: C.muted, flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        {/* Task 2: Text flows top→bottom, scrolls up when overflow */}
+        <div style={{ fontSize: 34, lineHeight: 1.5, color: C.muted, flex: 1, overflow: "hidden", position: "relative" }}>
           <div style={{ transform: `translateY(-${scrollOffset}px)` }}>
             {visibleWords.join(" ")}
             {scriptVisible < scriptWords.length && scriptVisible > 0 && <span style={{ opacity: 0.4 }}>▍</span>}

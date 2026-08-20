@@ -56,12 +56,12 @@ class TestLoadingSkeleton:
 class TestIncrementalScroll:
     """Gap #2: Script text jumps when scroll kicks in."""
 
-    def test_bundle_has_flex_end_alignment(self):
-        """The script container must use flex-end to anchor text at bottom."""
+    def test_bundle_has_no_flex_end_in_script_area(self):
+        """The script container must NOT use flex-end — text flows top→bottom."""
         js = _read_bundle()
-        # Look for the flex-end pattern in the script area styles
-        assert "flex-end" in js or "justifyContent" in js, (
-            "Missing flex-end alignment — text will jump when scroll begins"
+        # flex-end should NOT be in the bundle (was removed to fix bottom-up text)
+        assert "flex-end" not in js, (
+            "flex-end still present — text will appear from bottom instead of top"
         )
 
     def test_bundle_has_scroll_offset_calculation(self):
