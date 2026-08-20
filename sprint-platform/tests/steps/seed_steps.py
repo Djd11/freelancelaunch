@@ -274,6 +274,17 @@ def step_day_lesson_watched(context, n, sid):
     }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
 
 
+@given('day {n} of sprint "{sid}" is completed')
+def step_day_completed(context, n, sid):
+    """Mark a specific day as completed (is_done=True) without advancing
+    current_day — used to test day navigation from the dashboard."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("sprint_days").update({
+        "is_done": True,
+    }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
+
+
 @given('copy-work project {n} for sprint "{sid}" has a 3-point rubric')
 def step_project_rubric(context, n, sid):
     """Attach the canonical 3-point rubric to a project so the day view renders

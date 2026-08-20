@@ -269,11 +269,11 @@ class LiveDBAdapter:
                     "action_type": action_type, "action_payload": {}, "is_done": False,
                 }).execute()
 
-            # Create sprint_unlock_snapshots
-            self.sb.table("sprint_unlock_snapshots").insert({
+            # Create sprint_unlock_snapshots (upsert — reused sprints may already have one)
+            self.sb.table("sprint_unlock_snapshots").upsert({
                 "sprint_id": real_id, "user_id": user_id,
                 "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
-            }).execute()
+            }, on_conflict="sprint_id,user_id").execute()
 
         self._fixture_to_real_sprint[fixture_id] = real_id
         return real_id

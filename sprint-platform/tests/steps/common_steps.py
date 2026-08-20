@@ -205,8 +205,17 @@ def step_not_contains(context, text):
 @then('the page contains a link to "{path}"')
 def step_contains_link(context, path):
     html = _html(context)
-    assert f'href="{path}"' in html or f'href="{path}/"' in html, \
-        f"page missing link to {path!r}"
+    # Resolve fixture sprint IDs in paths like /sprints/s1/day/1
+    import re
+    def _resolve(match):
+        fixture_id = match.group(1)
+        try:
+            return _resolve_sprint_id(context, fixture_id)
+        except Exception:
+            return fixture_id
+    resolved = re.sub(r'/sprints/([a-zA-Z0-9_-]+)/', lambda m: f'/sprints/{_resolve(m)}/', path)
+    assert f'href="{resolved}"' in html or f'href="{resolved}/"' in html, \
+        f"page missing link to {resolved!r} (original: {path!r})"
 
 
 @then('the page contains the tag "{tag}" to indicate a numbered step list')

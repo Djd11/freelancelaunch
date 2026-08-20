@@ -99,9 +99,14 @@
           <h3>Skill Acquisition</h3>
           <p class="xs muted" style="margin-top:6px">Copy-Work: 3 replication projects + gap-fill</p>
           <div class="track" style="margin-top:12px">
-            {% for i in range(1, 6) %}<div class="{{ 't-done' if i <= phase_a_days else ('t-cur' if i == phase_a_days + 1 else 't-lock') }}"></div>{% endfor %}
+            {% for i in range(1, 6) %}
+              <a href="/sprints/{{ sprint.id }}/day/{{ i }}"
+                 class="{{ 't-done' if day_done_map.get(i) else ('t-cur' if i == phase_a_days + 1 else 't-lock') }}"
+                 style="text-decoration:none;display:block;border-radius:4px;transition:opacity .15s"
+                 title="Day {{ i }}{{ ' — completed' if day_done_map.get(i) else (' — current' if i == phase_a_days + 1 else '') }}"></a>
+            {% endfor %}
           </div>
-          <p class="xs muted" style="margin-top:6px">{{ phase_a_days }} / 5 days</p>
+          <p class="xs muted" style="margin-top:6px">{{ phase_a_days }} / 5 days — <a href="/sprints/{{ sprint.id }}/day/{{ phase_a_days + 1 if phase_a_days < 5 else 5 }}" style="color:var(--accent-ink)">review any day</a></p>
         </div>
         <div class="phase {{ 'active' if sprint.phase == 'B' else 'locked' }}" data-phase="B">
           <div class="phead"><span class="tag">Phase B · Days 6–10</span>{% if not gate_a_pass %}<span class="lock-ic" title="Locked">🔒</span>{% endif %}</div>
@@ -130,7 +135,13 @@
           </div>
         </div>
         <div class="track" style="margin:16px 0 8px">
-          {% for i in range(1, 15) %}<div class="{{ 't-done' if i <= meter.completed_days else ('t-cur' if i == meter.completed_days + 1 else 't-lock') }}"></div>{% endfor %}
+          {% for i in range(1, 15) %}
+            {% if day_done_map.get(i) or i == meter.completed_days + 1 %}
+            <a href="/sprints/{{ sprint.id }}/day/{{ i }}" class="{{ 't-done' if day_done_map.get(i) else 't-cur' }}" style="text-decoration:none;display:block;border-radius:4px" title="Day {{ i }}{{ ' — completed' if day_done_map.get(i) else ' — current' }}"></a>
+            {% else %}
+            <div class="t-lock"></div>
+            {% endif %}
+          {% endfor %}
         </div>
         <div class="small" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <span class="xs muted">{{ meter.completed_days }} of 14 days done · each bar = one day you've unlocked</span>

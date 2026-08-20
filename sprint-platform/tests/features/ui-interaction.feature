@@ -28,6 +28,22 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
     And the page contains the text "Replicate the project"
     And the page contains the text "Self-check vs rubric"
 
+  # ── DAY NAVIGATION (eng-spec J3: Phase A track is navigable) ────────
+  Scenario: Dashboard Phase A track renders clickable day links
+    Given I am on day 3 of sprint "s1"
+    When I GET "/sprints/s1"
+    Then the response status is 200
+    And the page contains a link to "/sprints/s1/day/1"
+    And the page contains a link to "/sprints/s1/day/2"
+    And the page contains a link to "/sprints/s1/day/3"
+    And the page contains the text "review any day"
+
+  Scenario: Completed day 1 is navigable from the dashboard
+    Given day 1 of sprint "s1" is completed
+    When I GET "/sprints/s1"
+    Then the response status is 200
+    And the page contains a link to "/sprints/s1/day/1"
+
   Scenario: Mock Contract page renders both verification check-items
     When I GET "/sprints/s1/contract"
     Then the response status is 200
