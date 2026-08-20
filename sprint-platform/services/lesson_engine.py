@@ -411,3 +411,24 @@ def generation_error(sb, sprint_id):
         if err:
             return err
     return None
+
+
+def day_status_map(sb, sprint_id):
+    """Return {day_no: 'ok'|'error'|'pending'} for every sprint day.
+
+    Used by the dashboard to render a per-day content status track so the
+    user can see at a glance which days have lessons and which failed.
+    """
+    days = sb.table("sprint_days").select("day_no,action_payload") \
+        .eq("sprint_id", sprint_id).order("day_no").execute().data
+    result = {}
+    for d in days:
+        day_no = d.get("day_no")
+        payload = d.get("action_payload") or {}
+        if payload.get("generation_error"):
+            result[day_no] = "error"
+        elif payload.get("lesson"):
+            result[day_no] = "ok"
+        else:
+            result[day_no] = "pending"
+    return result

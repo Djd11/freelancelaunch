@@ -142,20 +142,34 @@ def generation(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
-    from services.lesson_engine import generation_progress, generation_error
+    from services.lesson_engine import generation_progress, generation_error, day_status_map
     generated, total = generation_progress(sb, sprint_id)
     err = generation_error(sb, sprint_id)
-    if err:
+    day_map = day_status_map(sb, sprint_id)
+    failed_days = [d for d, s in day_map.items() if s == "error"]
+    if failed_days and generated < total:
+        # Partial failure: some days generated, some failed.
         return jsonify({
-            "status": "error",
+            "status": "partial",
             "error": err,
             "generated": generated,
             "total": total,
+            "day_status": day_map,
+            "failed_days": failed_days,
+        })
+    if failed_days and generated >= total:
+        # All days have content but some had errors on first attempt (retried successfully).
+        return jsonify({
+            "status": "ready",
+            "generated": generated,
+            "total": total,
+            "day_status": day_map,
         })
     return jsonify({
         "status": "ready" if generated >= total else "generating",
         "generated": generated,
         "total": total,
+        "day_status": day_map,
     })
 
 

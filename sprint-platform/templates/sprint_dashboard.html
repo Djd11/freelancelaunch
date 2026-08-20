@@ -38,6 +38,7 @@
           <span class="badge b-amber" id="gen-count">0 / 14</span>
           <button type="button" id="gen-retry" class="btn btn-p" style="display:none">Retry generation</button>
         </div>
+        <div id="gen-day-track" style="display:none;gap:4px;margin-top:12px"></div>
       </div>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
       <script>
@@ -45,14 +46,58 @@
         var banner = document.getElementById('gen-banner');
         if (!banner) return;
         var sprintId = "{{ sprint.id }}";
+
+        function renderDayTrack(dayStatus) {
+          // Render or update the per-day content status track inside the banner.
+          var track = document.getElementById('gen-day-track');
+          if (!track || !dayStatus) return;
+          track.innerHTML = '';
+          track.style.display = 'flex';
+          for (var i = 1; i <= 14; i++) {
+            var st = dayStatus[i] || 'pending';
+            var el = document.createElement('a');
+            el.href = '/sprints/' + sprintId + '/day/' + i;
+            el.title = 'Day ' + i + ' — ' + st;
+            el.style.cssText = 'display:block;flex:1;height:18px;border-radius:4px;text-decoration:none;transition:opacity .15s;';
+            if (st === 'ok') {
+              el.style.background = '#3F7A4E';  /* green */
+            } else if (st === 'error') {
+              el.style.background = '#B1574F';  /* red */
+            } else {
+              el.style.background = 'rgba(0,0,0,.08)';  /* pending gray */
+            }
+            var label = document.createElement('span');
+            label.textContent = i;
+            label.style.cssText = 'display:block;text-align:center;font-size:10px;line-height:18px;color:#fff;font-weight:600;';
+            el.appendChild(label);
+            track.appendChild(el);
+          }
+        }
+
         function poll() {
           fetch('/sprints/' + sprintId + '/generation')
             .then(function (r) { return r.json(); })
             .then(function (d) {
               if (d.status === 'ready') { banner.style.display = 'none'; return; }
               banner.style.display = 'block';
+              renderDayTrack(d.day_status);
+
+              if (d.status === 'partial') {
+                // Some days generated, some failed — show partial progress + retry.
+                banner.style.borderColor = '#A97B22';  /* amber */
+                banner.querySelector('.spinner').style.display = 'none';
+                banner.querySelector('b').textContent = d.generated + ' of ' + d.total + ' days generated';
+                var failed = (d.failed_days || []).join(', ');
+                document.getElementById('gen-msg').textContent =
+                  'Day' + (d.failed_days.length > 1 ? 's' : '') + ' ' + failed + ' failed. ' +
+                  (d.error || 'Some lessons could not be generated.');
+                document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
+                document.getElementById('gen-retry').style.display = 'inline-block';
+                return;
+              }
+
               if (d.status === 'error') {
-                // LLM-only generation failed — surface it with a retry CTA.
+                // All generation failed.
                 banner.style.borderColor = '#E3B7B0';
                 banner.querySelector('.spinner').style.display = 'none';
                 banner.querySelector('b').textContent = 'Content generation failed';
@@ -61,7 +106,12 @@
                 document.getElementById('gen-retry').style.display = 'inline-block';
                 return;
               }
+
+              // status === 'generating'
               document.getElementById('gen-retry').style.display = 'none';
+              banner.style.borderColor = 'var(--accent)';
+              banner.querySelector('.spinner').style.display = '';
+              banner.querySelector('b').textContent = 'Generating your sprint content…';
               document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
               setTimeout(poll, 3000);
             })
@@ -73,7 +123,6 @@
           btn.textContent = 'Retrying…';
           fetch('/sprints/' + sprintId + '/generation/retry', { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('input[name="csrf_token"]') ? document.querySelector('input[name="csrf_token"]').value : '' } })
             .then(function () {
-              // Back to the generating state and keep polling.
               banner.style.borderColor = 'var(--accent)';
               banner.querySelector('.spinner').style.display = '';
               banner.querySelector('b').textContent = 'Generating your sprint content…';
