@@ -20,6 +20,9 @@ type LessonProps = {
 function mount() {
   const el = document.getElementById("lesson-player");
   if (!el) return;
+  // Hide loading skeleton — player is about to render
+  const skeleton = el.querySelector(".player-skeleton") as HTMLElement | null;
+  if (skeleton) skeleton.style.display = "none";
   const props: LessonProps = (window as any).__LESSON_PROPS__ || {};
   const duration = Math.max(10, props.voiceover?.duration_seconds || 20);
   const root = createRoot(el);

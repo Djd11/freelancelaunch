@@ -37,7 +37,14 @@
             <p class="small muted" style="margin-top:6px">Each day's lesson is written from your cluster's live job postings.</p>
           </div>
           {% elif lesson.voiceover and lesson.voiceover.url %}
-          <div id="lesson-player" data-lesson-player="true" style="width:100%;aspect-ratio:16/9;background:var(--ink);border-radius:var(--radius);overflow:hidden"></div>
+          <div id="lesson-player" data-lesson-player="true" style="width:100%;aspect-ratio:16/9;background:var(--ink);border-radius:var(--radius);overflow:hidden;position:relative">
+            <div class="player-skeleton" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px">
+              <div style="width:60%;height:24px;background:rgba(255,255,255,.08);border-radius:6px"></div>
+              <div style="width:40%;height:16px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+              <div style="width:80%;height:16px;background:rgba(255,255,255,.05);border-radius:4px;margin-top:8px"></div>
+              <div style="width:50%;height:16px;background:rgba(255,255,255,.05);border-radius:4px"></div>
+            </div>
+          </div>
           <script>
             window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script|strip_markdown, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover} | tojson }};
           </script>
