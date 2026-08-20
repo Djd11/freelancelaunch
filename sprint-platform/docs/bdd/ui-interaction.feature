@@ -84,6 +84,7 @@ Feature: UI Interaction — checkboxes, submit buttons, and landing pages work e
 
   Scenario: Copy-proposal button is wired with a clipboard payload
     Given Phase B has passed verification for sprint "s1"
+    When the proposal drafts are generated for sprint "s1"
     When I GET "/sprints/s1/proposals"
     Then the response status is 200
     And the page contains an element with attribute "data-copy-proposal"
