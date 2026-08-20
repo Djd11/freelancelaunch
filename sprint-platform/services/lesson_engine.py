@@ -18,10 +18,7 @@ import json
 import re
 
 from services.llm import call_llm, LLMGenerationError
-
-# Day → copy-work project index (1-based). Mirrors routes/sprints.DAY_TO_PROJECT.
-# Every Phase A copy-work day (2-5) must map so project 3 is reachable.
-DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
+from routes import DAY_TO_PROJECT
 
 
 def _excerpt(text, limit=220):

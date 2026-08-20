@@ -22,6 +22,47 @@ def _num(value, cast, default):
         return default
 
 
+def _validate_contract_form(form):
+    """Validate contract add form fields. Returns dict of field -> error message."""
+    errors = {}
+    client_name = (form.get("client_name") or "").strip()
+    if not client_name:
+        errors["client_name"] = "Client name is required."
+    elif len(client_name) > 200:
+        errors["client_name"] = "Client name must be under 200 characters."
+
+    try:
+        value = float(form.get("contract_value") or 0)
+        if value < 0:
+            errors["contract_value"] = "Contract value cannot be negative."
+        elif value > 1_000_000:
+            errors["contract_value"] = "Contract value seems unreasonably high."
+    except (TypeError, ValueError):
+        errors["contract_value"] = "Contract value must be a number."
+
+    rate = form.get("your_rate")
+    if rate not in (None, ""):
+        try:
+            r = float(rate)
+            if r < 0:
+                errors["your_rate"] = "Rate cannot be negative."
+        except (TypeError, ValueError):
+            errors["your_rate"] = "Rate must be a number."
+
+    hours = form.get("hours_worked")
+    if hours not in (None, ""):
+        try:
+            h = int(hours)
+            if h < 0:
+                errors["hours_worked"] = "Hours cannot be negative."
+            elif h > 10000:
+                errors["hours_worked"] = "Hours seems unreasonably high."
+        except (TypeError, ValueError):
+            errors["hours_worked"] = "Hours must be a whole number."
+
+    return errors
+
+
 @contract_bp.route("/sprints/<sprint_id>/contract")
 def brief(sprint_id):
     gate = require_login()

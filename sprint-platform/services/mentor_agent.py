@@ -10,20 +10,49 @@ import re
 
 from services.llm import call_llm, LLMGenerationError
 
-FORBIDDEN_HANDOVER = "I have built it"
+FORBIDDEN_PATTERNS = [
+    "I have built",
+    "I've built",
+    "here is the complete",
+    "here's the complete",
+    "the finished",
+    "the implementation is",
+    "the code is",
+    "```",
+]
+
+MIN_ANSWER_LENGTH = 30
 
 
 def _extract_terms(job_description):
-    """Pull a few distinctive terms from the job description for grounding."""
+    """Extract domain-specific terms from the job description for grounding.
+    Filters out generic/common words and focuses on tool names, methodologies,
+    and domain-specific vocabulary."""
     if not job_description:
         return []
-    words = re.findall(r"[a-z][a-z ]{3,}", job_description.lower())
+
+    GENERIC = {
+        "the", "this", "that", "with", "from", "have", "will", "been",
+        "were", "they", "their", "about", "into", "over", "such", "your",
+        "you", "and", "for", "are", "not", "but", "can", "may", "our",
+        "who", "what", "when", "where", "how", "which", "would", "could",
+        "should", "these", "those", "than", "them", "then", "some",
+        "also", "just", "only", "very", "more", "most", "each", "does",
+        "did", "any", "its", "all", "being", "there", "here", "other",
+        "make", "like", "need", "work", "team", "new", "use", "used",
+        "using", "best", "good", "able", "well", "know", "help", "look",
+        "find", "give", "part", "take", "come", "back", "want", "way",
+    }
+
+    words = re.findall(r"[a-zA-Z][a-zA-Z \-]{2,}", job_description.lower())
     terms = []
     for w in words:
         w = w.strip()
-        if len(w) > 4 and w not in terms:
+        if w in GENERIC or len(w) < 4:
+            continue
+        if w not in terms:
             terms.append(w)
-        if len(terms) >= 4:
+        if len(terms) >= 6:
             break
     return terms
 
@@ -51,12 +80,23 @@ def _build_prompt(question, job_description, terms, history=None):
 
 
 def _grounded(candidate, terms):
-    """Safety gate: an LLM answer must echo at least one job term (when the job
-    has distinctive terms) and must never hand over the finished answer."""
-    if not candidate or FORBIDDEN_HANDOVER in candidate:
+    """Safety gate: an LLM answer must:
+    1. Echo at least one job term (when terms exist)
+    2. Never hand over the finished answer
+    3. Be long enough to be substantive (>30 chars)
+    4. Not be pure code blocks
+    """
+    if not candidate:
+        return False
+    if len(candidate.strip()) < MIN_ANSWER_LENGTH:
         return False
     lowered = candidate.lower()
-    return (not terms) or any(t in lowered for t in terms)
+    for pattern in FORBIDDEN_PATTERNS:
+        if pattern.lower() in lowered:
+            return False
+    if terms and not any(t in lowered for t in terms):
+        return False
+    return True
 
 
 def answer(question, job_description=None, history=None):

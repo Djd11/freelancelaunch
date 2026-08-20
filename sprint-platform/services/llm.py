@@ -15,6 +15,7 @@ generation error instead of silent template content.
 import json
 import os
 import socket
+import time as time_module
 import urllib.request
 
 
@@ -90,13 +91,18 @@ def _omniroute_call(prompt, timeout):
     return _extract_choices(data)
 
 
-def call_llm(prompt, timeout=3):
-    """Return a completion string, or None when no provider answered."""
-    for fn in (_env_call, _openrouter_call, _omniroute_call):
-        try:
-            out = fn(prompt, timeout)
-        except Exception:
-            out = None
-        if out and str(out).strip():
-            return str(out).strip()
+def call_llm(prompt, timeout=90, max_retries=1, backoff_base=1):
+    """Return a completion string, or None when no provider answered.
+    Retries with exponential backoff when max_retries > 1."""
+    delays = [backoff_base * (2 ** i) for i in range(max_retries)]
+    for attempt in range(max_retries):
+        for fn in (_env_call, _openrouter_call, _omniroute_call):
+            try:
+                out = fn(prompt, timeout)
+            except Exception:
+                out = None
+            if out and str(out).strip():
+                return str(out).strip()
+        if attempt < max_retries - 1:
+            time_module.sleep(delays[attempt])
     return None

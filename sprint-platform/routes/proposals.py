@@ -1,4 +1,6 @@
 """proposals blueprint — First-Bid challenge + human-initiated submission (eng-spec §3 J6)."""
+import threading
+
 from flask import Blueprint, render_template, request, redirect, url_for, g
 
 from routes import require_login, load_sprint, load_cluster
@@ -9,6 +11,25 @@ from services.proposal_engine import (SCORE_ERROR, generate_drafts, fill_drafts,
 from services.iteration_engine import diagnose
 
 proposals_bp = Blueprint("proposals", __name__)
+
+# Thread dedup: at most one fill thread per sprint at any time.
+_active_fill_threads = set()
+_fill_lock = threading.Lock()
+
+
+def _should_spawn_fill(sprint_id):
+    """Check if we should spawn a new fill thread for this sprint."""
+    with _fill_lock:
+        if sprint_id in _active_fill_threads:
+            return False
+        _active_fill_threads.add(sprint_id)
+        return True
+
+
+def _fill_done(sprint_id):
+    """Mark a fill thread as done."""
+    with _fill_lock:
+        _active_fill_threads.discard(sprint_id)
 
 # Outcome type → sprint counter column (eng-spec §4.3: the proposal iteration
 # loop writes responses/interviews).
@@ -37,12 +58,13 @@ def index(sprint_id):
     generate_drafts(sb, sprint, sprint["cluster_key"], sprint["user_id"])
     # LLM bodies fill asynchronously — the page shows generating/error states
     # and each load re-fills any failed drafts (self-healing retry).
-    import threading
+    # Thread dedup: at most one fill thread per sprint at any time.
     from flask import current_app
     app = current_app._get_current_object()
-    threading.Thread(
-        target=_fill_in_background, args=(app, sprint["id"], sprint["cluster_key"]), daemon=True,
-    ).start()
+    if _should_spawn_fill(sprint["id"]):
+        threading.Thread(
+            target=_fill_in_background, args=(app, sprint["id"], sprint["cluster_key"]), daemon=True,
+        ).start()
     proposals = list_proposals(sb, sprint, sprint["cluster_key"])
     submitted_count = sum(1 for p in proposals if p["status"] == "submitted")
     verified = verified_platforms(sb, sprint["user_id"])
@@ -77,21 +99,32 @@ def index(sprint_id):
 
 
 def _fill_in_background(app, sprint_id, cluster_key):
-    """Background LLM proposal fill — app context + dedicated Supabase client
-    (same pattern as the lesson worker; never blocks the proposals request)."""
-    with app.app_context():
-        try:
+    """Background LLM proposal fill — app context + dedicated Supabase client.
+    Stamps score=-1 on failure; always releases the thread lock."""
+    try:
+        with app.app_context():
             from supabase import create_client
             sb = create_client(
                 app.config.get("SUPABASE_URL") or "",
                 app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
             )
             fill_drafts(sb, sprint_id, cluster_key)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).exception("proposal fill failed for %s", sprint_id)
+        # Stamp score=-1 on unfilled proposals so the page surfaces the error
+        try:
+            from supabase import create_client as _cc
+            sb = _cc(
+                app.config.get("SUPABASE_URL") or "",
+                app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+            )
+            sb.table("proposals").update({"score": -1, "template_body": None}) \
+                .eq("sprint_id", sprint_id).is_("template_body", "null").execute()
         except Exception:
-            # LLM-only: fill_drafts already marked failed drafts (score=-1) so
-            # the page surfaces the error; log the failure for diagnosis.
-            import logging
-            logging.getLogger(__name__).exception("proposal fill failed for %s", sprint_id)
+            logging.getLogger(__name__).exception("failed to stamp score=-1 for %s", sprint_id)
+    finally:
+        _fill_done(sprint_id)
 
 
 @proposals_bp.route("/sprints/<sprint_id>/proposals/<proposal_id>/submit", methods=["POST"])

@@ -26,8 +26,14 @@ def _active_clusters(sb):
 
 
 def _open_cohort(sb, cluster_key):
-    """Open a new active cohort for the cluster (arch §5.2: 'create cohort
-    (or join existing active cohort)'). Named Cohort #N by count."""
+    """Open a new active cohort for the cluster. Idempotent: if an active
+    cohort already exists, return it instead of creating a duplicate."""
+    existing = sb.table("cohorts").select("id") \
+        .eq("cluster_key", cluster_key).eq("status", "active") \
+        .limit(1).execute().data
+    if existing:
+        return existing[0]["id"]
+
     today = datetime.date.today()
     count = sb.table("cohorts").select("id").eq("cluster_key", cluster_key).execute().data
     row = sb.table("cohorts").insert({
@@ -135,10 +141,7 @@ def start_sprint(cluster_key):
 
 
 def _generate_in_background(app, sprint_id):
-    """Background LLM content generation — app context + a dedicated Supabase
-    client (not the shared request-scoped one, so the worker's HTTP/2 traffic
-    never races the request threads — see the journey test's 'Server
-    disconnected' flake)."""
+    """Background LLM content generation — stamps visible errors on failure."""
     with app.app_context():
         try:
             from supabase import create_client
@@ -147,13 +150,26 @@ def _generate_in_background(app, sprint_id):
                 app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
             )
             generate_sprint_content(sb, sprint_id)
-        except Exception:
-            # Generation must never take the sprint down. Content is LLM-only,
-            # so the worker itself stamps a visible generation_error on a day
-            # payload before re-raising (see lesson_engine) — the dashboard
-            # /generation poll and the day view surface it, never a template.
+        except Exception as exc:
             import logging
             logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
+            # Stamp generation_error on the first empty day so the UI surfaces it
+            try:
+                sb2 = create_client(
+                    app.config.get("SUPABASE_URL") or "",
+                    app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+                )
+                days = sb2.table("sprint_days").select("day_no, action_payload") \
+                    .eq("sprint_id", sprint_id).order("day_no").execute().data
+                for d in (days or []):
+                    payload = d.get("action_payload") or {}
+                    if not payload.get("lesson"):
+                        payload["generation_error"] = f"Generation failed: {exc}"
+                        sb2.table("sprint_days").update({"action_payload": payload}) \
+                            .eq("sprint_id", sprint_id).eq("day_no", d["day_no"]).execute()
+                        break
+            except Exception:
+                logging.getLogger(__name__).exception("failed to stamp generation_error for %s", sprint_id)
 
 
 @main_bp.route("/pricing")

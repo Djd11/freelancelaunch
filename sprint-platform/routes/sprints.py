@@ -4,7 +4,8 @@ import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify, flash
 
 from routes import (require_login, load_cluster, load_sprint, load_cohort,
-                    load_meter, load_momentum, load_day, load_project, phase_a_done_days)
+                    load_meter, load_momentum, load_day, load_project, phase_a_done_days,
+                    DAY_TO_PROJECT)
 from services.supabase_client import get_supabase
 from services.verification_service import gate_a_passed, gate_b_passed, record as record_review
 from services.verification_service import auto_check_gate_a, is_valid_url
@@ -13,11 +14,6 @@ from services.badge_engine import issue as issue_badge
 from services.nudge_engine import nudge as nudge_for, recompute_confidence
 
 sprints_bp = Blueprint("sprints", __name__)
-
-# Day → copy-work project index (1-based). Mockup: Day 4 = Project 2 (Abandoned-Cart).
-# All four Phase A copy-work days (2-5) must map — project 3 lives on Day 5, or
-# Gate A can never pass through the real day flow (content-quality C1).
-DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
 
 
 @sprints_bp.route("/sprints/<sprint_id>")
@@ -190,6 +186,40 @@ def retry_generation(sprint_id):
     return jsonify({"status": "generating", "generated": None, "total": 14})
 
 
+def _complete_day_if_not_done(sb, sprint, day_no):
+    """Complete a day if not already done. Returns dict with status and meter.
+    Idempotent: double-clicking complete is a no-op."""
+    day_row = sb.table("sprint_days").select("is_done") \
+        .eq("sprint_id", sprint["id"]).eq("day_no", day_no).limit(1).execute().data
+    if day_row and day_row[0].get("is_done"):
+        return {"already_done": True, "meter": None}
+
+    sb.table("sprint_days").update({"is_done": True}) \
+        .eq("sprint_id", sprint["id"]).eq("day_no", day_no).execute()
+
+    next_day = min(day_no + 1, 14)
+    phase = "A" if next_day <= 5 else ("B" if next_day <= 10 else "C")
+    sb.table("sprints").update({"current_day": next_day, "phase": phase}) \
+        .eq("id", sprint["id"]).execute()
+
+    if day_no >= 14:
+        sb.table("sprints").update({
+            "status": "completed",
+            "completed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }).eq("id", sprint["id"]).execute()
+
+    meter = recompute(sb, sprint["id"], sprint["user_id"], sprint["cluster_key"], day_no)
+
+    mom = load_momentum(sb, sprint["user_id"])
+    streak = (mom.get("day_streak") or 0) + 1
+    confidence = recompute_confidence(mom.get("confidence"))
+    sb.table("user_momentum").upsert({
+        "user_id": sprint["user_id"], "day_streak": streak, "confidence": confidence,
+    }, on_conflict="user_id").execute()
+
+    return {"already_done": False, "meter": meter, "next_day": next_day}
+
+
 @sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/complete", methods=["POST"])
 def complete_day(sprint_id, day_no):
     gate = require_login()
@@ -199,44 +229,18 @@ def complete_day(sprint_id, day_no):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"ok": False, "error": "not found"}), 404
-
-    # A day number outside 1..14 (or a day with no row) must never advance or
-    # complete the sprint — refuse it (negative-path hardening, api.feature).
     if not load_day(sb, sprint_id, day_no):
         return jsonify({"ok": False, "error": "day not found"}), 404
 
-    sb.table("sprint_days").update({"is_done": True}).eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
+    result = _complete_day_if_not_done(sb, sprint, day_no)
 
-    next_day = min(day_no + 1, 14)
-    phase = "A" if next_day <= 5 else ("B" if next_day <= 10 else "C")
-    sb.table("sprints").update({"current_day": next_day, "phase": phase}).eq("id", sprint_id).execute()
-
-    # Day 14 done = the sprint is completed (eng-spec §3 J7: badge after the
-    # sprint completes) — completed_at stamps the finish.
-    if day_no >= 14:
-        sb.table("sprints").update({
-            "status": "completed",
-            "completed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        }).eq("id", sprint_id).execute()
-
-    meter = recompute(sb, sprint_id, sprint["user_id"], sprint["cluster_key"], day_no)
-
-    # momentum: streak +1, confidence recomputed by the nudge engine (eng-spec §4.4)
-    mom = load_momentum(sb, sprint["user_id"])
-    streak = (mom.get("day_streak") or 0) + 1
-    confidence = recompute_confidence(mom.get("confidence"))
-    sb.table("user_momentum").upsert({
-        "user_id": sprint["user_id"], "day_streak": streak, "confidence": confidence,
-    }, on_conflict="user_id").execute()
-
-    # Dual-mode (eng-spec J3): AJAX/API callers (X-Requested-With) get the
-    # meter payload as JSON so the journey can read meter.newly_unlocked;
-    # browser form POSTs get a PRG redirect so the user never sees raw JSON.
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return jsonify({"ok": True, "meter": meter, "next_day": next_day})
+        return jsonify({"ok": True, "meter": result.get("meter"), "next_day": result.get("next_day")})
     if day_no >= 14:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
-    return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=next_day))
+    return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=result.get("next_day", day_no)))
+
+
 
 
 @sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/copywork", methods=["POST"])

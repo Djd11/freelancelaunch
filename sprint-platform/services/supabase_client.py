@@ -1,9 +1,9 @@
 """
-Supabase client — live service-role client only (architecture.md §4.4).
+Supabase client — dual-key: anon for routes (RLS enforced), service-role for
+admin workers (arch §4.4, fix: anon vs service key split).
 
-The app has exactly one data layer: the dedicated Supabase project configured
-via SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (see .env.example and
-docs/supabase-setup.md). There is no in-memory/dev-mode database.
+Routes use get_client_supabase() (anon key → RLS policies apply).
+Background workers use get_supabase() (service role → bypasses RLS).
 """
 import logging
 
@@ -11,15 +11,15 @@ from flask import current_app, g
 
 logger = logging.getLogger(__name__)
 
-_live_client = None  # process-wide live client (create_client is expensive)
+_live_client = None          # process-wide service-role client
+_client_supabase_client = None  # process-wide anon-key client
 
 
 def get_supabase():
-    """Return the live Supabase client for the current request context.
+    """Return the service-role Supabase client (admin workers only).
 
-    Raises RuntimeError when the project is not configured — the app has no
-    fallback data layer, so a missing configuration must fail loudly instead
-    of silently serving an empty store.
+    Bypasses RLS — use only for server-side admin operations.
+    Raises RuntimeError when the project is not configured.
     """
     if "supabase" in g:
         return g.supabase
@@ -39,6 +39,38 @@ def get_supabase():
     if _live_client is None:
         from supabase import create_client
         _live_client = create_client(url, key)
-        logger.info("Connected to live Supabase at %s", url)
+        logger.info("Connected to live Supabase at %s (service role)", url)
     g.supabase = _live_client
     return g.supabase
+
+
+def get_client_supabase():
+    """Return the anon-key Supabase client for request-scoped reads/writes.
+
+    Uses RLS policies — never the service-role key. This is the client
+    that routes should use for all user-facing operations.
+    Raises RuntimeError when the anon key is not configured.
+    """
+    if "client_supabase" in g:
+        return g.client_supabase
+    url = (current_app.config.get("SUPABASE_URL") or "").strip()
+    key = (current_app.config.get("SUPABASE_ANON_KEY") or "").strip()
+    if not (url and key):
+        raise RuntimeError(
+            "Supabase anon key is not configured. Set SUPABASE_ANON_KEY "
+            "in the environment (copy .env.example to .env)."
+        )
+    global _client_supabase_client
+    if _client_supabase_client is None:
+        from supabase import create_client
+        _client_supabase_client = create_client(url, key)
+        logger.info("Connected to live Supabase at %s (anon key)", url)
+    g.client_supabase = _client_supabase_client
+    return g.client_supabase
+
+
+def reset_clients():
+    """Reset all cached clients (for tests)."""
+    global _live_client, _client_supabase_client
+    _live_client = None
+    _client_supabase_client = None

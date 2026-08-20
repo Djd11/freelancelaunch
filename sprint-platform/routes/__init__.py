@@ -1,6 +1,10 @@
 """Blueprint package. Shared query helpers for the sprint-platform routes."""
 import uuid as _uuid
 
+# Day → copy-work project index (1-based). Every Phase A copy-work day (2-5)
+# must map so project 3 is reachable and Gate A can pass through the real day flow.
+DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
+
 from flask import redirect, url_for, g
 
 from services.supabase_client import get_supabase
