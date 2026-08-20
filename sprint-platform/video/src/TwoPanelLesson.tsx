@@ -58,6 +58,22 @@ export const TwoPanelLesson = ({
 
   const activePoint = Math.min(key_points.length - 1, Math.max(0, pointsVisible - 1));
 
+  // Auto-scroll: simulate vertical scrolling so long scripts don't overflow.
+  // We translate the entire text block upward as more words appear, keeping
+  // the latest revealed line visible in the viewport.
+  const visibleWords = scriptWords.slice(0, Math.max(0, scriptVisible));
+  // Font 34px × lineHeight 1.5 = 51px per line.  Container usable width
+  // ≈ 1120px (1920 - 640 right panel - 160 padding), average word ~20px
+  // → ~5 words/line for a typical mix of short/long words.
+  const avgCharsPerWord = 6;
+  const charWidthPx = 20;
+  const wordsPerLine = Math.max(1, Math.floor(1120 / (avgCharsPerWord * charWidthPx)));
+  const lineHeightPx = 51;
+  const linesShown = Math.ceil(visibleWords.length / wordsPerLine);
+  const scriptAreaHeight = 1080 - 80/*top pad*/ - 70/*title h*/ - 30/*gap*/ - 80/*bottom pad*/;
+  const contentHeight = linesShown * lineHeightPx;
+  const scrollOffset = Math.max(0, contentHeight - scriptAreaHeight);
+
   const C = {
     bg: "#0f172a",
     panel: "#1e293b",
@@ -71,14 +87,16 @@ export const TwoPanelLesson = ({
     <div style={{ width: 1920, height: 1080, background: C.bg, color: C.text, fontFamily: "system-ui, sans-serif", display: "flex", overflow: "hidden" }}>
       {voiceover?.url && <Audio src={voiceover.url} />}
 
-      {/* Left panel — kinetic script */}
-      <div style={{ flex: 1, padding: 80, display: "flex", flexDirection: "column", gap: 30 }}>
-        <div style={{ fontSize: 58, fontWeight: 700, opacity: titleDone, transform: `translateY(${(1 - titleDone) * 24}px)` }}>
+      {/* Left panel — kinetic script (scrollable) */}
+      <div style={{ flex: 1, padding: 80, display: "flex", flexDirection: "column", gap: 30, overflow: "hidden" }}>
+        <div style={{ fontSize: 58, fontWeight: 700, opacity: titleDone, transform: `translateY(${(1 - titleDone) * 24}px)`, flexShrink: 0 }}>
           {title}
         </div>
-        <div style={{ fontSize: 34, lineHeight: 1.5, color: C.muted, flex: 1 }}>
-          {scriptWords.slice(0, Math.max(0, scriptVisible)).join(" ")}
-          {scriptVisible < scriptWords.length && <span style={{ opacity: 0.4 }}>▍</span>}
+        <div style={{ fontSize: 34, lineHeight: 1.5, color: C.muted, flex: 1, overflow: "hidden", position: "relative" }}>
+          <div style={{ transform: `translateY(-${scrollOffset}px)`, transition: "none" }}>
+            {visibleWords.join(" ")}
+            {scriptVisible < scriptWords.length && scriptVisible > 0 && <span style={{ opacity: 0.4 }}>▍</span>}
+          </div>
         </div>
       </div>
 
