@@ -48,6 +48,20 @@ def dashboard(sprint_id):
     today_project = load_project(sb, sprint_id, today_project_index)
     gate_a = gate_a_passed(sb, sprint_id)
 
+    # Live job feed: recent jobs from RSS/Freelancer for this cluster.
+    live_jobs = sb.table("job_feed").select("title,source_url,skills,rate,source_platform,posted_at") \
+        .eq("cluster_key", sprint["cluster_key"]).eq("status", "active") \
+        .order("posted_at", desc=True).limit(10).execute().data
+    # Update cluster job_count to reflect actual feed size.
+    live_count = sb.table("job_feed").select("id", count="exact") \
+        .eq("cluster_key", sprint["cluster_key"]).eq("status", "active").execute().count or 0
+    cluster["live_job_count"] = live_count
+    # RSS-sourced count for the badge.
+    rss_count = sb.table("job_feed").select("id", count="exact") \
+        .eq("cluster_key", sprint["cluster_key"]).eq("source_platform", "rss") \
+        .eq("status", "active").execute().count or 0
+    cluster["rss_job_count"] = rss_count
+
     return render_template(
         "sprint_dashboard.html",
         sprint=sprint, cluster=cluster, cohort=cohort, meter=meter,
@@ -56,6 +70,7 @@ def dashboard(sprint_id):
         today_lesson_watched=bool(today.get("lesson_watched")),
         today_project_done=bool(today_project and today_project.get("done")),
         nudge=nudge, contracts=contracts, day_done_map=day_done_map,
+        live_jobs=live_jobs,
     )
 
 

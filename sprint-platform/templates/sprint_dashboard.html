@@ -14,7 +14,7 @@
         <div>
           <span class="chip"><span class="dot"></span>{{ cohort.name if cohort else 'Sprint' }}{% if cohort and cohort.end_date %} · ends {{ cohort.end_date|dt }}{% endif %}</span>
           <h2 style="margin-top:12px">{{ cluster.icon }} {{ cluster.display_name }} Sprint</h2>
-          <p class="small muted" style="margin-top:4px">Training against <b style="color:var(--ink)">{{ cluster.job_count }} active jobs</b> · ${{ cluster.avg_rate }}/hr · {{ cluster.cluster_key }} cluster</p>
+          <p class="small muted" style="margin-top:4px">Training against <b style="color:var(--ink)">{{ cluster.live_job_count or cluster.job_count }} active jobs</b>{% if cluster.rss_job_count %} <span class="chip" style="font-size:10px">📡 {{ cluster.rss_job_count }} from RSS</span>{% endif %} · ${{ cluster.avg_rate }}/hr · {{ cluster.cluster_key }} cluster</p>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span class="badge b-amber" style="font-size:13px;padding:8px 14px">Day {{ sprint.current_day }} · Phase {{ sprint.phase }}</span>
@@ -269,6 +269,61 @@
             <button class="btn btn-p btn-sm" type="submit">Add contract</button>
           </form>
         </div>
+      </div>
+
+      <!-- ═══ LIVE JOB FEED (RSS + platform-sourced jobs) ═══ -->
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+          <div>
+            <h3>Live Job Feed</h3>
+            <p class="small muted">Recent jobs sourced from RSS feeds and platforms in your cluster.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            {% if cluster.rss_job_count %}
+            <span class="badge b-accent">📡 {{ cluster.rss_job_count }} from RSS</span>
+            {% endif %}
+            <span class="badge b-green">{{ cluster.live_job_count or cluster.job_count }} total</span>
+          </div>
+        </div>
+        {% if live_jobs %}
+        <table>
+          <thead><tr><th>Job Title</th><th>Source</th><th>Skills</th><th>Posted</th></tr></thead>
+          <tbody>
+            {% for job in live_jobs %}
+            <tr>
+              <td>
+                {% if job.source_url %}
+                <a href="{{ job.source_url }}" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:none;font-weight:500">{{ job.title[:80] }}</a>
+                {% else %}
+                <span style="font-weight:500">{{ job.title[:80] }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if job.source_platform == 'rss' %}
+                <span class="badge b-accent" style="font-size:10px">📡 RSS</span>
+                {% elif job.source_platform == 'freelancer' %}
+                <span class="badge b-green" style="font-size:10px">Freelancer</span>
+                {% elif job.source_platform == 'upwork' %}
+                <span class="badge b-slate" style="font-size:10px">Upwork</span>
+                {% else %}
+                <span class="badge b-slate" style="font-size:10px">{{ job.source_platform or 'Manual' }}</span>
+                {% endif %}
+              </td>
+              <td class="small muted">
+                {% for skill in (job.skills or [])[:3] %}
+                <span class="chip" style="font-size:10px">{{ skill }}</span>
+                {% endfor %}
+              </td>
+              <td class="small muted">
+                {% if job.posted_at %}{{ job.posted_at[:10] }}{% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="small muted" style="margin:6px 0 14px">No live jobs ingested yet. RSS feeds will populate this list automatically.</p>
+        {% endif %}
       </div>
     </div>
   </div>
