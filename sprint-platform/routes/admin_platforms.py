@@ -5,13 +5,18 @@ admin_platforms_bp = Blueprint("admin_platforms", __name__)
 
 
 def _require_admin():
+    """Check admin — reuse admin_bp's _require_admin for consistency."""
     from routes import require_login
     gate = require_login()
     if gate:
         return gate
-    from flask import current_app
-    from config import Config
-    if g.user.get("email") != current_app.config.get("ADMIN_EMAIL"):
+    from flask import session, current_app
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "login required"}), 401
+    # Import and delegate to admin_bp's _require_admin
+    from routes.admin import _require_admin as _admin_check
+    if not _admin_check():
         return jsonify({"error": "admin only"}), 403
     return None
 

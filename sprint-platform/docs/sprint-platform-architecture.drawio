@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="System Architecture">
+    <mxGraphModel dx="2200" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============================================================ -->
+        <!-- TIER 1: BROWSER (Client) -->
+        <!-- ============================================================ -->
+        <mxCell id="tier_browser" value="BROWSER (Client)" style="swimlane;startSize=35;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;html=1;swimlaneLine=1;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="40" width="2240" height="260" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tpl_jinja" value="&lt;b&gt;Jinja2 Templates&lt;/b&gt;&lt;br&gt;landing · login · sprint_picker&lt;br&gt;sprint_dashboard · day · proposals&lt;br&gt;mock_contract · profile · mentor&lt;br&gt;clients · admin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="40" y="50" width="280" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tpl_styles" value="&lt;b&gt;Tailwind CDN +&lt;br&gt;Alpine.js&lt;/b&gt;&lt;br&gt;styles.css" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="350" y="50" width="150" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="csrf_layer" value="&lt;b&gt;CSRF Protection&lt;/b&gt;&lt;br&gt;X-CSRFToken header&lt;br&gt;csrf_token() in forms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="350" y="145" width="150" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="remotion_player" value="&lt;b&gt;Remotion Player&lt;/b&gt;&lt;br&gt;lesson-player.js (400kb)&lt;br&gt;TwoPanelLesson.tsx&lt;br&gt;Kinetic text + Audio" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="540" y="50" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="js_polling" value="&lt;b&gt;Client-Side JS&lt;/b&gt;&lt;br&gt;Polling /generation&lt;br&gt;Form POST handlers&lt;br&gt;Fetch with CSRF header" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="780" y="50" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="day_html" value="&lt;b&gt;day.html&lt;/b&gt;&lt;br&gt;window.__LESSON_PROPS__&lt;br&gt;format_script filter&lt;br&gt;strip_markdown filter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="tier_browser">
+          <mxGeometry x="540" y="155" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- TIER 2: FLASK APPLICATION -->
+        <!-- ============================================================ -->
+        <mxCell id="tier_flask" value="FLASK APPLICATION (Render Free Tier)" style="swimlane;startSize=35;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;html=1;swimlaneLine=1;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="340" width="2240" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="app_factory" value="&lt;b&gt;app.py&lt;/b&gt;&lt;br&gt;create_app()&lt;br&gt;CSRFProtect · Template Filters&lt;br&gt;load_user · inject_globals" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_flask">
+          <mxGeometry x="40" y="45" width="280" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Blueprint containers -->
+        <mxCell id="bp_main" value="&lt;b&gt;main_bp&lt;/b&gt;&lt;br&gt;/ · /sprints · /topics&lt;br&gt;/sprints/request&lt;br&gt;POST /sprints/&lt;key&gt;/start" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="360" y="45" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bp_sprints" value="&lt;b&gt;sprints_bp&lt;/b&gt;&lt;br&gt;/sprints/&lt;id&gt; · /day/&lt;n&gt;&lt;br&gt;/generation&lt;br&gt;POST /day/&lt;n&gt;/complete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="550" y="45" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bp_contract" value="&lt;b&gt;contract_bp&lt;/b&gt;&lt;br&gt;/sprints/&lt;id&gt;/contract&lt;br&gt;/contract/add&lt;br&gt;/contract/&lt;id&gt;/complete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="740" y="45" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bp_proposals" value="&lt;b&gt;proposals_bp&lt;/b&gt;&lt;br&gt;/sprints/&lt;id&gt;/proposals&lt;br&gt;/proposals/&lt;pid&gt;/submit&lt;br&gt;/proposals/&lt;pid&gt;/respond" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="930" y="45" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bp_mentor" value="&lt;b&gt;mentor_bp&lt;/b&gt;&lt;br&gt;/mentor&lt;br&gt;/mentor/turn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="1120" y="45" width="130" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="bp_other" value="&lt;b&gt;Other Blueprints&lt;/b&gt;&lt;br&gt;auth_bp · profile_bp&lt;br&gt;clients_bp · admin_bp" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="tier_flask">
+          <mxGeometry x="1280" y="45" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Security sub-layer -->
+        <mxCell id="security_box" value="&lt;b&gt;Security Layer&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_flask">
+          <mxGeometry x="360" y="140" width="520" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sec1" value="CSRFProtect&lt;br&gt;(flask-wtf)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="security_box">
+          <mxGeometry x="10" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sec2" value="Session Auth&lt;br&gt;(user_id UUID)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="security_box">
+          <mxGeometry x="145" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sec3" value="Ownership Gate&lt;br&gt;(sprint owner)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="security_box">
+          <mxGeometry x="280" y="30" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sec4" value="Pydantic&lt;br&gt;Validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="security_box">
+          <mxGeometry x="400" y="30" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Gunicorn -->
+        <mxCell id="gunicorn" value="&lt;b&gt;gunicorn&lt;/b&gt;&lt;br&gt;2 workers · 120s timeout&lt;br&gt;wsgi.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="tier_flask">
+          <mxGeometry x="920" y="140" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- TIER 3: SERVICE LAYER -->
+        <!-- ============================================================ -->
+        <mxCell id="tier_service" value="SERVICE LAYER (Workers)" style="swimlane;startSize=35;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;html=1;swimlaneLine=1;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="2240" height="340" as="geometry" />
+        </mxCell>
+
+        <!-- Demand Intelligence -->
+        <mxCell id="svc_demand" value="&lt;b&gt;Demand Intelligence&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_service">
+          <mxGeometry x="40" y="45" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="di1" value="demand_intelligence.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_demand">
+          <mxGeometry x="10" y="30" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="di2" value="unlock_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_demand">
+          <mxGeometry x="10" y="65" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="di3" value="nudge_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_demand">
+          <mxGeometry x="155" y="65" width="135" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Sprint Engines -->
+        <mxCell id="svc_sprint" value="&lt;b&gt;Sprint Engines&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_service">
+          <mxGeometry x="370" y="45" width="520" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="se1" value="sprint_planner.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="10" y="30" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se2" value="lesson_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="140" y="30" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se3" value="video_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="270" y="30" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se4" value="copywork_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="10" y="70" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se5" value="mock_contract_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="160" y="70" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se6" value="proposal_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="330" y="70" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="se7" value="schemas.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_sprint">
+          <mxGeometry x="470" y="30" width="40" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Support Engines -->
+        <mxCell id="svc_support" value="&lt;b&gt;Support Engines&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_service">
+          <mxGeometry x="920" y="45" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="su1" value="verification_service.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="10" y="30" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="su2" value="badge_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="160" y="30" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="su3" value="outcome_service.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="280" y="30" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="su4" value="iteration_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="10" y="70" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="su5" value="mentor_agent.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="150" y="70" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="su6" value="nudge_engine.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="svc_support">
+          <mxGeometry x="270" y="70" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- LLM Provider Chain -->
+        <mxCell id="svc_llm" value="&lt;b&gt;LLM Provider Chain&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_service">
+          <mxGeometry x="40" y="185" width="520" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="llm1" value="1. ENV endpoint&lt;br&gt;(LLM_API_URL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="svc_llm">
+          <mxGeometry x="10" y="30" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="llm2" value="2. OpenRouter&lt;br&gt;(cloud)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="svc_llm">
+          <mxGeometry x="160" y="30" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="llm3" value="3. Omniroute&lt;br&gt;(localhost:20128)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="svc_llm">
+          <mxGeometry x="290" y="30" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="llm4" value="4. None →&lt;br&gt;LLMGenerationError" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="svc_llm">
+          <mxGeometry x="435" y="30" width="75" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- LLM chain edges -->
+        <mxCell id="llm_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="svc_llm" source="llm1" target="llm2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="llm_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="svc_llm" source="llm2" target="llm3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="llm_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="svc_llm" source="llm3" target="llm4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Supabase Client -->
+        <mxCell id="svc_sb" value="&lt;b&gt;Supabase Client&lt;/b&gt;" style="swimlane;startSize=25;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_service">
+          <mxGeometry x="590" y="185" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="sb1" value="get_client_supabase()&lt;br&gt;&lt;i&gt;ANON KEY · RLS enforced&lt;/i&gt;&lt;br&gt;(routes only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="svc_sb">
+          <mxGeometry x="10" y="30" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sb2" value="get_supabase()&lt;br&gt;&lt;i&gt;SERVICE ROLE KEY&lt;/i&gt;&lt;br&gt;(admin workers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="svc_sb">
+          <mxGeometry x="175" y="30" width="155" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- TIER 4: SUPABASE (Data Layer) -->
+        <!-- ============================================================ -->
+        <mxCell id="tier_data" value="SUPABASE (Cloud) — Data Layer" style="swimlane;startSize=35;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;html=1;swimlaneLine=1;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1000" width="2240" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Postgres DB -->
+        <mxCell id="db_box" value="&lt;b&gt;PostgreSQL Database&lt;/b&gt; (schema.sql)" style="swimlane;startSize=25;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;html=1;collapsible=0;" vertex="1" parent="tier_data">
+          <mxGeometry x="40" y="45" width="1200" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_demand" value="&lt;b&gt;Demand Tables&lt;/b&gt;&lt;br&gt;job_clusters&lt;br&gt;job_feed&lt;br&gt;demand_snapshots" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="20" y="35" width="150" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_sprint" value="&lt;b&gt;Sprint Tables&lt;/b&gt;&lt;br&gt;sprints&lt;br&gt;sprint_days&lt;br&gt;sprint_unlock_snapshots" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="190" y="35" width="170" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_cohort" value="&lt;b&gt;Cohort/User&lt;/b&gt;&lt;br&gt;cohorts&lt;br&gt;user_profiles&lt;br&gt;user_platforms&lt;br&gt;user_momentum" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="380" y="35" width="150" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_phase" value="&lt;b&gt;Phase Tables&lt;/b&gt;&lt;br&gt;copywork_projects&lt;br&gt;capstone_briefs&lt;br&gt;case_studies" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="550" y="35" width="160" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_outcome" value="&lt;b&gt;Outcome Tables&lt;/b&gt;&lt;br&gt;proposals&lt;br&gt;contracts&lt;br&gt;badges&lt;br&gt;verification_reviews" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="730" y="35" width="180" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_mentor" value="&lt;b&gt;Mentor&lt;/b&gt;&lt;br&gt;mentor_sessions" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;size=12;" vertex="1" parent="db_box">
+          <mxGeometry x="930" y="35" width="130" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tbl_view" value="&lt;b&gt;Public View&lt;/b&gt;&lt;br&gt;public_freelancers&lt;br&gt;(client filter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=1;" vertex="1" parent="db_box">
+          <mxGeometry x="1080" y="35" width="100" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- RPC functions -->
+        <mxCell id="tbl_rpc" value="&lt;b&gt;RPC Functions&lt;/b&gt;&lt;br&gt;add_contract_atomic&lt;br&gt;complete_contract_atomic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="db_box">
+          <mxGeometry x="930" y="125" width="180" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Supabase Auth -->
+        <mxCell id="sb_auth" value="&lt;b&gt;Supabase Auth&lt;/b&gt;&lt;br&gt;session cookie →&lt;br&gt;auth.users UUID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="tier_data">
+          <mxGeometry x="1280" y="45" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Supabase Storage -->
+        <mxCell id="sb_storage" value="&lt;b&gt;Supabase Storage&lt;/b&gt;&lt;br&gt;voiceovers bucket&lt;br&gt;MP3 files (edge-tts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="tier_data">
+          <mxGeometry x="1280" y="145" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Index -->
+        <mxCell id="db_index" value="&lt;b&gt;Indexes&lt;/b&gt;&lt;br&gt;idx_job_feed_cluster_day&lt;br&gt;idx_sprints_user&lt;br&gt;idx_sprint_days_sprint&lt;br&gt;idx_cohorts_active_per_cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;dashed=1;" vertex="1" parent="tier_data">
+          <mxGeometry x="1500" y="45" width="220" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- TIER 5: EXTERNAL SERVICES -->
+        <!-- ============================================================ -->
+        <mxCell id="tier_external" value="EXTERNAL SERVICES" style="swimlane;startSize=35;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=14;html=1;swimlaneLine=1;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1360" width="2240" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ext_llm" value="&lt;b&gt;LLM Providers&lt;/b&gt;&lt;br&gt;OpenRouter · Omniroute&lt;br&gt;Custom endpoint" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="tier_external">
+          <mxGeometry x="40" y="45" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ext_tts" value="&lt;b&gt;edge-tts&lt;/b&gt;&lt;br&gt;TTS synthesis&lt;br&gt;MP3 output" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="tier_external">
+          <mxGeometry x="280" y="45" width="160" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ext_render" value="&lt;b&gt;Render (Deployment)&lt;/b&gt;&lt;br&gt;gunicorn · wsgi.py&lt;br&gt;Free tier: 512MB · 2 workers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="tier_external">
+          <mxGeometry x="480" y="45" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ext_dev" value="&lt;b&gt;Developer Machine&lt;/b&gt;&lt;br&gt;run.py (localhost:5000)&lt;br&gt;Nightly crons · .env" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="tier_external">
+          <mxGeometry x="740" y="45" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EDGES: Tier-to-Tier connections -->
+        <!-- ============================================================ -->
+
+        <!-- Browser → Flask -->
+        <mxCell id="e_bf1" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=11;fontStyle=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="tpl_jinja" target="app_factory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flask → Services (multiple edges from blueprints to service groups) -->
+        <mxCell id="e_fs1" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="bp_main" target="tier_service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_fs2" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="bp_sprints" target="tier_service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_fs3" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="bp_contract" target="tier_service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services → LLM -->
+        <mxCell id="e_sl1" value="call_llm()" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="svc_sprint" target="svc_llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services → Supabase Client -->
+        <mxCell id="e_ss1" value="get_client_supabase()" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="svc_support" target="svc_sb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Supabase Client → Data Layer -->
+        <mxCell id="e_sd1" value="anon key (RLS)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="sb1" target="db_box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sd2" value="service key" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="sb2" target="db_box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- LLM → External -->
+        <mxCell id="e_le1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;strokeColor=#b85450;" edge="1" parent="1" source="svc_llm" target="ext_llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- LEGEND -->
+        <!-- ============================================================ -->
+        <mxCell id="legend" value="Legend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1700" y="1360" width="200" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" value="" style="rounded=0;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="legend">
+          <mxGeometry x="10" y="28" width="30" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1t" value="Browser / Templates" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry x="50" y="26" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" value="" style="rounded=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="legend">
+          <mxGeometry x="10" y="52" width="30" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2t" value="Flask / Routes / DB" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry x="50" y="50" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" value="" style="rounded=0;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="legend">
+          <mxGeometry x="10" y="76" width="30" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3t" value="Service Layer / Engines" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry x="50" y="74" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" value="" style="rounded=0;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="legend">
+          <mxGeometry x="10" y="100" width="30" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4t" value="Security / Auth" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry x="50" y="98" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="" style="rounded=0;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="legend">
+          <mxGeometry x="10" y="124" width="30" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5t" value="External / LLM" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry x="50" y="122" width="140" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

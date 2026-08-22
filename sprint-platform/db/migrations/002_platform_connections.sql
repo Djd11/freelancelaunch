@@ -27,11 +27,33 @@ ALTER TABLE job_feed ADD COLUMN IF NOT EXISTS external_id TEXT;
 
 -- Unique constraint: no duplicate jobs from the same platform
 -- (partial index — only enforced when external_id is not null)
+-- First: remove duplicate external_id rows (keep oldest)
+DELETE FROM job_feed j
+USING (
+    SELECT MIN(id::text) AS min_id
+    FROM job_feed
+    WHERE external_id IS NOT NULL
+    GROUP BY source_platform, external_id
+) d
+WHERE j.id::text != d.min_id
+AND j.external_id IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_job_feed_platform_dedup
     ON job_feed(source_platform, external_id)
     WHERE external_id IS NOT NULL;
 
 -- Also dedup by URL when available
+-- First: remove duplicate rows (keep the oldest row per source_url)
+DELETE FROM job_feed j
+USING (
+    SELECT MIN(id::text) AS min_id
+    FROM job_feed
+    WHERE source_url IS NOT NULL
+    GROUP BY source_url
+) d
+WHERE j.id::text != d.min_id
+AND j.source_url IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_job_feed_url_dedup
     ON job_feed(source_url)
     WHERE source_url IS NOT NULL;
