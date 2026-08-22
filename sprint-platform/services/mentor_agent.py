@@ -108,7 +108,7 @@ def answer(question, job_description=None, history=None):
     job_description = job_description or ""
     terms = _extract_terms(job_description)
 
-    candidate = call_llm(_build_prompt(question, job_description, terms, history), timeout=30)
+    candidate = call_llm(_build_prompt(question, job_description, terms, history), timeout=30, max_retries=3, backoff_base=2)
     if not candidate:
         raise LLMGenerationError("No LLM provider answered the mentor turn")
     if not _grounded(candidate, terms):

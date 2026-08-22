@@ -263,7 +263,7 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
         gap_fill_topic = _gap_fill_topic(sb, sprint.get("id"))
     project_title = (project or {}).get("title") or day_row.get("title") or ""
     text = call_llm(_lesson_prompt(job, day_row.get("day_no"), day_row.get("action_type"),
-                                   project_title, gap_fill_topic), timeout=90)
+                                   project_title, gap_fill_topic), timeout=90, max_retries=3, backoff_base=2)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the day's lesson")
     parsed = _parse_json(text)
@@ -281,7 +281,7 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
 def project_anatomy(sb, sprint, project_index):
     """Generate one copy-work project's clone_steps + rubric (LLM-only)."""
     job = _top_job(sb, sprint.get("cluster_key"))
-    text = call_llm(_project_prompt(job, project_index), timeout=90)
+    text = call_llm(_project_prompt(job, project_index), timeout=90, max_retries=3, backoff_base=2)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the project anatomy")
     return _parse_project(text)
@@ -342,7 +342,20 @@ def generate_sprint_content(sb, sprint_id):
                 proj = sb.table("copywork_projects").select("*") \
                     .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
                 project = proj[0] if proj else None
-            lesson = lesson_for_day(sb, sprint, day_row, project)
+            try:
+                lesson = lesson_for_day(sb, sprint, day_row, project)
+            except Exception as exc:
+                # Stamp error on this day but continue to next day
+                try:
+                    err_payload = dict(payload)
+                    err_payload["generation_error"] = f"Generation failed: {exc}"
+                    sb.table("sprint_days").update({"action_payload": err_payload}) \
+                        .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
+                except Exception:
+                    pass  # DB also down — just skip this day
+                import logging
+                logging.getLogger(__name__).warning("Day %d generation failed: %s", day_row.get("day_no"), exc)
+                continue
             new_payload = dict(payload)
             new_payload.pop("generation_error", None)  # a successful retry heals the marker
             new_payload["lesson"] = lesson
@@ -356,8 +369,12 @@ def generate_sprint_content(sb, sprint_id):
                     new_payload["lesson"]["voiceover"] = vo
             except Exception:
                 pass
-            sb.table("sprint_days").update({"action_payload": new_payload}) \
-                .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
+            try:
+                sb.table("sprint_days").update({"action_payload": new_payload}) \
+                    .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
+            except Exception as exc:
+                import logging
+                logging.getLogger(__name__).warning("Day %d DB write failed: %s (will retry next round)", day_row.get("day_no"), exc)
 
         for index in (1, 2, 3):
             existing = sb.table("copywork_projects").select("id,clone_steps,title") \
@@ -390,9 +407,10 @@ def generate_sprint_content(sb, sprint_id):
                             "project anatomy failed for %s project %d: %s", sprint_id, index, exc)
     except LLMGenerationError as exc:
         # LLM-only: never substitute templates — record the failure so the UI
-        # surfaces it, then propagate for logging.
-        _mark_generation_error(sb, sprint_id, str(exc))
-        raise
+        # surfaces it. Don't re-raise: individual day failures are already
+        # stamped inside the loop, so the worker should continue with remaining days.
+        import logging
+        logging.getLogger(__name__).warning("Sprint content generation error for %s: %s", sprint_id, exc)
 
 
 def generation_progress(sb, sprint_id):

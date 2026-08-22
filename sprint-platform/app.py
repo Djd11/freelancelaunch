@@ -35,6 +35,7 @@ def create_app(test_config=None):
     from routes.clients import clients_bp
     from routes.auth import auth_bp
     from routes.admin import admin_bp
+    from routes.admin_platforms import admin_platforms_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -45,6 +46,7 @@ def create_app(test_config=None):
     app.register_blueprint(mentor_bp)
     app.register_blueprint(clients_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_platforms_bp)
 
     @app.before_request
     def load_user():
@@ -241,6 +243,14 @@ def create_app(test_config=None):
         # Collapse multiple blank lines
         t = re.sub(r"\n{3,}", "\n\n", t)
         return t.strip()
+
+    # Start the platform refresh scheduler (if APScheduler is available)
+    if not test_config:
+        try:
+            from services.platform_scheduler import start_scheduler
+            start_scheduler(app)
+        except Exception:
+            pass  # scheduler is optional
 
     return app
 

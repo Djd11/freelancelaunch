@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Admin · Platform Connections{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-10">
+  <h1 class="text-2xl font-bold mb-6">🔌 Platform Connections</h1>
+
+  {# ── Scheduler Status ─────────────────────────────── #}
+  <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold">Scheduler</h2>
+        <p class="text-sm text-gray-500">
+          {% if scheduler.running %}
+            <span class="text-green-600">● Running</span> — refreshes every 6 hours
+          {% else %}
+            <span class="text-gray-400">● Stopped</span>
+          {% endif %}
+        </p>
+      </div>
+      <form method="POST" action="{{ url_for('admin_platforms.refresh_all') }}">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          🔄 Refresh All Platforms
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# ── Connections Table ─────────────────────────────── #}
+  <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left">Platform</th>
+          <th class="px-4 py-3 text-left">Status</th>
+          <th class="px-4 py-3 text-left">Last Sync</th>
+          <th class="px-4 py-3 text-left">Quota</th>
+          <th class="px-4 py-3 text-left">Error</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conn in connections %}
+        <tr class="border-t">
+          <td class="px-4 py-3">
+            <strong>{{ conn.display_name }}</strong>
+            <span class="text-xs text-gray-400 ml-1">({{ conn.platform }})</span>
+          </td>
+          <td class="px-4 py-3">
+            {% if conn.is_active %}
+              <span class="text-green-600">● Active</span>
+            {% else %}
+              <span class="text-gray-400">○ Inactive</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-gray-500">
+            {{ conn.last_synced_at[:19] if conn.last_synced_at else 'Never' }}
+          </td>
+          <td class="px-4 py-3 text-gray-500">
+            {{ conn.quota_remaining or '—' }}{% if conn.quota_limit %}/{{ conn.quota_limit }}{% endif %}
+          </td>
+          <td class="px-4 py-3 text-red-500 text-xs max-w-[200px] truncate">
+            {{ conn.last_error or '' }}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <form method="POST" action="{{ url_for('admin_platforms.refresh_platform', platform_id=conn.id) }}" class="inline">
+              <button type="submit" class="text-blue-600 hover:underline text-sm">
+                🔄 Refresh
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not connections %}
+        <tr>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-400">
+            No platform connections configured. Add one below.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ── Add Platform Form ─────────────────────────────── #}
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="font-semibold mb-4">Add Platform Connection</h2>
+    <form method="POST" action="{{ url_for('admin_platforms.add_platform') }}">
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Platform</label>
+          <select name="platform" class="mt-1 block w-full border rounded px-3 py-2">
+            <option value="rss">RSS Feed</option>
+            <option value="freelancer">Freelancer.com</option>
+            <option value="upwork">Upwork</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Display Name</label>
+          <input type="text" name="display_name" class="mt-1 block w-full border rounded px-3 py-2"
+                 placeholder="Remote OK RSS">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Feed URLs (one per line, for RSS)</label>
+        <textarea name="feed_urls" rows="3" class="mt-1 block w-full border rounded px-3 py-2 text-sm"
+                  placeholder="https://remoteok.com/remote-jobs.rss"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">API Key (for Freelancer/Upwork)</label>
+          <input type="password" name="api_key" class="mt-1 block w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Search Query</label>
+          <input type="text" name="search_query" class="mt-1 block w-full border rounded px-3 py-2"
+                 placeholder="email marketing">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Target Cluster Key</label>
+        <input type="text" name="cluster_key" class="mt-1 block w-full border rounded px-3 py-2"
+               placeholder="email-automation" value="email-automation">
+      </div>
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        ➕ Add Connection
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
