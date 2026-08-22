@@ -142,34 +142,39 @@ def start_sprint(cluster_key):
 
 def _generate_in_background(app, sprint_id):
     """Background LLM content generation — stamps visible errors on failure."""
-    with app.app_context():
-        try:
-            from supabase import create_client
-            sb = create_client(
-                app.config.get("SUPABASE_URL") or "",
-                app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
-            )
-            generate_sprint_content(sb, sprint_id)
-        except Exception as exc:
-            import logging
-            logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
-            # Stamp generation_error on the first empty day so the UI surfaces it
+    from services.lesson_engine import start_generation, stop_generation
+    start_generation(sprint_id)
+    try:
+        with app.app_context():
             try:
-                sb2 = create_client(
+                from supabase import create_client
+                sb = create_client(
                     app.config.get("SUPABASE_URL") or "",
                     app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
                 )
-                days = sb2.table("sprint_days").select("day_no, action_payload") \
-                    .eq("sprint_id", sprint_id).order("day_no").execute().data
-                for d in (days or []):
-                    payload = d.get("action_payload") or {}
-                    if not payload.get("lesson"):
-                        payload["generation_error"] = f"Generation failed: {exc}"
-                        sb2.table("sprint_days").update({"action_payload": payload}) \
-                            .eq("sprint_id", sprint_id).eq("day_no", d["day_no"]).execute()
-                        break
-            except Exception:
-                logging.getLogger(__name__).exception("failed to stamp generation_error for %s", sprint_id)
+                generate_sprint_content(sb, sprint_id)
+            except Exception as exc:
+                import logging
+                logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
+                # Stamp generation_error on the first empty day so the UI surfaces it
+                try:
+                    sb2 = create_client(
+                        app.config.get("SUPABASE_URL") or "",
+                        app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+                    )
+                    days = sb2.table("sprint_days").select("day_no, action_payload") \
+                        .eq("sprint_id", sprint_id).order("day_no").execute().data
+                    for d in (days or []):
+                        payload = d.get("action_payload") or {}
+                        if not payload.get("lesson"):
+                            payload["generation_error"] = f"Generation failed: {exc}"
+                            sb2.table("sprint_days").update({"action_payload": payload}) \
+                                .eq("sprint_id", sprint_id).eq("day_no", d["day_no"]).execute()
+                            break
+                except Exception:
+                    logging.getLogger(__name__).exception("failed to stamp generation_error for %s", sprint_id)
+    finally:
+        stop_generation(sprint_id)
 
 
 @main_bp.route("/pricing")

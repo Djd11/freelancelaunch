@@ -48,7 +48,6 @@
         var sprintId = "{{ sprint.id }}";
 
         function renderDayTrack(dayStatus) {
-          // Render or update the per-day content status track inside the banner.
           var track = document.getElementById('gen-day-track');
           if (!track || !dayStatus) return;
           track.innerHTML = '';
@@ -59,13 +58,9 @@
             el.href = '/sprints/' + sprintId + '/day/' + i;
             el.title = 'Day ' + i + ' — ' + st;
             el.style.cssText = 'display:block;flex:1;height:18px;border-radius:4px;text-decoration:none;transition:opacity .15s;';
-            if (st === 'ok') {
-              el.style.background = '#3F7A4E';  /* green */
-            } else if (st === 'error') {
-              el.style.background = '#B1574F';  /* red */
-            } else {
-              el.style.background = 'rgba(0,0,0,.08)';  /* pending gray */
-            }
+            if (st === 'ok') el.style.background = '#3F7A4E';
+            else if (st === 'error') el.style.background = '#B1574F';
+            else el.style.background = 'rgba(0,0,0,.08)';
             var label = document.createElement('span');
             label.textContent = i;
             label.style.cssText = 'display:block;text-align:center;font-size:10px;line-height:18px;color:#fff;font-weight:600;';
@@ -74,55 +69,65 @@
           }
         }
 
+        function showGenerating(d) {
+          /* Actively generating: show spinner, auto-poll */
+          banner.style.display = 'block';
+          banner.style.borderColor = 'var(--accent)';
+          banner.querySelector('.spinner').style.display = '';
+          banner.querySelector('b').textContent = 'Generating your sprint content…';
+          document.getElementById('gen-msg').textContent = "Each day's lesson is being written from your cluster's live job postings.";
+          document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
+          document.getElementById('gen-retry').style.display = 'none';
+          renderDayTrack(d.day_status);
+          setTimeout(poll, 3000);
+        }
+
+        function showPartial(d) {
+          /* Content partially generated, NOT actively generating — compact status, no auto-poll */
+          banner.style.display = 'block';
+          banner.style.borderColor = '#A97B22';
+          banner.querySelector('.spinner').style.display = 'none';
+          banner.querySelector('b').textContent = d.generated + ' of ' + d.total + ' days have lessons';
+          var failed = (d.failed_days || []);
+          if (failed.length > 0) {
+            document.getElementById('gen-msg').textContent =
+              'Day' + (failed.length > 1 ? 's' : '') + ' ' + failed.join(', ') + ' had errors. '
+              + (d.error || 'Click retry to regenerate failed days.');
+          } else {
+            document.getElementById('gen-msg').textContent =
+              'Some days are still pending. Click retry to generate missing lessons.';
+          }
+          document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
+          document.getElementById('gen-retry').style.display = 'inline-block';
+          renderDayTrack(d.day_status);
+          /* NO auto-poll — user can click Retry if they want */
+        }
+
         function poll() {
           fetch('/sprints/' + sprintId + '/generation')
             .then(function (r) { return r.json(); })
             .then(function (d) {
               if (d.status === 'ready') { banner.style.display = 'none'; return; }
-              banner.style.display = 'block';
-              renderDayTrack(d.day_status);
-
-              if (d.status === 'partial') {
-                // Some days generated, some failed — show partial progress + retry.
-                banner.style.borderColor = '#A97B22';  /* amber */
-                banner.querySelector('.spinner').style.display = 'none';
-                banner.querySelector('b').textContent = d.generated + ' of ' + d.total + ' days generated';
-                var failed = (d.failed_days || []).join(', ');
-                document.getElementById('gen-msg').textContent =
-                  'Day' + (d.failed_days.length > 1 ? 's' : '') + ' ' + failed + ' failed. ' +
-                  (d.error || 'Some lessons could not be generated.');
-                document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
-                document.getElementById('gen-retry').style.display = 'inline-block';
-                return;
-              }
-
-              if (d.status === 'error') {
-                // All generation failed.
-                banner.style.borderColor = '#E3B7B0';
-                banner.querySelector('.spinner').style.display = 'none';
-                banner.querySelector('b').textContent = 'Content generation failed';
-                document.getElementById('gen-msg').textContent = d.error || 'The lesson writer could not be reached. Please try again later.';
-                document.getElementById('gen-count').textContent = '';
-                document.getElementById('gen-retry').style.display = 'inline-block';
-                return;
-              }
-
-              // status === 'generating'
-              document.getElementById('gen-retry').style.display = 'none';
-              banner.style.borderColor = 'var(--accent)';
-              banner.querySelector('.spinner').style.display = '';
-              banner.querySelector('b').textContent = 'Generating your sprint content…';
-              document.getElementById('gen-count').textContent = d.generated + ' / ' + d.total;
-              setTimeout(poll, 3000);
+              if (d.status === 'generating') { showGenerating(d); return; }
+              /* partial or error — static, no auto-poll */
+              showPartial(d);
             })
-            .catch(function () { setTimeout(poll, 5000); });
+            .catch(function () {
+              /* Network error — don't keep retrying forever */
+              banner.style.display = 'none';
+            });
         }
+
         document.getElementById('gen-retry').addEventListener('click', function () {
           var btn = document.getElementById('gen-retry');
           btn.disabled = true;
           btn.textContent = 'Retrying…';
-          fetch('/sprints/' + sprintId + '/generation/retry', { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('input[name="csrf_token"]') ? document.querySelector('input[name="csrf_token"]').value : '' } })
+          fetch('/sprints/' + sprintId + '/generation/retry', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('input[name="csrf_token"]') ? document.querySelector('input[name="csrf_token"]').value : '' }
+          })
             .then(function () {
+              /* Now actively generating — show spinner and start polling */
               banner.style.borderColor = 'var(--accent)';
               banner.querySelector('.spinner').style.display = '';
               banner.querySelector('b').textContent = 'Generating your sprint content…';
@@ -135,8 +140,12 @@
             .catch(function () {
               btn.disabled = false;
               btn.textContent = 'Retry generation';
-              setTimeout(poll, 3000);
             });
+
+        });
+
+        /* Initial check: ONE fetch, no auto-poll. Only shows banner if actively generating. */
+        poll();
         });
         poll();
       })();

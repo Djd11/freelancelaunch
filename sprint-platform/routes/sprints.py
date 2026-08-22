@@ -142,13 +142,35 @@ def generation(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
-    from services.lesson_engine import generation_progress, generation_error, day_status_map
+    from services.lesson_engine import generation_progress, generation_error, day_status_map, is_generating
     generated, total = generation_progress(sb, sprint_id)
     err = generation_error(sb, sprint_id)
     day_map = day_status_map(sb, sprint_id)
     failed_days = [d for d, s in day_map.items() if s == "error"]
-    if failed_days and generated < total:
-        # Partial failure: some days generated, some failed.
+    active = is_generating(sprint_id)
+
+    if generated >= total:
+        # All days have content — nothing to show.
+        return jsonify({
+            "status": "ready",
+            "generated": generated,
+            "total": total,
+            "day_status": day_map,
+        })
+
+    if active:
+        # Background thread is actively generating — show spinner + auto-poll.
+        return jsonify({
+            "status": "generating",
+            "error": err,
+            "generated": generated,
+            "total": total,
+            "day_status": day_map,
+            "failed_days": failed_days,
+        })
+
+    # Not actively generating and content is incomplete — show static status.
+    if failed_days:
         return jsonify({
             "status": "partial",
             "error": err,
@@ -157,19 +179,15 @@ def generation(sprint_id):
             "day_status": day_map,
             "failed_days": failed_days,
         })
-    if failed_days and generated >= total:
-        # All days have content but some had errors on first attempt (retried successfully).
-        return jsonify({
-            "status": "ready",
-            "generated": generated,
-            "total": total,
-            "day_status": day_map,
-        })
+
+    # Some content exists, some days pending, no thread running.
     return jsonify({
-        "status": "ready" if generated >= total else "generating",
+        "status": "partial",
+        "error": err,
         "generated": generated,
         "total": total,
         "day_status": day_map,
+        "failed_days": failed_days,
     })
 
 
