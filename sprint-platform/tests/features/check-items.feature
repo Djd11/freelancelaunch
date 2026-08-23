@@ -85,3 +85,67 @@ Feature: Check-Items — every checkbox/check-item reflects verified state, not 
     When I GET "/sprints/s1/day/4"
     Then the page contains the text "Gap-Fill"
     And the page contains the text "mobile responsiveness"
+
+  # ── Interactive Rubric Checkboxes (Gap 1) ─────────────────────────────────
+  Scenario: Rubric checkboxes are interactive (not disabled) and user-checkable
+    Given I am on day 4 of sprint "s1"
+    And copy-work project 2 for sprint "s1" has a 3-point rubric
+    When I GET "/sprints/s1/day/4"
+    Then the page contains at least 3 rubric checkboxes
+    And the rubric checkboxes are not disabled
+    And the rubric checkboxes are not checked
+    When I check the first rubric checkbox for project 2 of sprint "s1"
+    And I GET "/sprints/s1/day/4"
+    Then the first rubric checkbox is checked
+
+  Scenario: Dashboard "Self-check vs rubric" reflects actual rubric item completion
+    Given I am on day 4 of sprint "s1"
+    And copy-work projects 1, 2, and 3 for sprint "s1" are done
+    And copy-work project 1 for sprint "s1" has all 3 rubric items user-checked
+    And copy-work project 2 for sprint "s1" has all 3 rubric items user-checked
+    And copy-work project 3 for sprint "s1" has all 3 rubric items user-checked
+    When I GET "/sprints/s1"
+    Then the check-item "Self-check vs rubric" is marked done
+    # If any project lacks a user-checked rubric item, the dashboard check-item stays unchecked
+    Given copy-work project 1 for sprint "s1" has only 2 of 3 rubric items user-checked
+    When I GET "/sprints/s1"
+    Then the check-item "Self-check vs rubric" is not marked done
+
+  # ── Case Study Validation (Gap 3) ──────────────────────────────────────────
+  Scenario: "Case study written" requires Problem, Solution, and Result all filled
+    Given I have an active sprint "s1" with 14 days for cluster "email-automation"
+    And a job cluster "email-automation" with 5 active postings
+    And a case study "Incomplete Study" exists for sprint "s1" with empty result
+    When I submit the contract form to "/sprints/s1/contract/submit" with submission_url "https://dropbox.com/x"
+    And I GET "/sprints/s1/contract"
+    Then the check-item "Case study written" is not marked done
+    And the check-item "Automated flow check" is marked done
+
+  Scenario: Case study with all three fields marks "Case study written" as done
+    Given I have an active sprint "s1" with 14 days for cluster "email-automation"
+    And a job cluster "email-automation" with 5 active postings
+    And a case study "Complete Study" exists for sprint "s1" with problem, solution, and result filled
+    When I submit the contract form to "/sprints/s1/contract/submit" with submission_url "https://dropbox.com/x"
+    And I GET "/sprints/s1/contract"
+    Then the check-item "Case study written" is marked done
+    And the check-item "Automated flow check" is marked done
+
+  # ── Gap-Fill User Confirmation (Gap 4) ─────────────────────────────────────
+  Scenario: Gap-Fill preview has a user-confirmable check-item
+    Given copy-work project 2 for sprint "s1" flagged gap-fill topic "mobile responsiveness"
+    When I GET "/sprints/s1/day/4"
+    Then the page contains a check-item "Gap-fill addressed"
+    And the check-item "Gap-fill addressed" is not marked done
+    When I mark the gap-fill addressed for day 4 of sprint "s1"
+    And I GET "/sprints/s1/day/4"
+    Then the check-item "Gap-fill addressed" is marked done
+
+  # ── Individual Rubric Item Tracking (Gap 5) ────────────────────────────────
+  Scenario: Individual rubric items are tracked per project
+    Given copy-work project 2 for sprint "s1" has a 3-point rubric
+    When I check the first rubric checkbox for project 2 of sprint "s1"
+    And I check the second rubric checkbox for project 2 of sprint "s1"
+    And I GET "/sprints/s1/day/4"
+    Then the first rubric checkbox is checked
+    And the second rubric checkbox is checked
+    And the third rubric checkbox is not checked

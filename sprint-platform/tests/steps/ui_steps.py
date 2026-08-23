@@ -199,3 +199,47 @@ def step_checkboxes_none_checked(context):
     assert total > 0, "no rubric checkboxes found"
     checked = len(re.findall(r'type="checkbox"[^>]*\bchecked', html))
     assert checked == 0, f"expected 0 checked checkboxes, got {checked}"
+
+
+@then('the rubric checkboxes are not disabled')
+def step_checkboxes_not_disabled(context):
+    html = _html(context)
+    # Find all checkboxes and verify none have 'disabled' attribute
+    checkboxes = re.findall(r'<input[^>]*type="checkbox"[^>]*>', html)
+    assert checkboxes, "no rubric checkboxes found"
+    for cb in checkboxes:
+        assert 'disabled' not in cb, f"found disabled checkbox: {cb}"
+
+
+@then('the page contains a check-item "{label}"')
+def step_page_has_checkitem(context, label):
+    html = _html(context)
+    assert f'<b>{label}</b>' in html, f'page has no check-item with label {label!r}'
+    # Also verify it's within a check-item div
+    ci = html.rfind('class="check-item', 0, html.find(label))
+    assert ci != -1, f'label {label!r} not inside a check-item div'
+
+
+@then('the first rubric checkbox is checked')
+def step_first_checkbox_checked(context):
+    html = _html(context)
+    # Find the first checkbox (type="checkbox") and verify it has 'checked'
+    checkboxes = re.findall(r'<input[^>]*type="checkbox"[^>]*>', html)
+    assert checkboxes, "no rubric checkboxes found"
+    assert 'checked' in checkboxes[0], f"first checkbox not checked: {checkboxes[0]}"
+
+
+@then('the second rubric checkbox is checked')
+def step_second_checkbox_checked(context):
+    html = _html(context)
+    checkboxes = re.findall(r'<input[^>]*type="checkbox"[^>]*>', html)
+    assert len(checkboxes) >= 2, f"expected at least 2 checkboxes, got {len(checkboxes)}"
+    assert 'checked' in checkboxes[1], f"second checkbox not checked: {checkboxes[1]}"
+
+
+@then('the third rubric checkbox is not checked')
+def step_third_checkbox_not_checked(context):
+    html = _html(context)
+    checkboxes = re.findall(r'<input[^>]*type="checkbox"[^>]*>', html)
+    assert len(checkboxes) >= 3, f"expected at least 3 checkboxes, got {len(checkboxes)}"
+    assert 'checked' not in checkboxes[2], f"third checkbox unexpectedly checked: {checkboxes[2]}"

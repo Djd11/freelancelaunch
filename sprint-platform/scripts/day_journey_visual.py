@@ -116,11 +116,16 @@ def main():
             m = re.search(r"/sprints/" + _UUID_RE, href)
             if not m:
                 print("no active sprint — starting email-automation from the picker")
-                r = page.request.post(f"{BASE}/sprints/email-automation/start",
-                                      data={}, max_redirects=0)
-                loc = r.headers.get("location", "")
-                m = re.search(r"/sprints/" + _UUID_RE, loc)
-                assert m, f"could not start sprint (location={loc!r})"
+                # Submit the form through the page to maintain session/CSRF
+                page.goto(f"{BASE}/sprints", wait_until="networkidle")
+                # Click the "Start sprint" button for email-automation
+                start_button = page.locator('form[action="/sprints/email-automation/start"] button[type=submit]').first
+                with page.expect_navigation(wait_until="networkidle"):
+                    start_button.click()
+                # After navigation, we should be on the sprint dashboard
+                current_url = page.url
+                m = re.search(r"/sprints/" + _UUID_RE, page.url)
+                assert m, f"could not start sprint (url={page.url!r})"
             sprint_id = m.group(1)
             print(f"journey sprint id: {sprint_id}")
 

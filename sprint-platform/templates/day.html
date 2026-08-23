@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<div id="page-data" data-sprint-id="{{ sprint.id }}" data-day-no="{{ day.day_no }}" style="display:none;"></div>
 <section class="screen" id="day">
   <div class="wrap">
     <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
@@ -115,7 +116,18 @@
           <div class="check-item{{ ' done' if project_done else '' }}"><div class="cbox">{{ '✓' if project_done else '' }}</div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
           <div class="check-item{{ ' done' if gate_a_pass else '' }}"><div class="cbox">{{ '✓' if gate_a_pass else '' }}</div><div><b>Pass 3-point rubric</b><div class="xs muted">rubric verified at Gate A</div>
             <div class="xs muted" style="margin:6px 0 0 18px;color:var(--ink-2)">
-              {% for r in rubric %}<label style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><input type="checkbox" disabled {{ 'checked' if project_submitted else '' }}> {{ r }}</label>{% endfor %}
+              {% set rubric_checked = project.get('rubric_checked', [false, false, false]) if project else [false, false, false] %}
+              {% for r in rubric %}
+                <label style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+                  <input type="checkbox" 
+                         name="rubric_{{ loop.index0 }}" 
+                         value="1" 
+                         data-project-index="{{ project.project_index if project else 2 }}"
+                         data-rubric-index="{{ loop.index0 }}"
+                         {{ 'checked' if rubric_checked[loop.index0] else '' }}>
+                  {{ r }}
+                </label>
+              {% endfor %}
             </div>
           </div></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
@@ -140,9 +152,14 @@
           <div><h3>🧩 Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
           <span class="badge b-amber">Auto-detected</span>
         </div>
+        <div class="check-item{{ ' done' if day.get('gap_fill_done') else '' }}" style="margin-top:12px">
+          <div class="cbox">{{ '✓' if day.get('gap_fill_done') else '' }}</div>
+          <div><b>Gap-fill addressed</b><div class="xs muted">Confirm you've applied the gap-fill nuance</div></div>
+        </div>
       </div>
       {% endif %}
     </div>
   </div>
 </section>
+<script src="/static/js/day.js"></script>
 {% endblock %}

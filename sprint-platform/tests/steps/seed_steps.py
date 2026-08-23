@@ -447,8 +447,27 @@ def step_project_url_removed(context, n, sid):
     }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
 
 
+@given('copy-work project {n} for sprint "{sid}" has all 3 rubric items user-checked')
+def step_project_rubric_all_checked(context, n, sid):
+    """Mark all 3 rubric items as user-checked for a project."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("copywork_projects").update({
+        "rubric_checked": [True, True, True],
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
 
-# ── capstone brief ─────────────────────────────────────────────────
+
+@given('copy-work project {n} for sprint "{sid}" has only 2 of 3 rubric items user-checked')
+def step_project_rubric_two_checked(context, n, sid):
+    """Mark only 2 of 3 rubric items as user-checked for a project."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("copywork_projects").update({
+        "rubric_checked": [True, True, False],
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
+
+# ── capstone brief ─────────────────────────────────────────────────# ── capstone brief ─────────────────────────────────────────────────
 def _seed_brief(adapter, sid, job_fixture, notes=None):
     """Seed one capstone brief for the sprint (delete-then-insert: the table
     has no unique constraint on sprint_id, so upsert-on-conflict is invalid)."""
@@ -643,6 +662,42 @@ def step_case_study(context, title):
     adapter.seed_table("case_studies", [{
         "id": f"cs-{abs(hash(title)) % 100000}",
         "sprint_id": sprint_id,
+        "user_id": real_user_id,
+        "title": title,
+        "problem": "Store lost 68% of checkouts to cart abandonment.",
+        "solution": "Built a 2-step flow with dynamic cart summary + coupon.",
+        "result": "Recovered 12% of abandoned carts in 4 weeks.",
+        "is_draft": False,
+    }], on_conflict="id")
+
+
+@given('a case study "{title}" exists for sprint "{sid}" with empty result')
+def step_case_study_incomplete(context, title, sid):
+    """Seed a case study with empty result field for negative validation test."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    real_user_id = adapter.resolve_user_id(TEST_USER_ID)
+    adapter.seed_table("case_studies", [{
+        "id": f"cs-incomplete-{abs(hash(title)) % 100000}",
+        "sprint_id": real_sprint_id,
+        "user_id": real_user_id,
+        "title": title,
+        "problem": "Problem statement.",
+        "solution": "Solution outline.",
+        "result": "",
+        "is_draft": False,
+    }], on_conflict="id")
+
+
+@given('a case study "{title}" exists for sprint "{sid}" with problem, solution, and result filled')
+def step_case_study_complete(context, title, sid):
+    """Seed a case study with all three fields filled for positive validation test."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    real_user_id = adapter.resolve_user_id(TEST_USER_ID)
+    adapter.seed_table("case_studies", [{
+        "id": f"cs-complete-{abs(hash(title)) % 100000}",
+        "sprint_id": real_sprint_id,
         "user_id": real_user_id,
         "title": title,
         "problem": "Store lost 68% of checkouts to cart abandonment.",

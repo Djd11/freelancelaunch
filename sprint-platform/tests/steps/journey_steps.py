@@ -137,3 +137,24 @@ def step_journey_review_recorded(context, gate):
     rows = adapter.sb.table("verification_reviews").select("*") \
         .eq("sprint_id", _journey_sprint_id(context)).eq("gate", gate).execute().data
     assert rows, f"no verification_reviews row for the journey sprint gate {gate}"
+
+
+@when('I start the sprint again from the picker')
+def step_start_sprint_again(context):
+    """Idempotency: re-POST /sprints/<cluster>/start (eng-spec J2). The route must
+    redirect to the SAME sprint UUID instead of 500 or creating a duplicate."""
+    resp = _post(context, "/sprints/email-automation/start", data={})
+    loc = resp.headers.get("Location", "")
+    m = re.search(rf"/sprints/{_UUID_RE}$", loc)
+    assert m, f"second start Location has no sprint UUID: {loc!r}"
+    context.second_start_uuid = m.group(1)
+    get_live_adapter().track_created("sprints", context.second_start_uuid)
+
+
+@then('the response redirects to the same sprint')
+def step_redirects_to_same_sprint(context):
+    first = _journey_sprint_id(context)
+    second = getattr(context, "second_start_uuid", None)
+    assert second, "second start did not capture a sprint UUID"
+    assert second == first, \
+        f"second start created a new sprint {second} instead of resuming {first}"

@@ -42,11 +42,24 @@ def dashboard(sprint_id):
     contracts = sb.table("contracts").select("*").eq("sprint_id", sprint_id).execute().data
 
     # Today-card check-items: Watch lesson ← today's lesson_watched (eng-spec J4);
-    # Replicate ← today's copy-work project.done; Self-check ← Gate A (auto-check).
+    # Replicate ← today's copy-work project.done; Self-check ← all rubric items user-checked for all projects.
     today_payload = today.get("action_payload") or {}
     today_project_index = today_payload.get("project_index") or DAY_TO_PROJECT.get(today.get("day_no"))
     today_project = load_project(sb, sprint_id, today_project_index)
     gate_a = gate_a_passed(sb, sprint_id)
+
+    # Check if all rubric items for all 3 projects are user-checked
+    projects = sb.table("copywork_projects").select("rubric_checked, done") \
+        .eq("sprint_id", sprint_id).order("project_index").execute().data
+    all_rubric_checked = True
+    for p in projects:
+        if not p.get("done"):
+            all_rubric_checked = False
+            break
+        rubric_checked = p.get("rubric_checked") or [False, False, False]
+        if not all(rubric_checked):
+            all_rubric_checked = False
+            break
 
     # Live job feed: recent jobs from RSS/Freelancer for this cluster.
     live_jobs = sb.table("job_feed").select("title,source_url,skills,rate,source_platform,posted_at") \
@@ -69,6 +82,7 @@ def dashboard(sprint_id):
         gate_a_pass=gate_a, gate_b_pass=gate_b_passed(sb, sprint_id),
         today_lesson_watched=bool(today.get("lesson_watched")),
         today_project_done=bool(today_project and today_project.get("done")),
+        today_rubric_checked=all_rubric_checked,
         nudge=nudge, contracts=contracts, day_done_map=day_done_map,
         live_jobs=live_jobs,
     )
@@ -310,14 +324,74 @@ def submit_copywork(sprint_id, day_no):
     record_review(sb, sprint_id, "A", status="pending", submitted_url=rubric_url)
 
     # Mark the day's copy-work project done (storing the submitted URL on the
-    # project row), then auto-check Gate A: all 3 projects done with URLs →
-    # pass → Phase B unlocks (eng-spec §4.2).
+    # project row), auto-check its rubric items (eng-spec J4: rubric auto-check on submit),
+    # then auto-check Gate A: all 3 projects done with URLs → pass → Phase B unlocks.
     project_index = DAY_TO_PROJECT.get(day_no)
     if project_index:
-        sb.table("copywork_projects").update({"done": True, "submitted_url": rubric_url}) \
-            .eq("sprint_id", sprint_id).eq("project_index", project_index).execute()
+        sb.table("copywork_projects").update({
+            "done": True, 
+            "submitted_url": rubric_url,
+            "rubric_checked": [True, True, True]  # auto-check rubric on submit
+        }).eq("sprint_id", sprint_id).eq("project_index", project_index).execute()
     auto_check_gate_a(sb, sprint_id, submitted_url=rubric_url)
     return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
+
+
+@sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/rubric-check", methods=["POST"])
+def rubric_check(sprint_id, day_no):
+    """Toggle a rubric item check for a copy-work project."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+
+    project_index = request.form.get("project_index", type=int)
+    rubric_index = request.form.get("rubric_index", type=int)
+    checked = request.form.get("checked") == "true"
+
+    if project_index is None or rubric_index is None:
+        return jsonify({"ok": False, "error": "Missing project_index or rubric_index"}), 400
+
+    # Get the project's current rubric_checked state
+    project = sb.table("copywork_projects").select("rubric_checked") \
+        .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
+
+    if not project:
+        return jsonify({"ok": False, "error": "Project not found"}), 404
+
+    rubric_checked = project[0].get("rubric_checked") or [False, False, False]
+    if rubric_index < 0 or rubric_index >= len(rubric_checked):
+        return jsonify({"ok": False, "error": "Invalid rubric_index"}), 400
+
+    rubric_checked[rubric_index] = checked
+
+    sb.table("copywork_projects").update({"rubric_checked": rubric_checked}) \
+        .eq("sprint_id", sprint_id).eq("project_index", project_index).execute()
+
+    return jsonify({"ok": True, "rubric_checked": rubric_checked})
+
+
+@sprints_bp.route("/sprints/<sprint_id>/day/<int:day_no>/gapfill-check", methods=["POST"])
+def gapfill_check(sprint_id, day_no):
+    """Toggle gap-fill addressed status for a day."""
+    gate = require_login()
+    if gate:
+        return gate
+    sb = get_supabase()
+    sprint = load_sprint(sb, sprint_id)
+    if not sprint or sprint.get("user_id") != g.user["id"]:
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+
+    checked = request.form.get("checked") == "true"
+
+    # Update the sprint_days row for this day
+    sb.table("sprint_days").update({"gap_fill_done": checked}) \
+        .eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
+
+    return jsonify({"ok": True, "gap_fill_done": checked})
 
 
 @sprints_bp.route("/sprints/<sprint_id>/complete", methods=["POST"])

@@ -90,8 +90,20 @@ def brief(sprint_id):
     brief_row["constraints"] = constraints
 
     case_studies = sb.table("case_studies").select("*").eq("sprint_id", sprint_id).execute().data
+    # Check if any case study has all 3 fields filled.
+    # If gate_b has passed, consider both draft and non-draft case studies.
+    # If gate_b hasn't passed yet, only non-draft (published) case studies count.
+    gate_b = gate_b_passed(sb, sprint_id)
+    case_study_complete = False
+    for cs in case_studies:
+        if cs.get("problem") and cs.get("solution") and cs.get("result"):
+            if gate_b or not cs.get("is_draft"):
+                case_study_complete = True
+                break
+
     return render_template("mock_contract.html", sprint=sprint, brief=brief_row,
-                           case_studies=case_studies, gate_b_pass=gate_b_passed(sb, sprint_id))
+                           case_studies=case_studies, gate_b_pass=gate_b,
+                           case_study_complete=case_study_complete)
 
 
 @contract_bp.route("/sprints/<sprint_id>/contract/submit", methods=["POST"])

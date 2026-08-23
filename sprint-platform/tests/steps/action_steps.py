@@ -36,6 +36,24 @@ def step_copywork_submit(context, day, sid, url):
     _post(context, f"/sprints/{sid}/day/{day}/copywork", data={"rubric_url": url})
 
 
+@when('I check the first rubric checkbox for project {project} of sprint "{sid}"')
+def step_check_first_rubric(context, project, sid):
+    """User checks the first rubric item for a project."""
+    _post(context, f"/sprints/{sid}/day/4/rubric-check", data={"project_index": project, "rubric_index": 0, "checked": "true"})
+
+
+@when('I check the second rubric checkbox for project {project} of sprint "{sid}"')
+def step_check_second_rubric(context, project, sid):
+    """User checks the second rubric item for a project."""
+    _post(context, f"/sprints/{sid}/day/4/rubric-check", data={"project_index": project, "rubric_index": 1, "checked": "true"})
+
+
+@when('I mark the gap-fill addressed for day {day} of sprint "{sid}"')
+def step_mark_gapfill(context, day, sid):
+    """User marks the gap-fill as addressed."""
+    _post(context, f"/sprints/{sid}/day/{day}/gapfill-check", data={"checked": "true"})
+
+
 def _fake_generation_llm(prompt, timeout=15):
     """Deterministic stand-in for the LLM in worker tests — returns the same
     job-grounded JSON shape the real model produces (content is LLM-only in the

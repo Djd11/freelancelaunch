@@ -87,6 +87,7 @@ def before_all(context):
     context.app = create_app({
         "TESTING": True,
         "SECRET_KEY": "test-secret",
+        "WTF_CSRF_ENABLED": False,
     })
     # Wrap the test client to rewrite sprint IDs
     context.client = SprintIDRewritingClient(context.app.test_client(), lambda: get_live_adapter())
@@ -178,7 +179,7 @@ def _seed_static_data(adapter: LiveDBAdapter):
             "cluster_key": "email-automation",
             "title": f["title"],
             "source": "curated",
-            "source_url": "https://example.com/job",
+            "source_url": f"https://example.com/job/{i}",
             "description": "Anonymized real job posting — checkout recovery + segmentation.",
             "skills": ["klaviyo", "email", "automation"],
             "rate": f["rate"],
