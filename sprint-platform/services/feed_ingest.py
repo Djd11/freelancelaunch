@@ -70,6 +70,36 @@ def _cluster_for_skills(sb, skills: list) -> str:
     return best_key
 
 
+def _cluster_keywords(sb, cluster_key: str) -> list:
+    """Return the keyword list for a cluster (used for relevance filtering)."""
+    rows = sb.table("job_clusters") \
+        .select("keywords") \
+        .eq("cluster_key", cluster_key) \
+        .limit(1).execute().data
+    if rows and rows[0].get("keywords"):
+        return [k.lower() for k in rows[0]["keywords"]]
+    return []
+
+
+def _is_relevant_to_cluster(title: str, description: str, keywords: list,
+                            source_platform: str = "") -> bool:
+    """Check if a job posting is relevant to the cluster's domain.
+
+    Manual jobs are always accepted (admin-curated).  For RSS/external
+    jobs, the job title must contain at least one cluster keyword.
+    Description-only matches are ignored — descriptions are often generic
+    HTML blobs that match unrelated keywords (e.g. 'flow' in a backend
+    job's pipeline description).
+    """
+    if not keywords:
+        return True
+    # Manual jobs are admin-curated — never filter them
+    if source_platform == "manual":
+        return True
+    title_lower = (title or "").lower()
+    return any(kw in title_lower for kw in keywords)
+
+
 def ingest_jobs(
     sb,
     connector: PlatformConnector,
@@ -97,6 +127,9 @@ def ingest_jobs(
     new_count = 0
     skipped = 0
 
+    # Fetch cluster keywords for relevance filtering
+    cluster_kw = _cluster_keywords(sb, cluster_key) if cluster_key else []
+
     for posting in postings:
         # Skip if external_id already exists
         if posting.external_id and posting.external_id in existing_ids:
@@ -108,6 +141,18 @@ def ingest_jobs(
             continue
         # Skip if title too similar to recent entries in same cluster
         # (lightweight fuzzy dedup)
+
+        # Relevance filter: when cluster has keywords, reject jobs that
+        # don't match the cluster's domain.  This prevents a generic
+        # backend RSS feed from polluting the email-automation cluster
+        # with unrelated senior-engineer postings.  Manual jobs are
+        # always accepted (admin-curated).
+        if cluster_kw and not _is_relevant_to_cluster(
+            posting.title, posting.description, cluster_kw,
+            source_platform=posting.source_platform,
+        ):
+            skipped += 1
+            continue
 
         target_cluster = cluster_key or _cluster_for_skills(sb, posting.skills)
 

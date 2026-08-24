@@ -28,16 +28,41 @@ def _excerpt(text, limit=220):
     return text[:limit].rstrip() + ("…" if len(text) > limit else "")
 
 
-def _top_job(sb, cluster_key):
-    """First active posting in the cluster (same pick as mock_contract_engine)."""
+def _top_job(sb, cluster_key, project_index=None):
+    """Active postings in the cluster (same pick as mock_contract_engine).
+
+    If project_index is provided (1-based), select the job at that index to
+    give different projects different source material from the cluster's job feed.
+
+    Relevance filter: when possible, prefer jobs whose title matches the
+    cluster's keywords (e.g. email-automation → jobs with 'email', 'klaviyo',
+    'cart').  Generic RSS feeds may land unrelated jobs in a cluster; this
+    ensures the LLM generates content about the right domain.
+    """
     feed = sb.table("job_feed").select("*") \
         .eq("cluster_key", cluster_key).eq("status", "active") \
-        .order("unlock_day").order("id").limit(1).execute().data
-    if feed:
-        return feed[0]
-    feed = sb.table("job_feed").select("*").eq("status", "active") \
-        .order("unlock_day").order("id").limit(1).execute().data
-    return feed[0] if feed else None
+        .order("unlock_day").order("id").execute().data
+    if not feed:
+        return None
+
+    # Fetch cluster keywords for relevance scoring
+    cluster_row = sb.table("job_clusters").select("keywords") \
+        .eq("cluster_key", cluster_key).limit(1).execute().data
+    keywords = [k.lower() for k in ((cluster_row[0].get("keywords") or []) if cluster_row else [])]
+
+    if keywords:
+        # Rank jobs: title contains cluster keyword → higher priority
+        def _relevance(job):
+            title_lower = (job.get("title") or "").lower()
+            # Manual-sourced jobs are usually the most relevant
+            manual_boost = 0 if job.get("source_platform") == "manual" else -1
+            kw_hits = sum(1 for kw in keywords if kw in title_lower)
+            return (manual_boost, kw_hits)
+        feed = sorted(feed, key=_relevance, reverse=True)
+
+    if project_index is not None and 1 <= project_index <= len(feed):
+        return feed[project_index - 1]
+    return feed[0]
 
 
 # ─── LLM prompt + parsing ─────────────────────────────────────────────
@@ -258,7 +283,8 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
     Raises LLMGenerationError when no provider answered or the output was not
     usable JSON — callers must surface the error, never substitute templates.
     """
-    job = _top_job(sb, sprint.get("cluster_key"))
+    project_index = (project or {}).get("project_index")
+    job = _top_job(sb, sprint.get("cluster_key"), project_index)
     if day_row.get("day_no") == 5 and not gap_fill_topic:
         gap_fill_topic = _gap_fill_topic(sb, sprint.get("id"))
     project_title = (project or {}).get("title") or day_row.get("title") or ""
@@ -280,7 +306,7 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
 
 def project_anatomy(sb, sprint, project_index):
     """Generate one copy-work project's clone_steps + rubric (LLM-only)."""
-    job = _top_job(sb, sprint.get("cluster_key"))
+    job = _top_job(sb, sprint.get("cluster_key"), project_index)
     text = call_llm(_project_prompt(job, project_index), timeout=90, max_retries=3, backoff_base=2)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the project anatomy")
