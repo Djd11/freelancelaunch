@@ -78,14 +78,15 @@ def seed_sprint(adapter, sprint_id, cluster, user_id, current_day=4, status="act
         "completed_at": None,
     }).eq("id", real_sprint_id).execute()
 
-    # Copy-work projects (3 per sprint)
+    # Copy-work projects (3 per sprint). No reachable placeholder URL — the
+    # reference build spec is generated per-sprint (content-quality P0-2).
     for idx, title in PROJECT_TITLES.items():
         adapter.seed_table("copywork_projects", [{
             "id": f"{sprint_id}-cw{idx}",
             "sprint_id": real_sprint_id,
             "project_index": idx,
             "title": title,
-            "source_url": "https://example.com/flow",
+            "source_url": "",
             "clone_steps": [],
             "rubric": [],
             "gap_fill_topic": None,
@@ -429,10 +430,12 @@ def step_projects_done(context, a, b, c, sid):
     done = {int(a), int(b), int(c)}
     for idx in done:
         # A project is only credibly "done" when the learner submitted a link to
-        # the replica — Gate A checks both done and submitted_url (fix #5).
+        # the replica AND ticked every rubric item first — Gate A checks all
+        # three signals (fix #5, content-quality P0-3).
         adapter.sb.table("copywork_projects").update({
             "done": True,
             "submitted_url": f"https://github.com/me/project-{idx}",
+            "rubric_checked": [True, True, True],
         }).eq("sprint_id", real_sprint_id).eq("project_index", idx).execute()
 
 

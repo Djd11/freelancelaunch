@@ -38,6 +38,23 @@ Feature: Hardened Verification Gates — required URLs & case study (fixes #4, #
     Then the response status is 302
     And gate "A" has not passed verification for sprint "s1"
 
+  # ── Gate A requires learner self-checks — the rubric never auto-passes itself
+  Scenario: Copy-work submission without all rubric self-checks does not count done
+    Given copy-work project 1 for sprint "s1" has only 2 of 3 rubric items user-checked
+    When I submit the copy-work task for day 2 of sprint "s1" with rubric_url "https://github.com/me/flow"
+    Then the response status is 302
+    And the flash message mentions "rubric"
+    And copy-work project 1 for sprint "s1" is not marked done
+    And gate "A" has not passed verification for sprint "s1"
+
+  Scenario: Re-submitting a done project without full self-checks un-marks it
+    Given copy-work projects 1, 2, and 3 for sprint "s1" are done
+    And copy-work project 3 for sprint "s1" has only 2 of 3 rubric items user-checked
+    When I submit the copy-work task for day 5 of sprint "s1" with rubric_url "https://github.com/me/p3"
+    Then the response status is 302
+    And copy-work project 3 for sprint "s1" is not marked done
+    And gate "A" has not passed verification for sprint "s1"
+
   Scenario: Gate A passes when all three done projects have submitted URLs
     Given copy-work projects 1, 2, and 3 for sprint "s1" are done
     When I submit the copy-work task for day 4 of sprint "s1" with rubric_url "https://github.com/me/flow"

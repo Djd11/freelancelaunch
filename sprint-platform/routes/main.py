@@ -96,9 +96,10 @@ def request_sprint():
 
 @main_bp.route("/sprints/<cluster_key>/start", methods=["POST"])
 def start_sprint(cluster_key):
-    """Enroll: create a sprint for the cluster, join/open a cohort, generate the
-    14-day plan + copy-work projects (eng-spec §5.2). POST-only — a GET must
-    never have side effects."""
+    """Enroll: create or resume a sprint for the cluster (idempotent).
+    If user already has an active sprint for this cluster, redirect to it.
+    Otherwise create a new sprint with plan + projects + background generation.
+    """
     gate = require_login()
     if gate:
         return gate
@@ -108,6 +109,14 @@ def start_sprint(cluster_key):
         return redirect(url_for("main.sprints"))
     cluster = cluster[0]
     user_id = g.user["id"]
+
+    # Idempotent: check for existing active sprint for this user + cluster
+    existing = sb.table("sprints").select("id,current_day,status") \
+        .eq("user_id", user_id).eq("cluster_key", cluster_key).eq("status", "active") \
+        .order("started_at", desc=True).limit(1).execute().data
+    if existing:
+        existing_sprint_id = existing[0]["id"]
+        return redirect(url_for("sprints.dashboard", sprint_id=existing_sprint_id))
 
     # Join the latest active cohort for this cluster, else open a new one.
     cohort = sb.table("cohorts").select("*").eq("cluster_key", cluster_key).eq("status", "active").limit(1).execute().data
@@ -128,14 +137,14 @@ def start_sprint(cluster_key):
     # populates IS the progress the dashboard polls.
     create_plan(sb, sprint["id"])
     create_projects(sb, sprint["id"])
-    sb.table("sprint_unlock_snapshots").insert({
+    sb.table("sprint_unlock_snapshots").upsert({
         "sprint_id": sprint["id"], "user_id": user_id,
         "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
-    }).execute()
+    }, on_conflict="sprint_id,user_id").execute()
 
     app = current_app._get_current_object()
     threading.Thread(
-        target=_generate_in_background, args=(app, sprint["id"]), daemon=True,
+        target=_generate_in_background, args=(app, sprint["id"],), daemon=True,
     ).start()
     return redirect(url_for("sprints.dashboard", sprint_id=sprint["id"]))
 

@@ -49,15 +49,27 @@ def gate_b_passed(sb, sprint_id):
 
 def auto_check_gate_a(sb, sprint_id, submitted_url=None):
     """Gate A auto-check: all 3 copy-work projects done AND each has a valid
-    submitted URL → pass.
+    submitted URL AND every project's rubric items are learner-ticked → pass.
+
+    The self-checks are the consequence that makes practice real: a submission
+    only counts done when the learner ticked all rubric items first (routes/
+    sprints.py submit_copywork), so this gate can only pass work the learner
+    actually verified themselves (content-quality P0-3).
 
     Called on every copy-work rubric submission. One review row per gate, so
     the submitted rubric URL is preserved through the pass write.
     """
-    rows = sb.table("copywork_projects").select("done, submitted_url").eq("sprint_id", sprint_id).execute().data
+    rows = sb.table("copywork_projects") \
+        .select("done, submitted_url, rubric_checked").eq("sprint_id", sprint_id).execute().data
+
+    def _self_checked(row):
+        checked = row.get("rubric_checked") or []
+        return len(checked) >= 3 and all(checked)
+
     if (rows and len(rows) >= 3
             and all(bool(r.get("done")) for r in rows)
-            and all(is_valid_url(r.get("submitted_url")) for r in rows)):
+            and all(is_valid_url(r.get("submitted_url")) for r in rows)
+            and all(_self_checked(r) for r in rows)):
         return record(sb, sprint_id, "A", status="pass", verification_type="auto",
                       submitted_url=submitted_url)
     return None

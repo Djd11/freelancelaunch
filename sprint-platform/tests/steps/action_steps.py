@@ -1,7 +1,7 @@
 """Action + verify steps — form submissions, DB-state assertions, iteration diagnosis."""
 import json
 
-from behave import when, then
+from behave import given, when, then
 
 from tests.live_db_adapter import get_live_adapter, TEST_USER_ID, get_static_job_id
 from tests.steps.common_steps import _post
@@ -54,10 +54,12 @@ def step_mark_gapfill(context, day, sid):
     _post(context, f"/sprints/{sid}/day/{day}/gapfill-check", data={"checked": "true"})
 
 
-def _fake_generation_llm(prompt, timeout=15):
+def _fake_generation_llm(prompt, **kwargs):
     """Deterministic stand-in for the LLM in worker tests — returns the same
     job-grounded JSON shape the real model produces (content is LLM-only in the
-    app; the stub keeps assertions stable without a live provider)."""
+    app; the stub keeps assertions stable without a live provider). **kwargs:
+    call_llm forwards timeout/max_retries/backoff_base, which are irrelevant
+    to a stub."""
     import json
     import re
     # Match various prompt formats for extracting the job title
@@ -70,15 +72,69 @@ def _fake_generation_llm(prompt, timeout=15):
     im = re.search(r"project (\d) of 3", prompt or "")
     if im:
         index = int(im.group(1))
+        # Fixed email-flow titles ONLY for the canonical email-automation feed
+        # postings; every other cluster's project title is DERIVED from the
+        # job title so grounding gates (e.g. web-scraping titles must mention
+        # the scraped-job posting) stay honest for all clusters.
+        email_feed_titles = {
+            "Klaviyo flow setup for store",
+            "Email automation revamp",
+            "Abandoned cart series",
+            "Segment + campaign build",
+            "Post-purchase upsell flow",
+        }
+        if job_title in email_feed_titles:
+            title = {
+                1: "Rebuild the Checkout Welcome Flow",
+                2: "Rebuild the Abandoned-Cart Flow",
+                3: "Rebuild the Post-Purchase Upsell Flow",
+            }.get(index, f"Rebuild the core flow for {job_title}")
+        else:
+            title = f"Rebuild the core flow for {job_title}"
+        clone_steps_map = {
+            1: ["Trigger on Checkout Started",
+                 "Add welcome email with dynamic order summary",
+                 "Configure mobile-responsive template"],
+            2: ["Trigger on Checkout Abandoned",
+                 "Add 30-minute delay email with cart summary",
+                 "Add 24-hour follow-up with coupon"],
+            3: ["Trigger on Purchase Completed",
+                 "Add upsell block for complementary product",
+                 "Configure 30-day winback sequence"],
+        }
+        rubric_map = {
+            1: ["Welcome email sends within 1 hour of checkout",
+                "Dynamic cart summary present in the email",
+                "Email renders correctly on mobile"],
+            2: ["Recovery flow triggers when a cart is abandoned",
+                "Dynamic cart summary present",
+                "Coupon step included"],
+            3: ["Post-purchase trigger fires on completion",
+                "Upsell block renders with the product",
+                "Winback sequence is scheduled"],
+        }
+        gap_fill_map = {1: None, 2: "mobile responsiveness", 3: None}
+        reference_spec_map = {
+            1: ("Screen 1: Flow list — create the automation from a blank account.\n"
+                "Screen 2: Trigger settings — pick the start event from the posting.\n"
+                "Screen 3: Message step — paste the sample subject line.\n"
+                "Screen 4: Settings — set the delay and switch the flow on."),
+            2: ("Screen 1: Flow list — create the recovery automation from scratch.\n"
+                "Screen 2: Trigger settings — start on the abandonment event.\n"
+                "Screen 3: First message — cart summary, 30-minute delay.\n"
+                "Screen 4: Second message — coupon at 24 hours."),
+            3: ("Screen 1: Flow list — create the post-purchase automation.\n"
+                "Screen 2: Trigger settings — fire on order completion.\n"
+                "Screen 3: Upsell block — complementary product.\n"
+                "Screen 4: Winback schedule — 30-day cadence."),
+        }
+
         return json.dumps({
-            "title": f"Rebuild the core flow for {job_title}",
-            "clone_steps": ["Trigger on Checkout Started",
-                             "2-step sequence: 30 min + 24 hr delays",
-                             "Cart summary dynamic block"],
-            "rubric": ["Flow is built from a blank account",
-                       "Trigger + dynamic block are present",
-                       "Deliverable matches the brief's acceptance criteria"],
-            "gap_fill_topic": "mobile responsiveness" if index == 2 else None,
+            "title": title,
+            "clone_steps": clone_steps_map.get(index, ["Step 1", "Step 2", "Step 3"]),
+            "rubric": rubric_map.get(index, ["Criterion 1", "Criterion 2", "Criterion 3"]),
+            "gap_fill_topic": gap_fill_map.get(index),
+            "reference_spec": reference_spec_map.get(index, "Screen 1: build it."),
         })
     # Gap-fill micro-lesson (day 5 with a flagged nuance)
     if "Gap-fill focus" in (prompt or ""):
@@ -119,13 +175,69 @@ def _fake_generation_llm(prompt, timeout=15):
     })
 
 
+@given('I check all rubric items for project {project} of sprint "{sid}"')
+@when('I check all rubric items for project {project} of sprint "{sid}"')
+def step_check_all_rubric(context, project, sid):
+    """The real checkbox flow: the learner ticks every rubric item for a
+    project BEFORE submitting — a submission only counts done when all
+    self-checks were ticked first (content-quality P0-3)."""
+    for rubric_index in range(3):
+        _post(context, f"/sprints/{sid}/day/2/rubric-check",
+              data={"project_index": project, "rubric_index": rubric_index,
+                    "checked": "true"})
+        assert context.response.status_code == 200, \
+            f"rubric-check POST failed: {context.response.status_code}"
+
+
+@when('the copy-work projects are created for sprint "{sid}"')
+def step_create_projects(context, sid):
+    """Run the REAL seeding path (services.copywork_engine.create_projects) so
+    gates can assert what production ships — not what the fixture helper seeds
+    (content-quality P0-2)."""
+    from services.copywork_engine import create_projects
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    create_projects(adapter.sb, real_sprint_id)
+
+
 @when('the content generation worker runs for sprint "{sid}"')
 def step_worker_run(context, sid):
     """Run the async content worker synchronously with a stubbed LLM returning
-    job-grounded JSON (no real LLM/TTS in tests) so assertions are stable."""
+    job-grounded JSON (no real LLM/TTS in tests) so assertions are stable.
+    Every prompt sent to the stub is captured on context.captured_prompts so
+    gates can assert what the engine ASKED the model (e.g. no hard-coded
+    foreign-niche tool names), not just what the stub answered."""
     import services.lesson_engine as le
     import services.video_engine as ve
-    le.call_llm = _fake_generation_llm
+    captured: list = []
+
+    def _capturing_llm(prompt, **kwargs):
+        captured.append(prompt or "")
+        return _fake_generation_llm(prompt, **kwargs)
+
+    le.call_llm = _capturing_llm
+    context.captured_prompts = captured
+    ve.voiceover_for_lesson = lambda *a, **k: None
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    le.generate_sprint_content(adapter.sb, real_sprint_id)
+
+
+@when('the content generation worker runs for sprint "{sid}" and the LLM omits '
+      'the gap-fill topic')
+def step_worker_run_null_gapfill(context, sid):
+    """Same worker run, but the LLM's anatomy answers carry gap_fill_topic=null
+    — the seeded flagged focus must survive (content-quality P1-4: an LLM null
+    never overwrites an existing gap_fill_topic)."""
+    import services.lesson_engine as le
+    import services.video_engine as ve
+
+    def _null_gapfill_llm(prompt, **kwargs):
+        return _fake_generation_llm(prompt, **kwargs).replace(
+            '"gap_fill_topic": "mobile responsiveness"',
+            '"gap_fill_topic": null')
+
+    le.call_llm = _null_gapfill_llm
     ve.voiceover_for_lesson = lambda *a, **k: None
     adapter = get_live_adapter()
     real_sprint_id = adapter.resolve_sprint_id(sid)
@@ -149,7 +261,7 @@ def step_worker_run_no_llm(context, sid):
         pass  # expected — the failure is recorded on the day payload
 
 
-def _fake_proposals_llm(prompt, timeout=90):
+def _fake_proposals_llm(prompt, **kwargs):
     """Deterministic stand-in for the LLM in proposal-fill tests — returns the
     batched JSON array of engineered drafts the real model produces."""
     import json
@@ -321,6 +433,78 @@ def step_day_lesson_mentions(context, n, sid, text):
     lesson = (rows[0].get("action_payload") or {}).get("lesson") or {}
     blob = json.dumps(lesson)
     assert text in blob, f"day {n} lesson missing {text!r}: {blob}"
+
+
+@then('day {n} of sprint "{sid}" has a lesson not mentioning "{banned}"')
+def step_day_lesson_not_mentions(context, n, sid, banned):
+    """The inverse grounding gate: a generated lesson must never name a tool
+    from an unrelated niche (content-quality P0-1)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("sprint_days").select("action_payload") \
+        .eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute().data
+    assert rows, f"no day {n} row for sprint {sid}"
+    blob = json.dumps((rows[0].get("action_payload") or {}).get("lesson") or {})
+    assert banned.lower() not in blob.lower(), \
+        f"day {n} lesson mentions {banned!r}: {blob[:400]}"
+
+
+@then('no generation prompt for sprint "{sid}" mentions "{first}" or "{second}"')
+def step_prompts_clean(context, sid, first, second):
+    """Every prompt the engine sent for this sprint must be free of literal
+    foreign-niche tool names — tool vocabulary is derived from the cluster,
+    never hard-coded (content-quality P0-1)."""
+    prompts = getattr(context, "captured_prompts", None)
+    assert prompts is not None, "worker did not run — no prompts captured"
+    bad = [p for p in prompts
+           if first.lower() in p.lower() or second.lower() in p.lower()]
+    assert not bad, \
+        f"{len(bad)} prompt(s) mention {first!r}/{second!r}; first offender: {bad[0][:300]}"
+
+
+@then('days 6 to 14 draw from more than one distinct job posting')
+def step_prompts_rotate(context):
+    """Phase B/C lessons must rotate across the ranked feed instead of every
+    prompt quoting feed[0] (content-quality P1-2)."""
+    import re as _re
+    prompts = getattr(context, "captured_prompts", None)
+    assert prompts is not None, "worker did not run — no prompts captured"
+    titles_by_day = {}
+    for p in prompts:
+        dm = _re.search(r"Day (\d+)[,.]", p)
+        tm = _re.search(r'The job title is: "([^"]+)"', p)
+        if dm and tm and int(dm.group(1)) >= 6:
+            titles_by_day[int(dm.group(1))] = tm.group(1)
+    assert titles_by_day, "no Phase B/C day prompts were captured"
+    distinct = set(titles_by_day.values())
+    assert len(distinct) > 1, \
+        f"days {sorted(titles_by_day)} all drew from one posting: {distinct}"
+
+
+@then('copy-work project {n} for sprint "{sid}" ships no reachable source URL')
+def step_no_reachable_source_url(context, n, sid):
+    """Seeded projects must not carry reachable placeholder URLs (e.g.
+    example.com) into prod paths — content-quality P0-2."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("source_url") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
+    assert rows, f"no copy-work project {n} for sprint {sid}"
+    url = rows[0].get("source_url")
+    assert not url or not str(url).lower().startswith(("http://", "https://")), \
+        f"project {n} ships a reachable placeholder URL: {url!r}"
+
+
+@then('copy-work project {n} for sprint "{sid}" still has gap-fill topic "{topic}"')
+def step_gapfill_topic_survives(context, n, sid, topic):
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("gap_fill_topic") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute().data
+    assert rows, f"no copy-work project {n} for sprint {sid}"
+    actual = rows[0].get("gap_fill_topic")
+    assert actual == topic, \
+        f"project {n} gap_fill_topic={actual!r}, expected {topic!r} to survive"
 
 
 def _day_lesson(adapter, sid, n):

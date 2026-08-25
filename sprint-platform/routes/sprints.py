@@ -127,12 +127,18 @@ def day(sprint_id, day_no):
     rubric = (project or {}).get("rubric") or []
     submitted_url = (project or {}).get("submitted_url")
     project_submitted = bool(project and is_valid_url(submitted_url))
+    # The generated reference build spec — what to replicate INSTEAD of an
+    # external link (content-quality P0-2). Stored on the project row when the
+    # reference_spec column is migrated, else on this day's action_payload.
+    reference_spec = payload.get("reference_spec") \
+        or ((project or {}).get("reference_spec") or "")
 
     return render_template(
         "day.html",
         sprint=sprint, day=day_row, project=project, meter=meter,
         day_done=bool(day_row.get("is_done")), gap_fill_topic=gap_fill_topic, pct=pct,
         lesson=lesson, gen_error=gen_error, clone_steps=clone_steps, rubric=rubric,
+        reference_spec=reference_spec,
         lesson_watched=bool(day_row.get("lesson_watched")),
         project_done=bool(project and project.get("done")),
         gate_a_pass=gate_a_passed(sb, sprint_id),
@@ -323,16 +329,24 @@ def submit_copywork(sprint_id, day_no):
         return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
     record_review(sb, sprint_id, "A", status="pending", submitted_url=rubric_url)
 
-    # Mark the day's copy-work project done (storing the submitted URL on the
-    # project row), auto-check its rubric items (eng-spec J4: rubric auto-check on submit),
-    # then auto-check Gate A: all 3 projects done with URLs → pass → Phase B unlocks.
+    # The submission only counts done when the learner ticked every rubric item
+    # BEFORE submitting (content-quality P0-3: the rubric never auto-passes
+    # itself — a pasted URL alone unlocks nothing). Then auto-check Gate A:
+    # all 3 projects done + self-checked + URLs → pass → Phase B unlocks.
     project_index = DAY_TO_PROJECT.get(day_no)
     if project_index:
+        proj_rows = sb.table("copywork_projects").select("rubric_checked") \
+            .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
+        rubric_checked = list((proj_rows[0].get("rubric_checked") if proj_rows else None) or [])
+        all_ticked = len(rubric_checked) >= 3 and all(rubric_checked)
         sb.table("copywork_projects").update({
-            "done": True, 
+            "done": all_ticked,
             "submitted_url": rubric_url,
-            "rubric_checked": [True, True, True]  # auto-check rubric on submit
+            "rubric_checked": [bool(c) for c in rubric_checked],
         }).eq("sprint_id", sprint_id).eq("project_index", project_index).execute()
+        if not all_ticked:
+            flash("Tick off all three rubric items before submitting — "
+                  "your build only counts once you've self-checked it.")
     auto_check_gate_a(sb, sprint_id, submitted_url=rubric_url)
     return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
 

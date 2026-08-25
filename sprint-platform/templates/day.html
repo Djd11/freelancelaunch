@@ -103,6 +103,12 @@
         <div class="card">
           <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
           <p class="small muted">From a blank account, rebuild the exact flow:</p>
+          {% if reference_spec %}
+          <div style="margin-top:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+            <b style="font-family:var(--font-display)">📘 Reference build</b>
+            <div class="small" style="margin-top:6px;color:var(--ink-2)">{{ reference_spec|format_script }}</div>
+          </div>
+          {% endif %}
           {% if gen_error %}
           <p class="small" style="color:var(--ink-2);margin-top:10px">Project anatomy failed to generate ({{ gen_error }}).</p>
           {% elif not clone_steps %}

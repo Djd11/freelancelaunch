@@ -27,8 +27,9 @@ Feature: Check-Items — every checkbox/check-item reflects verified state, not 
     And the check-item "Replicate from scratch" is not marked done
     And the check-item "Pass 3-point rubric" is not marked done
 
-  Scenario: Submitting copy-work completes the Replicate check-item (not the rubric yet)
+  Scenario: Submitting a fully self-checked project completes the Replicate check-item
     Given I am on day 4 of sprint "s1"
+    And I check all rubric items for project 2 of sprint "s1"
     When I submit the copy-work task for day 4 of sprint "s1" with rubric_url "https://github.com/me/flow"
     And I GET "/sprints/s1/day/4"
     Then the check-item "Replicate from scratch" is marked done
@@ -41,13 +42,16 @@ Feature: Check-Items — every checkbox/check-item reflects verified state, not 
     And I GET "/sprints/s1/day/4"
     Then the check-item "Pass 3-point rubric" is marked done
 
-  # ── #7 rubric is auto-checked by the verification service (not a dead <ul>) ─
-  Scenario: Submitting copy-work auto-checks the rubric checkboxes
+  # ── #7 rubric checkboxes are the LEARNER's self-check, never auto-passed ──
+  Scenario: Rubric checkboxes persist as the learner left them after submitting
     Given I am on day 4 of sprint "s1"
     And copy-work project 2 for sprint "s1" has a 3-point rubric
     When I GET "/sprints/s1/day/4"
     Then the page contains at least 3 rubric checkboxes
     And the rubric checkboxes are not checked
+    When I check all rubric items for project 2 of sprint "s1"
+    And I GET "/sprints/s1/day/4"
+    Then the rubric checkboxes are all checked
     When I submit the copy-work task for day 4 of sprint "s1" with rubric_url "https://github.com/me/flow"
     And I GET "/sprints/s1/day/4"
     Then the rubric checkboxes are all checked

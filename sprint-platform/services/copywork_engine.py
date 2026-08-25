@@ -6,22 +6,27 @@ Each sprint gets 3 copy-work projects with a 3-point rubric (auto-checkable)
 and a gap-fill topic on project 2 — the nuance flagged from rubric results
 that Day 5 serves as a targeted 30-min micro-lesson.
 
-v2: create_projects seeds a placeholder SKELETON (mockup titles/source_url,
-EMPTY clone_steps/rubric) so the async worker's lesson_engine.project_anatomy
-path (LLM-only) actually runs. The LLM fills every title/step/rubric from the
-cluster's live posting — content is never hard-coded here (content-quality H1).
+v2: create_projects seeds a placeholder SKELETON (mockup titles, EMPTY
+clone_steps/rubric) so the async worker's lesson_engine.project_anatomy
+path (LLM-only) actually runs. The LLM fills every title/step/rubric — and a
+reference_spec build breakdown — from the cluster's live posting; content is
+never hard-coded here (content-quality H1). No seeded project carries an
+external URL: the reference build spec generated per sprint IS the artifact to
+copy (content-quality P0-2 — example.com placeholders are gone).
 If the LLM is unavailable the worker records a visible generation_error; the
 skeleton titles are transient scaffolding, never presented as generated content.
 """
 
 # The 3 replication projects. Titles match the mockup (Day 4 = Project 2,
 # "Rebuild the Abandoned-Cart Flow"). gap_fill_topic on project 2 is the
-# auto-detected nuance surfaced on the day view before Day 5.
+# flagged nuance surfaced on the day view before Day 5. source_url stays
+# empty: there is no external exemplar link — the LLM-generated reference
+# build spec (stored on the project / day payload by the worker) is the source.
 PROJECTS = [
     {
         "project_index": 1,
         "title": "Rebuild the Checkout Welcome Flow",
-        "source_url": "https://example.com/checkout-welcome",
+        "source_url": "",
         "clone_steps": [
             "Trigger: Checkout Started",
             "Blocks: 1 welcome email",
@@ -37,7 +42,7 @@ PROJECTS = [
     {
         "project_index": 2,
         "title": "Rebuild the Abandoned-Cart Flow",
-        "source_url": "https://example.com/abandoned-cart",
+        "source_url": "",
         "clone_steps": [
             "Trigger: Checkout Abandoned",
             "Sequence: 2-step recovery (30 min + 24 hr)",
@@ -53,7 +58,7 @@ PROJECTS = [
     {
         "project_index": 3,
         "title": "Rebuild the Post-Purchase Upsell Flow",
-        "source_url": "https://example.com/post-purchase",
+        "source_url": "",
         "clone_steps": [
             "Trigger: Purchase Completed",
             "Upsell block: complementary product",

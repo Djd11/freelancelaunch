@@ -145,7 +145,7 @@ def step_start_sprint_again(context):
     redirect to the SAME sprint UUID instead of 500 or creating a duplicate."""
     resp = _post(context, "/sprints/email-automation/start", data={})
     loc = resp.headers.get("Location", "")
-    m = re.search(rf"/sprints/{_UUID_RE}$", loc)
+    m = re.search(rf"/sprints/({_UUID_RE})$", loc)
     assert m, f"second start Location has no sprint UUID: {loc!r}"
     context.second_start_uuid = m.group(1)
     get_live_adapter().track_created("sprints", context.second_start_uuid)

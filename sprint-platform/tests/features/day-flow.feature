@@ -35,7 +35,7 @@ Feature: Day View & Copy-Work (mockup screen 4)
     Then the response status is 200
     And the page contains the text "Phase A · Day 2 · Copywork"
     And the page contains the text "Copy-Work Task"
-    And the page contains the text "Project 1 — Rebuild the core flow for"
+    And the page contains the text "Project 1 — Rebuild the Checkout Welcome Flow"
     And the page contains the text "Trigger on Checkout Started"
     And the page contains the text "Mark day 2 complete"
     And the page does not contain the text "Mark day 1 complete"
@@ -61,14 +61,14 @@ Feature: Day View & Copy-Work (mockup screen 4)
   Scenario: The lesson content is generated from the cluster's live job posting
     When the content generation worker runs for sprint "s1"
     And I GET "/sprints/s1/day/4"
-    Then the page contains the text "Klaviyo flow setup for store"
+    Then the page contains the text "Email automation revamp"
     And the page contains the text "how to"
     And the page contains the text "Common pitfalls"
 
   Scenario: The day view renders the generated copy-work anatomy (steps + rubric)
     When the content generation worker runs for sprint "s1"
     And I GET "/sprints/s1/day/4"
-    Then the page contains the text "Trigger on Checkout Started"
+    Then the page contains the text "Trigger on Checkout Abandoned"
     And the page contains the text "rubric verified at Gate A"
 
   Scenario: A day whose content generation failed shows a visible error, never template content

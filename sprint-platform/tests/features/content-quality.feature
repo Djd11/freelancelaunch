@@ -12,9 +12,12 @@ Feature: Day Content Quality — completable Phase A, job-grounded copy-work, Da
     Given I have an active sprint "s1" with 14 days for cluster "email-automation"
     And a job cluster "email-automation" with 5 active postings
 
-  Scenario: A learner can pass Gate A by submitting copy-work through the real day flow
-    When I submit the copy-work task for day 2 of sprint "s1" with rubric_url "https://github.com/me/p1"
+  Scenario: A learner can pass Gate A through the real checkbox flow
+    When I check all rubric items for project 1 of sprint "s1"
+    And I submit the copy-work task for day 2 of sprint "s1" with rubric_url "https://github.com/me/p1"
+    And I check all rubric items for project 2 of sprint "s1"
     And I submit the copy-work task for day 4 of sprint "s1" with rubric_url "https://github.com/me/p2"
+    And I check all rubric items for project 3 of sprint "s1"
     And I submit the copy-work task for day 5 of sprint "s1" with rubric_url "https://github.com/me/p3"
     Then copy-work project 1 for sprint "s1" has submitted_url "https://github.com/me/p1"
     And copy-work project 2 for sprint "s1" has submitted_url "https://github.com/me/p2"
@@ -22,6 +25,34 @@ Feature: Day Content Quality — completable Phase A, job-grounded copy-work, Da
     And gate "A" has passed verification for sprint "s1"
     When I GET "/sprints/s1"
     Then Phase B is not locked
+
+  Scenario: Web-scraping lessons never inherit email-tool jargon from the prompts
+    Given I have an active sprint "s3" with 14 days for cluster "web-scraping"
+    And job cluster "web-scraping" has a posting titled "Scrape real-estate listings from Zillow"
+    When the content generation worker runs for sprint "s3"
+    Then no generation prompt for sprint "s3" mentions "Klaviyo" or "Shopify"
+    And day 2 of sprint "s3" has a lesson not mentioning "Klaviyo"
+
+  Scenario: Later-phase days draw from different postings instead of one repeated feed entry
+    When the content generation worker runs for sprint "s1"
+    Then days 6 to 14 draw from more than one distinct job posting
+
+  Scenario: Seeded copy-work projects ship no placeholder source links
+    When the copy-work projects are created for sprint "s1"
+    Then copy-work project 1 for sprint "s1" ships no reachable source URL
+    And copy-work project 2 for sprint "s1" ships no reachable source URL
+    And copy-work project 3 for sprint "s1" ships no reachable source URL
+
+  Scenario: The day view renders a generated reference build spec instead of a dead source link
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1/day/4"
+    Then the page contains the text "Reference build"
+    And the page contains the text "Screen 1:"
+
+  Scenario: An LLM answer without a gap-fill topic never erases the flagged focus
+    Given copy-work project 2 for sprint "s1" flagged gap-fill topic "mobile responsiveness"
+    When the content generation worker runs for sprint "s1" and the LLM omits the gap-fill topic
+    Then copy-work project 2 for sprint "s1" still has gap-fill topic "mobile responsiveness"
 
   Scenario: Copy-work projects are grounded in the learner's cluster job posting
     Given I have an active sprint "s2" with 14 days for cluster "web-scraping"

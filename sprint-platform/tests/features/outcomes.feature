@@ -10,7 +10,7 @@ Feature: Outcome Tracking, Verification Auto-Check & Sprint Completion (eng-spec
     And a job cluster "email-automation" with 5 active postings
     And the user has a verified platform "upwork"
 
-  Scenario: Gate A auto-passes once all three copy-work projects are done
+  Scenario: Gate A auto-passes once all three projects are done with self-checked rubrics
     Given copy-work projects 1, 2, and 3 for sprint "s1" are done
     When I submit the copy-work task for day 4 of sprint "s1" with rubric_url "https://github.com/me/flow"
     Then the response status is 302
