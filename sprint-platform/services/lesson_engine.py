@@ -603,3 +603,27 @@ def day_status_map(sb, sprint_id):
         else:
             result[day_no] = "pending"
     return result
+
+
+def content_day_cards(day_rows):
+    """Per-day dicts powering the dashboard's server-rendered Sprint Content
+    grid. Status mirrors day_status_map: 'error' (payload carries a
+    generation_error), 'ok' (lesson present), else 'pending'."""
+    cards = []
+    for d in day_rows:
+        payload = d.get("action_payload") or {}
+        lesson = payload.get("lesson") or {}
+        if payload.get("generation_error"):
+            status = "error"
+        elif lesson:
+            status = "ok"
+        else:
+            status = "pending"
+        cards.append({
+            "day_no": d.get("day_no"),
+            "action_type": d.get("action_type") or "",
+            "is_done": bool(d.get("is_done")),
+            "lesson_title": (lesson.get("title") or "").strip(),
+            "status": status,
+        })
+    return cards

@@ -179,6 +179,24 @@
         </div>
       </div>
 
+      <!-- ═══ SPRINT CONTENT · 14 DAY CARDS (persisted; visible when generation is ready) ═══ -->
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+          <h3>Sprint Content</h3>
+          <span class="badge b-green">{{ content_days | selectattr('status', 'equalto', 'ok') | list | length }} / {{ content_days | length }} days generated</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+          {% for cd in content_days %}
+          <a href="/sprints/{{ sprint.id }}/day/{{ cd.day_no }}"
+             style="text-decoration:none;border:1px solid var(--hairline);border-radius:var(--radius);padding:10px;display:block{% if cd.status == 'error' %};border-color:#B1574F{% elif cd.status == 'pending' %};border-color:#A97B22{% endif %}">
+            <div class="xs muted">Day {{ cd.day_no }} · {{ cd.action_type | capitalize }}</div>
+            <b class="small">{% if cd.lesson_title %}{{ cd.lesson_title[:70] }}{% elif cd.status == 'error' %}Generation failed{% else %}Pending generation{% endif %}</b>
+            <div class="xs muted" style="margin-top:4px">{% if cd.is_done %}✓ day complete{% endif %}</div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
       <!-- ═══ JOB UNLOCK METER ═══ -->
       <div class="card" style="margin-top:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">

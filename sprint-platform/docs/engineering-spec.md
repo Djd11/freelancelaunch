@@ -58,7 +58,7 @@ FreelanceLaunch is a **14-day, cohort-batched, demand-validated sprint** that co
 - **Job Unlock Meter:** `unlocked / total` ("186 / 450 active jobs unlocked") + "+38 postings unlocked so far" chip + 14-bar track.
 - **Today card:** Watch lesson (✓), Replicate the project, Self-check vs rubric → "Open Day N →".
 - **Momentum card:** Day streak 🔥, Confidence n/100, Proposals sent, Contracts, plus a Nudge message.
-- **Content generation progress:** the 14 day-lessons generate async after enrollment; the dashboard polls `GET /sprints/<id>/generation` (`{status, generated, total}`) and hides the spinner at `ready` (eng-spec §5).
+- **Content generation progress:** the 14 day-lessons generate async after enrollment; the dashboard polls `GET /sprints/<id>/generation` (`{status, generated, total}`) and hides the spinner at `ready`, where the persistent server-rendered "Sprint Content" 14-card grid (from `sprint_days.action_payload`) becomes the day-content surface (eng-spec §5).
 - **Contracts & Earnings card:** lists recorded contracts (won/completed) with an add-contract form → `POST /sprints/<id>/contract/add`.
 - **Complete sprint button:** explicit `POST /sprints/<id>/complete` (also fired by finishing Day 14).
 - Routes: `GET /sprints/<id>`, `GET /sprints/<id>/generation`, day/complete/copywork helpers; all state gated by ownership.

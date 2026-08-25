@@ -12,6 +12,7 @@ from services.verification_service import auto_check_gate_a, is_valid_url
 from services.unlock_engine import recompute
 from services.badge_engine import issue as issue_badge
 from services.nudge_engine import nudge as nudge_for, recompute_confidence
+from services.lesson_engine import content_day_cards
 
 sprints_bp = Blueprint("sprints", __name__)
 
@@ -35,9 +36,10 @@ def dashboard(sprint_id):
     today = load_day(sb, sprint_id, sprint["current_day"]) or {"day_no": sprint["current_day"], "phase": sprint["phase"], "action_type": "copywork", "action_payload": {}}
     phase_a_days = phase_a_done_days(sb, sprint_id)
     # Per-day done status so the dashboard can render clickable day tracks.
-    all_days = sb.table("sprint_days").select("day_no,is_done") \
+    all_days = sb.table("sprint_days").select("day_no,title,is_done,action_type,action_payload") \
         .eq("sprint_id", sprint_id).order("day_no").execute().data
     day_done_map = {d["day_no"]: bool(d.get("is_done")) for d in all_days}
+    content_days = content_day_cards(all_days)
     nudge = nudge_for(sprint, momentum)
     contracts = sb.table("contracts").select("*").eq("sprint_id", sprint_id).execute().data
 
@@ -84,7 +86,7 @@ def dashboard(sprint_id):
         today_project_done=bool(today_project and today_project.get("done")),
         today_rubric_checked=all_rubric_checked,
         nudge=nudge, contracts=contracts, day_done_map=day_done_map,
-        live_jobs=live_jobs,
+        live_jobs=live_jobs, content_days=content_days,
     )
 
 

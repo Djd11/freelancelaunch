@@ -78,3 +78,23 @@ Feature: Sprint Dashboard (mockup screen 3)
     When I GET "/sprints/s1"
     Then the page contains the text "Cohort #12"
     And the page contains the text "ends 2026-08-23"
+
+  Scenario: A fully generated sprint shows the 14 day-content cards
+    Given I am on day 4 of sprint "s1"
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1"
+    Then the response status is 200
+    And the page contains the text "Sprint Content"
+    And the page contains the text "14 / 14 days generated"
+
+  Scenario: Each day card exposes its generated lesson title
+    Given I am on day 4 of sprint "s1"
+    When the content generation worker runs for sprint "s1"
+    And I GET "/sprints/s1"
+    Then the page contains the text "Day lesson for"
+
+  Scenario: A day whose generation failed is marked on the dashboard
+    Given I am on day 4 of sprint "s1"
+    When the content generation worker runs for sprint "s1" with no LLM
+    And I GET "/sprints/s1"
+    Then the page contains the text "Generation failed"
