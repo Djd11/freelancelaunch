@@ -69,6 +69,20 @@
               {% for pf in lesson.pitfalls %}<li style="margin-bottom:4px">{{ pf }}</li>{% endfor %}
             </ul>
             {% endif %}
+
+            {% if lesson.quiz and lesson.quiz|length > 0 %}
+            <div style="margin-top:16px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+              <b style="font-family:var(--font-display);font-size:14px">🧠 Knowledge Check</b>
+              <p class="xs muted" style="margin:4px 0 10px">Test yourself on what you just learned.</p>
+              {% for q in lesson.quiz %}
+              <div style="margin-bottom:10px">
+                <div class="small" style="font-weight:600;color:var(--ink-2)">{{ loop.index }}. {{ q }}</div>
+                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:#C96442;font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
+                <div class="small" style="display:none;margin-top:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius);color:var(--ink-2)">{{ lesson.quiz_answers[loop.index0] if lesson.quiz_answers and lesson.quiz_answers|length > loop.index0 else '—' }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
           {% else %}
           <div style="background:var(--ink);border-radius:var(--radius);color:#E8E5DE;font-size:14px;padding:18px 20px">
@@ -87,6 +101,20 @@
             <ul style="margin:6px 0 0 18px;opacity:.8">
               {% for pf in lesson.pitfalls %}<li style="margin-bottom:4px">{{ pf }}</li>{% endfor %}
             </ul>
+            {% endif %}
+
+            {% if lesson.quiz and lesson.quiz|length > 0 %}
+            <div style="margin-top:16px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+              <b style="font-family:var(--font-display);font-size:14px">🧠 Knowledge Check</b>
+              <p class="xs muted" style="margin:4px 0 10px">Test yourself on what you just learned.</p>
+              {% for q in lesson.quiz %}
+              <div style="margin-bottom:10px">
+                <div class="small" style="font-weight:600;color:var(--ink-2)">{{ loop.index }}. {{ q }}</div>
+                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:#C96442;font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
+                <div class="small" style="display:none;margin-top:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius);color:var(--ink-2)">{{ lesson.quiz_answers[loop.index0] if lesson.quiz_answers and lesson.quiz_answers|length > loop.index0 else '—' }}</div>
+              </div>
+              {% endfor %}
+            </div>
             {% endif %}
           </div>
           {% endif %}
