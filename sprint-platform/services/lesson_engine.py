@@ -115,6 +115,19 @@ def _domain_context(tools):
 
 # ─── LLM prompt + parsing ─────────────────────────────────────────────
 
+# Quiz + answer-key fields appended to every lesson prompt (content-quality
+# P1-3): a 3-4 question knowledge check with a parallel, specific answer key.
+# Stored inside sprint_days.action_payload.lesson (JSONB — no migration).
+_QUIZ_INSTRUCTION = (
+    ' Also include a "quiz": a list of 3-4 short knowledge-check questions '
+    '(strings) that test the learner on the EXACT trigger / variable / block / '
+    'step just taught (not generic trivia), and a parallel "quiz_answers": '
+    'list of 3-4 answer strings (one per question) that are specific and '
+    'non-generic — each answer must name the concrete feature/syntax from the '
+    'lesson. Keep "quiz" and "quiz_answers" the same length.'
+)
+
+
 def _lesson_prompt(job, day, action_type, project_title,
                    gap_fill_topic=None, domain_context=""):
     job_title = (job or {}).get("title") or "the target job"
@@ -134,9 +147,10 @@ def _lesson_prompt(job, day, action_type, project_title,
             "copy-work replication, Phase B: mock contract, Phase C: proposals), "
             "(4) one quick win they can do today to get started. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
-            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
+            '"quiz_answers": ["...", "..."]}.'
         )
-        return prompt
+        return prompt + _QUIZ_INSTRUCTION
 
     # Copy-work days (2-5): step-by-step build instructions
     if action_type == "copywork":
@@ -153,11 +167,12 @@ def _lesson_prompt(job, day, action_type, project_title,
             "Be concrete and actionable — the learner should be able to follow along "
             "click-by-click using this toolset's actual feature names. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
-            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
+            '"quiz_answers": ["...", "..."]}.'
         )
         if gap_fill_topic:
             prompt += f" Gap-fill focus: {gap_fill_topic}."
-        return prompt
+        return prompt + _QUIZ_INSTRUCTION
 
     # Contract days (6-8): executing the mock contract
     if action_type == "contract":
@@ -171,9 +186,10 @@ def _lesson_prompt(job, day, action_type, project_title,
             "Be concrete — reference specific features and integrations of this niche's "
             "tools, and deliverable formats the client would expect. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
-            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
+            '"quiz_answers": ["...", "..."]}.'
         )
-        return prompt
+        return prompt + _QUIZ_INSTRUCTION
 
     # Case-study days (9-10): writing the case study
     if action_type == "case-study":
@@ -187,9 +203,10 @@ def _lesson_prompt(job, day, action_type, project_title,
             "(3) how to quantify results (even estimated ones), (4) the structure that "
             "clients want to see. This case study becomes their portfolio piece. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
-            '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+            '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
+            '"quiz_answers": ["...", "..."]}.'
         )
-        return prompt
+        return prompt + _QUIZ_INSTRUCTION
 
     # Proposal days (11-14): building and sending proposals
     prompt = (
@@ -202,9 +219,10 @@ def _lesson_prompt(job, day, action_type, project_title,
         "contract and case study, (3) how to personalize each proposal, (4) what to "
         "do after sending (track, follow up). "
         'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
-        '"key_points": ["...", "..."], "pitfalls": ["...", "..."]}.'
+        '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
+        '"quiz_answers": ["...", "..."]}.'
     )
-    return prompt
+    return prompt + _QUIZ_INSTRUCTION
 
 
 def _load_json_object(text):
@@ -248,6 +266,8 @@ def clean_lesson(lesson):
         "script": _clean_escapes(lesson.get("script")),
         "key_points": [_clean_escapes(k) for k in (lesson.get("key_points") or [])],
         "pitfalls": [_clean_escapes(p) for p in (lesson.get("pitfalls") or [])],
+        "quiz": [_clean_escapes(q) for q in (lesson.get("quiz") or [])],
+        "quiz_answers": [_clean_escapes(a) for a in (lesson.get("quiz_answers") or [])],
     }
     if lesson.get("voiceover"):
         clean["voiceover"] = lesson["voiceover"]
@@ -255,7 +275,7 @@ def clean_lesson(lesson):
 
 
 def _parse_json(text):
-    """Lesson-shape parser — title/script/key_points from the raw LLM dict."""
+    """Lesson-shape parser — title/script/key_points/quiz from the raw LLM dict."""
     data = _load_json_object(text)
     if not data:
         return None
@@ -265,7 +285,54 @@ def _parse_json(text):
         "script": _clean_escapes(str(data.get("script") or "")).strip(),
         "key_points": [_clean_escapes(str(k)) for k in (data.get("key_points") or []) if str(k).strip()],
         "pitfalls": [_clean_escapes(str(p)) for p in (data.get("pitfalls") or []) if str(p).strip()],
+        "quiz": [_clean_escapes(str(q)) for q in (data.get("quiz") or []) if str(q).strip()],
+        "quiz_answers": [_clean_escapes(str(a)) for a in (data.get("quiz_answers") or []) if str(a).strip()],
     }
+
+
+def _quiz_verify_prompt(lesson):
+    """Build the verification prompt for a generated quiz (content-quality P1-3):
+    mirrors daily-tech-study's practice discipline — the answers must be specific
+    and non-generic, or they get repaired."""
+    import json as _json
+    return (
+        "You are a rigorous technical editor. A lesson was generated with a quiz "
+        "and answer key. Verify each answer is SPECIFIC (names the exact feature, "
+        "trigger, variable, or syntax from the lesson) and non-generic. "
+        "If every answer is specific, reply exactly: {\"ok\": true}. "
+        "If any answer is generic or wrong, reply with a REPAIRED JSON: "
+        '{"quiz": ["...", "..."], "quiz_answers": ["specific answer", "..."]} '
+        "matching the lesson below.\n\n"
+        "LESSON:\n" + _json.dumps(lesson, ensure_ascii=False)
+    )
+
+
+def _verify_lesson_quiz(sb, lesson):
+    """Run/repair verification for the lesson's quiz (content-quality P1-3).
+
+    Returns (quiz, quiz_answers) — either the original pair (when the LLM
+    confirms they are specific) or a repaired pair. A None/garbage LLM response
+    keeps the original answers (best-effort, never drops the quiz)."""
+    quiz = lesson.get("quiz") or []
+    answers = lesson.get("quiz_answers") or []
+    if not quiz or not answers:
+        return quiz, answers
+    try:
+        text = call_llm(_quiz_verify_prompt(lesson), timeout=60, max_retries=2, backoff_base=2)
+    except Exception:
+        return quiz, answers
+    if not text:
+        return quiz, answers
+    data = _load_json_object(text)
+    if not data:
+        return quiz, answers
+    if data.get("ok") is True:
+        return quiz, answers
+    new_quiz = [str(q) for q in (data.get("quiz") or []) if str(q).strip()]
+    new_answers = [str(a) for a in (data.get("quiz_answers") or []) if str(a).strip()]
+    if new_quiz and new_answers and len(new_quiz) == len(new_answers):
+        return new_quiz, new_answers
+    return quiz, answers
 
 
 def _project_prompt(job, project_index, domain_context=""):
@@ -359,12 +426,15 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
     parsed = _parse_json(text)
     if not parsed or not parsed.get("script"):
         raise LLMGenerationError("LLM returned an unusable lesson (missing script)")
+    quiz, quiz_answers = _verify_lesson_quiz(sb, parsed)
     return {
         "title": parsed["title"],
         "objective": parsed["objective"] or "",
         "script": parsed["script"],
         "key_points": parsed["key_points"] or [],
         "pitfalls": parsed["pitfalls"] or [],
+        "quiz": quiz,
+        "quiz_answers": quiz_answers,
     }
 
 

@@ -77,3 +77,20 @@ Feature: Day Content Quality — completable Phase A, job-grounded copy-work, Da
     When the content generation worker runs for sprint "s1"
     Then copy-work project 1 for sprint "s1" has between 3 and 5 clone steps
     And copy-work project 1 for sprint "s1" has exactly 3 rubric items
+
+  Scenario: Generated lessons include a quiz with an answer key
+    When the content generation worker runs for sprint "s1"
+    Then day 2 of sprint "s1" has a lesson with at least 3 quiz questions
+    And day 2 of sprint "s1" has a lesson with quiz_answers for every question
+
+  Scenario: Gate B passes only when the deliverable meets the brief's acceptance criteria
+    Given the mock contract brief for sprint "s1" requires "Message contains the dynamic summary block"
+    And a case study "Mock Case" exists for sprint "s1"
+    When I submit the mock contract for sprint "s1" with deliverable_url "https://me.dev/flow" missing that requirement
+    Then gate "B" has not passed verification for sprint "s1"
+    When I resubmit with a deliverable containing the dynamic summary block
+    Then gate "B" has passed verification for sprint "s1"
+
+  Scenario: The mock contract submit form captures the deliverable content
+    When I GET "/sprints/s1/contract"
+    Then the page contains the text "deliverable_text"

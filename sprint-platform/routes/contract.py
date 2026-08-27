@@ -124,10 +124,15 @@ def submit(sprint_id):
         flash("That doesn't look like a valid link — paste the full URL (starting with http:// or https://).")
         return redirect(url_for("contract.brief", sprint_id=sprint_id))
 
+    # The deliverable's own content (or attached artifact text) — the Gate B
+    # content check parses it for the rubric-named observable items (P0-2).
+    deliverable_text = request.form.get("deliverable_text", "").strip()
+
     record_review(sb, sprint_id, "B", status="pending", submitted_url=url)
     # Gate B auto-check (arch §7: contract submit → inline auto-test): a valid
-    # deliverable URL + a saved case study → pass → Phase C unlocks.
-    auto_check_gate_b(sb, sprint_id)
+    # deliverable URL + a saved case study + (when rubrics exist) the deliverable
+    # content containing those artifacts → pass → Phase C unlocks.
+    auto_check_gate_b(sb, sprint_id, deliverable_text=deliverable_text)
     flash("Deliverable submitted — verification service is checking your flow.")
     return redirect(url_for("contract.brief", sprint_id=sprint_id))
 

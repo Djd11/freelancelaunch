@@ -216,11 +216,13 @@ def _seed_static_data(adapter: LiveDBAdapter):
         ).execute()
 
 
-def _fake_mentor_llm(prompt, timeout=30):
+def _fake_mentor_llm(prompt, timeout=30, **kwargs):
     """Deterministic stand-in for the mentor LLM — echoes the target job's
     exact wording so the grounding gate passes and answers stay stable. When
     the prompt carries earlier turns (mentor memory), the answer references
-    the learner's earlier question so memory is observable in tests."""
+    the learner's earlier question so memory is observable in tests. Accepts
+    **kwargs (timeout/max_retries/backoff_base) so it can stand in for the
+    real call_llm signature used by mentor_agent.answer."""
     import re
     m = re.search(r"job posting says: (['\"])(.*?)\1", prompt or "", re.DOTALL)
     desc = m.group(2) if m else ""

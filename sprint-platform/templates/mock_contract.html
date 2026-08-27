@@ -40,7 +40,9 @@
           <p class="small" style="font-weight:700;margin-bottom:10px">Submit your deliverable for verification</p>
           <form method="post" action="/sprints/{{ sprint.id }}/contract/submit">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div style="display:flex;gap:10px">
+            <textarea name="deliverable_text" rows="3" aria-label="Deliverable description"
+              placeholder="Paste or describe what you built so verification can check it against the brief (e.g. the dynamic summary block, trigger used, steps completed)…"></textarea>
+            <div style="display:flex;gap:10px;margin-top:10px">
               <input type="url" name="submission_url" placeholder="Paste a link to your deliverable…" aria-label="Deliverable link">
               <button class="btn btn-g" type="submit">Submit deliverable for verification</button>
             </div>

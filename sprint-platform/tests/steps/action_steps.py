@@ -154,7 +154,14 @@ def _fake_generation_llm(prompt, **kwargs):
                             focus or "The smallest reproducible piece you can build today"],
             "pitfalls": ["Copying a generic template instead of the posting's exact flow",
                           "Skipping the dynamic cart block the client names"],
+            "quiz": [f"What trigger fires this {job_title} flow?",
+                      "Which block carries the dynamic content?"],
+            "quiz_answers": ["The start event named in the posting.",
+                              "The dynamic summary block configured per the posting."],
         })
+    # Quiz verification pass (content-quality P1-3): confirm answers are specific.
+    if "verify" in (prompt or "").lower() and "quiz" in (prompt or "").lower():
+        return json.dumps({"ok": True})
     # Regular day lesson (setup, copywork, contract, case-study, proposals)
     # The script uses markdown-style numbered steps and bold emphasis so the
     # format_script Jinja2 filter converts them to <ol>/<b> HTML for readability.
@@ -172,6 +179,12 @@ def _fake_generation_llm(prompt, **kwargs):
                         "Test before publishing"],
         "pitfalls": ["Skipping the test step",
                       "Using the wrong trigger for this flow type"],
+        "quiz": ["What trigger starts the flow in this niche's tool?",
+                  "Which variable holds the dynamic content?",
+                  "How do you test the flow before going live?"],
+        "quiz_answers": ["The start event named in the job posting (e.g. Checkout Started).",
+                          "The dynamic summary block bound to the order/cart object.",
+                          "Send a test event and confirm the email renders correctly."],
     })
 
 
@@ -263,16 +276,21 @@ def step_worker_run_no_llm(context, sid):
 
 def _fake_proposals_llm(prompt, **kwargs):
     """Deterministic stand-in for the LLM in proposal-fill tests — returns the
-    batched JSON array of engineered drafts the real model produces."""
+    batched JSON array of engineered drafts the real model produces. Echoes any
+    learner-submitted URLs found in the prompt into the proof so the P1-2
+    grounding (cite the real deliverable, not an abstract Mock Contract) is
+    observable in assertions."""
     import json
     import re
     titles = re.findall(r'- "([^"]+)"', prompt or "")
+    urls = re.findall(r'https?://[^\s")]+', prompt or "")
+    url_text = (" See my build at " + ", ".join(urls)) if urls else ""
     out = []
     for t in titles:
         out.append({
             "job_title": t,
             "hook": f"I see you need {t} handled — I just rebuilt a matching flow for a Mock Contract.",
-            "proof": "I completed a Mock Contract brief in this niche and passed a 3-point checklist.",
+            "proof": "I completed a Mock Contract brief in this niche and passed a 3-point checklist." + url_text,
             "cta": "Happy to run a quick scope call this week.",
             "score": 85,
         })
@@ -388,6 +406,59 @@ def step_gate_not_passed(context, gate, sid):
         .eq("sprint_id", real_sprint_id).eq("gate", gate).execute().data
     assert not rows or rows[0].get("status") != "pass", \
         f"gate {gate} unexpectedly passed for sprint {sid}: {rows}"
+
+
+@given('copy-work project {n} for sprint "{sid}" has rubric "{rubric}"')
+def step_project_has_rubric(context, n, sid, rubric):
+    """Set a single explicit rubric item on a copy-work project so Gate B's
+    content check has a concrete observable artifact to look for (P0-2)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("copywork_projects").update({
+        "rubric": [rubric],
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
+
+@given('the mock contract brief for sprint "{sid}" requires "{req}"')
+def step_brief_requires(context, sid, req):
+    """Seed the capstone brief's acceptance criteria so Gate B's content check
+    validates the deliverable against the brief's OWN requirements (critique I2),
+    not the copy-work rubric."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("capstone_briefs").select("id") \
+        .eq("sprint_id", real_sprint_id).limit(1).execute().data
+    if rows:
+        adapter.sb.table("capstone_briefs").update({"requirements": req}) \
+            .eq("id", rows[0]["id"]).execute()
+    else:
+        # job_feed_id is NOT NULL — reuse the cluster's first feed row.
+        feed = adapter.sb.table("job_feed").select("id") \
+            .eq("status", "active").limit(1).execute().data
+        adapter.sb.table("capstone_briefs").insert({
+            "sprint_id": real_sprint_id, "title": "Mock Brief", "requirements": req,
+            "job_feed_id": feed[0]["id"] if feed else None,
+        }).execute()
+
+
+@when('I submit the mock contract for sprint "{sid}" with deliverable_url "{url}" missing that requirement')
+def step_submit_contract_missing(context, sid, url):
+    """Submit a Mock Contract deliverable whose content does NOT meet the brief's
+    acceptance criterion → Gate B must NOT pass (P0-2)."""
+    _post(context, f"/sprints/{sid}/contract/submit", data={
+        "submission_url": url,
+        "deliverable_text": "I rebuilt a generic checkout flow and tested it end to end.",
+    })
+
+
+@when('I resubmit with a deliverable containing the dynamic summary block')
+def step_resubmit_contract_with_artifact(context):
+    """Resubmit the Mock Contract with deliverable content that DOES contain the
+    rubric-named artifact → Gate B must pass (P0-2)."""
+    _post(context, "/sprints/s1/contract/submit", data={
+        "submission_url": "https://me.dev/flow-with-artifact",
+        "deliverable_text": "Here is my finished deliverable. Message contains the dynamic summary block.",
+    })
 
 
 @then('copy-work project {n} for sprint "{sid}" is not marked done')
@@ -542,6 +613,28 @@ def step_day_lesson_pitfall(context, n, sid):
     assert (lesson.get("pitfalls") or []), f"day {n} lesson has no pitfalls"
 
 
+@then('day {n} of sprint "{sid}" has a lesson with at least {k} quiz questions')
+def step_day_lesson_quiz_count(context, n, sid, k):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    quiz = lesson.get("quiz") or []
+    assert len(quiz) >= int(k), f"day {n} lesson has {len(quiz)} quiz questions, expected >= {k}"
+
+
+@then('day {n} of sprint "{sid}" has a lesson with quiz_answers for every question')
+def step_day_lesson_quiz_answers(context, n, sid):
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    quiz = lesson.get("quiz") or []
+    answers = lesson.get("quiz_answers") or []
+    assert quiz, f"day {n} lesson has no quiz to answer"
+    assert len(answers) == len(quiz), \
+        f"day {n} lesson has {len(answers)} answers for {len(quiz)} questions"
+    # M1: answer key must be specific, not a generic placeholder — each answer
+    # carries real content (the P1-3 fix claims non-generic answers).
+    for a in answers:
+        assert isinstance(a, str) and len(a.strip()) >= 5, \
+            f"day {n} quiz answer is too short/generic: {a!r}"
+
+
 @then('copy-work project {p} for sprint "{sid}" has between {lo} and {hi} clone steps')
 def step_project_clone_count(context, p, sid, lo, hi):
     adapter = get_live_adapter()
@@ -691,6 +784,32 @@ def step_proposal_submitted(context, pid):
     assert rows and rows[0].get("status") == "submitted", f"proposal {pid} not submitted: {rows}"
 
 
+@given('copy-work project {n} for sprint "{sid}" has submitted_url "{url}" and rubric_checked all true')
+def step_project_submitted_url_checked(context, n, sid, url):
+    """Seed a Gate-A-passed project: a valid submitted URL plus every rubric item
+    self-checked (content-quality P1-2 needs this to ground the proposal proof in
+    the learner's real deliverable)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("copywork_projects").update({
+        "submitted_url": url,
+        "rubric_checked": [True, True, True],
+    }).eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
+
+@then('the proposal for the live job mentions "{text}"')
+def step_proposal_mentions(context, text):
+    """Assert at least one generated proposal body cites the learner's real
+    submitted deliverable URL (content-quality P1-2 grounding)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id("s1")
+    rows = adapter.sb.table("proposals").select("template_body") \
+        .eq("sprint_id", real_sprint_id).execute().data
+    bodies = [r.get("template_body") or "" for r in rows]
+    assert any(text in b for b in bodies), \
+        f"no proposal mentions {text!r}; bodies={bodies!r}"
+
+
 @then('the proposal "{pid}" is submitted on platform "{platform}"')
 def step_proposal_platform_status(context, pid, platform):
     adapter = get_live_adapter()
@@ -765,3 +884,52 @@ def step_mentor_session(context, sid, job):
     real_job_id = get_static_job_id(job)
     rows = adapter.sb.table("mentor_sessions").select("*").eq("sprint_id", real_sprint_id).eq("job_feed_id", real_job_id).execute().data
     assert rows, f"no mentor session for ({sid}, {job})"
+
+
+@given('sprint "{sid}" stored clone step "{step}" for project {n}')
+def step_stored_clone_step(context, sid, step, n):
+    """Seed a clone step on a copy-work project so the mentor RAG contradiction
+    check has stored build content to compare against (content-quality P1-1)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("copywork_projects").select("clone_steps") \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).limit(1).execute().data
+    existing = (rows[0].get("clone_steps") or []) if rows else []
+    if step not in existing:
+        existing = existing + [step]
+    adapter.sb.table("copywork_projects").update({"clone_steps": existing}) \
+        .eq("sprint_id", real_sprint_id).eq("project_index", int(n)).execute()
+
+
+@when('the learner asks the mentor "{question}"')
+def step_learner_asks_mentor(context, question):
+    """Drive the mentor agent directly with a stubbed LLM that returns an answer
+    advising a trigger. Asserts the returned answer (if any) does not contradict
+    the stored clone steps (content-quality P1-1)."""
+    import services.mentor_agent as ma
+    from services.llm import LLMGenerationError
+    # Stub returns an answer that mentions a contradicting trigger and contains
+    # two job-description terms ("checkout", "flow") so it clears the term bar
+    # and reaches the contradiction check.
+    ma.call_llm = lambda prompt, **k: \
+        "You should use the Purchase Completed trigger for this checkout flow."
+    job_description = "Build a checkout flow with dynamic content."
+    real_sprint_id = get_live_adapter().resolve_sprint_id("s1")
+    try:
+        context.mentor_result = ma.answer(
+            question, job_description, sprint_id=real_sprint_id,
+            sb=get_live_adapter().sb)
+        context.mentor_error = None
+    except LLMGenerationError as exc:
+        context.mentor_error = str(exc)
+        context.mentor_result = None
+
+
+@then('the mentor answer does not advise a trigger contradicting the stored clone steps')
+def step_mentor_no_contradiction(context):
+    if context.mentor_error:
+        # Rejected for contradicting stored clone steps — acceptable outcome.
+        return
+    answer = (context.mentor_result or {}).get("answer", "")
+    assert "purchase completed" not in answer.lower(), \
+        f"mentor answer advises a contradicting trigger: {answer!r}"

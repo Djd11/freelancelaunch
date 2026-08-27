@@ -107,7 +107,8 @@ def turn():
             if turn.get("answer"):
                 history.append({"role": "mentor", "text": turn["answer"]})
     try:
-        result = mentor_answer(question, job_desc, history=history)
+        result = mentor_answer(question, job_desc, history=history,
+                               sprint_id=sprint["id"] if sprint else None, sb=sb)
     except LLMGenerationError as exc:
         # LLM-only mentor: no deterministic template. Surface the failure
         # visibly (503) instead of answering with canned content.

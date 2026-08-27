@@ -44,7 +44,7 @@ def _extract_terms(job_description):
         "find", "give", "part", "take", "come", "back", "want", "way",
     }
 
-    words = re.findall(r"[a-zA-Z][a-zA-Z \-]{2,}", job_description.lower())
+    words = re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", job_description.lower())
     terms = []
     for w in words:
         w = w.strip()
@@ -81,7 +81,8 @@ def _build_prompt(question, job_description, terms, history=None):
 
 def _grounded(candidate, terms):
     """Safety gate: an LLM answer must:
-    1. Echo at least one job term (when terms exist)
+    1. Echo at least TWO distinct job/clone terms (when terms exist) — content-quality P1-1
+       raises the bar from 1 to >=2 so a generic answer can't pass on a single keyword.
     2. Never hand over the finished answer
     3. Be long enough to be substantive (>30 chars)
     4. Not be pure code blocks
@@ -94,23 +95,79 @@ def _grounded(candidate, terms):
     for pattern in FORBIDDEN_PATTERNS:
         if pattern.lower() in lowered:
             return False
-    if terms and not any(t in lowered for t in terms):
-        return False
+    if terms:
+        matched = sum(1 for t in set(terms) if t in lowered)
+        if matched < 2:
+            return False
     return True
 
 
-def answer(question, job_description=None, history=None):
+def _clone_steps_for(sprint_id, sb):
+    """RAG the sprint's stored clone steps (and reference specs) for the
+    contradiction check (content-quality P1-1). Returns a flat list of the
+    learner's actual build steps."""
+    if not sprint_id or not sb:
+        return []
+    rows = sb.table("copywork_projects").select("clone_steps") \
+        .eq("sprint_id", sprint_id).execute().data
+    steps = []
+    for r in rows:
+        steps.extend(r.get("clone_steps") or [])
+    return steps
+
+
+def _norm_trigger(text):
+    """Extract a normalized trigger phrase from a clone step or an answer.
+    Handles 'Trigger: X', 'Trigger on X', 'use the X trigger', 'X trigger'."""
+    if not text:
+        return None
+    t = text
+    m = re.search(r"trigger\s*[:\-]\s*([A-Za-z][A-Za-z ]{1,40})", t, re.IGNORECASE)
+    if m:
+        return " ".join(m.group(1).strip().lower().split())
+    m = re.search(r"([A-Z][A-Za-z]+(?:\s+[A-Za-z]+){0,3})\s+trigger", t, re.IGNORECASE)
+    if m:
+        return " ".join(m.group(1).strip().lower().split())
+    return None
+
+
+def _contradicts_clone_steps(answer, clone_steps):
+    """Return True ONLY when the answer advises a trigger that is ABSENT from the
+    learner's stored clone-step triggers (content-quality P1-1). A single
+    differing stored step no longer flags a contradiction — the answer must
+    advise a trigger that matches none of the stored triggers, so a valid
+    coaching answer referencing one of the real steps is never falsely blocked
+    (addresses critique I4 false-positive risk)."""
+    claimed = _norm_trigger(answer)
+    if not claimed:
+        return False
+    stored = {_norm_trigger(s) for s in clone_steps}
+    stored.discard(None)
+    if not stored:
+        return False
+    return claimed not in stored
+
+
+def answer(question, job_description=None, history=None, sprint_id=None, sb=None):
     """Return a guided, job-grounded LLM answer. Never hands over the finished
-    answer. Raises LLMGenerationError when no provider answered or the answer
-    failed the grounding gate — the route surfaces a visible error (LLM-only,
-    no deterministic template). history is a list of {"role", "text"} prior
-    turns so the mentor can reference the learner's earlier exchange."""
+    answer. Raises LLMGenerationError when no provider answered, the answer
+    failed the grounding gate, or the answer contradicts the learner's stored
+    clone steps (content-quality P1-1 RAG check).
+
+    history is a list of {"role", "text"} prior turns so the mentor can
+    reference the learner's earlier exchange. sprint_id/sb enable RAG over the
+    sprint's stored copy-work content for the contradiction check."""
     job_description = job_description or ""
     terms = _extract_terms(job_description)
+    clone_steps = _clone_steps_for(sprint_id, sb)
 
     candidate = call_llm(_build_prompt(question, job_description, terms, history), timeout=30, max_retries=3, backoff_base=2)
     if not candidate:
         raise LLMGenerationError("No LLM provider answered the mentor turn")
+    # Content-quality P1-1: the mentor must not advise a trigger that contradicts
+    # the actually-stored clone steps for this sprint.
+    if _contradicts_clone_steps(candidate, clone_steps):
+        raise LLMGenerationError("The mentor answer contradicted the stored clone steps")
     if not _grounded(candidate, terms):
         raise LLMGenerationError("The LLM answer was not grounded in the target job's terminology")
 

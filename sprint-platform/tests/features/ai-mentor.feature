@@ -49,3 +49,8 @@ Feature: AI Mentor (mockup screen 8)
   Scenario: Mentor sessions are scoped to the user's sprint and target job
     When I POST to "/mentor/turn" with JSON {"question": "How do I segment VIP buyers?"}
     Then a mentor session exists for sprint "s1" and job "email-automation-1"
+
+  Scenario: Mentor answer contradicting stored clone steps is rejected
+    Given sprint "s1" stored clone step "Trigger: Checkout Started" for project 1
+    When the learner asks the mentor "Should I use the Purchase Completed trigger?"
+    Then the mentor answer does not advise a trigger contradicting the stored clone steps

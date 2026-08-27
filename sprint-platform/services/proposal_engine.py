@@ -23,13 +23,13 @@ def _excerpt(text, limit=300):
     return text[:limit].rstrip() + ("…" if len(text) > limit else "")
 
 
-def _proposals_prompt(jobs):
+def _proposals_prompt(jobs, sprint_context=None):
     lines = []
     for job in jobs:
         title = job.get("title") or "this job"
         desc = _excerpt(job.get("description") or "")
         lines.append(f"- \"{title}\": {desc}" if desc else f"- \"{title}\"")
-    return (
+    prompt = (
         "You engineer proposal drafts for a freelancer who just completed a "
         "14-day sprint that included a paid-style Mock Contract in the same niche. "
         "For EACH live job posting below, write a short proposal draft with: "
@@ -40,6 +40,54 @@ def _proposals_prompt(jobs):
         '"cta": "...", "score": 85}, ...]. '
         "Jobs:\n" + "\n".join(lines)
     )
+    # Content-quality P1-2: ground the proof in the learner's REAL, self-verified
+    # deliverables (Gate-A-passed submitted_url + rubric checks + reference_spec
+    # title) instead of an abstract Mock Contract. Cite the concrete URL so the
+    # proof is a real artifact, not circular boilerplate.
+    if sprint_context:
+        ctx_lines = [
+            f"- Project {c.get('project_index')}: submitted deliverable "
+            f"{c.get('submitted_url')} (Gate A passed, rubric self-checked); "
+            f"reference spec: {c.get('reference_title') or 'n/a'}"
+            for c in sprint_context
+        ]
+        prompt += (
+            "\nThe learner's OWN verified deliverables — cite these real artifacts "
+            "in each proof sentence instead of an abstract Mock Contract:\n"
+            + "\n".join(ctx_lines) +
+            "\nIn each proof sentence, reference the learner's actual submitted_url "
+            '(e.g. "I rebuilt your flow — see my build at <their URL>").\n'
+        )
+    return prompt
+
+
+def _verified_deliverables(sb, sprint_id):
+    """Gather the learner's Gate-A-passed deliverables for the proof grounding
+    (content-quality P1-2). A deliverable counts only when it has a valid
+    submitted URL AND every rubric item was self-checked (mirrors Gate A)."""
+    try:
+        rows = sb.table("copywork_projects").select(
+            "project_index,submitted_url,rubric_checked,reference_spec,title") \
+            .eq("sprint_id", sprint_id).execute().data
+    except Exception:
+        # Defensive: reference_spec column may not be migrated yet (migration 003).
+        rows = sb.table("copywork_projects").select(
+            "project_index,submitted_url,rubric_checked,title") \
+            .eq("sprint_id", sprint_id).execute().data
+    out = []
+    for r in rows:
+        url = r.get("submitted_url")
+        checked = r.get("rubric_checked") or []
+        if not (isinstance(url, str) and (url.startswith("http://") or url.startswith("https://"))):
+            continue
+        if not (len(checked) >= 3 and all(checked)):
+            continue
+        out.append({
+            "project_index": r.get("project_index"),
+            "submitted_url": url,
+            "reference_title": (r.get("reference_spec") or "").strip()[:80] or (r.get("title") or ""),
+        })
+    return out
 
 
 def _parse_proposals(text):
@@ -124,8 +172,14 @@ def fill_drafts(sb, sprint_id, cluster_key=None):
     jobs = [j for j in jobs if j]
     if not jobs:
         return
+    # Content-quality P1-2: ground the proof in the learner's own verified
+    # deliverables (Gate-A-passed submitted_url + rubric checks + reference_spec).
     try:
-        parsed = _parse_proposals(call_llm(_proposals_prompt(jobs), timeout=90, max_retries=3, backoff_base=2))
+        sprint_context = _verified_deliverables(sb, sprint_id)
+    except Exception:
+        sprint_context = []
+    try:
+        parsed = _parse_proposals(call_llm(_proposals_prompt(jobs, sprint_context=sprint_context), timeout=90, max_retries=3, backoff_base=2))
     except LLMGenerationError:
         # Mark every pending draft as failed — the page shows a visible error.
         for d in pending:

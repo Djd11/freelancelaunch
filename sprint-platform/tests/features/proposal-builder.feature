@@ -25,6 +25,11 @@ Feature: Proposal Builder & First-Bid Challenge (mockup screen 6)
     Then the page contains the text "I see you need"
     And the page contains the text "Mock Contract"
 
+  Scenario: Proposal proof references the learner's actual submitted deliverable
+    Given copy-work project 1 for sprint "s1" has submitted_url "https://me.dev/p1" and rubric_checked all true
+    When the proposal drafts are generated for sprint "s1"
+    Then the proposal for the live job mentions "https://me.dev/p1"
+
   Scenario: A proposal whose generation failed surfaces a visible error, never a template
     And the user has a verified platform "upwork"
     When the proposal drafts are generated for sprint "s1" with no LLM

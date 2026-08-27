@@ -655,6 +655,25 @@ def step_completed_outcomes(context, sent, held):
         }).eq("id", sprint["id"]).execute()
 
 
+@given('a case study "{title}" exists for sprint "{sid}"')
+def step_case_study_for_sprint(context, title, sid):
+    """Seed a completed case study directly on a given sprint so Gate B's
+    case-study precondition is met (P0-2 content-check scenario)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    real_user_id = adapter.resolve_user_id(TEST_USER_ID)
+    adapter.seed_table("case_studies", [{
+        "id": f"cs-{abs(hash(title)) % 100000}",
+        "sprint_id": real_sprint_id,
+        "user_id": real_user_id,
+        "title": title,
+        "problem": "Store lost checkouts to cart abandonment.",
+        "solution": "Built a 2-step flow with dynamic cart summary + coupon.",
+        "result": "Recovered 12% of abandoned carts in 4 weeks.",
+        "is_draft": False,
+    }], on_conflict="id")
+
+
 @given('the user has a case study "{title}"')
 def step_case_study(context, title):
     adapter = get_live_adapter()
