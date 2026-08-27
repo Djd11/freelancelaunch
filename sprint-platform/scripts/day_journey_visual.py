@@ -185,6 +185,22 @@ def main():
                     if day_no in COPYWORK_TITLES:
                         assert check_project_title(html, day_no), \
                             f"Day {day_no} missing project title (expected keywords from {COPYWORK_TITLES[day_no]!r})"
+                    # P1-4: a day WITH a generated lesson must render the
+                    # Knowledge Check section (post-feature quiz wiring) — the
+                    # "Generating…" / error states have no lesson yet, so skip
+                    # those until content exists.
+                    if "Generating your lesson" not in html and "Lesson generation failed" not in html:
+                        assert "Knowledge Check" in html, \
+                            f"Day {day_no} has a lesson but renders no Knowledge Check section"
+                        # At least one question carries a "Show answer" toggle.
+                        show_answer_count = html.count("Show answer")
+                        assert show_answer_count >= 1, \
+                            f"Day {day_no} Knowledge Check has no 'Show answer' toggle (no questions rendered?)"
+                        import re as _re
+                        rest = html.split("🧠 Knowledge Check", 1)[1] \
+                            if "🧠 Knowledge Check" in html else html
+                        assert _re.search(r'>\s*\d+\.\s', rest), \
+                            f"Day {day_no} Knowledge Check has no numbered quiz question"
                     print(f"  ✅ Day {day_no} verified")
 
                 # J3 Dashboard

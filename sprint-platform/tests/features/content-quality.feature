@@ -80,8 +80,19 @@ Feature: Day Content Quality — completable Phase A, job-grounded copy-work, Da
 
   Scenario: Generated lessons include a quiz with an answer key
     When the content generation worker runs for sprint "s1"
-    Then day 2 of sprint "s1" has a lesson with at least 3 quiz questions
+    Then a content generation prompt contains the quiz instruction
+    And day 2 of sprint "s1" has a lesson with at least 3 quiz questions
     And day 2 of sprint "s1" has a lesson with quiz_answers for every question
+
+  Scenario: Quiz verification repairs generic answers
+    When the content generation worker runs for sprint "s1" and the quiz verify repairs generic answers
+    Then day 2 of sprint "s1" has the repaired quiz answers
+
+  Scenario: A legacy lesson without quiz data renders without a Knowledge Check
+    Given day 2 of sprint "s1" has a lesson without quiz data
+    When I GET "/sprints/s1/day/2"
+    Then the response status is 200
+    And the page does not contain the text "Knowledge Check"
 
   Scenario: Gate B passes only when the deliverable meets the brief's acceptance criteria
     Given the mock contract brief for sprint "s1" requires "Message contains the dynamic summary block"

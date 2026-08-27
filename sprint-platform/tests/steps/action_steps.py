@@ -180,12 +180,38 @@ def _fake_generation_llm(prompt, **kwargs):
         "pitfalls": ["Skipping the test step",
                       "Using the wrong trigger for this flow type"],
         "quiz": ["What trigger starts the flow in this niche's tool?",
-                  "Which variable holds the dynamic content?",
-                  "How do you test the flow before going live?"],
+                   "Which variable holds the dynamic content?",
+                   "How do you test the flow before going live?"],
         "quiz_answers": ["The start event named in the job posting (e.g. Checkout Started).",
-                          "The dynamic summary block bound to the order/cart object.",
-                          "Send a test event and confirm the email renders correctly."],
+                           "The dynamic summary block bound to the order/cart object.",
+                           "Send a test event and confirm the email renders correctly."],
     })
+
+
+# P1-1: a fake that returns a REPAIRED quiz/answer pair when the engine sends
+# the verification prompt (services.lesson_engine._quiz_verify_prompt emits
+# "LESSON:" + the lesson JSON). This exercises the repair path of
+# _verify_lesson_quiz instead of the dead `{"ok": true}` branch, so the test
+# can assert the stored answers are the specific, repaired ones.
+_REPAIRED_QUIZ = [
+    "What trigger starts the flow in this niche's tool?",
+    "Which variable holds the dynamic content?",
+    "How do you test the flow before going live?",
+]
+_REPAIRED_ANSWERS = [
+    "The Checkout Started start event fires the flow in this niche's tool.",
+    "The dynamic order-summary block bound to the cart object holds the content.",
+    "Send a test event and confirm the email renders correctly in a live inbox.",
+]
+
+
+def _fake_repairing_llm(prompt, **kwargs):
+    """Like _fake_generation_llm, but the quiz-verify pass returns a repaired,
+    specific answer key (length-matched to the quiz) so _verify_lesson_quiz
+    actually replaces the original pair."""
+    if "LESSON:" in (prompt or ""):
+        return json.dumps({"quiz": _REPAIRED_QUIZ, "quiz_answers": _REPAIRED_ANSWERS})
+    return _fake_generation_llm(prompt, **kwargs)
 
 
 @given('I check all rubric items for project {project} of sprint "{sid}"')
@@ -272,6 +298,21 @@ def step_worker_run_no_llm(context, sid):
         le.generate_sprint_content(adapter.sb, real_sprint_id)
     except LLMGenerationError:
         pass  # expected — the failure is recorded on the day payload
+
+
+@when('the content generation worker runs for sprint "{sid}" and the quiz '
+      'verify repairs generic answers')
+def step_worker_run_quiz_repair(context, sid):
+    """Run the worker with a fake whose quiz-verify pass returns a REPAIRED,
+    specific answer key (content-quality P1-1) — exercises _verify_lesson_quiz's
+    repair path so the stored quiz_answers become the repaired ones."""
+    import services.lesson_engine as le
+    import services.video_engine as ve
+    le.call_llm = _fake_repairing_llm
+    ve.voiceover_for_lesson = lambda *a, **k: None
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    le.generate_sprint_content(adapter.sb, real_sprint_id)
 
 
 def _fake_proposals_llm(prompt, **kwargs):
@@ -533,6 +574,19 @@ def step_prompts_clean(context, sid, first, second):
         f"{len(bad)} prompt(s) mention {first!r}/{second!r}; first offender: {bad[0][:300]}"
 
 
+@then('a content generation prompt contains the quiz instruction')
+def step_prompt_quiz_instruction(context):
+    """P0-1: prove the generated LLM prompt actually carried _QUIZ_INSTRUCTION
+    (which contains both 'quiz' and 'quiz_answers'). The fake always returns a
+    quiz, so without this check a DEV edit that dropped the instruction would
+    still leave the BDD suite green (false-green gap)."""
+    from services.lesson_engine import _QUIZ_INSTRUCTION
+    prompts = getattr(context, "captured_prompts", None)
+    assert prompts is not None, "worker did not run — no prompts captured"
+    assert any(_QUIZ_INSTRUCTION in (p or "") for p in prompts), \
+        "no captured generation prompt contains _QUIZ_INSTRUCTION; quiz prompt wiring may be broken"
+
+
 @then('days 6 to 14 draw from more than one distinct job posting')
 def step_prompts_rotate(context):
     """Phase B/C lessons must rotate across the ranked feed instead of every
@@ -633,6 +687,43 @@ def step_day_lesson_quiz_answers(context, n, sid):
     for a in answers:
         assert isinstance(a, str) and len(a.strip()) >= 5, \
             f"day {n} quiz answer is too short/generic: {a!r}"
+
+
+@then('day {n} of sprint "{sid}" has the repaired quiz answers')
+def step_day_lesson_repaired_answers(context, n, sid):
+    """P1-1: the stored quiz_answers are the SPECIFIC repaired pair returned by
+    the verify pass (not the generic original) — proves _verify_lesson_quiz's
+    repair path ran and replaced the answers."""
+    lesson = _day_lesson(get_live_adapter(), sid, n)
+    answers = lesson.get("quiz_answers") or []
+    assert answers == _REPAIRED_ANSWERS, \
+        f"day {n} quiz_answers={answers!r}, expected repaired {_REPAIRED_ANSWERS!r}"
+
+
+@given('day {n} of sprint "{sid}" has a lesson without quiz data')
+def step_seed_lesson_no_quiz(context, n, sid):
+    """P1-5: seed a LEGACY lesson (pre-feature) that has NO quiz/quiz_answers
+    so we can assert the day page still renders and hides the Knowledge Check
+    section gracefully (no 500, no broken toggle)."""
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    rows = adapter.sb.table("sprint_days").select("action_payload") \
+        .eq("sprint_id", real_sprint_id).eq("day_no", int(n)).limit(1).execute().data
+    assert rows, f"no day {n} row for sprint {sid}"
+    payload = dict(rows[0].get("action_payload") or {})
+    payload["lesson"] = {
+        "title": "Legacy lesson with no quiz",
+        "objective": "Do the thing the posting asks for.",
+        "script": "Rebuild the smallest real version of exactly what the posting asks for.",
+        "key_points": ["Use the exact trigger from the job posting",
+                       "Follow the step-by-step build sequence"],
+        "pitfalls": ["Skipping the test step",
+                     "Using the wrong trigger for this flow type"],
+    }
+    payload["lesson"].pop("quiz", None)
+    payload["lesson"].pop("quiz_answers", None)
+    adapter.sb.table("sprint_days").update({"action_payload": payload}) \
+        .eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
 
 
 @then('copy-work project {p} for sprint "{sid}" has between {lo} and {hi} clone steps')
