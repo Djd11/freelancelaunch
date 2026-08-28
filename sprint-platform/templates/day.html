@@ -23,7 +23,11 @@
       </div>
       {% endif %}
 
-      <div class="grid-lesson-wide" style="margin-top:22px">
+      <div style="position:sticky;top:0;z-index:20;display:flex;gap:8px;margin-top:22px;background:var(--surface);padding:10px;border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+        <button type="button" id="tab-lesson" onclick="showDayTab('lesson')" style="flex:1;padding:11px 10px;border:0;border-radius:var(--radius);font:inherit;font-weight:600;cursor:pointer;background:var(--ink);color:#fff">📖 Lesson</button>
+        <button type="button" id="tab-task" onclick="showDayTab('task')" style="flex:1;padding:11px 10px;border:0;border-radius:var(--radius);font:inherit;font-weight:600;cursor:pointer;background:var(--surface-2);color:var(--ink-2)">🛠️ Task</button>
+      </div>
+      <div id="panel-lesson">
         <div class="card">
           <h3 style="margin-bottom:12px">🎬 Watch · Lesson</h3>
           <div class="xs muted" style="margin:-6px 0 10px">TwoPanel HTML preview — kinetic text + TTS</div>
@@ -127,7 +131,9 @@
             </button>
           </form>
         </div>
+      </div>
 
+      <div id="panel-task" style="display:none">
         <div class="card">
           <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
           <p class="small muted">From a blank account, rebuild the exact flow:</p>
@@ -196,4 +202,17 @@
   </div>
 </section>
 <script src="/static/js/day.js"></script>
+<script>
+function showDayTab(which){
+  var lesson=document.getElementById('panel-lesson'), task=document.getElementById('panel-task');
+  var tl=document.getElementById('tab-lesson'), tt=document.getElementById('tab-task');
+  if(which==='lesson'){
+    lesson.style.display='block'; task.style.display='none';
+    tl.style.background='var(--ink)'; tl.style.color='#fff'; tt.style.background='var(--surface-2)'; tt.style.color='var(--ink-2)';
+  }else{
+    task.style.display='block'; lesson.style.display='none';
+    tt.style.background='var(--ink)'; tt.style.color='#fff'; tl.style.background='var(--surface-2)'; tl.style.color='var(--ink-2)';
+  }
+}
+</script>
 {% endblock %}
