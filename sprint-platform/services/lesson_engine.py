@@ -335,6 +335,98 @@ def _verify_lesson_quiz(sb, lesson):
     return quiz, answers
 
 
+def quiz_from_lesson_prompt(lesson):
+    """DEDICATED generation prompt for backfilling a quiz onto an EXISTING
+    lesson (content-quality P1-1 / F3). Takes the lesson's title/script/
+    key_points/pitfalls and asks the model for 3-4 knowledge-check questions
+    with a parallel, specific answer key.
+
+    This is intentionally NOT `_quiz_verify_prompt`: that prompt is a verify/
+    repair prompt ("A lesson was generated WITH a quiz…") and `_verify_lesson_quiz`
+    early-returns when the input has no quiz — so feeding a quiz-less lesson
+    through it is a silent no-op. Backfill needs a generation prompt that
+    CREATES the quiz from nothing.
+    """
+    lesson_blob = json.dumps({
+        "title": lesson.get("title") or "",
+        "script": lesson.get("script") or "",
+        "key_points": lesson.get("key_points") or [],
+        "pitfalls": lesson.get("pitfalls") or [],
+    }, ensure_ascii=False)
+    return (
+        "You are writing a knowledge-check quiz for an EXISTING lesson that was "
+        "already generated. Read the lesson below and write a short quiz that "
+        "tests the learner on the EXACT trigger / variable / block / step taught "
+        "in it (not generic trivia). "
+        'Reply with JSON only: {"quiz": ["...", "...", "..."], '
+        '"quiz_answers": ["specific answer", "...", "..."]} where "quiz" is a '
+        'list of 3-4 short knowledge-check questions (strings) and "quiz_answers" '
+        "is a parallel list of 3-4 answer strings (one per question) that are "
+        "specific and non-generic — each answer must name the concrete "
+        "feature/syntax from the lesson. Keep \"quiz\" and \"quiz_answers\" the "
+        "same length.\n\n"
+        "LESSON:\n" + lesson_blob
+    )
+
+
+def backfill_quiz(sb, sprint_id):
+    """Backfill `quiz`/`quiz_answers` for a sprint's legacy lessons that lack a
+    valid quiz (data-era gap: pre-feature lessons were generated before the quiz
+    field existed, and `generate_sprint_content` skips already-generated days).
+
+    - REQUIRES `sprint_id` (no tenant-wide default) — runs on one sprint only
+      (P1-1 / F2: avoids over-reaching other tenants' data).
+    - Selects days whose lesson EXISTS and `needs_quiz = not (quiz and
+      quiz_answers and len(quiz) == len(quiz_answers))`, so it also repairs
+      malformed lessons (quiz present but answers missing / length-mismatched).
+    - Days with no lesson are skipped (F5): backfill only repairs existing
+      lessons.
+    - For each selected day: generate via `quiz_from_lesson_prompt`, parse, then
+      run the existing `_verify_lesson_quiz` repair/parity pass, and merge
+      quiz/quiz_answers into `action_payload.lesson` ONLY when the generated quiz
+      is non-empty and length-matched (Fix 2 guard). Idempotent: a satisfied day
+      is skipped, so a re-run resumes safely.
+    Returns the number of days actually updated.
+    """
+    days = sb.table("sprint_days").select("day_no,action_payload") \
+        .eq("sprint_id", sprint_id).order("day_no").execute().data
+    updated = 0
+    for d in days:
+        day_no = d.get("day_no")
+        payload = dict(d.get("action_payload") or {})
+        lesson = payload.get("lesson")
+        if not lesson:
+            continue  # F5: no lesson to backfill
+        quiz = lesson.get("quiz") or []
+        answers = lesson.get("quiz_answers") or []
+        if quiz and answers and len(quiz) == len(answers):
+            continue  # already valid — idempotent skip
+        text = call_llm(quiz_from_lesson_prompt(lesson), timeout=90, max_retries=3, backoff_base=2)
+        if not text:
+            continue
+        parsed = _parse_json(text)
+        if not parsed:
+            continue
+        parsed_quiz = parsed.get("quiz") or []
+        parsed_answers = parsed.get("quiz_answers") or []
+        if not parsed_quiz or not parsed_answers:
+            continue
+        # verify/repair pass (enforces specificity + length parity)
+        new_quiz, new_answers = _verify_lesson_quiz(sb, {
+            "quiz": parsed_quiz, "quiz_answers": parsed_answers,
+        })
+        # Fix 2 guard: only merge when non-empty + length-matched
+        if not new_quiz or not new_answers or len(new_quiz) != len(new_answers):
+            continue
+        lesson["quiz"] = new_quiz
+        lesson["quiz_answers"] = new_answers
+        payload["lesson"] = lesson
+        sb.table("sprint_days").update({"action_payload": payload}) \
+            .eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
+        updated += 1
+    return updated
+
+
 def _project_prompt(job, project_index, domain_context=""):
     job_title = (job or {}).get("title") or "the target job"
     excerpt = _excerpt((job or {}).get("description") or "")
