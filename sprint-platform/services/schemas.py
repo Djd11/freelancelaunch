@@ -9,6 +9,13 @@ class LessonPayload(BaseModel):
     script: str
     key_points: list[str] = Field(default_factory=list)
     pitfalls: list[str] = Field(default_factory=list)
+    # Engagement preview fields (video-preview plan) — all OPTIONAL so legacy
+    # payloads (which lack them) still validate. Clamping of pre_quiz answer
+    # indices lives in services.lesson_engine, not here.
+    hook: str | None = None
+    day_overview: list[str] | None = None
+    usefulness_context: str | None = None
+    pre_quiz: list[dict] | None = None  # each: {"q": str, "options": list[str], "answer": int (0-based)}
 
 
 class ProjectAnatomy(BaseModel):

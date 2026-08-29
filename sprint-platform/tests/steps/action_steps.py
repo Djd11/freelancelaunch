@@ -165,6 +165,8 @@ def _fake_generation_llm(prompt, **kwargs):
     # Regular day lesson (setup, copywork, contract, case-study, proposals)
     # The script uses markdown-style numbered steps and bold emphasis so the
     # format_script Jinja2 filter converts them to <ol>/<b> HTML for readability.
+    # Engagement preview fields (video-preview plan) are included so the Day View
+    # renders the hook / overview / usefulness / pre-quiz block in BDD tests.
     return json.dumps({
         "title": f"Day lesson for {job_title}",
         "objective": f"Complete the day's task for {job_title}.",
@@ -185,6 +187,14 @@ def _fake_generation_llm(prompt, **kwargs):
         "quiz_answers": ["The start event named in the job posting (e.g. Checkout Started).",
                            "The dynamic summary block bound to the order/cart object.",
                            "Send a test event and confirm the email renders correctly."],
+        "hook": "Land your first Klaviyo automation gig faster — this lesson builds the exact flow clients pay for.",
+        "day_overview": ["Configure the right trigger from the posting",
+                          "Build the dynamic email step",
+                          "Test the flow before going live"],
+        "usefulness_context": "Upwork clients repeatedly post Klaviyo flow jobs; shipping this skill gets you shortlisted for real freelance work.",
+        "pre_quiz": [{"q": "What event starts the flow in this niche's tool?",
+                       "options": ["Checkout Started", "Order Refunded", "User Signup"],
+                       "answer": 0}],
     })
 
 

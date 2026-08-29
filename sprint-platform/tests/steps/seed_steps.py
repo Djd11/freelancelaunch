@@ -236,13 +236,45 @@ def step_day_lesson_voiceover(context, n, sid):
         "action_payload": {
             "lesson": {
                 "title": "Klaviyo flow setup for store: how to rebuild a real flow",
+                "objective": "Rebuild the smallest real version of what the posting asks for.",
                 "script": "Your target job is 'Klaviyo flow setup for store'. "
                           "Today you rebuild the smallest real version of what it asks for.",
                 "key_points": ["What the posting literally asks for", "The smallest reproducible piece"],
+                "hook": "Land your first Klaviyo automation gig faster — this lesson builds the exact flow clients pay for.",
+                "day_overview": ["Configure the right trigger", "Build the dynamic email step", "Test before going live"],
+                "usefulness_context": "Upwork clients repeatedly post Klaviyo flow jobs; this skill gets you shortlisted.",
+                "pre_quiz": [{"q": "What event starts the flow in this niche's tool?",
+                              "options": ["Checkout Started", "Order Refunded", "User Signup"],
+                              "answer": 0}],
                 "voiceover": {
                     "url": "https://example.com/voiceover/lesson.mp3",
                     "duration_seconds": 42.0,
                 },
+            }
+        },
+    }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()
+
+
+@given('day {n} of sprint "{sid}" has a stored lesson without engagement fields')
+def step_day_lesson_legacy(context, n, sid):
+    """Seed a LEGACY lesson that predates the engagement-preview fields: it carries
+    the original keys (title/objective/script/key_points/pitfalls/quiz/quiz_answers)
+    but NO hook/day_overview/usefulness_context/pre_quiz. Used by the engagement
+    BDD scenario to prove backward-compat (no error, no empty placeholder blocks).
+    """
+    adapter = get_live_adapter()
+    real_sprint_id = adapter.resolve_sprint_id(sid)
+    adapter.sb.table("sprint_days").update({
+        "action_payload": {
+            "lesson": {
+                "title": "Klaviyo flow setup for store: legacy lesson",
+                "objective": "Rebuild the smallest real version of what the posting asks for.",
+                "script": "Your target job is 'Klaviyo flow setup for store'. "
+                          "Today you rebuild the smallest real version of exactly what it asks for.",
+                "key_points": ["What the posting literally asks for", "The smallest reproducible piece"],
+                "pitfalls": ["Copying a generic template instead of the posting's exact flow"],
+                "quiz": ["What trigger starts this flow?"],
+                "quiz_answers": ["The start event named in the posting."],
             }
         },
     }).eq("sprint_id", real_sprint_id).eq("day_no", int(n)).execute()

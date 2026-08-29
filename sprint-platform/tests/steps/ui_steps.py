@@ -39,6 +39,23 @@ def step_ui_has_attribute(context, attr):
     assert f"{attr}=" in html, f"page has no element with attribute {attr!r}"
 
 
+@then('the pre-quiz appears before the lesson player')
+def step_ui_prequiz_before_player(context):
+    """The pre-quiz engagement block must render ABOVE the TwoPanel lesson player
+    in document order — for BOTH the voiceover variant (data-lesson-player) and
+    the non-voiceover variant (the 'TwoPanel' subtitle text)."""
+    html = getattr(context, "page_html", "") or (
+        context.response.get_data(as_text=True) if context.response is not None else ""
+    )
+    pq = html.find("Before you watch")
+    assert pq != -1, "pre-quiz block (Before you watch) not found on the page"
+    player = html.find("data-lesson-player")
+    two_panel = html.find("TwoPanel")
+    marker = player if player != -1 else two_panel
+    assert marker != -1, "no lesson player marker found on the page"
+    assert pq < marker, "pre-quiz does not appear before the lesson player"
+
+
 @then('the page does not contain any dead link')
 def step_ui_no_dead_links(context):
     html = getattr(context, "page_html", "") or (

@@ -127,6 +127,25 @@ _QUIZ_INSTRUCTION = (
     'lesson. Keep "quiz" and "quiz_answers" the same length.'
 )
 
+# Engagement fields (pre-lesson hook/overview/usefulness/pre-quiz) appended to
+# every lesson prompt so the Day View can render an engaging preview. Optional
+# in output; the template degrades gracefully when any are missing.
+_ENGAGEMENT_INSTRUCTION = (
+    ' Also include these four OPTIONAL engagement fields so the day preview is '
+    'compelling: (1) "hook": a 1-2 sentence punchy opener that names the '
+    "learner's concrete freelance win for THIS niche (e.g. \"Land your first "
+    'Klaviyo automation gig faster\"); (2) "day_overview": a list of 2-4 short '
+    'strings, "what you will learn today"; (3) "usefulness_context": 1 paragraph '
+    'explaining WHY this skill helps win freelance jobs, citing the live job '
+    'posting above (name the specific tool/feature clients ask for); (4) '
+    '"pre_quiz": a list of 1-2 objects testing the learner\'s PRIOR intuition '
+    'BEFORE the lesson — each object MUST be {"q": "...", "options": '
+    '["...","..."], "answer": <0-based index into options>}. Keep "pre_quiz" '
+    'distinct from the post-lesson "quiz". Write "script" as a NARRATIVE ARC '
+    '(context -> action -> payoff), still >80 chars, still ending with '
+    '"key_points" + "pitfalls".'
+)
+
 
 def _lesson_prompt(job, day, action_type, project_title,
                    gap_fill_topic=None, domain_context=""):
@@ -148,9 +167,9 @@ def _lesson_prompt(job, day, action_type, project_title,
             "(4) one quick win they can do today to get started. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
             '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
-            '"quiz_answers": ["...", "..."]}.'
+            '"quiz_answers": ["...", "..."], "hook": "...", "day_overview": ["...","..."], "usefulness_context": "...", "pre_quiz": [{"q":"...","options":["...","..."],"answer":0}]}.'
         )
-        return prompt + _QUIZ_INSTRUCTION
+        return prompt + _QUIZ_INSTRUCTION + _ENGAGEMENT_INSTRUCTION
 
     # Copy-work days (2-5): step-by-step build instructions
     if action_type == "copywork":
@@ -168,11 +187,11 @@ def _lesson_prompt(job, day, action_type, project_title,
             "click-by-click using this toolset's actual feature names. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
             '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
-            '"quiz_answers": ["...", "..."]}.'
+            '"quiz_answers": ["...", "..."], "hook": "...", "day_overview": ["...","..."], "usefulness_context": "...", "pre_quiz": [{"q":"...","options":["...","..."],"answer":0}]}.'
         )
         if gap_fill_topic:
             prompt += f" Gap-fill focus: {gap_fill_topic}."
-        return prompt + _QUIZ_INSTRUCTION
+        return prompt + _QUIZ_INSTRUCTION + _ENGAGEMENT_INSTRUCTION
 
     # Contract days (6-8): executing the mock contract
     if action_type == "contract":
@@ -187,9 +206,9 @@ def _lesson_prompt(job, day, action_type, project_title,
             "tools, and deliverable formats the client would expect. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
             '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
-            '"quiz_answers": ["...", "..."]}.'
+            '"quiz_answers": ["...", "..."], "hook": "...", "day_overview": ["...","..."], "usefulness_context": "...", "pre_quiz": [{"q":"...","options":["...","..."],"answer":0}]}.'
         )
-        return prompt + _QUIZ_INSTRUCTION
+        return prompt + _QUIZ_INSTRUCTION + _ENGAGEMENT_INSTRUCTION
 
     # Case-study days (9-10): writing the case study
     if action_type == "case-study":
@@ -204,9 +223,9 @@ def _lesson_prompt(job, day, action_type, project_title,
             "clients want to see. This case study becomes their portfolio piece. "
             'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
             '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
-            '"quiz_answers": ["...", "..."]}.'
+            '"quiz_answers": ["...", "..."], "hook": "...", "day_overview": ["...","..."], "usefulness_context": "...", "pre_quiz": [{"q":"...","options":["...","..."],"answer":0}]}.'
         )
-        return prompt + _QUIZ_INSTRUCTION
+        return prompt + _QUIZ_INSTRUCTION + _ENGAGEMENT_INSTRUCTION
 
     # Proposal days (11-14): building and sending proposals
     prompt = (
@@ -220,9 +239,9 @@ def _lesson_prompt(job, day, action_type, project_title,
         "do after sending (track, follow up). "
         'Reply with JSON only: {"title": "...", "objective": "...", "script": "...", '
         '"key_points": ["...", "..."], "pitfalls": ["...", "..."], "quiz": ["...", "..."], '
-        '"quiz_answers": ["...", "..."]}.'
+        '"quiz_answers": ["...", "..."], "hook": "...", "day_overview": ["...","..."], "usefulness_context": "...", "pre_quiz": [{"q":"...","options":["...","..."],"answer":0}]}.'
     )
-    return prompt + _QUIZ_INSTRUCTION
+    return prompt + _QUIZ_INSTRUCTION + _ENGAGEMENT_INSTRUCTION
 
 
 def _load_json_object(text):
@@ -253,6 +272,39 @@ def _clean_escapes(value):
     return value.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")
 
 
+def _normalize_engagement(data):
+    """Normalize the four engagement preview fields from a raw lesson dict.
+
+    Shared by both `_parse_json` (fresh LLM output) and `clean_lesson`
+    (backfilled rows) so freshly generated and already-stored lessons are
+    consistent. `pre_quiz` items whose `answer` is not a valid 0-based index
+    into `options` are DROPPED (models frequently emit 1-based or out-of-range
+    indices — an unclamped index would yield an empty reveal or IndexError).
+    """
+    raw_pq = (data.get("pre_quiz")) or []
+    norm_pq = []
+    for it in raw_pq:
+        if not isinstance(it, dict):
+            continue
+        q = str(it.get("q") or it.get("question") or "").strip()
+        opts = [str(o).strip() for o in (it.get("options") or []) if str(o).strip()]
+        try:
+            ans = int(it.get("answer") if it.get("answer") is not None else it.get("answer_index"))
+        except (ValueError, TypeError):
+            ans = -1
+        if not q or len(opts) < 2:
+            continue                      # needs a real question + >=2 options
+        if not (0 <= ans < len(opts)):
+            continue                      # DROP unsafe/out-of-range answer index
+        norm_pq.append({"q": q, "options": opts, "answer": ans})
+    return {
+        "hook": _clean_escapes(str(data.get("hook") or "")).strip(),
+        "day_overview": [_clean_escapes(str(x)) for x in (data.get("day_overview") or []) if str(x).strip()],
+        "usefulness_context": _clean_escapes(str(data.get("usefulness_context") or "")).strip(),
+        "pre_quiz": norm_pq,
+    }
+
+
 def clean_lesson(lesson):
     """Return a copy of a generated lesson with literal escape sequences
     normalized. New content is already clean (``_parse_json`` normalizes);
@@ -269,6 +321,11 @@ def clean_lesson(lesson):
         "quiz": [_clean_escapes(q) for q in (lesson.get("quiz") or [])],
         "quiz_answers": [_clean_escapes(a) for a in (lesson.get("quiz_answers") or [])],
     }
+    eng = _normalize_engagement(lesson)
+    clean["hook"] = eng["hook"]
+    clean["day_overview"] = eng["day_overview"]
+    clean["usefulness_context"] = eng["usefulness_context"]
+    clean["pre_quiz"] = eng["pre_quiz"]
     if lesson.get("voiceover"):
         clean["voiceover"] = lesson["voiceover"]
     return clean
@@ -279,6 +336,7 @@ def _parse_json(text):
     data = _load_json_object(text)
     if not data:
         return None
+    eng = _normalize_engagement(data)
     return {
         "title": _clean_escapes(str(data.get("title") or "")).strip(),
         "objective": _clean_escapes(str(data.get("objective") or "")).strip(),
@@ -287,6 +345,10 @@ def _parse_json(text):
         "pitfalls": [_clean_escapes(str(p)) for p in (data.get("pitfalls") or []) if str(p).strip()],
         "quiz": [_clean_escapes(str(q)) for q in (data.get("quiz") or []) if str(q).strip()],
         "quiz_answers": [_clean_escapes(str(a)) for a in (data.get("quiz_answers") or []) if str(a).strip()],
+        "hook": eng["hook"],
+        "day_overview": eng["day_overview"],
+        "usefulness_context": eng["usefulness_context"],
+        "pre_quiz": eng["pre_quiz"],
     }
 
 
@@ -527,6 +589,10 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
         "pitfalls": parsed["pitfalls"] or [],
         "quiz": quiz,
         "quiz_answers": quiz_answers,
+        "hook": parsed.get("hook") or "",
+        "day_overview": parsed.get("day_overview") or [],
+        "usefulness_context": parsed.get("usefulness_context") or "",
+        "pre_quiz": parsed.get("pre_quiz") or [],
     }
 
 
