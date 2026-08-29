@@ -5,10 +5,10 @@ import threading
 from flask import Blueprint, render_template, request, redirect, url_for, g, current_app
 
 from routes import require_login
-from services.supabase_client import get_supabase
 from services.sprint_planner import create_plan
 from services.copywork_engine import create_projects
 from services.lesson_engine import generate_sprint_content
+from . import obtain_supabase
 
 main_bp = Blueprint("main", __name__)
 
@@ -48,7 +48,7 @@ def _open_cohort(sb, cluster_key):
 
 @main_bp.route("/")
 def index():
-    sb = get_supabase()
+    sb = obtain_supabase()
     clusters = _active_clusters(sb)
     featured = clusters[0] if clusters else EMPTY_FEATURED
     return render_template("landing.html", featured=featured, clusters=clusters)
@@ -66,7 +66,7 @@ def sprints():
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     clusters = _active_clusters(sb)
     return render_template("sprint_picker.html", clusters=clusters)
 
@@ -78,7 +78,7 @@ def request_sprint():
         return gate
     skill = request.form.get("skill", "").strip().lower().replace(" ", "-")
     if skill:
-        sb = get_supabase()
+        sb = obtain_supabase()
         existing = sb.table("job_clusters").select("*").eq("cluster_key", skill).limit(1).execute().data
         if not existing:
             sb.table("job_clusters").insert({
@@ -103,7 +103,7 @@ def start_sprint(cluster_key):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     cluster = sb.table("job_clusters").select("*").eq("cluster_key", cluster_key).limit(1).execute().data
     if not cluster:
         return redirect(url_for("main.sprints"))

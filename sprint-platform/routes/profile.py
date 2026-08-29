@@ -3,8 +3,7 @@ import datetime
 from flask import Blueprint, render_template, redirect, url_for, g
 
 from routes import require_login
-from services.supabase_client import get_supabase
-
+from . import obtain_supabase
 profile_bp = Blueprint("profile", __name__)
 
 
@@ -91,7 +90,7 @@ def _case_studies(sb, user_id):
 
 @profile_bp.route("/profile/<slug>")
 def public(slug):
-    sb = get_supabase()
+    sb = obtain_supabase()
     profile = _resolve_user(sb, slug)
     if not profile:
         return render_template("profile.html", profile={"display_name": "Not found", "headline": ""},
@@ -109,7 +108,7 @@ def me():
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     rows = sb.table("user_profiles").select("*").eq("user_id", g.user["id"]).limit(1).execute().data
     if rows:
         slug = (rows[0].get("display_name") or "me").split()[0].lower()

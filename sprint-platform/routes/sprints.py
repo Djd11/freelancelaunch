@@ -6,13 +6,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, g, jso
 from routes import (require_login, load_cluster, load_sprint, load_cohort,
                     load_meter, load_momentum, load_day, load_project, phase_a_done_days,
                     DAY_TO_PROJECT)
-from services.supabase_client import get_supabase
 from services.verification_service import gate_a_passed, gate_b_passed, record as record_review
 from services.verification_service import auto_check_gate_a, is_valid_url
 from services.unlock_engine import recompute
 from services.badge_engine import issue as issue_badge
 from services.nudge_engine import nudge as nudge_for, recompute_confidence
 from services.lesson_engine import content_day_cards
+from . import obtain_supabase
 
 sprints_bp = Blueprint("sprints", __name__)
 
@@ -22,7 +22,7 @@ def dashboard(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint:
         return redirect(url_for("main.dashboard"))
@@ -95,7 +95,7 @@ def day(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint:
         return redirect(url_for("main.dashboard"))
@@ -155,7 +155,7 @@ def mark_watched(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -175,7 +175,7 @@ def generation(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
@@ -240,7 +240,7 @@ def retry_generation(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
@@ -294,7 +294,7 @@ def complete_day(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"ok": False, "error": "not found"}), 404
@@ -317,7 +317,7 @@ def submit_copywork(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
@@ -359,7 +359,7 @@ def rubric_check(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
@@ -396,7 +396,7 @@ def gapfill_check(sprint_id, day_no):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
@@ -416,7 +416,7 @@ def complete(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -432,7 +432,7 @@ def badge(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))

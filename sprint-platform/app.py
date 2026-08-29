@@ -5,8 +5,9 @@ Supabase project (services/supabase_client.py) — no in-memory fallback.
 """
 import os
 import logging
+import uuid
 
-from flask import Flask, g, session, redirect, url_for
+from flask import Flask, g, session, redirect, url_for, request, render_template
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,6 +25,18 @@ def create_app(test_config=None):
     app.config.from_object("config.Config")
     if test_config:
         app.config.update(test_config)
+
+    # P0-2: structured, leveled, module-tagged logging. Under gunicorn this is a
+    # no-op if the server already configured the root logger; the app logger
+    # still forwards via propagation.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s [%(module)s:%(lineno)d] %(message)s",
+    )
+    app.logger.setLevel(logging.INFO)
+    app.logger.handlers = logging.getLogger().handlers
+    logging.getLogger("werkzeug").setLevel(logging.INFO)
+
     csrf.init_app(app)
 
     from routes.main import main_bp
@@ -47,6 +60,29 @@ def create_app(test_config=None):
     app.register_blueprint(clients_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_platforms_bp)
+
+    # P0-1: global error handlers → friendly page + structured log, never a
+    # raw traceback. 503 is raised by obtain_supabase() when the DB is down.
+    @app.errorhandler(404)
+    def page_not_found(err):
+        return render_template("error.html", code=404, ref=None,
+                               message="Page not found."), 404
+
+    @app.errorhandler(503)
+    def service_unavailable(err):
+        ref = str(uuid.uuid4())
+        app.logger.error("Service unavailable (503) on %s %s — ref %s",
+                         request.method, request.path, ref)
+        return render_template("error.html", code=503, ref=ref,
+                               message="The service is temporarily unavailable. Please try again shortly."), 503
+
+    @app.errorhandler(500)
+    def server_error(err):
+        ref = str(uuid.uuid4())
+        app.logger.exception("Unhandled exception on %s %s — ref %s",
+                             request.method, request.path, ref)
+        return render_template("error.html", code=500, ref=ref,
+                               message="Something went wrong. Our team has been notified."), 500
 
     @app.before_request
     def load_user():

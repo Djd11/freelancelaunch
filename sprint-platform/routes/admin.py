@@ -3,6 +3,7 @@ Admin blueprint — feed curation, cohort creation, platform admin.
 Requires user with user_metadata.role == 'admin' in Supabase Auth.
 """
 from flask import Blueprint, request, jsonify, session, g, current_app, render_template, redirect, url_for, flash
+from . import obtain_supabase
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -18,8 +19,7 @@ def _require_admin():
     if not user_id:
         return False
     try:
-        from services.supabase_client import get_supabase
-        sb = get_supabase()
+        sb = obtain_supabase()
         
         # First check: try to get admin user ID from config (set in tests)
         admin_id = current_app.config.get("ADMIN_USER_ID")
@@ -73,8 +73,7 @@ def dashboard():
 
 @admin_bp.route("/clusters")
 def list_clusters():
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     resp = sb.table("job_clusters").select("*").order("cluster_key").execute()
     clusters = resp.data or []
     return render_template("admin/clusters.html", clusters=clusters)
@@ -88,8 +87,7 @@ def create_cluster():
     # Ensure keywords is an array
     if "keywords" not in data:
         data["keywords"] = []
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     # Use upsert to handle duplicates
     resp = sb.table("job_clusters").upsert(data, on_conflict="cluster_key").execute()
     if request.is_json:
@@ -100,8 +98,7 @@ def create_cluster():
 
 @admin_bp.route("/feed")
 def list_feed():
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     resp = sb.table("job_feed").select("*").order("cluster_key,unlock_day").execute()
     jobs = resp.data or []
     return render_template("admin/feed.html", jobs=jobs)
@@ -115,8 +112,7 @@ def create_feed():
     # Parse skills
     if "skills" in data and isinstance(data["skills"], str):
         data["skills"] = [s.strip() for s in data["skills"].split(",") if s.strip()]
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     resp = sb.table("job_feed").insert(data).execute()
     if request.is_json:
         return jsonify(resp.data[0]), 201
@@ -126,8 +122,7 @@ def create_feed():
 
 @admin_bp.route("/cohorts")
 def list_cohorts():
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     resp = sb.table("cohorts").select("*").order("start_date", desc=True).execute()
     cohorts = resp.data or []
     return render_template("admin/cohorts.html", cohorts=cohorts)
@@ -138,8 +133,7 @@ def create_cohort():
     if request.method == "GET":
         return render_template("admin/cohort_form.html")
     data = request.get_json(silent=True) or request.form.to_dict()
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     resp = sb.table("cohorts").insert(data).execute()
     if request.is_json:
         return jsonify(resp.data[0]), 201
@@ -151,9 +145,8 @@ def create_cohort():
 def refresh_cluster(cluster_key):
     """Recompute the cluster's live counters from its feed + write a demand
     snapshot (eng-spec §4.5). Explicit admin action — never an implicit read."""
-    from services.supabase_client import get_supabase
     from services.demand_intelligence import refresh_cluster as refresh, assign_unlock_days
-    sb = get_supabase()
+    sb = obtain_supabase()
     assigned = assign_unlock_days(sb, cluster_key)
     result = refresh(sb, cluster_key, snapshot=True)
     result["unlock_days_assigned"] = assigned

@@ -4,11 +4,11 @@ import threading
 from flask import Blueprint, render_template, request, redirect, url_for, g
 
 from routes import require_login, load_sprint, load_cluster
-from services.supabase_client import get_supabase
 from services.verification_service import gate_b_passed
 from services.proposal_engine import (SCORE_ERROR, generate_drafts, fill_drafts,
                                       list_proposals, verified_platforms)
 from services.iteration_engine import diagnose
+from . import obtain_supabase
 
 proposals_bp = Blueprint("proposals", __name__)
 
@@ -45,7 +45,7 @@ def index(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -132,7 +132,7 @@ def submit(sprint_id, proposal_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -166,7 +166,7 @@ def respond(sprint_id, proposal_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))

@@ -1,5 +1,6 @@
 """admin_platforms blueprint — platform connection management + manual refresh."""
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, g, flash
+from . import obtain_supabase
 
 admin_platforms_bp = Blueprint("admin_platforms", __name__)
 
@@ -27,9 +28,8 @@ def list_platforms():
     gate = _require_admin()
     if gate:
         return gate
-    from services.supabase_client import get_supabase
     from services.platform_scheduler import get_scheduler_status
-    sb = get_supabase()
+    sb = obtain_supabase()
     connections = sb.table("platform_connections").select("*").order("created_at").execute().data
     scheduler = get_scheduler_status()
     return render_template("admin/platforms.html",
@@ -42,8 +42,7 @@ def add_platform():
     gate = _require_admin()
     if gate:
         return gate
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     platform = request.form.get("platform", "").strip()
     display_name = request.form.get("display_name", "").strip()
     config = {}
@@ -72,10 +71,9 @@ def refresh_platform(platform_id):
     gate = _require_admin()
     if gate:
         return gate
-    from services.supabase_client import get_supabase
     from services.feed_ingest import ingest_jobs
     from services.platform_connector import get_connector
-    sb = get_supabase()
+    sb = obtain_supabase()
     conn = sb.table("platform_connections").select("*").eq("id", platform_id).execute().data
     if not conn:
         return jsonify({"error": "not found"}), 404
@@ -98,7 +96,6 @@ def refresh_all():
     if gate:
         return gate
     from services.feed_ingest import refresh_all_platforms
-    from services.supabase_client import get_supabase
-    sb = get_supabase()
+    sb = obtain_supabase()
     results = refresh_all_platforms(sb)
     return jsonify(results)

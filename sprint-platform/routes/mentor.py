@@ -2,9 +2,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, g, jsonify
 
 from routes import require_login, load_sprint
-from services.supabase_client import get_supabase
 from services.mentor_agent import answer as mentor_answer
 from services.llm import LLMGenerationError
+from . import obtain_supabase
 
 mentor_bp = Blueprint("mentor", __name__)
 
@@ -44,7 +44,7 @@ def chat():
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint, job, job_id = _context(sb, g.user["id"])
     cluster_name = "a sprint"
     progress = 0
@@ -86,7 +86,7 @@ def turn():
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
 
     data = request.get_json(silent=True) or {}
     question = data.get("question") or request.form.get("question", "")

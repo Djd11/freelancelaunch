@@ -1,5 +1,6 @@
 """auth blueprint — Supabase Auth surface (arch §4.2)."""
 from flask import Blueprint, render_template, request, redirect, url_for, session, g, flash
+from . import obtain_supabase
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -19,9 +20,8 @@ def _find_user_by_email(sb, email):
 @auth_bp.route("/auth/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        from services.supabase_client import get_supabase
         email = request.form.get("email", "").strip()
-        sb = get_supabase()
+        sb = obtain_supabase()
         user_id = _find_user_by_email(sb, email) if email else None
 
         if user_id is None:

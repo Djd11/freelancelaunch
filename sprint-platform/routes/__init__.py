@@ -5,9 +5,26 @@ import uuid as _uuid
 # must map so project 3 is reachable and Gate A can pass through the real day flow.
 DAY_TO_PROJECT = {2: 1, 3: 1, 4: 2, 5: 3}
 
-from flask import redirect, url_for, g
+from flask import redirect, url_for, g, abort, current_app
 
-from services.supabase_client import get_supabase
+from services.supabase_client import get_supabase, get_client_supabase
+
+
+def obtain_supabase(client: bool = False):
+    """Get a Supabase client, NEVER None.
+
+    On any failure (missing config or client creation error) it aborts with a
+    503 so the request is turned away cleanly instead of crashing on a None
+    dereference. `client=True` returns an unauthenticated client for public
+    reads, otherwise an authenticated client for RLS-scoped writes.
+    """
+    try:
+        if client:
+            return get_client_supabase()
+        return get_supabase()
+    except Exception as exc:
+        current_app.logger.error("obtain_supabase failed (client=%s): %s", client, exc)
+        abort(503)
 
 
 def _is_uuid(value):

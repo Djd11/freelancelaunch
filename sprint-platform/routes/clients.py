@@ -6,8 +6,7 @@ supply only. The view does the filtering; this route applies cluster + recency.
 """
 import datetime
 from flask import Blueprint, render_template, request
-
-from services.supabase_client import get_supabase
+from . import obtain_supabase
 
 clients_bp = Blueprint("clients", __name__)
 
@@ -30,7 +29,7 @@ def _days_ago(iso):
 
 @clients_bp.route("/clients/freelancers")
 def freelancers():
-    sb = get_supabase()
+    sb = obtain_supabase()
     cluster_key = request.args.get("cluster", "")
     try:
         within_days = int(request.args.get("within_days", 30))

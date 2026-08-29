@@ -6,11 +6,11 @@ and the Problem/Solution/Result case study (Days 9-10, J5).
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
 
 from routes import require_login, load_sprint, load_brief
-from services.supabase_client import get_supabase
 from services.verification_service import record as record_review
 from services.verification_service import auto_check_gate_b, gate_b_passed, is_valid_url
 from services.mock_contract_engine import synthesize as synthesize_brief
 from services.outcome_service import add_contract, complete_contract
+from . import obtain_supabase
 
 contract_bp = Blueprint("contract", __name__)
 
@@ -68,7 +68,7 @@ def brief(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -111,7 +111,7 @@ def submit(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -143,7 +143,7 @@ def add(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -167,7 +167,7 @@ def complete(sprint_id, contract_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
@@ -182,7 +182,7 @@ def save_case_study(sprint_id):
     gate = require_login()
     if gate:
         return gate
-    sb = get_supabase()
+    sb = obtain_supabase()
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
