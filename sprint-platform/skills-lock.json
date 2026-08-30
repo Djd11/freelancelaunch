@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "codegraph": {
+      "source": "onsager-ai/dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codegraph/SKILL.md",
+      "computedHash": "11f053808a41637e9a6ffe485ee09eec9114577b366cb27971f968b340dfd06f"
+    },
+    "drawio-skill": {
+      "source": "agents365-ai/drawio-skill",
+      "sourceType": "github",
+      "skillPath": "skills/drawio-skill/SKILL.md",
+      "computedHash": "0cc2f76bafe46796691efba4ece4e1efefd328d7e6502a08faae10377aac596e"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    }
+  }
+}

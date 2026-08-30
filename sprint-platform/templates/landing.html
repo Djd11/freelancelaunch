@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+/* landing-scoped layout (hero grid + shift columns + punch demo) */
+.hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding:72px 0 48px}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap}
+.punch-demo{padding:6px 0 44px}
+.shifts{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--hairline-strong)}
+.shifts>div{padding:26px 26px 26px 0;border-right:1px solid var(--hairline)}
+.shifts>div:nth-child(2){padding:26px}
+.shifts>div:nth-child(3){padding:26px 0 26px 26px;border-right:0}
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr;gap:28px;padding:48px 0 32px}
+  .shifts{grid-template-columns:1fr}
+  .shifts>div,.shifts>div:nth-child(2),.shifts>div:nth-child(3){padding:20px 0;border-right:0;border-bottom:1px solid var(--hairline)}
+  .shifts>div:last-child{border-bottom:0;padding-bottom:0}
+}
+</style>
 <section class="screen" id="landing">
   <div class="wrap">
     <div class="topnav">
@@ -9,55 +25,76 @@
     </div>
 
     <!-- Hero — one idea: demand, not curriculum -->
-    <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding:72px 0 48px">
+    <div class="hero-grid">
       <div>
         <span class="chip"><span class="dot"></span>14 days · 3 phases · first client</span>
-        <h1 style="font-family:var(--font-display);font-size:52px;line-height:1.06;font-weight:650;letter-spacing:-.02em;margin:20px 0 18px">
-          Stop learning skills.<br>Start landing clients.
-        </h1>
+        <h1 style="margin:20px 0 18px">Stop learning skills.<br>Start <span class="sweep animate">landing clients</span>.</h1>
         <p class="muted" style="font-size:17px;max-width:520px;margin-bottom:30px">A 14-day demand-validated sprint that teaches you to fulfill a real contract — not just watch videos — then hands you a proposal and sends you to bid.</p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div class="btn-row">
           <a class="btn btn-p" href="/sprints">Start your sprint</a>
           <a class="btn btn-o" href="#how">See how it works</a>
         </div>
       </div>
 
-      <!-- headline demand counter -->
+      <!-- headline demand readout — mono instrument panel -->
       <div class="card" style="padding:26px">
-        <p class="xs" style="font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Live demand · {{ featured.display_name }}</p>
+        <div class="ticker" style="margin-bottom:16px"><span class="live">Demand live</span><span>Cluster · <b>{{ featured.display_name }}</b></span></div>
+        <span class="eyebrow" style="margin-bottom:14px">Demand · {{ featured.display_name }}</span>
         <div style="display:flex;flex-direction:column;gap:2px">
-          <div class="stat" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
+          <div class="stat mono" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
             <div class="n" style="display:flex;align-items:baseline;gap:10px">{{ featured.job_count }} <span class="l" style="margin:0">active jobs</span></div>
           </div>
-          <div class="stat" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
+          <div class="stat mono" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
             <div class="n" style="display:flex;align-items:baseline;gap:10px">${{ featured.avg_rate }} <span class="l" style="margin:0">median hourly rate</span></div>
           </div>
-          <div class="stat" style="text-align:left;padding:10px 0">
-            <div class="n" style="display:flex;align-items:baseline;gap:10px;color:var(--green)">+{{ featured.growth_score }}% <span class="l" style="margin:0">demand this quarter</span></div>
+          <div class="stat mono" style="text-align:left;padding:10px 0">
+            <div class="n" style="display:flex;align-items:baseline;gap:10px;color:var(--green-ink)">+{{ featured.growth_score }}% <span class="l" style="margin:0">demand this quarter</span></div>
           </div>
         </div>
         <p class="xs muted" style="margin-top:12px">This is the demand you're training against — not a generic course.</p>
       </div>
     </div>
 
-    <!-- 3 phases — numbered editorial list, not three equal cards -->
+    <!-- the sprint itself: 14 numbered shifts, one punch per completed day -->
+    <div class="punch-demo">
+      <span class="eyebrow">The sprint · 14 numbered shifts</span>
+      <div class="punchcard animate" aria-hidden="true">
+        <div class="slot today" title="Day 1 — starts the moment you begin">1</div>
+        <div class="slot locked" title="Day 2">2</div>
+        <div class="slot locked" title="Day 3">3</div>
+        <div class="slot locked" title="Day 4">4</div>
+        <div class="slot locked" title="Day 5">5</div>
+        <div class="slot locked" title="Day 6">6</div>
+        <div class="slot locked" title="Day 7">7</div>
+        <div class="slot locked" title="Day 8">8</div>
+        <div class="slot locked" title="Day 9">9</div>
+        <div class="slot locked" title="Day 10">10</div>
+        <div class="slot locked" title="Day 11">11</div>
+        <div class="slot locked" title="Day 12">12</div>
+        <div class="slot locked" title="Day 13">13</div>
+        <div class="slot locked" title="Day 14">14</div>
+      </div>
+      <p class="xs muted" style="margin-top:10px">Every completed day is punched out — and unlocks another batch of the live job feed.</p>
+    </div>
+
+    <!-- 3 phases — hairline-divided columns with mono eyebrows -->
     <div id="how" style="padding:24px 0 8px">
-      <h2 style="margin-bottom:6px">Three phases. One loop.</h2>
+      <h2 style="margin-bottom:6px">Three shifts. One loop.</h2>
       <p class="muted small" style="margin-bottom:26px">Teach → fulfill → sell, compressed into 14 days.</p>
 
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--hairline-strong)">
-        <div style="padding:26px 26px 26px 0;border-right:1px solid var(--hairline)">
-          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE A · DAYS 1–5</p>
+      <div class="shifts">
+        <div>
+          <span class="eyebrow">Shift A · Days 01–05</span>
           <h3 style="margin-bottom:8px">Skill Acquisition</h3>
           <p class="small muted">The <b>Copy-Work method</b>: rebuild 3 real projects from scratch to build muscle memory, then a gap-fill micro-lesson on what's missing.</p>
         </div>
-        <div style="padding:26px;border-right:1px solid var(--hairline)">
-          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE B · DAYS 6–10</p>
+        <div>
+          <span class="eyebrow">Shift B · Days 06–10</span>
           <h3 style="margin-bottom:8px">Mock Contract</h3>
           <p class="small muted">Fulfill a real anonymized job brief under deadline + constraints — and package it as a case-study portfolio that doubles as your first proposal.</p>
         </div>
-        <div style="padding:26px 0 26px 26px">
-          <p class="xs" style="font-weight:700;color:var(--accent-ink);letter-spacing:.06em;margin-bottom:10px">PHASE C · DAYS 11–14</p>
+        <div>
+          <span class="eyebrow">Shift C · Days 11–14</span>
           <h3 style="margin-bottom:8px">Supply Chain</h3>
           <p class="small muted">Engineered proposals with "I see you need X…" hooks, a 5-proposal First-Bid challenge, and an auto-adapting iteration loop.</p>
         </div>

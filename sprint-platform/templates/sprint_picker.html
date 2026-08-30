@@ -19,15 +19,11 @@
       <div class="card" style="display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span style="font-size:26px" aria-hidden="true">{{ c.icon }}</span>
-          {% if c.cluster_key == 'email-automation' %}<span class="badge b-accent">Trending</span>{% endif %}
+          {% if c.cluster_key == 'email-automation' %}<span class="stamp ok" title="Trending">Trending</span>{% endif %}
         </div>
         <h3 style="margin:14px 0 4px">{{ c.display_name }}</h3>
         <p class="xs muted">{{ c.description }}</p>
-        <div style="margin:14px 0;display:flex;flex-wrap:wrap;gap:6px">
-          <span class="badge b-green">● {{ c.job_count }} jobs open</span>
-          <span class="badge b-slate">${{ c.avg_rate }}/hr avg</span>
-          <span class="badge b-slate">14 days</span>
-        </div>
+        <p class="mono xs" style="margin:14px 0;color:var(--ink-2);letter-spacing:.06em">● {{ c.job_count }} jobs open · ${{ c.avg_rate }}/hr · 14 days</p>
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
           <form method="post" action="/sprints/{{ c.cluster_key }}/start">

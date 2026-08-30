@@ -1,35 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+/* day-scoped layout (mini punchcard in the done banner + tab strip) */
+.done-banner{margin-top:22px;padding:20px 22px;background:var(--green-soft);border:1px solid var(--green-line);border-radius:var(--radius-lg);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.done-banner .punchwrap{flex:1;min-width:260px;text-align:right}
+.punchcard.mini{margin-left:auto;max-width:340px}
+.punchcard.mini .slot{height:28px;padding-top:3px;border-radius:4px}
+.punchcard.mini .slot.done::after{width:9px;height:9px;border-width:2px;top:68%}
+</style>
 <div id="page-data" data-sprint-id="{{ sprint.id }}" data-day-no="{{ day.day_no }}" style="display:none;"></div>
 <section class="screen" id="day">
   <div class="wrap">
     <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
     <div style="padding:26px 0">
-      <span class="chip"><span class="dot"></span>Phase {{ day.phase }} · Day {{ day.day_no }} · {{ day.action_type|capitalize }}</span>
-      <h2 style="margin:14px 0 6px">{{ ('Project ' ~ project.project_index ~ ' — ') if project else '' }}{{ project.title if project and project.title else day.title }}</h2>
+      <span class="eyebrow">Shift {{ day.phase }} · Day {{ '%02d'|format(day.day_no|int) }} · {{ day.action_type|capitalize }}</span>
+      <h2 style="margin:0 0 6px">{{ ('Project ' ~ project.project_index ~ ' — ') if project else '' }}{{ project.title if project and project.title else day.title }}</h2>
       <p class="muted small" style="max-width:640px">{{ project.description if project and project.description else 'Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.' }}</p>
 
       <!-- ═══ DAY-COMPLETE UPTICK BANNER (only when the day is done) ═══ -->
       {% if day_done %}
-      <div style="margin-top:22px;padding:20px 22px;background:var(--green-soft);border:1px solid #CBE0CB;border-radius:var(--radius-lg);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+      <div class="done-banner">
         <div>
-          <b style="font-size:18px;font-family:var(--font-display);font-weight:650">🎉 Day {{ day.day_no }} complete — job postings unlocked!</b>
+          <span class="stamp ok" style="margin-bottom:8px">Day complete — +{{ meter.last_delta }} postings unlocked</span>
           <p class="small" style="color:var(--green-ink);margin-top:6px">You unlocked <b>+{{ meter.last_delta }} more job postings</b> → <b>{{ meter.unlocked_count }} of {{ meter.total_in_cluster }}</b> active jobs in your cluster are now open to you.</p>
         </div>
-        <div style="text-align:right">
-          <div class="track" style="width:200px"><div class="t-done" style="flex:{{ pct }}%"></div><div class="t-lock" style="flex:{{ 100 - pct }}%"></div></div>
-          <span class="xs muted" style="display:block;margin-top:6px">{{ pct }}% of your cluster unlocked</span>
+        <div class="punchwrap">
+          <div class="punchcard mini" aria-hidden="true">
+            {% for i in range(1, day.day_no + 1) %}<div class="slot done" title="Day {{ i }} — completed">{{ i }}</div>{% endfor %}
+            {% for i in range(day.day_no + 1, 15) %}<div class="slot locked" title="Day {{ i }} — upcoming">{{ i }}</div>{% endfor %}
+          </div>
+          <span class="mono xs muted" style="display:block;margin-top:6px;letter-spacing:.06em">{{ pct }}% of your cluster unlocked</span>
         </div>
       </div>
       {% endif %}
 
-      <div style="position:sticky;top:0;z-index:20;display:flex;gap:8px;margin-top:22px;background:var(--surface);padding:10px;border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-        <button type="button" id="tab-lesson" onclick="showDayTab('lesson')" style="flex:1;padding:11px 10px;border:0;border-radius:var(--radius);font:inherit;font-weight:600;cursor:pointer;background:var(--ink);color:#fff">📖 Lesson</button>
-        <button type="button" id="tab-task" onclick="showDayTab('task')" style="flex:1;padding:11px 10px;border:0;border-radius:var(--radius);font:inherit;font-weight:600;cursor:pointer;background:var(--surface-2);color:var(--ink-2)">🛠️ Task</button>
+      <div id="tab-strip" class="tabs">
+        <button type="button" id="tab-lesson" class="tab active" onclick="showDayTab('lesson')">Lesson</button>
+        <button type="button" id="tab-task" class="tab" onclick="showDayTab('task')">Task</button>
       </div>
       <div id="panel-lesson">
         <div class="card">
-          <h3 style="margin-bottom:12px">🎬 Watch · Lesson</h3>
+          <h3 style="margin-bottom:12px">Watch · Lesson</h3>
           <div class="xs muted" style="margin:-6px 0 10px">TwoPanel HTML preview — kinetic text + TTS</div>
           {# Engagement preview block — rendered ONCE, above the TwoPanel player, for
              BOTH the voiceover and non-voiceover variants. Suppressed on generation
@@ -56,12 +67,12 @@
             {% endif %}
             {% if lesson.pre_quiz and lesson.pre_quiz|length > 0 %}
             <div style="margin-top:14px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-              <b style="font-family:var(--font-display);font-size:14px">🤔 Before you watch — quick check</b>
+              <b style="font-family:var(--font-display);font-size:14px">Before you watch — quick check</b>
               <p class="xs muted" style="margin:4px 0 10px">Guess first, then watch the lesson to confirm.</p>
               {% for item in lesson.pre_quiz %}
               <div style="margin-bottom:10px">
                 <div class="small" style="font-weight:600;color:var(--ink-2)">{{ loop.index }}. {{ item.q }}</div>
-                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:#C96442;font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
+                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:var(--accent-ink);font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
                 <div class="small" style="display:none;margin-top:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius);color:var(--ink-2)">{{ item.options[item.answer] if item.options and item.answer is not none and item.answer < item.options|length else '—' }}</div>
               </div>
               {% endfor %}
@@ -70,7 +81,7 @@
           </div>
           {% endif %}
           {% if gen_error %}
-          <div style="padding:18px 20px;background:var(--red-soft, #FBE9E7);border:1px solid #E3B7B0;border-radius:var(--radius)">
+          <div style="padding:18px 20px;background:var(--red-soft);border:1px solid var(--red);border-radius:var(--radius)">
             <b style="font-family:var(--font-display)">Lesson generation failed</b>
             <p class="small muted" style="margin-top:6px">{{ gen_error }}</p>
           </div>
@@ -114,12 +125,12 @@
 
             {% if lesson.quiz and lesson.quiz|length > 0 %}
             <div style="margin-top:16px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-              <b style="font-family:var(--font-display);font-size:14px">🧠 Knowledge Check</b>
+              <b style="font-family:var(--font-display);font-size:14px">Knowledge Check</b>
               <p class="xs muted" style="margin:4px 0 10px">Test yourself on what you just learned.</p>
               {% for q in lesson.quiz %}
               <div style="margin-bottom:10px">
                 <div class="small" style="font-weight:600;color:var(--ink-2)">{{ loop.index }}. {{ q }}</div>
-                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:#C96442;font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
+                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:var(--accent-ink);font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
                 <div class="small" style="display:none;margin-top:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius);color:var(--ink-2)">{{ lesson.quiz_answers[loop.index0] if lesson.quiz_answers and lesson.quiz_answers|length > loop.index0 else '—' }}</div>
               </div>
               {% endfor %}
@@ -127,7 +138,7 @@
             {% endif %}
           </div>
           {% else %}
-          <div style="background:var(--ink);border-radius:var(--radius);color:#E8E5DE;font-size:14px;padding:18px 20px">
+          <div style="background:var(--ink);border-radius:var(--radius);color:var(--surface);font-size:14px;padding:18px 20px">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
               <span style="font-size:18px">▶</span><b style="font-family:var(--font-display)">{{ lesson.title }}</b>
             </div>
@@ -147,12 +158,12 @@
 
             {% if lesson.quiz and lesson.quiz|length > 0 %}
             <div style="margin-top:16px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-              <b style="font-family:var(--font-display);font-size:14px">🧠 Knowledge Check</b>
+              <b style="font-family:var(--font-display);font-size:14px">Knowledge Check</b>
               <p class="xs muted" style="margin:4px 0 10px">Test yourself on what you just learned.</p>
               {% for q in lesson.quiz %}
               <div style="margin-bottom:10px">
                 <div class="small" style="font-weight:600;color:var(--ink-2)">{{ loop.index }}. {{ q }}</div>
-                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:#C96442;font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
+                <button type="button" onclick="var a=this.nextElementSibling;a.style.display=a.style.display==='none'?'block':'none';this.textContent=this.textContent==='Show answer'?'Hide answer':'Show answer'" style="margin-top:4px;background:none;border:none;color:var(--accent-ink);font-size:12px;cursor:pointer;font-weight:600">Show answer</button>
                 <div class="small" style="display:none;margin-top:4px;padding:8px 10px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius);color:var(--ink-2)">{{ lesson.quiz_answers[loop.index0] if lesson.quiz_answers and lesson.quiz_answers|length > loop.index0 else '—' }}</div>
               </div>
               {% endfor %}
@@ -173,11 +184,11 @@
 
       <div id="panel-task" style="display:none">
         <div class="card">
-          <h3 style="margin-bottom:12px">🛠️ Copy-Work Task</h3>
+          <h3 style="margin-bottom:12px">Copy-Work Task</h3>
           <p class="small muted">From a blank account, rebuild the exact flow:</p>
           {% if reference_spec %}
           <div style="margin-top:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-            <b style="font-family:var(--font-display)">📘 Reference build</b>
+            <b style="font-family:var(--font-display)">Reference build</b>
             <div class="small" style="margin-top:6px;color:var(--ink-2)">{{ reference_spec|format_script }}</div>
           </div>
           {% endif %}
@@ -227,7 +238,7 @@
       {% if gap_fill_topic %}
       <div class="card" style="margin-top:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div><h3>🧩 Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
+          <div><h3>Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
           <span class="badge b-amber">Auto-detected</span>
         </div>
         <div class="check-item{{ ' done' if day.get('gap_fill_done') else '' }}" style="margin-top:12px">
@@ -246,10 +257,10 @@ function showDayTab(which){
   var tl=document.getElementById('tab-lesson'), tt=document.getElementById('tab-task');
   if(which==='lesson'){
     lesson.style.display='block'; task.style.display='none';
-    tl.style.background='var(--ink)'; tl.style.color='#fff'; tt.style.background='var(--surface-2)'; tt.style.color='var(--ink-2)';
+    tl.style.background='var(--ink)'; tl.style.color='var(--surface)'; tt.style.background='var(--surface-2)'; tt.style.color='var(--ink-2)';
   }else{
     task.style.display='block'; lesson.style.display='none';
-    tt.style.background='var(--ink)'; tt.style.color='#fff'; tl.style.background='var(--surface-2)'; tl.style.color='var(--ink-2)';
+    tt.style.background='var(--ink)'; tt.style.color='var(--surface)'; tl.style.background='var(--surface-2)'; tl.style.color='var(--ink-2)';
   }
 }
 </script>

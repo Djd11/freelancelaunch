@@ -6,18 +6,22 @@
     <div style="padding:26px 0">
       {% if locked %}
       <span class="chip"><span class="dot"></span>Phase C · Proposal Engineering</span>
-      <h2 style="margin:14px 0 6px">🔒 Phase C is locked</h2>
-      <p class="muted small" style="max-width:600px">Phase C stays locked until the Mock Contract passes verification. Fulfill your brief and submit the deliverable to unlock the proposal challenge.</p>
+      <span class="eyebrow" style="display:block;margin-top:14px">Bid board</span>
+      <h2 style="margin:0 0 6px">Phase C is locked</h2>
+      <span class="stamp wait" style="margin-top:4px">Locked — Gate B pending</span>
+      <p class="muted small" style="max-width:600px;margin-top:10px">Phase C stays locked until the Mock Contract passes verification. Fulfill your brief and submit the deliverable to unlock the proposal challenge.</p>
       <div class="card" style="margin-top:22px;max-width:520px">
         <p class="small">Your next step: <a href="/sprints/{{ sprint.id }}/contract" style="color:var(--accent-ink);font-weight:600">Open the Mock Contract →</a></p>
       </div>
       {% else %}
       <span class="chip"><span class="dot"></span>Phase C · Day 11 · Proposal Engineering</span>
-      <h2 style="margin:14px 0 6px">First-Bid Challenge — {{ submitted_count }} / 5 proposals</h2>
+      <span class="eyebrow" style="display:block;margin-top:14px">Bid board</span>
+      <h2 style="margin:0 0 6px">First-bid challenge — {{ submitted_count }} / 5 proposals</h2>
       <p class="muted small" style="max-width:640px">We pre-write the "I see you need X…" hooks from your job cluster. You send 5 live proposals. If none convert, the system diagnoses why and assigns a fix.</p>
 
-      <div style="display:flex;gap:6px;margin:20px 0">
-        {% for i in range(0, 5) %}<div class="{{ 't-done' if i < submitted_count else 't-lock' }}" style="flex:1;height:10px;border-radius:3px"></div>{% endfor %}
+      <!-- Bid board: 5-slot punchcard — submitted = punched -->
+      <div class="punchcard" style="margin:20px 0" aria-label="{{ submitted_count }} of 5 proposals submitted">
+        {% for i in range(0, 5) %}<div class="slot{{ ' done' if i < submitted_count else ' locked' }}" title="Proposal {{ i + 1 }} — {{ 'submitted' if i < submitted_count else 'not submitted yet' }}">{{ i + 1 }}</div>{% endfor %}
       </div>
 
       <div class="grid2">
@@ -31,7 +35,7 @@
             <button class="btn btn-p btn-sm" type="button" data-copy-proposal="true">Copy proposal</button>
           </div>
           {% elif proposal_state == 'error' %}
-          <div style="padding:18px;background:var(--red-soft, #FBE9E7);border:1px solid #E3B7B0;border-radius:var(--radius)">
+          <div style="padding:18px;background:var(--red-soft);border:1px solid var(--red-ink);border-radius:var(--radius)">
             <b style="font-family:var(--font-display)">Proposal generation failed</b>
             <p class="small muted" style="margin-top:6px">The proposal writer could not be reached. Refresh the page to retry.</p>
           </div>
@@ -100,10 +104,10 @@
       <div class="card" style="margin-top:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div>
-            <h3>🩺 Iteration diagnosis — <b>{{ diagnosis }}</b></h3>
+            <h3>Iteration diagnosis — <b>{{ diagnosis }}</b></h3>
             <p class="small muted" style="margin-top:6px">5 proposals sent, no responses yet. The system diagnosed the bottleneck from your sprint data: <b>{{ diagnosis }}</b> — a 2-hour remedial micro-course is assigned.</p>
           </div>
-          <span class="badge b-amber">Day 14 · iteration loop</span>
+          <span class="stamp wait">Day 14 · Iteration loop</span>
         </div>
       </div>
       {% endif %}

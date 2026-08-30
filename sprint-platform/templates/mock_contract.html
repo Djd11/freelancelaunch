@@ -5,28 +5,29 @@
     <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
     <div style="padding:26px 0">
       <span class="chip"><span class="dot"></span>Phase B · Day 6 · Mock Contract</span>
-      <h2 style="margin:14px 0 6px">Your First "Client" — fulfill it like it's paid</h2>
+      <span class="eyebrow" style="display:block;margin-top:14px">Client brief · Work order</span>
+      <h2 style="margin:0 0 6px">Your first "client" — fulfill it like it's paid</h2>
       <p class="muted small" style="max-width:640px">This brief is an anonymized real job post. Same deadline, same constraints. Most platforms teach skills — this one teaches <b>fulfillment</b>.</p>
 
       <div class="card" style="margin-top:22px">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
           <div>
             <h3>Client Brief · "{{ brief.title }}"</h3>
             <p class="xs muted" style="margin-top:4px">Anonymized from a curated job posting · posted recently</p>
           </div>
           <div style="text-align:right">
-            <span class="badge b-red">⏱ Due in {{ brief.constraints.deadline_days if brief.constraints else 4 }} days</span>
+            <span class="stamp fail">Due in {{ brief.constraints.deadline_days if brief.constraints else 4 }} days</span>
           </div>
         </div>
         <div class="grid2" style="margin-top:18px">
           <div>
-            <p class="xs" style="font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">REQUIREMENTS</p>
+            <span class="eyebrow">Requirements</span>
             <ul class="small" style="margin:0 0 0 18px;color:var(--ink-2)">
               {% for r in brief.requirements_list %}<li style="margin-bottom:6px">{{ r }}</li>{% endfor %}
             </ul>
           </div>
           <div>
-            <p class="xs" style="font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">CONSTRAINTS</p>
+            <span class="eyebrow">Constraints</span>
             <ul class="small" style="margin:0 0 0 18px;color:var(--ink-2)">
               <li style="margin-bottom:6px">Deadline: <b>{{ brief.constraints.deadline_days if brief.constraints else 4 }} days</b></li>
               <li style="margin-bottom:6px">Budget: <b>${{ brief.constraints.budget if brief.constraints else 180 }} fixed</b></li>
@@ -37,12 +38,12 @@
         <div class="divider"></div>
         <div class="small"><b>Steps to complete:</b> execute flow (Day 6–8) → write Problem / Solution / Result case study (Day 9–10)</div>
         <div style="margin-top:16px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px">
-          <p class="small" style="font-weight:700;margin-bottom:10px">Submit your deliverable for verification</p>
+          <span class="eyebrow">Submit your deliverable for verification</span>
           <form method="post" action="/sprints/{{ sprint.id }}/contract/submit">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <textarea name="deliverable_text" rows="3" aria-label="Deliverable description"
               placeholder="Paste or describe what you built so verification can check it against the brief (e.g. the dynamic summary block, trigger used, steps completed)…"></textarea>
-            <div style="display:flex;gap:10px;margin-top:10px">
+            <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
               <input type="url" name="submission_url" placeholder="Paste a link to your deliverable…" aria-label="Deliverable link">
               <button class="btn btn-g" type="submit">Submit deliverable for verification</button>
             </div>
@@ -52,17 +53,24 @@
 
       <!-- verification gate -->
       <div class="card" style="margin-top:18px">
-        <h3 style="margin-bottom:6px">Verification Gate — locks Phase C</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <h3 style="margin-bottom:6px">Verification gate — locks Phase C</h3>
+          {% if gate_b_pass and case_study_complete %}
+          <span class="stamp ok">Gate B passed</span>
+          {% else %}
+          <span class="stamp wait">Gate B pending</span>
+          {% endif %}
+        </div>
         <p class="small muted">Your Mock Contract must pass review before you can enter the job-feed stage. This is what makes your badge credible to clients.</p>
         <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
-          <div class="check-item{{ ' done' if gate_b_pass else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if gate_b_pass else '' }}</div><div><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div></div>
-          <div class="check-item{{ ' done' if case_study_complete else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if case_study_complete else '' }}</div><div><b>Case study written</b><div class="xs muted">Problem / Solution / Result (all three required)</div></div></div>
+          <div class="check-item{{ ' done' if gate_b_pass else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if gate_b_pass else '' }}</div><div style="flex:1"><b>Automated flow check</b><div class="xs muted">verification service validates structure</div></div>{% if gate_b_pass %}<span class="stamp ok" style="align-self:center">Passed</span>{% endif %}</div>
+          <div class="check-item{{ ' done' if case_study_complete else '' }}" style="flex:1;min-width:220px;margin-bottom:0"><div class="cbox">{{ '✓' if case_study_complete else '' }}</div><div style="flex:1"><b>Case study written</b><div class="xs muted">Problem / Solution / Result (all three required)</div></div>{% if case_study_complete %}<span class="stamp ok" style="align-self:center">Passed</span>{% endif %}</div>
         </div>
       </div>
 
       <!-- case study (Days 9-10) — Problem / Solution / Result (eng-spec §3 J5) -->
       <div class="card" style="margin-top:18px">
-        <h3 style="margin-bottom:6px">Case Study · Problem / Solution / Result</h3>
+        <h3 style="margin-bottom:6px">Case study · Problem / Solution / Result</h3>
         <p class="small muted" style="margin-bottom:12px">Write it in client format during Days 9–10. It doubles as your first proposal draft and appears on your public profile.</p>
         <form method="post" action="/sprints/{{ sprint.id }}/case-study" style="display:grid;gap:10px">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

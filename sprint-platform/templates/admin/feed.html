@@ -17,9 +17,9 @@
       <tr>
         <td><code>{{ j.cluster_key }}</code></td>
         <td><b>{{ j.title }}</b></td>
-        <td>${{ j.rate }}</td>
+        <td class="mono">${{ j.rate }}</td>
         <td>{{ j.experience_needed }}</td>
-        <td>Day {{ j.unlock_day }}</td>
+        <td class="mono">Day {{ j.unlock_day }}</td>
         <td>
           {% if j.status == 'active' %}<span class="badge b-green">active</span>
           {% elif j.status == 'filled' %}<span class="badge b-slate">filled</span>

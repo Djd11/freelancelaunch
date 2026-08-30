@@ -10,10 +10,13 @@
 
       <div class="grid2" style="margin-top:22px">
         <div class="card">
-          <h3 style="margin-bottom:14px">{% if badges %}🏅 {% endif %}Demand-Validated Badges</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <h3 style="margin:0">{% if badges %}🏅 {% endif %}Demand-Validated Badges</h3>
+            {% if badges %}<span class="stamp ok">Verified</span>{% endif %}
+          </div>
           {% for b in badges %}
           <div class="check-item done" style="align-items:center">
-            <div style="width:44px;height:44px;border-radius:12px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏅</div>
+            <div style="width:44px;height:44px;border-radius:8px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0" aria-hidden="true">🏅</div>
             <div style="flex:1">
               <b>{{ b.cluster.display_name }} Sprint</b> <span class="badge b-green">completed {{ b.days_ago }} days ago</span>
               <div style="margin-top:6px" class="small"><b style="color:var(--green-ink)">● {{ b.cluster.job_count }} active jobs right now</b> <span class="muted xs">{% if b.trend_from and b.trend_from < b.cluster.job_count %}↑ from {{ b.trend_from }} two weeks ago{% endif %}</span></div>
@@ -31,7 +34,7 @@
           <h3 style="margin-bottom:14px">Case Study Portfolio</h3>
           {% for cs in case_studies %}
           <div class="check-item {{ 'done' if not cs.is_draft else '' }}" style="align-items:center;{{ 'opacity:.7' if cs.is_draft else '' }}">
-            <div style="width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📄</div>
+            <div style="width:44px;height:44px;border-radius:8px;background:var(--surface-2);border:1px solid var(--hairline);display:flex;align-items:center;justify-content:center;flex-shrink:0" aria-hidden="true"><span class="mono" style="font-size:11px;font-weight:600;color:var(--ink-2)">PSR</span></div>
             <div style="flex:1"><b>{{ cs.title }}</b><div class="xs muted">{{ 'Problem / Solution / Result · client-format case study' if not cs.is_draft else 'draft — completes with Mock Contract' }}</div></div>
           </div>
           {% endfor %}

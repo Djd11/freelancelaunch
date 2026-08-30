@@ -9,6 +9,7 @@
 
     <div class="pagehead">
       <span class="chip"><span class="dot"></span>Client filter</span>
+      <span class="eyebrow" style="display:block;margin-top:12px">Labor board · verified supply</span>
       <h2>Fresh, verified freelancers</h2>
       <p class="sub">Completed "<b>{{ cluster_name }}</b>" sprint within the last 30 days. Badges are verification-backed — never self-reported.</p>
     </div>
@@ -31,10 +32,10 @@
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
           <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
-            <span class="badge b-green">● {{ f.jobs_now }} active jobs</span>
+            <span class="badge b-green">{{ f.jobs_now }} active jobs</span>
             <span class="badge b-amber">sprint completed {{ f.days_ago }}d ago</span>
           </div>
-          <p class="xs muted">{{ f.proposals_sent }} proposals · {{ f.interviews_held }} interviews · {{ f.contracts_won }} contracts</p>
+          <p class="mono xs" style="margin:0;color:var(--muted);letter-spacing:.04em">{{ f.proposals_sent }} proposals · {{ f.interviews_held }} interviews · {{ f.contracts_won }} contracts</p>
         </div>
       </div>
       {% endfor %}

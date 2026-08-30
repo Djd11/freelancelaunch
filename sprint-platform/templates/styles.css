@@ -1,43 +1,49 @@
 /* ═══════════════════════════════════════════════════════════════════
-   FreelanceLaunch · Sprint Platform — design system
-   Warm editorial: cream canvas, ink text, one terracotta accent.
-   Serif display (Fraunces) + humanist sans body. No gradients, no
-   glass, no accent rails — hierarchy from scale, weight, spacing.
+   FreelanceLaunch · Sprint Platform — "The Trades Desk" design system
+   Jobsite signage for a work product: safety-orange hi-vis used the
+   way real signage uses it (ink on orange, never white-on-neon),
+   condensed signage type for display, punch-clock mono for numbers
+   and labels, and the PUNCH-CARD day strip as the one signature
+   element. Everything else stays quiet and disciplined.
+   Single source of truth: docs/ui-redesign-brief.md §2–3.
+   This file is included inline into base.html via the Jinja include
+   of styles.css — keep that mechanism, and never write literal Jinja
+   delimiters in comments here (they execute as template code).
    ═══════════════════════════════════════════════════════════════════ */
+
 :root{
-  --canvas:#FAF9F5;
-  --surface:#FFFFFF;
-  --surface-2:#F5F3EE;
-  --ink:#1A1917;
-  --ink-2:#3D3A36;
-  --muted:#6B6762;
-  --faint:#8F8A82;
-  --hairline:#E5E1D8;
-  --hairline-strong:#D6D1C4;
+  /* ground */
+  --canvas:#E8EAE6;        /* concrete sage-gray            */
+  --surface:#FDFDFB;      /* paper white (cards)            */
+  --surface-2:#F0F2EE;    /* shelf gray (inset panels)      */
+  --ink:#20241F;           /* graphite text                  */
+  --ink-2:#3C423B;
+  --muted:#5D645C;
+  --faint:#646B62;         /* AA-safe on canvas/surface/surface-2 (§2.1); old #8A9188 banned */
+  --hairline:#CDD2CB;
+  --hairline-strong:#B4BBB1;
+  /* hi-vis accent — the one brand color */
+  --accent:#D95B08;  --accent-ink:#A84505;  --accent-soft:#FCEADB;
+  /* semantics */
+  --steel:#2E5E73;    --steel-soft:#E2EDF1;   /* info/links    */
+  --green:#2E6B3A;    --green-ink:#20492A;    --green-soft:#E4EFE3;  /* pass/verified */
+  --amber:#8F6400;    --amber-ink:#6B4B00;    --amber-soft:#F6EDD2;  /* waiting/locked */
+  --red:#B3372B;      --red-ink:#8C2A20;      --red-soft:#F9E7E1;    /* error/urgent  */
+  --radius:8px; --radius-lg:10px;
+  --shadow:0 1px 2px rgba(32,36,31,.06),0 4px 14px rgba(32,36,31,.06);
+  --font-display:"Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body:"Barlow", -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  --accent:#C96442;          /* terracotta — the one accent */
-  --accent-ink:#A44E2F;
-  --accent-soft:#F7ECE6;
-
-  --green:#3F7A4E;
-  --green-ink:#2C5E3A;
-  --green-soft:#E6F0E6;
-
-  --amber:#A97B22;
-  --amber-ink:#7A5A18;
-  --amber-soft:#F7EFDC;
-
-  --red:#B1574F;
-  --red-ink:#8F3F38;
-  --red-soft:#F8E9E6;
-
-  --radius:12px;
-  --radius-lg:16px;
-  --shadow:0 1px 2px rgba(26,25,23,.05), 0 4px 16px rgba(26,25,23,.05);
-  --font-display:"Fraunces", Georgia, "Times New Roman", serif;
-  --font-body:"Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* ── derived + mapped tones (additive; brief §3/§4 values) ── */
+  --accent-deep:#C24F06;   /* .btn-p hover (brief §3)                       */
+  --ink-deep:#191C18;      /* .btn-ink hover                                 */
+  --green-line:#C6DBC5;    /* done-state border (hex map #CBE0CB→#C6DBC5)    */
+  --accent-line:#F2D9C2;   /* accent-tint border (hex map #EBD5C9→#F2D9C2)   */
+  --line:var(--hairline-strong); /* legacy alias — day.html still calls it */
 }
 
+/* ── Reset & base ───────────────────────────────────────────────── */
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
@@ -50,151 +56,277 @@ body{
 }
 a{text-decoration:none;color:inherit}
 button{font-family:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;color:var(--ink)}
-h2{font-size:27px;line-height:1.2}
-h3{font-size:18px;line-height:1.3}
+/* ── Type roles ───────────────────────────────────────────────────
+   Display: Barlow Condensed 600/700, tight tracking, sentence case.
+   Body: Barlow 15px/1.55. Mono: IBM Plex Mono 11–13px uppercase. */
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.05}
+h1{font-size:clamp(40px,5vw,56px);font-weight:700}
+h2{font-size:30px;line-height:1.15}
+h3{font-size:20px;line-height:1.3}
 
+/* ── Utilities ───────────────────────────────────────────────────── */
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-.muted{color:var(--muted)} .small{font-size:13.5px} .xs{font-size:12.5px}
+.screen{max-width:1180px;margin:0 auto;padding:8px 0 64px}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+.xs{font-size:12.5px}
+.mono{font-family:var(--font-mono)}
 .divider{height:1px;background:var(--hairline);margin:18px 0}
+/* mono eyebrow label — "SHIFT A · DAYS 01–05"; replaces ad-hoc
+   uppercase label styles across pages */
+.eyebrow{display:block;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 
 /* ── Top navigation ─────────────────────────────────────────────── */
 .topnav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;border-bottom:1px solid var(--hairline)}
-.logo{font-family:var(--font-display);font-size:21px;font-weight:650;letter-spacing:-.02em;color:var(--ink)}
+/* logo with brand mark: 14px safety-orange square, punched hole */
+.logo{display:inline-flex;align-items:center;font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.logo::before{
+  content:"";width:14px;height:14px;border-radius:3px;margin-right:10px;flex-shrink:0;
+  /* hard-stop radial draws the 8px punched hole (canvas shows through)
+     — a drawn shape, not a decorative gradient */
+  background:radial-gradient(circle at 50% 50%,var(--canvas) 0 3.5px,rgba(0,0,0,0) 4px),var(--accent);
+}
 .logo em{font-style:normal;color:var(--accent)}
 .navl{display:flex;gap:26px;font-size:14px;font-weight:500;color:var(--muted)}
 .navl a{padding:6px 2px;transition:color .15s}
 .navl a:hover{color:var(--ink)}
 
-/* ── Buttons (≥44px hit targets) ────────────────────────────────── */
+/* ── Ticker strip: platform readout (landing + dashboard only) ──── */
+.ticker{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  font-family:var(--font-mono);font-size:11.5px;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  background:var(--surface);border:1px solid var(--hairline);
+  border-radius:var(--radius);padding:10px 16px}
+.ticker .live{display:inline-flex;align-items:center;gap:7px;color:var(--green-ink);font-weight:600}
+.ticker .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite}
+.ticker b{color:var(--ink);font-weight:600}
+
+/* ── Buttons (44px hit targets; NO white-on-orange) ──────────────── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  min-height:44px;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;
+  min-height:44px;padding:10px 20px;border-radius:var(--radius);font-weight:600;font-size:14px;
   cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
 .btn:active{transform:translateY(1px)}
-.btn-p{background:var(--accent);color:#fff}
-.btn-p:hover{background:var(--accent-ink)}
-.btn-ink{background:var(--ink);color:#fff}
-.btn-ink:hover{background:#000}
-.btn-o{background:var(--surface);color:var(--ink);border-color:var(--hairline-strong)}
+/* primary: pure black on safety orange — signage-true, 5.45:1 AA (§2.1);
+   hover #CC5407 = 4.84:1 with black. Never var(--ink) here. */
+.btn-p{background:var(--accent);color:#000}
+.btn-p:hover{background:#CC5407;color:#000}
+.btn-ink{background:var(--ink);color:var(--surface)}
+.btn-ink:hover{background:var(--ink-deep)}
+.btn-o{background:var(--surface);color:var(--ink);border:1.5px solid var(--hairline-strong)}
 .btn-o:hover{border-color:var(--ink);background:var(--surface-2)}
 .btn-g{background:var(--green);color:#fff}
 .btn-g:hover{background:var(--green-ink)}
-.btn-white{background:#fff;color:var(--ink)}
+.btn-white{background:var(--surface);color:var(--ink)}
 .btn-white:hover{background:var(--surface-2)}
-.btn-sm{min-height:38px;padding:7px 14px;font-size:13px;border-radius:8px}
+.btn-sm{min-height:38px;padding:7px 14px;font-size:13px;border-radius:var(--radius)}
 
 /* ── Cards ──────────────────────────────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow)}
 .card-flat{box-shadow:none}
 
-/* ── Badges & chips ─────────────────────────────────────────────── */
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.01em}
+/* ── Badges & chips (mono ticket tags) ───────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:4px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .b-green{background:var(--green-soft);color:var(--green-ink)}
 .b-amber{background:var(--amber-soft);color:var(--amber-ink)}
 .b-accent{background:var(--accent-soft);color:var(--accent-ink)}
+.b-steel{background:var(--steel-soft);color:var(--steel)}
 .b-slate{background:var(--surface-2);color:var(--ink-2)}
 .b-red{background:var(--red-soft);color:var(--red-ink)}
-.chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--hairline-strong);color:var(--ink-2);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--hairline-strong);
+  color:var(--ink-2);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 12px;border-radius:4px}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
 
-/* ── Key-value rows ─────────────────────────────────────────────── */
+/* ── Key-value rows (work-order spec lines) ──────────────────────── */
 .kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:14px}
 .kv:last-child{border:none}
 
-/* ── Day/phase track bars ───────────────────────────────────────── */
-.track{display:flex;gap:4px}
-.track>div,.track>a{flex:1;height:10px;border-radius:3px;background:var(--hairline);min-width:0}
-.t-done{background:var(--accent)}
-.t-cur{background:var(--ink);box-shadow:0 0 0 3px var(--accent-soft)}
-.t-lock{background:var(--hairline)}
+/* ═══════════════════════════════════════════════════════════════════
+   PUNCH-CARD day strip — THE signature element (brief §3 verbatim).
+   14 numbered slots; done = punched hole, today = hi-vis ring +
+   pulse marker, locked = dashed quiet guide. Day numerals stay
+   visible in every state (mono).
+   ═══════════════════════════════════════════════════════════════════ */
+.punchcard{display:flex;gap:5px}
+.punchcard .slot{
+  flex:1;min-width:0;height:42px;border:1px solid var(--hairline-strong);
+  border-radius:6px;background:var(--surface);position:relative;
+  font-family:var(--font-mono);font-size:11px;font-weight:500;
+  color:var(--faint);display:flex;align-items:flex-start;
+  justify-content:center;padding-top:5px;text-decoration:none;
+}
+/* punched = done: number fades, hole punched through */
+.punchcard .slot.done{color:var(--faint)}
+.punchcard .slot.done::after{
+  content:"";position:absolute;left:50%;top:55%;width:14px;height:14px;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:var(--canvas);border:2.5px solid var(--green);
+  box-shadow:inset 0 1px 2px rgba(32,36,31,.35);
+}
+/* today: hi-vis ring + marker */
+.punchcard .slot.today{border-color:var(--accent);color:var(--ink);
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.punchcard .slot.today::before{content:"";position:absolute;left:50%;
+  top:20%;width:8px;height:8px;transform:translateX(-50%);
+  border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+/* keep today's numeral legible under the pulse marker (brief: slots
+   keep day numbers visible) — nudge it below the dot, unless the slot
+   is already punched (done+today leaves the hole as the focal mark) */
+.punchcard .slot.today:not(.done){padding-top:20px}
+/* future: quiet, dashed guide */
+.punchcard .slot.locked{background:var(--surface-2);border-style:dashed;color:var(--faint)}
+/* slots that are links stay quiet until hovered */
+.punchcard a.slot:hover{border-color:var(--accent)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* orchestrated entry — the one motion moment: slots rise in sequence */
+.punchcard.animate .slot{animation:rise .25s both}
+.punchcard.animate .slot:nth-child(1){animation-delay:0s}
+.punchcard.animate .slot:nth-child(2){animation-delay:.04s}
+.punchcard.animate .slot:nth-child(3){animation-delay:.08s}
+.punchcard.animate .slot:nth-child(4){animation-delay:.12s}
+.punchcard.animate .slot:nth-child(5){animation-delay:.16s}
+.punchcard.animate .slot:nth-child(6){animation-delay:.2s}
+.punchcard.animate .slot:nth-child(7){animation-delay:.24s}
+.punchcard.animate .slot:nth-child(8){animation-delay:.28s}
+.punchcard.animate .slot:nth-child(9){animation-delay:.32s}
+.punchcard.animate .slot:nth-child(10){animation-delay:.36s}
+.punchcard.animate .slot:nth-child(11){animation-delay:.4s}
+.punchcard.animate .slot:nth-child(12){animation-delay:.44s}
+.punchcard.animate .slot:nth-child(13){animation-delay:.48s}
+.punchcard.animate .slot:nth-child(14){animation-delay:.52s}
 
-/* ── Phase cards ────────────────────────────────────────────────── */
+/* ── Stamp (gate passed / issued badges only — brief §3 verbatim).
+   Rotation is part of the stamp; ordinary status chips elsewhere
+   stay unrotated (.chip/.badge). */
+.stamp{display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--green-ink);
+  border:1.5px solid currentColor;border-radius:4px;padding:3px 9px;
+  transform:rotate(-1.5deg);background:var(--surface)}
+.stamp.ok{color:var(--green-ink)} .stamp.wait{color:var(--amber-ink)}
+.stamp.fail{color:var(--red-ink)}
+
+/* ── Phase / shift cards ────────────────────────────────────────── */
 .phases-track{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
 .phase{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);padding:18px;position:relative;box-shadow:var(--shadow)}
-.phase .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.phase .tag{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .phase.active{border-color:var(--ink)}
 .phase.active .tag{color:var(--accent-ink)}
-.phase.locked{opacity:.62}
+.phase.locked{opacity:.62;border-style:dashed}
 .phase.done{border-color:var(--green)}
 .phase .phead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.phase h3{font-size:17px}
 .lock-ic{font-size:15px}
 .lock-note{margin-top:10px;font-size:12.5px;color:var(--amber-ink);font-weight:500}
 
-/* ── Check items ────────────────────────────────────────────────── */
+/* ── Check items (status indicators, NOT checkboxes) ────────────────
+   State is set server-side: pending = dashed circle with a dot;
+   done = solid green ✓. Remapped to tokens. */
 .check-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border:1px solid var(--hairline);border-radius:var(--radius);margin-bottom:10px;background:var(--surface);transition:border-color .15s,background .15s}
-.check-item.done{background:var(--green-soft);border-color:#CBE0CB}
-/* Status indicators, NOT checkboxes: state is set server-side (day done,
-   gate reviews, case-study draft) — never by clicking. Pending = dashed
-   circle with a dot; done = solid green ✓. No empty-square affordance. */
-.check-item .cbox{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--hairline-strong);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:transparent;cursor:default}
+.check-item.done{background:var(--green-soft);border-color:var(--green-line)}
+.check-item .cbox{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--hairline-strong);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--surface);background:transparent;cursor:default}
 .check-item .cbox::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--hairline-strong)}
 .check-item.done .cbox{background:var(--green);border:1.5px solid var(--green)}
 .check-item.done .cbox::after{display:none}
 
-/* ── Mentor chat ────────────────────────────────────────────────── */
+/* ── Mentor chat (dispatch-radio) ────────────────────────────────── */
 .chat{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
 .msg{display:flex;gap:12px;padding:16px 18px}
 .msg.mentor{background:var(--surface)}
-.msg .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:var(--surface-2)}
-.msg.mentor .av{background:var(--accent);color:#fff;font-family:var(--font-display);font-weight:600}
+/* avatars are squares: mentor = hi-vis accent square with mono "M"
+   (ink-on-orange), user = shelf-gray square "Y" */
+.msg .av{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:600;flex-shrink:0;background:var(--surface-2);color:var(--ink-2)}
+.msg.mentor .av{background:var(--accent);color:#000}
 .msg p{font-size:14.5px;color:var(--ink-2)}
-.msg .row{background:var(--accent-soft);border:1px solid #EBD5C9;color:var(--accent-ink);font-size:13px;padding:10px 14px;border-radius:10px;margin-top:10px}
+.msg .row{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-ink);font-size:13px;padding:10px 14px;border-radius:var(--radius);margin-top:10px}
 .chat-input{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--hairline);background:var(--surface)}
-.chat-input input{flex:1;border:1px solid var(--hairline-strong);border-radius:10px;padding:11px 14px;font-size:14px;outline:none;background:var(--canvas);font-family:inherit;color:var(--ink)}
-.chat-input input:focus{border-color:var(--accent)}
+.chat-input input{flex:1;border:1.5px solid var(--hairline-strong);border-radius:var(--radius);padding:11px 14px;font-size:14px;outline:none;background:var(--canvas);font-family:inherit;color:var(--ink)}
+.chat-input input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 
-/* ── Tables ─────────────────────────────────────────────────────── */
+/* ── Tables (labor-board rows; mono uppercase headers) ───────────── */
 table{width:100%;border-collapse:collapse;font-size:13.5px}
-th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--hairline)}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-family:var(--font-mono);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--hairline)}
 td{padding:12px;border-bottom:1px solid var(--hairline);color:var(--ink-2)}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface-2)}
 
-/* ── Forms ──────────────────────────────────────────────────────── */
+/* ── Forms ───────────────────────────────────────────────────────── */
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
-.input, input[type="text"], input[type="email"], input[type="url"], input[type="number"], input[type="date"], select, textarea{
-  width:100%;border:1px solid var(--hairline-strong);border-radius:10px;padding:11px 14px;font-size:14px;
+.input, input[type="text"], input[type="email"], input[type="url"], input[type="number"], input[type="date"], input[type="password"], select, textarea{
+  width:100%;border:1.5px solid var(--hairline-strong);border-radius:var(--radius);padding:11px 14px;font-size:14px;
   outline:none;background:var(--surface);font-family:inherit;color:var(--ink)}
 input:focus, select:focus, textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 
-/* ── CTA band ───────────────────────────────────────────────────── */
-.cta-band{background:var(--ink);border-radius:20px;color:#fff;padding:48px 40px;margin-top:48px}
-.cta-band h2{color:#fff;margin-bottom:10px}
-.cta-band p{color:#C9C5BD;max-width:560px;margin:0 0 24px}
+/* ── CTA band (graphite block) ───────────────────────────────────── */
+.cta-band{background:var(--ink);border-radius:var(--radius-lg);color:var(--surface);padding:48px 40px;margin-top:48px}
+.cta-band h2{color:var(--surface);margin-bottom:10px}
+.cta-band p{color:rgba(253,253,251,.75);max-width:560px;margin:0 0 24px}
 
-/* ── Stats ──────────────────────────────────────────────────────── */
+/* ── Stats (instrument readouts) ───────────────────────────────────
+   Default: condensed display numerals (brief §2). Add .mono for
+   punch-clock instrument panels ("N/14 DAYS · J POSTINGS"). */
 .stat{padding:18px 12px;text-align:center}
-.stat .n{font-family:var(--font-display);font-size:34px;font-weight:650;letter-spacing:-.02em;color:var(--ink)}
+.stat .n{font-family:var(--font-display);font-size:34px;font-weight:700;letter-spacing:-.01em;color:var(--ink);line-height:1.1}
 .stat .l{font-size:12.5px;color:var(--muted);margin-top:4px}
+.stat.mono .n{font-family:var(--font-mono);font-weight:600;font-size:30px}
 
-/* ── Grids ──────────────────────────────────────────────────────── */
+/* ── Grids ───────────────────────────────────────────────────────── */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .grid-lesson-wide{display:grid;grid-template-columns:2fr 1fr;gap:18px}
 
-/* ── Flash banner ───────────────────────────────────────────────── */
-.flash{background:var(--green-soft);border-bottom:1px solid #CBE0CB;color:var(--green-ink);padding:11px 24px;font-size:13.5px;font-weight:600}
+/* ── Flash banner (instrument readout band) ─────────────────────────
+   Green-soft band, mono type, punched-square marker prefix. */
+.flash{background:var(--green-soft);border-bottom:1px solid var(--green-line);color:var(--green-ink);padding:11px 24px;font-family:var(--font-mono);font-size:12.5px;font-weight:600}
+.flash::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:10px;vertical-align:-1px;background:var(--green)}
 
-/* ── Page header pattern ────────────────────────────────────────── */
+/* ── Page header pattern ─────────────────────────────────────────── */
 .pagehead{padding:34px 0 22px}
 .pagehead h2{margin:12px 0 6px}
 .pagehead .sub{color:var(--muted);max-width:640px}
 
-/* ── Motion ─────────────────────────────────────────────────────── */
-.screen{max-width:1180px;margin:0 auto;padding:8px 0 64px}
+/* ── Day-page tabs (Lesson / Task switch) ───────────────────────────
+   Sticky instrument strip; active tab = graphite with paper text. */
+.tabs{position:sticky;top:0;z-index:20;display:flex;gap:8px;margin-top:22px;
+  background:var(--surface);padding:10px;border:1px solid var(--hairline-strong);
+  border-radius:var(--radius)}
+.tab{flex:1;padding:11px 10px;border:0;border-radius:7px;font:inherit;font-weight:600;
+  cursor:pointer;background:var(--surface-2);color:var(--ink-2)}
+.tab.active{background:var(--ink);color:var(--surface)}
+
+/* ── Underline sweep — hero key phrase (landing) ────────────────────
+   A single hi-vis stroke drawn under the phrase; animates in once. */
+.sweep{background-image:linear-gradient(var(--accent),var(--accent));
+  background-repeat:no-repeat;background-size:100% .16em;background-position:0 88%;
+  padding-bottom:.05em}
+@keyframes sweep-in{from{background-size:0% .16em}to{background-size:100% .16em}}
+.sweep.animate{animation:sweep-in .9s .25s ease-out both}
+
+/* ── Motion ────────────────────────────────────────────────────────
+   One rise keyframe; used by .fade-in and the punchcard stagger.
+   Everything else stays static. */
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .fade-in{animation:rise .25s ease}
+/* kill switch — copy of the established pattern */
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
 
+/* ── Responsive ──────────────────────────────────────────────────── */
 @media(max-width:900px){
   .grid2,.grid3,.phases-track,.grid-lesson-wide{grid-template-columns:1fr}
   .topnav{flex-wrap:wrap}
   .cta-band{padding:36px 24px}
+}
+/* punchcard stays usable at 390px: slots shrink, numerals hide */
+@media(max-width:480px){
+  .punchcard{gap:3px}
+  .punchcard .slot{height:24px;padding-top:0;font-size:0}
+  .punchcard .slot.today:not(.done){padding-top:0}
+  .punchcard .slot.done::after{width:10px;height:10px;border-width:2px}
+  .punchcard .slot.today::before{width:6px;height:6px}
 }

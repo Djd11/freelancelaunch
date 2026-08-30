@@ -18,8 +18,8 @@
         <td><code>{{ c.id[:8] }}…</code></td>
         <td><code>{{ c.cluster_key }}</code></td>
         <td><b>{{ c.name }}</b></td>
-        <td>{{ c.start_date|dt }}</td>
-        <td>{{ c.end_date|dt }}</td>
+        <td class="mono">{{ c.start_date|dt }}</td>
+        <td class="mono">{{ c.end_date|dt }}</td>
         <td>
           {% if c.status == 'active' %}<span class="badge b-green">active</span>
           {% elif c.status == 'upcoming' %}<span class="badge b-accent">upcoming</span>

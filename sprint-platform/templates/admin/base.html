@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+/* admin nav: 5 sections — links wrap on narrow screens instead of
+   overflowing. Careful: this file is parsed by Jinja, and a CSS brace
+   immediately followed by a hash mark reads as a comment opener —
+   keep the space after the brace in the rule below. */
+@media(max-width:900px){ #admin .navl{flex-wrap:wrap;gap:10px 18px} }
+</style>
 <section class="screen" id="admin">
   <div class="wrap">
     <div class="topnav">
-      <div class="logo">Freelance<em>Launch</em> <span class="badge b-accent" style="margin-left:8px">Admin</span></div>
+      <div class="logo">Freelance<em>Launch</em> <span class="stamp wait" style="margin-left:10px">Admin</span></div>
       <div class="navl">
         <a href="/admin/">Dashboard</a>
         <a href="/admin/clusters">Job Clusters</a>
         <a href="/admin/feed">Job Feed</a>
         <a href="/admin/cohorts">Cohorts</a>
+        <a href="/admin/platforms">Platforms</a>
       </div>
       <a class="btn btn-o btn-sm" href="/sprints">Learner view</a>
     </div>

@@ -9,6 +9,7 @@
 <div class="card" style="max-width:640px">
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <span class="eyebrow">Posting</span>
     <div class="grid2">
       <div class="field">
         <label for="cluster_key">Cluster key</label>
@@ -37,6 +38,7 @@
       <label for="skills">Skills (comma-separated)</label>
       <input id="skills" name="skills" placeholder="klaviyo, email, automation">
     </div>
+    <span class="eyebrow">Placement</span>
     <div class="grid3">
       <div class="field">
         <label for="rate">Rate ($)</label>

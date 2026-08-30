@@ -9,6 +9,7 @@
 <div class="card" style="max-width:560px">
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <span class="eyebrow">Cohort</span>
     <div class="grid2">
       <div class="field">
         <label for="cluster_key">Cluster key</label>
@@ -19,6 +20,7 @@
         <input id="name" name="name" required placeholder="Cohort #13">
       </div>
     </div>
+    <span class="eyebrow">Window</span>
     <div class="grid2">
       <div class="field">
         <label for="start_date">Start date</label>
@@ -29,6 +31,7 @@
         <input id="end_date" name="end_date" type="date" required>
       </div>
     </div>
+    <span class="eyebrow">Publication</span>
     <div class="field">
       <label for="status">Status</label>
       <select id="status" name="status">

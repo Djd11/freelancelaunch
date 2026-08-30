@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Error {{ code }}</title>
 </head>
-<body style="font-family: system-ui, -apple-system, sans-serif; max-width: 540px; margin: 12vh auto; padding: 0 16px; color: #222;">
-  <h1 style="font-size: 44px; margin: 0 0 8px;">{{ code }}</h1>
-  <p style="font-size: 18px; margin: 0 0 16px;">{{ message }}</p>
+<body style="font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, -apple-system, sans-serif; max-width: 540px; margin: 12vh auto; padding: 0 16px; color: #20241F; background: #E8EAE6;">
+  <p style="font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #5D645C; margin: 0 0 8px;">Site error</p>
+  <h1 style="font-size: 88px; font-weight: 700; line-height: 1.05; letter-spacing: -.01em; margin: 0 0 8px; color: #20241F;">{{ code }}</h1>
+  <p style="font-size: 18px; margin: 0 0 16px; line-height: 1.5;">{{ message }}</p>
   {% if ref %}
-  <p style="color: #666; font-size: 14px;">Reference: <code>{{ ref }}</code></p>
+  <p style="font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace; font-size: 13px; color: #5D645C; margin: 0 0 8px;">Reference: <code style="border: 1px solid #B4BBB1; border-radius: 4px; padding: 2px 6px; background: #FDFDFB;">{{ ref }}</code></p>
+  <p style="font-size: 14px; color: #5D645C; margin: 0;">If this keeps happening, contact support with the reference above.</p>
+  {% else %}
+  <p style="font-size: 14px; color: #5D645C; margin: 0;">If this keeps happening, contact support.</p>
   {% endif %}
-  <p style="color: #666; font-size: 14px;">If this keeps happening, contact support with the reference above.</p>
 </body>
 </html>
