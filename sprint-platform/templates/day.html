@@ -41,7 +41,7 @@
       <div id="panel-lesson">
         <div class="card">
           <h3 style="margin-bottom:12px">Watch · Lesson</h3>
-          <div class="xs muted" style="margin:-6px 0 10px">TwoPanel HTML preview — kinetic text + TTS</div>
+          <div class="xs muted" style="margin:-6px 0 10px">TwoPanel video · Hook → Lesson → Key points → Outro</div>
           {# Engagement preview block — rendered ONCE, above the TwoPanel player, for
              BOTH the voiceover and non-voiceover variants. Suppressed on generation
              error / not-yet-generated days, and entirely omitted for legacy lessons
@@ -100,7 +100,7 @@
             </div>
           </div>
           <script>
-            window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script|strip_markdown, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover, "hook": lesson.hook or "", "day_overview": lesson.day_overview or [], "usefulness_context": lesson.usefulness_context or "", "pre_quiz": lesson.pre_quiz or []} | tojson }};
+            window.__LESSON_PROPS__ = {{ {"title": lesson.title, "script": lesson.script|strip_markdown, "key_points": lesson.key_points or [], "voiceover": lesson.voiceover, "hook": lesson.hook or "", "day_overview": lesson.day_overview or [], "usefulness_context": lesson.usefulness_context or "", "pre_quiz": lesson.pre_quiz or [], "day_no": day.day_no, "phase": day.phase, "action": day.action_type, "days_done": days_done} | tojson }};
           </script>
           <script src="/static/video/lesson-player.js"></script>
           <!-- Readable lesson content: the player reveals the script word-by-word

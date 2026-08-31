@@ -118,6 +118,13 @@ def day(sprint_id, day_no):
     # if generation failed the worker stamped a visible generation_error.
     from services.lesson_engine import generation_error, clean_lesson
     lesson = clean_lesson(payload.get("lesson"))
+    # Video props: real sprint progress for the player's punch-card outro
+    # and day eyebrow (t4 blocker #3 — every video previously rendered
+    # "Day 01" regardless of the actual day being viewed).
+    days_done_rows = sb.table("sprint_days").select("day_no").eq(
+        "sprint_id", sprint_id
+    ).eq("is_done", True).execute().data
+    days_done = len(days_done_rows or [])
     # A day that ALREADY has content renders it — a failure elsewhere in the
     # sprint (generation_error is sprint-wide, stamped on the first empty day)
     # must not hide this day's valid lesson. Only days still waiting on the
@@ -145,6 +152,7 @@ def day(sprint_id, day_no):
         project_done=bool(project and project.get("done")),
         gate_a_pass=gate_a_passed(sb, sprint_id),
         project_submitted=project_submitted,
+        days_done=days_done,
     )
 
 

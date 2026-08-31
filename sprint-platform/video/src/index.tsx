@@ -15,6 +15,18 @@ type LessonProps = {
   script?: string;
   key_points?: string[];
   voiceover?: { url?: string; duration_seconds?: number };
+  /* Redesign (Trades Desk 4-scene): engagement fields already passed by the
+     day view; now consumed by HOOK/LESSON scenes. All optional — old payloads
+     keep working through the composition's per-scene fallbacks. */
+  hook?: string;
+  day_overview?: string[];
+  usefulness_context?: string;
+  pre_quiz?: unknown;
+  day_no?: number;
+  phase?: string;
+  action?: string;
+  days_done?: number;
+  total_days?: number;
 };
 
 function mount() {

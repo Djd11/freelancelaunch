@@ -1,141 +1,1001 @@
-import { useCurrentFrame, interpolate, Easing, Audio } from "remotion";
+import {
+  useCurrentFrame,
+  useVideoConfig,
+  interpolate,
+  spring,
+  Sequence,
+  Audio,
+  AbsoluteFill,
+} from "remotion";
 
 /**
- * TwoPanelLesson — data-driven "TwoPanel HTML preview — kinetic text + TTS"
- * composition (docs/decisions.md D8, engineering-spec §J4).
+ * TwoPanelLesson — the 4-scene "Trades Desk" lesson video.
+ * (docs/decisions.md D8, engineering-spec §J4; redesign per the approved
+ *  mock docs/mockups/video-preview-redesign-mock.html — all five ★ choices:
+ *  Light variant, karaoke transcript, hand-drawn underlines, live waveform,
+ *  punch-card outro.)
  *
- * Input props (set by the Flask day view from sprint_days.action_payload.lesson):
- *   { title, script, key_points: string[], voiceover: { url, duration_seconds } }
+ * Input props (set by the Flask day view from sprint_days.action_payload.lesson
+ * via window.__LESSON_PROPS__):
+ *   { title, script, key_points: string[], voiceover: {url, duration_seconds},
+ *     hook?, day_overview?, usefulness_context?, pre_quiz?,
+ *     day_no?, phase?, action?, days_done?, total_days? }
  *
- * The video is pure SVG + <Audio> — played in-browser by the pre-built
- * @remotion/player bundle (static/video/lesson-player.js). No MP4 is rendered;
- * duration = voiceover duration (frames at 30fps, min 300 so a missing audio
- * never renders a zero-length player).
+ * Pure SVG + <Audio>, played in-browser by the pre-built @remotion/player
+ * bundle (static/video/lesson-player.js). No MP4; duration = voiceover
+ * duration at 30fps, min 300 frames. Older payloads without hook/day_overview
+ * still render: every scene has a fallback, and no empty placeholder blocks
+ * are ever shown.
+ *
+ * FONTS: Barlow / Barlow Condensed / IBM Plex Mono are loaded by the host
+ * day page (templates/base.html) — referenced via font-family stack only.
+ *
+ * WAVEFORM: the bottom strip is DECORATIVE — a deterministic sine/noise mix
+ * driven by frame (matches the approved mock). No audio decoding.
  */
 
 const FPS = 30;
+const MIN_FRAMES = 300;
 
 /** Strip markdown formatting from script text for clean video rendering. */
 function stripMarkdown(text: string): string {
   if (!text) return "";
   let t = text
-    .replace(/\*\*(.+?)\*\*/g, "$1")  // **bold** → bold
-    .replace(/^\d+\.\s+/gm, "")          // 1. Step → Step
-    .replace(/^[-*]\s+/gm, "")            // - item → item
-    .replace(/\n{3,}/g, "\n\n")          // collapse blank lines
+    .replace(/\*\*(.+?)\*\*/g, "$1") // **bold** → bold
+    .replace(/^\d+\.\s+/gm, "") // 1. Step → Step
+    .replace(/^[-*]\s+/gm, "") // - item → item
+    .replace(/\n{3,}/g, "\n\n") // collapse blank lines
     .trim();
   return t;
 }
 
-export const TwoPanelLesson = ({
-  title = "Lesson",
-  script = "",
-  key_points = [],
-  voiceover = { url: null, duration_seconds: 20 },
-}) => {
-  const frame = useCurrentFrame();
-  const durationFrames = Math.max(300, Math.round((voiceover?.duration_seconds || 20) * FPS));
-  const progress = Math.min(1, frame / durationFrames);
+const firstSentence = (text: string): string => {
+  const clean = stripMarkdown(text || "");
+  if (!clean) return "";
+  const m = clean.match(/^[^.!?]*[.!?]/);
+  return (m ? m[0] : clean).trim();
+};
 
+/** "The Trades Desk" light tokens — mirror of the mock :root (exact hexes). */
+const C = {
+  bg: "#E8EAE6",
+  surface: "#FDFDFB",
+  surface2: "#F0F2EE",
+  ink: "#20241F",
+  ink2: "#3C423B",
+  muted: "#5D645C",
+  hairline: "#CDD2CB",
+  hairline2: "#B4BBB1",
+  accent: "#D95B08",
+  accentInk: "#A84505",
+  accentSoft: "#FCEADB",
+  green: "#2E6B3A",
+  greenInk: "#20492A",
+};
+
+const FONT = {
+  cond: '"Barlow Condensed","Arial Narrow",sans-serif',
+  body: '"Barlow",-apple-system,"Segoe UI",sans-serif',
+  mono: '"IBM Plex Mono",ui-monospace,"SF Mono",monospace',
+};
+
+type LessonProps = {
+  title?: string;
+  script?: string;
+  key_points?: string[];
+  voiceover?: { url?: string; duration_seconds?: number };
+  hook?: string;
+  day_overview?: string[];
+  usefulness_context?: string;
+  pre_quiz?: unknown;
+  day_no?: number;
+  phase?: string;
+  action?: string;
+  days_done?: number;
+  total_days?: number;
+};
+
+const mono = (size: number, weight = 500): React.CSSProperties => ({
+  fontFamily: FONT.mono,
+  fontSize: size,
+  fontWeight: weight,
+});
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** t4 blocker #2: length-based headline clamp. ≤10 words (mock demo) → 88px;
+ *  real 15-22-word hooks scale down to fit the scene, floor 52px. */
+const clampHeadline = (wordCount: number): number => {
+  if (wordCount <= 10) return 88;
+  if (wordCount <= 14) return 74;
+  if (wordCount <= 18) return 64;
+  return 56;
+};
+
+/** Spring entrance (overshoot via damping 12) — never linear-only. */
+const springIn = (frame: number, from: number) =>
+  spring({ frame: frame - from, fps: FPS, config: { damping: 12, mass: 1 } });
+
+/** Hand-drawn marker underline: wavy SVG path drawn on via dashoffset.
+ *  Path coordinates live in a 0–100 viewBox space; preserveAspectRatio
+ *  stretches it to the element width. */
+const Underline: React.FC<{
+  progress: number;
+  width?: number;
+  color?: string;
+  thickness?: number;
+  seed?: number;
+}> = ({ progress, width = 120, color = C.accent, thickness = 5, seed = 1 }) => {
+  const wob = (i: number) => Math.sin(seed * 7.3 + i * 1.7) * 2.2;
+  const d = `M 0 ${9 + wob(0)}` +
+    ` C 18 ${6 + wob(1)}, 34 ${12 + wob(2)}, 52 ${9 + wob(3)}` +
+    ` S 80 ${5 + wob(4)}, 100 ${8 + wob(5)}`;
+  return (
+    <svg
+      width={width}
+      height={18}
+      viewBox="0 0 100 18"
+      preserveAspectRatio="none"
+      style={{ display: "block", overflow: "visible" }}
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke={color}
+        strokeWidth={thickness}
+        strokeLinecap="round"
+        pathLength={100}
+        strokeDasharray={100}
+        strokeDashoffset={100 - Math.max(0, Math.min(1, progress)) * 100}
+      />
+    </svg>
+  );
+};
+
+export const TwoPanelLesson: React.FC<LessonProps> = (props) => {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+
+  const {
+    title = "Lesson",
+    script = "",
+    key_points = [],
+    voiceover = { url: null, duration_seconds: 20 },
+    hook,
+    usefulness_context,
+    day_no,
+    phase,
+    action,
+    days_done,
+    total_days = 14,
+  } = props;
+
+  const D = Math.max(MIN_FRAMES, durationInFrames);
+
+  // ── Scene split: proportional to duration (never hardcoded seconds) ──
+  const hookEnd = Math.max(30, Math.floor(D * 0.125));
+  const lessonEnd = Math.floor(D * 0.56);
+  const pointsEnd = Math.floor(D * 0.87);
+
+  // ── Text prep ──
   const cleanScript = stripMarkdown(String(script || ""));
   const sentences = cleanScript
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
+  const scriptWords = sentences.length
+    ? sentences.join(" ").split(" ").filter(Boolean)
+    : [];
 
-  // Left panel: title + kinetic script words; right panel: key points.
-  const words = String(title || "").split(" ");
-  const scriptWords = sentences.length ? sentences.join(" ").split(" ") : [];
+  // Karaoke: char-proportional word pacing across the LESSON scene (★2).
+  const lessonDur = Math.max(1, lessonEnd - hookEnd);
+  const totalChars = scriptWords.join(" ").length || 1;
+  const wordStartFrames = (() => {
+    let acc = 0;
+    return scriptWords.map((w) => {
+      const startFrame = Math.floor((acc / totalChars) * lessonDur);
+      acc += w.length + 1;
+      return startFrame;
+    });
+  })();
 
-  // Reveal pacing across the whole duration.
-  const titleDone = interpolate(frame, [0, 60], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const scriptStart = 45;
-  const scriptDur = Math.max(1, durationFrames * 0.55);
-  const scriptVisible = Math.floor(((frame - scriptStart) / scriptDur) * scriptWords.length);
-  const pointsStart = Math.floor(durationFrames * 0.5);
-  const pointsDur = Math.max(1, durationFrames * 0.4);
-  const pointsVisible = Math.floor(((frame - pointsStart) / pointsDur) * key_points.length);
+  // ── Captions: sentence-level, only during the LESSON scene ──
+  const capForFrame = (() => {
+    const rel = frame - hookEnd;
+    if (rel < 0 || rel >= lessonDur) return "";
+    let acc = 0;
+    for (const s of sentences) {
+      const startFrame = Math.floor((acc / totalChars) * lessonDur);
+      acc += s.length + 1;
+      const endFrame = Math.floor((acc / totalChars) * lessonDur);
+      if (rel >= startFrame && rel < endFrame) return s;
+    }
+    return "";
+  })();
 
-  const activePoint = Math.min(key_points.length - 1, Math.max(0, pointsVisible - 1));
+  // ── OUTRO punch-card facts (★5 — real progress, never faked) ──
+  const dayNo = typeof day_no === "number" ? dayNoGuard(day_no) : 1;
+  const done =
+    typeof days_done === "number"
+      ? Math.max(0, Math.min(total_days, days_done))
+      : Math.max(0, dayNo - 1);
+  const daysToGo = Math.max(0, total_days - dayNo);
 
-  // ── Auto-scroll: text flows top→bottom, scrolls up when content overflows ──
-  const visibleWords = scriptWords.slice(0, Math.max(0, scriptVisible));
-  // Character-based word-per-line estimate.
-  // Font 34px system-ui → ~18px per char. Container width ≈ 1120px.
-  const charWidthPx = 18;
-  const containerWidth = 1120;
-  const avgWordLen = visibleWords.length > 0
-    ? (visibleWords.join(" ").length / visibleWords.length)
-    : 6;
-  const wordsPerLine = Math.max(1, Math.floor(containerWidth / ((avgWordLen + 1) * charWidthPx)));
-  const lineHeightPx = 51; // 34px × 1.5
-  const linesShown = visibleWords.length > 0 ? Math.ceil(visibleWords.length / wordsPerLine) : 0;
-  const scriptAreaHeight = 1080 - 80/*top pad*/ - 70/*title h*/ - 30/*gap*/ - 80/*bottom pad*/;
-  // Start scrolling when content reaches 70% of viewport, then grow linearly.
-  const scrollThreshold = scriptAreaHeight * 0.7;
-  const totalContentHeight = linesShown * lineHeightPx;
-  const scrollOffset = Math.max(0, totalContentHeight - scrollThreshold);
-
-  const C = {
-    bg: "#0f172a",
-    panel: "#1e293b",
-    text: "#e8e5de",
-    muted: "#94a3b8",
-    accent: "#f59e0b",
-    ring: "#38bdf8",
-  };
+  const mm = String(Math.floor(frame / FPS / 60)).padStart(2, "0");
+  const ss = String(Math.floor(frame / FPS) % 60).padStart(2, "0");
+  const chapterBounds: [number, number][] = [
+    [0, hookEnd],
+    [hookEnd, lessonEnd],
+    [lessonEnd, pointsEnd],
+    [pointsEnd, D],
+  ];
 
   return (
-    <div style={{ width: 1920, height: 1080, background: C.bg, color: C.text, fontFamily: "system-ui, sans-serif", display: "flex", overflow: "hidden" }}>
+    <AbsoluteFill
+      style={{ background: C.bg, color: C.ink, fontFamily: FONT.body }}
+    >
       {voiceover?.url && <Audio src={voiceover.url} />}
 
-      {/* Left panel — kinetic script (scrollable, anchored at bottom) */}
-      <div style={{ flex: 1, padding: 80, display: "flex", flexDirection: "column", gap: 30, overflow: "hidden" }}>
-        {/* Task 4: Title truncation with line-clamp */}
-        <div style={{ fontSize: 58, fontWeight: 700, opacity: titleDone, transform: `translateY(${(1 - titleDone) * 24}px)`, flexShrink: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>
-          {title}
-        </div>
-        {/* Task 2: Text flows top→bottom, scrolls up when overflow */}
-        <div style={{ fontSize: 34, lineHeight: 1.5, color: C.muted, flex: 1, overflow: "hidden", position: "relative" }}>
-          <div style={{ transform: `translateY(-${scrollOffset}px)` }}>
-            {visibleWords.join(" ")}
-            {scriptVisible < scriptWords.length && scriptVisible > 0 && <span style={{ opacity: 0.4 }}>▍</span>}
-          </div>
-        </div>
+      {/* ══════════ TOP CHROME ══════════ */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "20px 30px",
+        }}
+      >
+        <span
+          style={{
+            ...mono(12, 600),
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            color: C.greenInk,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: C.green,
+              display: "inline-block",
+              opacity: interpolate(frame % 48, [0, 24, 48], [1, 0.35, 1]),
+            }}
+          />
+          Voiceover live
+        </span>
+        <span style={{ ...mono(12, 500), color: C.muted }}>
+          {mm}:{ss}
+        </span>
       </div>
 
-      {/* Task 3: Right panel — key points with overflow scroll + Task 6: safe-area bottom padding */}
-      <div style={{ width: 640, borderLeft: "1px solid rgba(255,255,255,0.08)", padding: "80px 80px 100px 80px", display: "flex", flexDirection: "column", gap: 22, overflow: "hidden" }}>
-        <div style={{ fontSize: 30, color: C.muted, letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>Key points</div>
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: 22 }}>
-          {key_points.slice(0, Math.max(0, pointsVisible)).map((kp, i) => {
-            const speaking = i === activePoint;
-            const dimmed = i < activePoint;
+      {/* ══════════ SCENE 1 · HOOK ══════════ */}
+      <Sequence from={0} durationInFrames={hookEnd}>
+        <HookScene
+          hook={firstSentence(String(hook || title))}
+          eyebrow={
+            [
+              `Day ${pad2(dayNo)}`,
+              phase ? `Shift ${phase}` : "",
+              action ? String(action) : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          }
+          keyPointCount={key_points.length}
+          hasVoiceover={Boolean(voiceover?.url)}
+          voiceoverDur={voiceover?.duration_seconds}
+        />
+      </Sequence>
+
+      {/* ══════════ SCENE 2 · LESSON — karaoke transcript ══════════ */}
+      <Sequence from={hookEnd} durationInFrames={lessonEnd - hookEnd}>
+        <LessonScene
+          title={String(title)}
+          words={scriptWords}
+          wordStartFrames={wordStartFrames}
+          statSource={String(usefulness_context || "")}
+        />
+      </Sequence>
+
+      {/* ══════════ SCENE 3 · KEY POINTS ══════════ */}
+      <Sequence from={lessonEnd} durationInFrames={pointsEnd - lessonEnd}>
+        <PointsScene key_points={key_points} />
+      </Sequence>
+
+      {/* ══════════ SCENE 4 · OUTRO — punch-card ══════════ */}
+      <Sequence from={pointsEnd}>
+        <OutroScene dayNo={dayNo} done={done} totalDays={total_days} daysToGo={daysToGo} />
+      </Sequence>
+
+      {/* ══════════ BOTTOM CHROME ══════════ */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: "0 30px 18px",
+          background: `linear-gradient(transparent, ${C.bg}dd 55%)`,
+        }}
+      >
+        {/* Decorative waveform (deterministic; see file NOTE). Bars grow
+            bottom-aligned via scaleY + transformOrigin, so the container
+            centers with alignItems:center — no flex-end needed. */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            height: 26,
+            marginBottom: 10,
+          }}
+        >
+          {Array.from({ length: 48 }).map((_, i) => {
+            const energy = Math.max(
+              0.08,
+              0.25 +
+                0.75 *
+                  Math.abs(
+                    Math.sin((frame / FPS) * 7 + i * 0.55) *
+                      (0.5 + 0.5 * Math.sin((frame / FPS) * 2.1 + i * 0.21))
+                  )
+              );
             return (
-              <div key={i} style={{
-                background: C.panel,
-                border: speaking ? `2px solid ${C.ring}` : "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 14,
-                padding: "20px 24px",
-                fontSize: 30,
-                opacity: dimmed ? 0.4 : 1,
-                boxShadow: speaking ? `0 0 40px rgba(56,189,248,0.25)` : "none",
-                flexShrink: 0,
-              }}>
-                <span style={{ color: speaking ? C.ring : C.accent, marginRight: 12 }}>{speaking ? "●" : dimmed ? "✓" : "○"}</span>
-                {kp}
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  maxWidth: 7,
+                  height: "100%",
+                  background: C.accent,
+                  opacity: 0.85,
+                  borderRadius: 2,
+                  transform: `scaleY(${energy})`,
+                  transformOrigin: "bottom",
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Chapter bar — 4 scenes */}
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            height: 6,
+            borderRadius: 3,
+            overflow: "hidden",
+            background: C.hairline,
+            marginBottom: 12,
+          }}
+        >
+          {chapterBounds.map(([a, b], i) => {
+            const state = frame >= b ? "done" : frame >= a ? "now" : "future";
+            return (
+              <div key={i} style={{ flex: 1, position: "relative" }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 3,
+                    background:
+                      state === "done"
+                        ? C.green
+                        : state === "now"
+                        ? C.accent
+                        : "transparent",
+                    opacity:
+                      state === "now"
+                        ? interpolate(frame % 48, [0, 24, 48], [1, 0.5, 1])
+                        : 1,
+                  }}
+                />
               </div>
+            );
+          })}
+        </div>
+
+        {/* Caption chip */}
+        <div
+          style={{
+            minHeight: 44,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {capForFrame ? (
+            <div
+              style={{
+                fontSize: 19,
+                fontWeight: 600,
+                color: C.ink,
+                background: C.surface,
+                border: `1px solid ${C.hairline2}`,
+                borderRadius: 8,
+                padding: "7px 16px",
+                maxWidth: "80%",
+                overflow: "hidden",
+              }}
+            >
+              {capForFrame}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const dayNoGuard = (n: number) =>
+  Number.isFinite(n) && n > 0 ? Math.min(99, Math.round(n)) : 1;
+
+/* ═══════════════ SCENES ═══════════════ */
+
+/* ── HOOK (★ springs, ★ hand-drawn underline) ── */
+const HookScene: React.FC<{
+  hook: string;
+  eyebrow: string;
+  keyPointCount: number;
+  hasVoiceover: boolean;
+  voiceoverDur?: number;
+}> = ({ hook, eyebrow, keyPointCount, hasVoiceover, voiceoverDur }) => {
+  const f = useCurrentFrame();
+  const words = (hook || "Lesson").split(" ").filter(Boolean);
+  const hlIndex = words.length > 2 ? Math.floor(words.length * 0.66) : -1;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "0 8%",
+      }}
+    >
+      <div
+        style={{
+          ...mono(14, 600),
+          letterSpacing: ".1em",
+          textTransform: "uppercase",
+          color: C.accentInk,
+          marginBottom: 18,
+          opacity: springIn(f, 2),
+          transform: `translateY(${(1 - springIn(f, 2)) * 12}px)`,
+        }}
+      >
+        {eyebrow}
+      </div>
+      {/* Length-based font clamp (t4 blocker #2): real hooks run 20+ words —
+          88px clips them. Scale down so the longest realistic hook still
+          fits the 640px scene area, floor at a still-bold 52px. */}
+      <h2
+        style={{
+          fontFamily: FONT.cond,
+          fontSize: clampHeadline(hook ? (hook || "").split(" ").length : 0),
+          fontWeight: 700,
+          lineHeight: 1.02,
+          letterSpacing: "-.01em",
+          color: C.ink,
+          maxWidth: "15ch",
+          margin: 0,
+          overflow: "hidden",
+        }}
+      >
+        {words.map((w, i) => {
+          const s = springIn(f, 6 + i * 4);
+          const isHl = i === hlIndex;
+          /* t4 #1: the highlight wrapper CONTAINS the word itself, so the
+             underline anchors to the word's own box - left edge under the
+             word's first glyph, below the baseline. */
+          if (isHl) {
+            return (
+              <span
+                key={i}
+                style={{
+                  display: "inline-block",
+                  position: "relative",
+                  opacity: s,
+                  transform: `translateY(${(1 - s) * 30}px) scale(${0.96 + s * 0.04})`,
+                }}
+              >
+                {w}
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    bottom: -8,
+                  }}
+                >
+                  <Underline
+                    progress={interpolate(s, [0.4, 1], [0, 1], {
+                      extrapolateLeft: "clamp",
+                      extrapolateRight: "clamp",
+                    })}
+                    width={Math.min(200, Math.max(90, w.length * 16))}
+                    thickness={6}
+                  />
+                </span>
+              </span>
+            );
+          }
+          return (
+            <span
+              key={i}
+              style={{
+                display: "inline-block",
+                opacity: s,
+                transform: `translateY(${(1 - s) * 30}px) scale(${0.96 + s * 0.04})`,
+              }}
+            >
+              {w}
+            </span>
+          );
+        })}
+      </h2>
+      <div
+        style={{
+          marginTop: 26,
+          display: "flex",
+          gap: 10,
+          opacity: springIn(f, 40),
+          transform: `translateY(${(1 - springIn(f, 40)) * 10}px)`,
+        }}
+      >
+        {[
+          // t4 #7: real estimate from duration (5 min was hardcoded) —
+          // shown only when we actually know the length.
+          ...(voiceoverDur
+            ? [`≈ ${Math.max(1, Math.round(voiceoverDur / 60))} min`]
+            : []),
+          hasVoiceover ? "Voiceover + transcript" : "Transcript",
+          `${keyPointCount} key points`,
+        ].map((chip) => (
+          <span
+            key={chip}
+            style={{
+              ...mono(12, 600),
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              color: C.ink2,
+              border: `1px solid ${C.hairline2}`,
+              borderRadius: 4,
+              padding: "6px 12px",
+              background: C.surface,
+            }}
+          >
+            {chip}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── LESSON — karaoke transcript (★2) with pinned scroll math ── */
+const LessonScene: React.FC<{
+  title: string;
+  words: string[];
+  wordStartFrames: number[];
+  statSource: string;
+}> = ({ title, words, wordStartFrames, statSource }) => {
+  const f = useCurrentFrame(); // scene-relative (Sequence wraps us)
+  const visibleCount = wordStartFrames.filter((s) => s <= f).length;
+  const activeIdx = visibleCount > 0 ? visibleCount - 1 : -1;
+  const activeStart = activeIdx >= 0 ? wordStartFrames[activeIdx] : 0;
+
+  // Scroll math (pinned): charWidthPx=18 / containerWidth=1120 estimate →
+  // lines shown → translateY(-scrollOffset) once content passes 70% of the
+  // script area. Frame-accurate, scene-relative.
+  const charWidthPx = 18;
+  const containerWidth = 1120;
+  const visibleWords = words.slice(0, visibleCount);
+  const avgWordLen =
+    visibleWords.length > 0
+      ? visibleWords.join(" ").length / visibleWords.length
+      : 6;
+  const wordsPerLine = Math.max(
+    1,
+    Math.floor(containerWidth / ((avgWordLen + 1) * charWidthPx))
+  );
+  const lineHeightPx = 47; // 29px × 1.62
+  const linesShown =
+    visibleWords.length > 0 ? Math.ceil(visibleWords.length / wordsPerLine) : 0;
+  const scriptAreaHeight = 1080 - 120 - 90 - 40 - 120;
+  const scrollThreshold = scriptAreaHeight * 0.7;
+  const scrollOffset = Math.max(0, linesShown * lineHeightPx - scrollThreshold);
+
+  // Stat panel (★ no fake data): only when usefulness_context carries a
+  // number — otherwise the panel is omitted entirely.
+  // t4 #6: grab the longest numeric token (so "$2k+" shows "$2k+", not "$2").
+  const statLine = firstSentence(statSource);
+  const statTokens = statLine
+    ? (statLine.match(/[$+≈≈]?\s?\d[\d.,%]*[a-zA-Z+%]?/g) || []).map((s) =>
+        s.replace(/\s+/g, "")
+      )
+    : [];
+  const statNum = statTokens.sort((a, b) => b.length - a.length)[0];
+  const showStat = Boolean(statLine && statNum);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "0 8%",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 16,
+          marginBottom: 26,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: FONT.cond,
+            fontSize: 34,
+            fontWeight: 600,
+            color: C.ink,
+          }}
+        >
+          {title}
+        </div>
+        <span
+          style={{
+            ...mono(11, 600),
+            textTransform: "uppercase",
+            letterSpacing: ".07em",
+            color: "#2E5E73",
+            border: `1px solid ${C.hairline2}`,
+            padding: "3px 9px",
+            borderRadius: 4,
+            background: C.surface,
+          }}
+        >
+          Transcript
+        </span>
+      </div>
+
+      <div
+        style={{
+          position: "relative",
+          maxWidth: "56ch",
+          fontSize: 29,
+          lineHeight: 1.62,
+          height: 560,
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ transform: `translateY(-${scrollOffset}px)` }}>
+          {words.map((w, i) => {
+            const isSaid = i < visibleCount;
+            const isActive =
+              i === activeIdx && f < activeStart + 18 && visibleCount > 0;
+            return (
+              <span key={i}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    opacity: isSaid ? 0.75 : 0.35,
+                    color: isActive ? C.ink : isSaid ? C.ink2 : C.muted,
+                    background: isActive ? C.accentSoft : "transparent",
+                    borderRadius: 6,
+                    padding: isActive ? "0 6px" : 0,
+                    margin: isActive ? "0 -2px" : 0,
+                  }}
+                >
+                  {w}
+                </span>{" "}
+                {/* separator lives OUTSIDE the inline-block span (t4 #4):
+                    karaoke words keep natural inter-word spacing */}
+              </span>
             );
           })}
         </div>
       </div>
 
-      {/* Bottom progress bar */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 8, background: "rgba(255,255,255,0.06)" }}>
-        <div style={{ width: `${progress * 100}%`, height: 8, background: C.ring, transition: "none" }} />
+      {showStat ? (
+        <div
+          style={{
+            position: "absolute",
+            right: "7%",
+            top: "50%",
+            transform: `translateY(-50%) scale(${0.9 + springIn(f, 48) * 0.1})`,
+            textAlign: "right",
+            opacity: springIn(f, 48),
+          }}
+        >
+          <div
+            style={{
+              fontFamily: FONT.cond,
+              fontSize: 120,
+              fontWeight: 700,
+              lineHeight: 1,
+              color: C.accent,
+            }}
+          >
+            {statNum}
+          </div>
+          <div
+            style={{
+              ...mono(12, 500),
+              letterSpacing: ".08em",
+              textTransform: "uppercase",
+              color: C.muted,
+              marginTop: 6,
+              maxWidth: 260,
+            }}
+          >
+            {statLine}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+/* ── KEY POINTS (★ springs stagger, ★ underline draw-on, ✓ punch) ── */
+const PointsScene: React.FC<{ key_points: string[] }> = ({ key_points }) => {
+  const f = useCurrentFrame(); // scene-relative
+  const points = key_points.slice(0, 4);
+  const per = 57; // frames between card entrances (≈1.9s)
+
+  if (points.length === 0) return null; // no empty placeholder blocks
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "0 8%",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: FONT.cond,
+          fontSize: 34,
+          fontWeight: 600,
+          color: C.ink,
+          marginBottom: 8,
+          opacity: springIn(f, 3),
+          transform: `translateY(${(1 - springIn(f, 3)) * 14}px)`,
+        }}
+      >
+        What separates pros from tinkerers
       </div>
-      <div style={{ position: "absolute", right: 40, bottom: 28, fontSize: 24, color: C.muted }}>
-        {Math.round(progress * 100)}%
+      <div
+        style={{
+          ...mono(12, 600),
+          letterSpacing: ".08em",
+          textTransform: "uppercase",
+          color: C.muted,
+          marginBottom: 30,
+          opacity: springIn(f, 9),
+        }}
+      >
+        Key points · verified at Gate A
+      </div>
+      <div style={{ display: "flex", gap: 26 }}>
+        {points.map((kp, i) => {
+          const s = springIn(f, 16 + i * per);
+          const drawn = interpolate(s, [0.5, 1], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
+          const checked = springIn(f, 16 + i * per + 45);
+          return (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                background: C.surface,
+                border: `1.5px solid ${checked > 0.5 ? C.green : C.hairline2}`,
+                borderRadius: 14,
+                padding: 26,
+                position: "relative",
+                opacity: s,
+                transform: `translateY(${(1 - s) * 44}px) scale(${0.97 + s * 0.03})`,
+              }}
+            >
+              <div
+                style={{
+                  ...mono(12, 600),
+                  color: C.accentInk,
+                  letterSpacing: ".08em",
+                  marginBottom: 12,
+                }}
+              >
+                KP {pad2(i + 1)}
+              </div>
+              <div
+                style={{
+                  fontFamily: FONT.cond,
+                  fontSize: 27,
+                  fontWeight: 600,
+                  color: C.ink,
+                  lineHeight: 1.15,
+                  display: "inline-block",
+                  position: "relative",
+                  paddingBottom: 10,
+                }}
+              >
+              {/* t4 #5: strip any residual **bold** markdown from KP titles */}
+                {String(kp).replace(/\*\*(.+?)\*\*/g, "$1")}
+                <div style={{ position: "absolute", left: 0, bottom: 0 }}>
+                  <Underline progress={drawn} width={140} thickness={4.5} seed={i + 2} />
+                </div>
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -14,
+                  right: -14,
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  background: C.green,
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  opacity: checked,
+                  transform: `scale(${0.4 + checked * 0.6}) rotate(${(1 - checked) * -30}deg)`,
+                }}
+              >
+                ✓
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/* ── OUTRO — stamp + punch-card (★5) ── */
+const OutroScene: React.FC<{
+  dayNo: number;
+  done: number;
+  totalDays: number;
+  daysToGo: number;
+}> = ({ dayNo, done, totalDays, daysToGo }) => {
+  const f = useCurrentFrame(); // scene-relative
+  const stampS = springIn(f, 3);
+  const headS = springIn(f, 12);
+  const punchS = springIn(f, 21);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          ...mono(13, 600),
+          letterSpacing: ".09em",
+          textTransform: "uppercase",
+          color: C.greenInk,
+          border: "2px solid currentColor",
+          borderRadius: 5,
+          padding: "6px 14px",
+          background: C.surface,
+          marginBottom: 26,
+          opacity: stampS,
+          transform: `rotate(-2deg) scale(${0.7 + stampS * 0.3})`,
+        }}
+      >
+        Lesson complete
+      </div>
+      <h2
+        style={{
+          fontFamily: FONT.cond,
+          fontSize: 56,
+          fontWeight: 700,
+          color: C.ink,
+          margin: 0,
+          lineHeight: 1.05,
+          opacity: headS,
+          transform: `translateY(${(1 - headS) * 18}px)`,
+        }}
+      >
+        Now replicate the flow yourself.
+      </h2>
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          marginTop: 34,
+          opacity: punchS,
+          transform: `translateY(${(1 - punchS) * 14}px)`,
+        }}
+      >
+        {Array.from({ length: totalDays }).map((_, i) => {
+          const dayNum = i + 1;
+          const isPunched = dayNum <= done;
+          const isToday = dayNum === dayNo;
+          return (
+            <div
+              key={i}
+              style={{
+                width: 46,
+                height: 46,
+                border: `1.5px ${isPunched || isToday ? "solid" : "dashed"} ${
+                  isPunched ? C.green : isToday ? C.accent : C.hairline2
+                }`,
+                borderRadius: 7,
+                position: "relative",
+                background: isPunched || isToday ? C.surface : C.surface2,
+                fontFamily: FONT.mono,
+                fontSize: 12,
+                color: isToday ? C.ink : C.muted,
+                display: "flex",
+                justifyContent: "center",
+                paddingTop: 5,
+                boxShadow: isToday ? `0 0 0 3px ${C.accentSoft}` : "none",
+              }}
+            >
+              {pad2(dayNum)}
+              {isPunched ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: "60%",
+                    width: 15,
+                    height: 15,
+                    transform: "translate(-50%,-50%)",
+                    borderRadius: "50%",
+                    background: C.bg,
+                    border: `2.5px solid ${C.green}`,
+                    boxShadow: "inset 0 1px 2px rgba(0,0,0,.28)",
+                  }}
+                />
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      <div
+        style={{
+          ...mono(12, 500),
+          letterSpacing: ".06em",
+          textTransform: "uppercase",
+          color: C.muted,
+          marginTop: 22,
+          opacity: springIn(f, 30),
+        }}
+      >
+        Day {pad2(dayNo)} punched · {daysToGo} days to go
       </div>
     </div>
   );
