@@ -186,27 +186,46 @@
 
       <div id="panel-task" style="display:none">
         <div class="card">
-          <h3 style="margin-bottom:12px">Copy-Work Task</h3>
-          <p class="small muted">From a blank account, rebuild the exact flow:</p>
-          {% if reference_spec %}
-          <div style="margin-top:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
-            <b style="font-family:var(--font-display)">Reference build</b>
-            <div class="small" style="margin-top:6px;color:var(--ink-2)">{{ reference_spec|format_script }}</div>
+          <span class="eyebrow">Copy-Work · Project {{ project.project_index if project else 2 }} of 3</span>
+          <h3 style="margin-bottom:4px">Your build task</h3>
+
+          <!-- STEP 1 · BUILD IT -->
+          <div style="margin-top:18px">
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <span class="mono" style="font-size:12px;font-weight:600;color:var(--accent-ink)">STEP 1</span>
+              <b style="font-family:var(--font-display);font-size:18px">Build it</b>
+              <span class="xs muted">~35 min</span>
+            </div>
+            <p class="small muted" style="margin:6px 0 0 52px">Rebuild the reference flow below in your own account.</p>
+            <div style="margin:10px 0 0 52px">
+              {% if reference_spec %}
+              <div style="padding:14px 16px;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+                <b style="font-family:var(--font-display)">Reference build</b>
+                <div class="small" style="margin-top:6px;color:var(--ink-2)">{{ reference_spec|format_script }}</div>
+              </div>
+              {% endif %}
+              {% if gen_error %}
+              <p class="small" style="color:var(--ink-2);margin-top:10px">Your step-by-step guide couldn't be written ({{ gen_error }}) — build from the reference below.</p>
+              {% elif not clone_steps %}
+              <p class="small muted" style="margin-top:10px">Your step-by-step guide is being written — start with the reference build above.</p>
+              {% else %}
+              <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
+                {% for step in clone_steps %}<li>{{ step }}</li>{% endfor %}
+              </ul>
+              {% endif %}
+            </div>
           </div>
-          {% endif %}
-          {% if gen_error %}
-          <p class="small" style="color:var(--ink-2);margin-top:10px">Project anatomy failed to generate ({{ gen_error }}).</p>
-          {% elif not clone_steps %}
-          <p class="small muted" style="margin-top:10px">Project anatomy is being generated…</p>
-          {% else %}
-          <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
-            {% for step in clone_steps %}<li>{{ step }}</li>{% endfor %}
-          </ul>
-          {% endif %}
+
           <div class="divider"></div>
-          <div class="check-item{{ ' done' if project_done else '' }}"><div class="cbox">{{ '✓' if project_done else '' }}</div><div><b>Replicate from scratch</b><div class="xs muted">~35 min</div></div></div>
-          <div class="check-item{{ ' done' if gate_a_pass else '' }}"><div class="cbox">{{ '✓' if gate_a_pass else '' }}</div><div><b>Pass 3-point rubric</b><div class="xs muted">rubric verified at Gate A</div>
-            <div class="xs muted" style="margin:6px 0 0 18px;color:var(--ink-2)">
+
+          <!-- STEP 2 · CHECK YOUR BUILD MATCHES -->
+          <div style="margin-top:6px">
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <span class="mono" style="font-size:12px;font-weight:600;color:var(--accent-ink)">STEP 2</span>
+              <b style="font-family:var(--font-display);font-size:18px">Check your build matches</b>
+            </div>
+            <p class="small muted" style="margin:6px 0 0 52px">Tick each point your build actually does. (Saves as you tick.)</p>
+            <div class="xs" style="margin:10px 0 0 52px;color:var(--ink-2)">
               {% set rubric_checked = project.get('rubric_checked', [false, false, false]) if project else [false, false, false] %}
               {% for r in rubric %}
                 <label style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
@@ -220,13 +239,38 @@
                 </label>
               {% endfor %}
             </div>
-          </div></div>
-          <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin-top:8px">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label class="xs muted" for="rubric_url" style="display:block;margin-bottom:6px">Link to your rebuilt flow (required)</label>
-            <input type="url" id="rubric_url" name="rubric_url" required placeholder="https://github.com/you/flow" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;margin-bottom:8px">
-            <button class="btn btn-p" type="submit">Submit for check</button>
-          </form>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- STEP 3 · SEND YOUR BUILD LINK -->
+          <div style="margin-top:6px">
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <span class="mono" style="font-size:12px;font-weight:600;color:var(--accent-ink)">STEP 3</span>
+              <b style="font-family:var(--font-display);font-size:18px">Send your build link</b>
+            </div>
+            <p class="small muted" style="margin:6px 0 0 52px">Paste the link to what you built.</p>
+            <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/copywork" style="margin:10px 0 0 52px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <label class="xs muted" for="rubric_url" style="display:block;margin-bottom:6px">Link to your rebuilt flow (required)</label>
+              <input type="url" id="rubric_url" name="rubric_url" required placeholder="https://github.com/you/flow" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;margin-bottom:8px">
+              <button class="btn btn-p" type="submit">Send</button>
+            </form>
+            <p class="xs muted" style="margin:10px 0 0 52px">When all {{ rubric|length }} points are ticked and your link is in, this project counts as done.</p>
+          </div>
+
+          <!-- STATUS — stamps, not checkboxes -->
+          <div class="divider"></div>
+          <div style="margin-top:6px">
+            <span class="eyebrow">Status</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+              {% set all_ticked = rubric_checked and (rubric_checked|length >= (rubric|length if rubric else 3)) and (rubric_checked | select | list | length == (rubric|length if rubric else 3)) %}
+              <span class="stamp{{ ' ok' if project_done else '' }}" style="{{ '' if project_done else 'color:var(--muted);border-style:dashed' }}">Build submitted</span>
+              <span class="stamp{{ ' ok' if all_ticked else '' }}" style="{{ '' if all_ticked else 'color:var(--muted);border-style:dashed' }}">Matches all points</span>
+              <span class="stamp{{ ' ok' if gate_a_pass else '' }}" style="{{ '' if gate_a_pass else 'color:var(--muted);border-style:dashed' }}">Verified</span>
+            </div>
+          </div>
+
           {% if not day_done %}
           <div class="divider"></div>
           <form method="post" action="/sprints/{{ sprint.id }}/day/{{ day.day_no }}/complete">
@@ -240,12 +284,12 @@
       {% if gap_fill_topic %}
       <div class="card" style="margin-top:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div><h3>Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing nuance — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
+          <div><h3>Gap-Fill · Day {{ day.day_no + 1 }} preview</h3><p class="small muted" style="margin-top:6px">Your last project flagged <b>{{ gap_fill_topic }}</b> as the missing piece — Day {{ day.day_no + 1 }} serves a targeted 30-min micro-lesson to fix it.</p></div>
           <span class="badge b-amber">Auto-detected</span>
         </div>
         <div class="check-item{{ ' done' if day.get('gap_fill_done') else '' }}" style="margin-top:12px">
           <div class="cbox">{{ '✓' if day.get('gap_fill_done') else '' }}</div>
-          <div><b>Gap-fill addressed</b><div class="xs muted">Confirm you've applied the gap-fill nuance</div></div>
+          <div><b>Gap-fill addressed</b><div class="xs muted">Confirm you've applied the fix</div></div>
         </div>
       </div>
       {% endif %}
