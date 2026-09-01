@@ -58,19 +58,23 @@ const firstSentence = (text: string): string => {
 
 /** "The Trades Desk" light tokens — mirror of the mock :root (exact hexes). */
 const C = {
-  bg: "#E8EAE6",
-  surface: "#FDFDFB",
-  surface2: "#F0F2EE",
-  ink: "#20241F",
-  ink2: "#3C423B",
-  muted: "#5D645C",
-  hairline: "#CDD2CB",
-  hairline2: "#B4BBB1",
+  /* ByteMonk dark studio (2026-09-01): near-black ground measured from their
+     thumbnails (#050505–#14091A, ~75% dark); one saturated accent — their
+     #E65509 is a near-twin of our safety orange, so the orange stays. */
+  bg: "#0A0A0B",
+  surface: "#16181C",
+  surface2: "#1E2126",
+  ink: "#F2F4F1",
+  ink2: "#D7DCD8",
+  muted: "#9BA39C",
+  hairline: "#39424A",
+  hairline2: "#4A545D",
   accent: "#D95B08",
-  accentInk: "#A84505",
-  accentSoft: "#FCEADB",
-  green: "#2E6B3A",
-  greenInk: "#20492A",
+  accentInk: "#F08A47",
+  accentSoft: "#2A170B",
+  green: "#4C9A5E",
+  greenInk: "#7FCB90",
+  greenSoft: "#1B2E20",
 };
 
 const FONT = {
@@ -162,6 +166,7 @@ export const TwoPanelLesson: React.FC<LessonProps> = (props) => {
     key_points = [],
     voiceover = { url: null, duration_seconds: 20 },
     hook,
+    day_overview,
     usefulness_context,
     day_no,
     phase,
@@ -296,13 +301,14 @@ export const TwoPanelLesson: React.FC<LessonProps> = (props) => {
         />
       </Sequence>
 
-      {/* ══════════ SCENE 2 · LESSON — karaoke transcript ══════════ */}
+      {/* ══════════ SCENE 2 · LESSON — ByteMonk roadmap (map-not-detail) ══════════ */}
       <Sequence from={hookEnd} durationInFrames={lessonEnd - hookEnd}>
         <LessonScene
           title={String(title)}
           words={scriptWords}
           wordStartFrames={wordStartFrames}
           statSource={String(usefulness_context || "")}
+          dayOverview={Array.isArray(day_overview) ? day_overview : []}
         />
       </Sequence>
 
@@ -584,42 +590,72 @@ const HookScene: React.FC<{
   );
 };
 
-/* ── LESSON — karaoke transcript (★2) with pinned scroll math ── */
+/* ── LESSON — ByteMonk roadmap (map-not-detail, 2026-09-01) ──
+   The channel formula: never wall-of-text the content. The middle scene
+   shows WHAT you'll learn — day_overview items as numbered journey stops,
+   one active at a time, karaoke-synced by stop. The full script stays
+   readable on the page below the player (data-lesson-content). */
 const LessonScene: React.FC<{
   title: string;
   words: string[];
   wordStartFrames: number[];
   statSource: string;
-}> = ({ title, words, wordStartFrames, statSource }) => {
+  dayOverview: string[];
+}> = ({ title, words, wordStartFrames, statSource, dayOverview }) => {
   const f = useCurrentFrame(); // scene-relative (Sequence wraps us)
-  const visibleCount = wordStartFrames.filter((s) => s <= f).length;
-  const activeIdx = visibleCount > 0 ? visibleCount - 1 : -1;
-  const activeStart = activeIdx >= 0 ? wordStartFrames[activeIdx] : 0;
 
-  // Scroll math (pinned): charWidthPx=18 / containerWidth=1120 estimate →
-  // lines shown → translateY(-scrollOffset) once content passes 70% of the
-  // script area. Frame-accurate, scene-relative.
+  // Roadmap stops: day_overview when present; fallback = first sentences of
+  // the script (2-4 short stops) so legacy payloads still render a map.
+  const stops: string[] = (dayOverview && dayOverview.length
+    ? dayOverview
+    : (() => {
+        const clean = words.join(" ");
+        const sentences = clean.split(/(?<=[.!?])\s+/).filter(Boolean);
+        return sentences.slice(0, 4);
+      })()
+  )
+    .map((s) => String(s).replace(/\*\*/g, "").trim())
+    .filter((s) => s.length > 3)
+    .slice(0, 6);
+
+  // Stop-sync (char-proportional like the karaoke pacing it replaces):
+  const totalChars = stops.join(" ").length || 1;
+  const sceneLen = Math.max(1, stops.length * 90 + 30); // approx frames; caller pace
+  const visibleStops = (() => {
+    let acc = 0; let vis = 0;
+    for (const s of stops) {
+      const startFrame = Math.floor((acc / totalChars) * (stops.length * 90));
+      acc += s.length + 1;
+      if (f >= startFrame) vis += 1;
+    }
+    return vis;
+  })();
+  const activeStop = Math.max(0, visibleStops - 1);
+
+  // Pinned scroll math (kept from the transcript era): charWidthPx=18 /
+  // containerWidth=1120 -> lines -> translateY(-scrollOffset) — now guards
+  // the STOPS container when a sprint carries many stops.
   const charWidthPx = 18;
   const containerWidth = 1120;
-  const visibleWords = words.slice(0, visibleCount);
+  const visibleStopText = stops.slice(0, Math.max(1, visibleStops));
   const avgWordLen =
-    visibleWords.length > 0
-      ? visibleWords.join(" ").length / visibleWords.length
+    visibleStopText.length > 0
+      ? visibleStopText.join(" ").length /
+        visibleStopText.join(" ").split(" ").length
       : 6;
   const wordsPerLine = Math.max(
     1,
     Math.floor(containerWidth / ((avgWordLen + 1) * charWidthPx))
   );
-  const lineHeightPx = 47; // 29px × 1.62
+  const lineHeightPx = 96; // stop row height (title 34px + spacing)
+  const totalStopWords = visibleStopText.join(" ").split(" ").length;
   const linesShown =
-    visibleWords.length > 0 ? Math.ceil(visibleWords.length / wordsPerLine) : 0;
+    totalStopWords > 0 ? Math.ceil(totalStopWords / wordsPerLine) : 0;
   const scriptAreaHeight = 1080 - 120 - 90 - 40 - 120;
   const scrollThreshold = scriptAreaHeight * 0.7;
   const scrollOffset = Math.max(0, linesShown * lineHeightPx - scrollThreshold);
 
-  // Stat panel (★ no fake data): only when usefulness_context carries a
-  // number — otherwise the panel is omitted entirely.
-  // t4 #6: grab the longest numeric token (so "$2k+" shows "$2k+", not "$2").
+  // Stat panel (no fake data): only when usefulness_context carries a number.
   const statLine = firstSentence(statSource);
   const statTokens = statLine
     ? (statLine.match(/[$+≈≈]?\s?\d[\d.,%]*[a-zA-Z+%]?/g) || []).map((s) =>
@@ -628,6 +664,8 @@ const LessonScene: React.FC<{
     : [];
   const statNum = statTokens.sort((a, b) => b.length - a.length)[0];
   const showStat = Boolean(statLine && statNum);
+
+  if (stops.length === 0) return null; // no empty placeholder blocks
 
   return (
     <div
@@ -645,7 +683,7 @@ const LessonScene: React.FC<{
           display: "flex",
           alignItems: "baseline",
           gap: 16,
-          marginBottom: 26,
+          marginBottom: 40,
         }}
       >
         <div
@@ -663,50 +701,83 @@ const LessonScene: React.FC<{
             ...mono(11, 600),
             textTransform: "uppercase",
             letterSpacing: ".07em",
-            color: "#2E5E73",
+            color: "#5FA5C2",
             border: `1px solid ${C.hairline2}`,
             padding: "3px 9px",
             borderRadius: 4,
             background: C.surface,
           }}
         >
-          Transcript
+          Today's roadmap
         </span>
       </div>
 
+      {/* The map: numbered stops, one active at a time (ByteMonk formula). */}
       <div
         style={{
           position: "relative",
-          maxWidth: "56ch",
-          fontSize: 29,
-          lineHeight: 1.62,
-          height: 560,
+          maxWidth: "62ch",
+          height: 640,
           overflow: "hidden",
         }}
       >
         <div style={{ transform: `translateY(-${scrollOffset}px)` }}>
-          {words.map((w, i) => {
-            const isSaid = i < visibleCount;
-            const isActive =
-              i === activeIdx && f < activeStart + 18 && visibleCount > 0;
+          {stops.map((stop, i) => {
+            const s = springIn(f, 8 + i * 22);
+            const isActive = i === activeStop;
+            const isDone = i < activeStop;
             return (
-              <span key={i}>
-                <span
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 26,
+                  opacity: s,
+                  transform: `translateY(${(1 - s) * 26}px)`,
+                  marginBottom: 34,
+                }}
+              >
+                <div
                   style={{
-                    display: "inline-block",
-                    opacity: isSaid ? 0.75 : 0.35,
-                    color: isActive ? C.ink : isSaid ? C.ink2 : C.muted,
-                    background: isActive ? C.accentSoft : "transparent",
-                    borderRadius: 6,
-                    padding: isActive ? "0 6px" : 0,
-                    margin: isActive ? "0 -2px" : 0,
+                    ...mono(26, 600),
+                    color: isActive ? C.accent : isDone ? C.green : C.muted,
+                    minWidth: 64,
+                    paddingTop: 2,
+                    textShadow: isActive
+                      ? `0 0 24px ${C.accent}66`
+                      : "none",
                   }}
                 >
-                  {w}
-                </span>{" "}
-                {/* separator lives OUTSIDE the inline-block span (t4 #4):
-                    karaoke words keep natural inter-word spacing */}
-              </span>
+                  {isDone ? "✓" : pad2(i + 1)}
+                </div>
+                <div
+                  style={{
+                    fontFamily: FONT.cond,
+                    fontSize: 38,
+                    fontWeight: 600,
+                    lineHeight: 1.18,
+                    color: isActive ? C.ink : isDone ? C.ink2 : C.muted,
+                    maxWidth: "48ch",
+                  }}
+                >
+                  {stop}
+                  {isActive ? (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        marginLeft: 14,
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: C.accent,
+                        animation: "none",
+                        opacity: interpolate(f % 48, [0, 24, 48], [1, 0.35, 1]),
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -751,6 +822,7 @@ const LessonScene: React.FC<{
     </div>
   );
 };
+
 
 /* ── KEY POINTS (★ springs stagger, ★ underline draw-on, ✓ punch) ── */
 const PointsScene: React.FC<{ key_points: string[] }> = ({ key_points }) => {

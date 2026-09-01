@@ -1,7 +1,17 @@
 {% extends "base.html" %}
+{% block title %}Pricing — free sprints now, placement-first monetization later{% endblock %}
+{% block meta_description %}Sprints are free now — all 14 days, three phases, the Job Unlock Meter, and the Demand-Validated badge. Pricing comes after placement, not seat time.{% endblock %}
+{% block og %}
+<meta property="og:title" content="Pricing — free sprints now, placement-first monetization later">
+<meta property="og:description" content="All 14 days, all three phases, the Job Unlock Meter, and the Demand-Validated badge — no card required.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:site_name" content="FreelanceLaunch">
+<meta name="twitter:card" content="summary">
+{% endblock %}
 {% block content %}
 <section class="screen" id="pricing">
-  <div class="wrap" style="max-width:640px;padding-top:56px">
+  <div class="wrap" style="padding-top:56px">
     <div class="topnav" style="border:none;padding-bottom:0">
       <div class="logo">Freelance<em>Launch</em></div>
       <div class="navl"><a href="/sprints">Sprints</a><a href="/">Home</a></div>
@@ -9,7 +19,7 @@
 
     <div class="pagehead">
       <span class="chip"><span class="dot"></span>Pricing</span>
-      <h2>Pricing comes after placement</h2>
+      <h1 style="font-size:30px;line-height:1.15;margin:12px 0 6px">Pricing comes after placement</h1>
       <p class="sub">Monetization is deferred for v1 (engineering-spec §7.3). The first thing we owe you is a demand-validated placement — not a paywall.</p>
     </div>
 

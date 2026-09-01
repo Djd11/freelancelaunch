@@ -1,4 +1,14 @@
 {% extends "base.html" %}
+{% block title %}Verified freelancers — filter by demand-validated sprints{% endblock %}
+{% block meta_description %}Find fresh, verified freelancers who completed a demand-validated sprint in the last 30 days. Badges are verification-backed — never self-reported.{% endblock %}
+{% block og %}
+<meta property="og:title" content="Verified freelancers — FreelanceLaunch labor board">
+<meta property="og:description" content="Verification-backed freelancers who completed a demand-validated sprint within the last 30 days.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:site_name" content="FreelanceLaunch">
+<meta name="twitter:card" content="summary">
+{% endblock %}
 {% block content %}
 <section class="screen" id="clients">
   <div class="wrap">
@@ -10,7 +20,7 @@
     <div class="pagehead">
       <span class="chip"><span class="dot"></span>Client filter</span>
       <span class="eyebrow" style="display:block;margin-top:12px">Labor board · verified supply</span>
-      <h2>Fresh, verified freelancers</h2>
+      <h1 style="font-size:30px;line-height:1.15;margin:12px 0 6px">Fresh, verified freelancers</h1>
       <p class="sub">Completed "<b>{{ cluster_name }}</b>" sprint within the last 30 days. Badges are verification-backed — never self-reported.</p>
     </div>
 

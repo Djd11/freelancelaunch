@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FreelanceLaunch · Sprint Platform</title>
+<title>{% block title %}FreelanceLaunch · Sprint Platform{% endblock %}</title>
+<meta name="description" content="{% block meta_description %}FreelanceLaunch runs 14-day demand-validated sprints: learn a skill against live job demand, fulfill a real contract, then send engineered proposals.{% endblock %}">
+<link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}">
+<meta name="robots" content="index, follow">
+{% block og %}{% endblock %}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23D95B08'/%3E%3Ccircle cx='16' cy='18' r='6' fill='%23E8EAE6'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

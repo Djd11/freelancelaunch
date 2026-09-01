@@ -1,4 +1,19 @@
 {% extends "base.html" %}
+{% block title %}Stop learning skills. Start landing clients — demand-validated sprints{% endblock %}
+{% block meta_description %}A 14-day demand-validated sprint: learn a skill against live job demand, fulfill a real contract, then send engineered proposals. Free while in v1.{% endblock %}
+{% block og %}
+<meta property="og:title" content="Stop learning skills. Start landing clients — FreelanceLaunch">
+<meta property="og:description" content="A 14-day demand-validated sprint: fulfill a real contract, earn a Demand-Validated badge, then bid on live jobs. Free while in v1.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:site_name" content="FreelanceLaunch">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Stop learning skills. Start landing clients — FreelanceLaunch">
+<meta name="twitter:description" content="A 14-day demand-validated sprint: fulfill a real contract, earn a Demand-Validated badge, then bid on live jobs.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"EducationalOrganization","name":"FreelanceLaunch","description":"14-day demand-validated freelance sprints: copy-work skill acquisition, a real mock contract, and engineered proposals against a live job feed.","educationalCredentialAwarded":"Demand-Validated Badge","hasOfferCatalog":{"@type":"OfferCatalog","name":"Sprint topics","itemListElement":[{"@type":"Course","name":"Email Automation Sprint","description":"14-day sprint against the live email-automation job cluster.","provider":{"@type":"EducationalOrganization","name":"FreelanceLaunch"}}]},"url":"{{ request.url }}"}
+</script>
+{% endblock %}
 {% block content %}
 <style>
 /* landing-scoped layout (hero grid + shift columns + punch demo) */

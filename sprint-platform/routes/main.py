@@ -186,6 +186,13 @@ def _generate_in_background(app, sprint_id):
         stop_generation(sprint_id)
 
 
+@main_bp.route("/robots.txt")
+def robots_txt():
+    """Allow-all robots.txt (SEO: crawlability for public pages)."""
+    body = "User-agent: *\nDisallow:\n"
+    return body, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
 @main_bp.route("/pricing")
 def pricing():
     return render_template("pricing.html")
