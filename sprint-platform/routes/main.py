@@ -1,5 +1,6 @@
 """main blueprint — landing, sprint picker, request-a-sprint, pricing (arch §4.2)."""
 import datetime
+import os
 import threading
 
 from flask import Blueprint, render_template, request, redirect, url_for, g, current_app
@@ -188,9 +189,61 @@ def _generate_in_background(app, sprint_id):
 
 @main_bp.route("/robots.txt")
 def robots_txt():
-    """Allow-all robots.txt (SEO: crawlability for public pages)."""
-    body = "User-agent: *\nDisallow:\n"
+    """Robots with sitemap reference (SEO: crawlability + discovery)."""
+    base = (os.getenv("PUBLIC_BASE_URL") or "").rstrip("/")
+    lines = ["User-agent: *",
+             "Disallow: /sprints/",   # auth-gated learner content
+             "Disallow: /mentor",     # auth-gated
+             "Disallow: /profile",    # auth-gated
+             "Disallow: /admin",      # internal ops
+             "Allow: /"]
+    if base:
+        lines.append(f"\nSitemap: {base}/sitemap.xml")
+    body = "\n".join(lines) + "\n"
     return body, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
+@main_bp.route("/sitemap.xml")
+def sitemap_xml():
+    """XML sitemap for the public, indexable pages (SEO: systematic crawling).
+
+    Static public routes + one URL per ACTIVE cluster (each sprint-picker
+    cluster card is a distinct "course" surface). Lastmod is left off —
+    the job counts change daily and we don't want stale timestamps lying
+    to crawlers.
+    """
+    base = (os.getenv("PUBLIC_BASE_URL") or "").rstrip("/")
+    if not base:
+        # No public base URL configured — serve an empty sitemap shell so
+        # the route exists but doesn't emit wrong hostnames.
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>',
+            200,
+            {"Content-Type": "application/xml; charset=utf-8"},
+        )
+
+    urls = [
+        ("/", "1.0", "weekly"),
+        ("/sprints", "0.9", "daily"),      # picker: live job counts
+        ("/pricing", "0.6", "monthly"),
+        ("/clients/freelancers", "0.7", "daily"),
+        ("/auth/login", "0.3", "yearly"),
+    ]
+    # Public per-cluster pages exist via /topics anchors on the picker;
+    # sitemap includes the picker itself rather than fragment URLs.
+    items = [
+        f"  <url><loc>{base}{loc}</loc>"
+        f"<changefreq>{freq}</changefreq><priority>{prio}</priority></url>"
+        for loc, prio, freq in urls
+    ]
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(items)
+        + "\n</urlset>"
+    )
+    return body, 200, {"Content-Type": "application/xml; charset=utf-8"}
 
 
 @main_bp.route("/pricing")

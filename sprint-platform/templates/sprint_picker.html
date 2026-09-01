@@ -10,6 +10,39 @@
 <meta name="twitter:card" content="summary">
 {% endblock %}
 {% block content %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Demand-validated freelance sprints",
+  "itemListElement": [
+    {%- for c in clusters %}
+    {
+      "@type": "ListItem",
+      "position": {{ loop.index }},
+      "item": {
+        "@type": "Course",
+        "name": "{{ c.display_name }} Sprint — 14 days, demand-validated",
+        "description": "{{ (c.promise or 'Rebuild real projects, fulfill a mock contract, and send live proposals.') | truncate(150) }}",
+        "provider": { "@type": "Organization", "name": "FreelanceLaunch", "sameAs": "{{ (request.url.rsplit('/', 1)[0]) }}" },
+        "hasCourseInstance": {
+          "@type": "CourseInstance",
+          "courseMode": "online",
+          "courseWorkload": "P14D"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "category": "{{ c.avg_rate }} USD/hr average rate in this cluster"
+        }
+      }
+    }{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+}
+</script>
 <section class="screen" id="picker">
   <div class="wrap">
     <div class="topnav">
