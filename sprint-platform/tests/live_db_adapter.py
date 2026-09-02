@@ -456,7 +456,7 @@ class LiveDBAdapter:
 def live_db_context():
     """Context manager for BDD scenarios: yields LiveDBAdapter, cleans up on exit."""
     from app import create_app
-    app = create_app()
+    app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False})
     with app.app_context():
         sb = get_supabase()
         adapter = LiveDBAdapter(sb)
@@ -475,7 +475,7 @@ def get_live_adapter() -> LiveDBAdapter:
     global _adapter
     if _adapter is None:
         from app import create_app
-        app = create_app()
+        app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False})
         with app.app_context():
             sb = get_supabase()
             _adapter = LiveDBAdapter(sb)

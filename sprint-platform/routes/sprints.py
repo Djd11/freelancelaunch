@@ -17,6 +17,45 @@ from . import obtain_supabase
 sprints_bp = Blueprint("sprints", __name__)
 
 
+def _try_resume_generation(sprint_id):
+    """Lazily resume a sprint whose content is unfinished but not failed.
+
+    After a server restart the in-memory ``_active_generations`` set is empty,
+    so a partially-generated sprint looks like it lost content ("partial" /
+    endless "generating" notice). The durable signal lives in the DB:
+    ``should_resume_generation`` (active sprint + at least one empty day + no
+    generation_error). When that holds, spawn the same background worker the
+    enrollment/retry paths use and mark the sprint generating, so the UI
+    auto-resumes instead of showing the error-ish "partial" state.
+
+    Returns True when a resume thread was spawned, False otherwise. Never
+    raises — a resume failure must not 500 the page.
+    """
+    from services.lesson_engine import (
+        is_generating, should_resume_generation, start_generation,
+    )
+    if is_generating(sprint_id):
+        return False
+    try:
+        sb = obtain_supabase()
+        if not should_resume_generation(sb, sprint_id):
+            return False
+    except Exception:
+        return False
+    try:
+        import threading
+        from flask import current_app
+        from routes.main import _generate_in_background
+        start_generation(sprint_id)  # mark generating before the thread wakes
+        app = current_app._get_current_object()
+        threading.Thread(
+            target=_generate_in_background, args=(app, sprint_id), daemon=True,
+        ).start()
+        return True
+    except Exception:
+        return False
+
+
 @sprints_bp.route("/sprints/<sprint_id>")
 def dashboard(sprint_id):
     gate = require_login()
@@ -118,6 +157,12 @@ def day(sprint_id, day_no):
     # if generation failed the worker stamped a visible generation_error.
     from services.lesson_engine import generation_error, clean_lesson
     lesson = clean_lesson(payload.get("lesson"))
+    # Lazy resume after a restart: the in-memory active set is empty, so a
+    # partially-generated sprint would otherwise show a dead "generating"
+    # notice. The DB says content is unfinished but not failed — kick the
+    # background worker so this empty day page auto-resumes. Never raises.
+    if not lesson:
+        _try_resume_generation(sprint_id)
     # Video props: real sprint progress for the player's punch-card outro
     # and day eyebrow (t4 blocker #3 — every video previously rendered
     # "Day 01" regardless of the actual day being viewed).
@@ -187,12 +232,20 @@ def generation(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
-    from services.lesson_engine import generation_progress, generation_error, day_status_map, is_generating
+    from services.lesson_engine import generation_progress, generation_error, day_status_map, is_generating, should_resume_generation
     generated, total = generation_progress(sb, sprint_id)
     err = generation_error(sb, sprint_id)
     day_map = day_status_map(sb, sprint_id)
     failed_days = [d for d, s in day_map.items() if s == "error"]
     active = is_generating(sprint_id)
+
+    if not active and should_resume_generation(sb, sprint_id):
+        # After a restart the in-memory active set is empty, so a
+        # partially-generated sprint would read as "partial" / content-lost.
+        # The DB says content is unfinished but not failed — auto-resume the
+        # background worker so the dashboard spinner + auto-poll path works.
+        _try_resume_generation(sprint_id)
+        active = True
 
     if generated >= total:
         # All days have content — nothing to show.

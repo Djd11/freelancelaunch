@@ -810,6 +810,44 @@ def is_generating(sprint_id: str) -> bool:
     return sprint_id in _active_generations
 
 
+def should_resume_generation(sb, sprint_id: str) -> bool:
+    """DB-backed check: does this sprint have unfinished content that should auto-resume?
+
+    Returns True when:
+      - the sprint exists, its status is 'active', and started_at is set
+      - at least one sprint_days row has an EMPTY ``action_payload.lesson``
+      - NO sprint_days row carries a ``generation_error`` marker (visible failure
+        = do NOT auto-resume; the user retries manually)
+
+    This is the durable "content is unfinished but not failed" state that survives
+    server restarts (the in-memory ``_active_generations`` set is lost on restart).
+    """
+    sprint_rows = sb.table("sprints").select("status,started_at") \
+        .eq("id", sprint_id).limit(1).execute().data
+    if not sprint_rows:
+        return False
+    sprint = sprint_rows[0]
+    if sprint.get("status") != "active":
+        return False
+    if not sprint.get("started_at"):
+        return False
+
+    days = sb.table("sprint_days").select("action_payload") \
+        .eq("sprint_id", sprint_id).execute().data
+    if not days:
+        return False
+
+    has_empty = False
+    for d in days:
+        payload = d.get("action_payload") or {}
+        if payload.get("generation_error"):
+            return False  # visible failure — manual retry only
+        if not payload.get("lesson"):
+            has_empty = True
+
+    return has_empty
+
+
 def generation_progress(sb, sprint_id):
     """(generated, total) — count of days whose lesson payload is populated."""
     days = sb.table("sprint_days").select("action_payload").eq("sprint_id", sprint_id).execute().data

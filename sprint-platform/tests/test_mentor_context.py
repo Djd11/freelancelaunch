@@ -24,7 +24,7 @@ def test_mentor_context_preference():
     from app import create_app
     from services.supabase_client import get_supabase
 
-    app = create_app()
+    app = create_app({"TESTING": True, "SECRET_KEY": "test"})
     with app.app_context():
         sb = get_supabase()
 

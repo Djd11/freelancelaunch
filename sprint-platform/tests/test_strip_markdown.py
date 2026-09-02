@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 def _get_strip_markdown():
     """Import the strip_markdown filter from the Flask app."""
     from app import create_app
-    app = create_app()
+    app = create_app({"TESTING": True, "SECRET_KEY": "test"})
     return app.jinja_env.filters["strip_markdown"]
 
 

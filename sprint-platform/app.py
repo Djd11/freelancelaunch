@@ -288,7 +288,57 @@ def create_app(test_config=None):
         except Exception:
             pass  # scheduler is optional
 
+    # Eager boot resume: the in-memory _active_generations set is lost on every
+    # restart, so partially-generated sprints would render as "partial" /
+    # content-lost instead of auto-resuming. Re-scan active sprints from the DB
+    # and restart a background worker for any whose content is unfinished but
+    # not failed (empty day payload, no generation_error).
+    # Guard: only on real boots (not test/test-adapter contexts).
+    if not test_config and not app.config.get("TESTING", False):
+        try:
+            _resume_stuck_generations(app)
+        except Exception:
+            app.logger.exception("boot generation-resume scan failed")
+
     return app
+
+
+def _resume_stuck_generations(app):
+    """Restart background generation for active sprints stuck mid-generation.
+
+    After a restart every in-memory ``_active_generations`` entry is gone and
+    the worker threads died. ``should_resume_generation`` derives the durable
+    "unfinished but not failed" state from the DB (active sprint + at least one
+    empty day payload + no generation_error marker). For each such sprint,
+    spawn the same background worker thread the enrollment path uses so content
+    generation auto-continues without any user action. Each resume is wrapped
+    in try/except — a DB hiccup on one sprint must not stop the others.
+    """
+    import threading
+    from routes.main import _generate_in_background
+    from services.lesson_engine import should_resume_generation, start_generation
+    from supabase import create_client
+
+    sb = create_client(
+        app.config.get("SUPABASE_URL") or "",
+        app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
+    )
+    active = sb.table("sprints").select("id,cluster_key") \
+        .eq("status", "active").execute().data or []
+    for sprint in active:
+        sprint_id = sprint.get("id")
+        if not sprint_id:
+            continue
+        try:
+            if not should_resume_generation(sb, sprint_id):
+                continue
+            start_generation(sprint_id)  # mark generating before the thread wakes
+            threading.Thread(
+                target=_generate_in_background, args=(app, sprint_id), daemon=True,
+            ).start()
+            app.logger.info("resumed generation for %s", sprint_id)
+        except Exception:
+            app.logger.exception("boot generation-resume failed for %s", sprint_id)
 
 
 if __name__ == "__main__":
