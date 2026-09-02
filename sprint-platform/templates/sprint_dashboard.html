@@ -237,11 +237,11 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
           <div>
             <h3>Job Unlock Meter</h3>
-            <p class="small muted">Every day you complete unlocks another batch of live job postings in your cluster.</p>
+            <p class="small muted">Every day you finish opens more real job postings in your skill.</p>
           </div>
           <div style="text-align:right">
             <span class="mono" style="font-size:26px;font-weight:600;color:var(--accent-ink)">{{ meter.unlocked_count }}</span>
-            <span class="muted small"> / {{ meter.total_in_cluster }} active jobs unlocked</span>
+            <span class="muted small"> of {{ meter.total_in_cluster }} real jobs unlocked</span>
           </div>
         </div>
         <div class="punchcard" style="margin:16px 0 8px">
@@ -261,13 +261,28 @@
         </div>
       </div>
 
+      <!-- ═══ HOW THIS BECOMES A PAID CONTRACT — the money path, current phase highlighted ═══ -->
+      <div class="card card-flat" style="margin-top:18px;padding:16px 22px">
+        <span class="eyebrow">How this becomes a paid contract</span>
+        <div class="small" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+          {% set ph = sprint.phase or 'A' %}
+          <span style="{% if ph == 'A' %}color:var(--accent-ink);font-weight:700{% else %}color:var(--muted){% endif %}">1 · Build the skill <span class="xs muted">(Days 1–5)</span></span>
+          <span class="muted">→</span>
+          <span style="{% if ph == 'B' %}color:var(--accent-ink);font-weight:700{% else %}color:var(--muted){% endif %}">2 · Pass verification <span class="xs muted">(Days 6–10)</span></span>
+          <span class="muted">→</span>
+          <span style="{% if ph == 'C' %}color:var(--accent-ink);font-weight:700{% else %}color:var(--muted){% endif %}">3 · Send proposals <span class="xs muted">(Days 11–14)</span></span>
+          <span class="muted">→</span>
+          <span style="{% if sprint.contracts_won %}color:var(--green-ink);font-weight:700{% else %}color:var(--muted){% endif %}">4 · Land your first client</span>
+        </div>
+      </div>
+
       <div class="grid2" style="margin-top:18px">
         <div class="card">
           <div class="kv" style="border:none;padding-bottom:12px"><h3>Today · Day {{ '%02d'|format(sprint.current_day|int) }}</h3><span class="badge b-amber">{{ today.action_type|capitalize }} · Project {{ today.action_payload.project_index if today.action_payload and today.action_payload.project_index is defined else 1 }} of 3</span></div>
           <p class="small muted">{{ today.description or 'Complete today\'s action to unlock the next batch of live job postings.' }}</p>
           <div style="margin-top:16px" class="check-item{{ ' done' if today_lesson_watched else '' }}"><div class="cbox">{{ '✓' if today_lesson_watched else '' }}</div><div><b>Watch lesson</b><div class="xs muted">Learn the flow anatomy (5 min)</div></div></div>
           <div class="check-item{{ ' done' if today_project_done else '' }}"><div class="cbox">{{ '✓' if today_project_done else '' }}</div><div><b>Replicate the project</b><div class="xs muted">Rebuild from a blank canvas (~35 min)</div></div></div>
-          <div class="check-item{{ ' done' if today_rubric_checked else '' }}"><div class="cbox">{{ '✓' if today_rubric_checked else '' }}</div><div><b>Self-check vs rubric</b><div class="xs muted">3 acceptance criteria (~10 min)</div></div></div>
+          <div class="check-item{{ ' done' if today_rubric_checked else '' }}"><div class="cbox">{{ '✓' if today_rubric_checked else '' }}</div><div><b>Check your build matches</b><div class="xs muted">3 points (~10 min)</div></div></div>
           <a class="btn btn-p" href="/sprints/{{ sprint.id }}/day/{{ sprint.current_day }}" style="margin-top:8px">Open Day {{ sprint.current_day }} →</a>
         </div>
 
@@ -308,10 +323,10 @@
           </tbody>
         </table>
         {% else %}
-        <p class="small muted" style="margin:6px 0 14px">No contracts recorded yet. Log your first one — earnings roll up on the sprint record.</p>
+        <p class="small muted" style="margin:6px 0 14px">You'll send your first proposals in Phase C (Days 11–14). When a client says yes, log it here — earnings roll up on your sprint record.</p>
         {% endif %}
         <div style="margin-top:14px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius);padding:16px">
-          <p class="small" style="font-weight:700;margin-bottom:10px">Record a contract</p>
+          <p class="small" style="font-weight:700;margin-bottom:10px">Log a contract you've won</p>
           <form method="post" action="/sprints/{{ sprint.id }}/contract/add" style="display:flex;gap:10px;flex-wrap:wrap">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="client_name" placeholder="Client" aria-label="Client name">
@@ -329,7 +344,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
           <div>
             <h3>Live Job Feed</h3>
-            <p class="small muted">Recent jobs sourced from RSS feeds and platforms in your cluster.</p>
+            <p class="small muted">Real postings in your skill — bid on them when you reach Phase C (Day 11).</p>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             {% if cluster.rss_job_count %}
@@ -346,7 +361,7 @@
             <tr>
               <td>
                 {% if job.source_url %}
-                <a href="{{ job.source_url }}" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:none;font-weight:500">{{ job.title[:80] }}</a>
+                <a href="{{ job.source_url }}" target="_blank" rel="noopener" style="color:var(--accent-ink);text-decoration:none;font-weight:500">{{ job.title[:80] }}</a><br><a href="{{ job.source_url }}" target="_blank" rel="noopener" class="xs" style="color:var(--accent-ink);text-decoration:none;font-weight:600">Open posting →</a>
                 {% else %}
                 <span style="font-weight:500">{{ job.title[:80] }}</span>
                 {% endif %}

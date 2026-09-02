@@ -70,10 +70,51 @@ def load_cohort(sb, cohort_id):
 
 
 def load_meter(sb, sprint_id):
+    """Load the Job Unlock Meter, healing stale snapshots against the live feed.
+
+    A snapshot written at sprint creation can hold total_in_cluster=0 while
+    the job feed has since been stocked (e.g. RSS ingest after the sprint
+    started). When the snapshot's total is 0 — or disagrees wildly with the
+    live active-job count — recompute from job_feed using the same counting
+    rule as services.unlock_engine.recompute (unlock_day <= completed_days)
+    and write the healed values back best-effort, so the dashboard never
+    shows an empty prize that actually exists.
+    """
     rows = sb.table("sprint_unlock_snapshots").select("*").eq("sprint_id", sprint_id).limit(1).execute().data
-    return rows[0] if rows else {
+    meter = rows[0] if rows else {
         "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
     }
+
+    try:
+        cluster_key = None
+        sprint_row = sb.table("sprints").select("cluster_key").eq("id", sprint_id).limit(1).execute().data
+        cluster_key = sprint_row[0].get("cluster_key") if sprint_row else None
+        if cluster_key:
+            active = sb.table("job_feed").select("unlock_day").eq("cluster_key", cluster_key) \
+                .eq("status", "active").execute().data
+            live_total = len(active)
+            snap_total = int(meter.get("total_in_cluster") or 0)
+            if live_total > 0 and (snap_total == 0 or snap_total < live_total):
+                completed = int(meter.get("completed_days") or 0)
+                # Same counting rule as unlock_engine.recompute.
+                unlocked = sum(1 for r in active if (r.get("unlock_day") or 99) <= completed)
+                healed = dict(meter)
+                healed["total_in_cluster"] = live_total
+                healed["unlocked_count"] = unlocked
+                healed["last_delta"] = max(0, unlocked - int(meter.get("unlocked_count") or 0)) \
+                    if meter.get("unlocked_count") is not None else 0
+                # Best-effort write-back so the snapshot converges.
+                try:
+                    sb.table("sprint_unlock_snapshots").update({
+                        "total_in_cluster": live_total,
+                        "unlocked_count": unlocked,
+                    }).eq("sprint_id", sprint_id).execute()
+                except Exception:
+                    pass
+                return healed
+    except Exception:
+        pass
+    return meter
 
 
 def load_momentum(sb, user_id):
