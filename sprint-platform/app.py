@@ -113,7 +113,11 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_globals():
-        return {"user": g.get("user")}
+        # site_base: canonical origin for absolute URLs (og:image etc.).
+        # PUBLIC_BASE_URL wins so social/AI crawlers see the real domain even
+        # when the app runs behind a proxy; falls back to the request host.
+        site_base = (os.getenv("PUBLIC_BASE_URL") or request.url_root).rstrip("/")
+        return {"user": g.get("user"), "site_base": site_base}
 
     @app.route("/favicon.ico")
     def favicon():

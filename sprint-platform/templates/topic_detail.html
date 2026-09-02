@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set cluster_name = cluster.display_name %}
+{% set cluster_key = cluster.cluster_key %}
+{% set cluster_promise = cluster.promise or 'Rebuild real projects, fulfill a mock contract, and send live proposals.' %}
+{% block title %}{{ cluster_name }} Sprint — 14 days, demand-validated | FreelanceLaunch{% endblock %}
+{% block meta_description %}{{ cluster_name }} sprint: {{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open, ${{ cluster.avg_rate }}/hr median rate.{% endblock %}
+{% block canonical %}{{ request.url }}{% endblock %}
+{% block og %}
+<meta property="og:title" content="{{ cluster_name }} Sprint — FreelanceLaunch">
+<meta property="og:description" content="{{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open, ${{ cluster.avg_rate }}/hr.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:site_name" content="FreelanceLaunch">
+<meta name="twitter:card" content="summary">
+{% endblock %}
+{% block content %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ cluster_name }} Sprint — 14 days, demand-validated",
+  "description": "{{ cluster_promise | truncate(150) }}",
+  "provider": { "@type": "Organization", "name": "FreelanceLaunch", "sameAs": "{{ request.url_root.rstrip('/') }}" },
+  "hasCourseInstance": {
+    "@type": "CourseInstance",
+    "courseMode": "online",
+    "courseWorkload": "P14D"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "{{ cluster.avg_rate }} USD/hr average rate in this cluster"
+  }
+}
+</script>
+<section class="screen" id="topic-detail">
+  <div class="wrap">
+    <div class="topnav">
+      <div class="logo">Freelance<em>Launch</em></div>
+      <div class="navl"><a href="/sprints">Sprints</a><a href="/topics">Topics</a><a href="/pricing">Pricing</a><a href="/mentor">Mentor</a></div>
+      {% if user %}<a class="btn btn-o btn-sm" href="/auth/logout">Sign out</a>{% endif %}
+    </div>
+
+    <div style="max-width:640px;margin:48px auto">
+      <p class="xs" style="margin-bottom:16px"><a href="/topics" style="color:var(--accent-ink);font-weight:600">&larr; All topics</a></p>
+      <span class="chip" style="margin-bottom:16px;display:inline-flex"><span class="dot"></span>14-day sprint</span>
+      <span style="font-size:48px;display:block;margin:16px 0" aria-hidden="true">{{ cluster.icon }}</span>
+      <h1 style="font-size:36px;line-height:1.1;margin:0 0 12px">{{ cluster.display_name }}</h1>
+      <p class="muted" style="font-size:17px;max-width:520px;margin-bottom:20px">{{ cluster.description }}</p>
+
+      <div class="card" style="padding:24px;margin-bottom:24px">
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <span class="eyebrow">Open jobs</span>
+            <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px">{{ cluster.job_count }}</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <span class="eyebrow">Median rate</span>
+            <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px">${{ cluster.avg_rate }}/hr</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <span class="eyebrow">Demand growth</span>
+            <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px;color:var(--green-ink)">+{{ cluster.growth_score }}%</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:15px;line-height:1.6;margin-bottom:24px">{{ cluster.promise if cluster.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a class="btn btn-p" href="/sprints">Start this sprint</a>
+        <a class="btn btn-o" href="/topics">Browse all topics</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

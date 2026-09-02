@@ -69,10 +69,14 @@
         <p class="mono xs" style="margin:14px 0;color:var(--ink-2);letter-spacing:.06em">● {{ c.job_count }} jobs open · ${{ c.avg_rate }}/hr · 14 days</p>
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
+          {% if user %}
           <form method="post" action="/sprints/{{ c.cluster_key }}/start">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-p btn-sm" type="submit">Start sprint</button>
           </form>
+          {% else %}
+          <a class="btn btn-p btn-sm" href="/auth/login">Start sprint — sign in</a>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
