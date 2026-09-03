@@ -19,7 +19,7 @@ Feature: Sprint Dashboard (mockup screen 3)
     When I GET "/sprints/s1"
     Then the page contains the text "Skill Acquisition"
     And the page contains the text "Mock Contract"
-    And the page contains the text "Supply Chain"
+    And the page contains the text "Send Proposals"
 
   Scenario: Phase B is locked until Phase A passes verification
     Given Phase A has not passed verification for sprint "s1"

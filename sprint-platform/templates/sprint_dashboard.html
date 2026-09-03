@@ -21,7 +21,7 @@
             <span><b>{{ cluster.live_job_count or cluster.job_count }}</b> active jobs</span>
             {% if cluster.rss_job_count %}<span>RSS <b>{{ cluster.rss_job_count }}</b></span>{% endif %}
             <span>$<b>{{ cluster.avg_rate }}</b>/hr</span>
-            <span>{{ cluster.cluster_key }} cluster</span>
+            <span>{{ cluster.display_name }} demand</span>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -163,6 +163,46 @@
       })();
       </script>
 
+      <!-- ═══ NEXT ACTION — the one thing to do right now, above the fold ═══ -->
+      {% if sprint.status == 'completed' %}
+      <div class="card" style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--green-line);background:var(--green-soft)">
+        <div><b style="font-family:var(--font-display);font-size:18px">Sprint complete 🎉</b><p class="small muted" style="margin-top:4px">You finished all 14 days. Your Demand-Validated badge is on your public profile.</p></div>
+        <a class="btn btn-ink btn-sm" href="/profile/me">View your profile →</a>
+      </div>
+      {% else %}
+      <div class="card" style="margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--accent)">
+        <div>
+          <span class="eyebrow">Your next step</span>
+          {% if sprint.phase == 'A' %}
+          <p style="margin:4px 0 0;font-family:var(--font-display);font-size:18px">Continue Day {{ '%02d'|format(sprint.current_day|int) }} — build the skill</p>
+          {% elif sprint.phase == 'B' %}
+          <p style="margin:4px 0 0;font-family:var(--font-display);font-size:18px">Work your Mock Contract — fulfill a real brief</p>
+          {% else %}
+          <p style="margin:4px 0 0;font-family:var(--font-display);font-size:18px">Send your proposals — bid on live jobs</p>
+          {% endif %}
+        </div>
+        {% if sprint.phase == 'A' %}
+        <a class="btn btn-p" href="/sprints/{{ sprint.id }}/day/{{ sprint.current_day }}">Open Day {{ sprint.current_day }} →</a>
+        {% elif sprint.phase == 'B' %}
+        <a class="btn btn-p" href="/sprints/{{ sprint.id }}/contract">Open Mock Contract →</a>
+        {% else %}
+        <a class="btn btn-p" href="/sprints/{{ sprint.id }}/proposals">Open Proposals →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ═══ HOW TO READ THIS — plain-English glossary (collapsible) ═══ -->
+      <details style="margin-top:12px;padding:12px 16px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--radius)">
+        <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-2)">New here? What the words on this page mean</summary>
+        <div class="small" style="margin-top:10px;color:var(--ink-2);line-height:1.7">
+          <b>Shift</b> — one of the three stages: <b>Skill Acquisition</b> (learn by rebuilding real projects), <b>Mock Contract</b> (fulfill a real brief), <b>Send Proposals</b> (bid on live jobs).<br>
+          <b>Gate</b> — a checkpoint you pass to unlock the next shift. Gate A ends Skill Acquisition; Gate B ends the Mock Contract.<br>
+          <b>Copy-Work</b> — rebuilding an existing high-performing project from a blank canvas, instead of watching videos.<br>
+          <b>Cluster</b> — the group of real job postings your sprint is trained against (e.g. Email Automation).<br>
+          <b>Job Unlock Meter</b> — how many real postings you've opened by finishing days. It's proof your skill is in demand.
+        </div>
+      </details>
+
       <!-- phase lock track — three shifts, each with its own punch strip -->
       <div class="phases-track">
         <div class="phase active" data-phase="A">
@@ -197,7 +237,7 @@
         </div>
         <div class="phase {{ 'active' if sprint.phase == 'C' else 'locked' }}" data-phase="C">
           <div class="phead"><span class="tag">Shift C · Days 11–14</span>{% if sprint.status == 'completed' %}<span class="stamp ok">Sprint complete</span>{% elif gate_b_pass %}<span class="badge b-accent">In progress</span>{% else %}<span class="badge b-amber">Locked</span>{% endif %}</div>
-          <h3>Supply Chain</h3>
+          <h3>Send Proposals</h3>
           <p class="xs muted" style="margin-top:6px">Proposals + First-Bid challenge</p>
           <div class="punchcard" style="margin-top:12px">
             {% for i in range(11, 15) %}
@@ -244,16 +284,12 @@
             <span class="muted small"> of {{ meter.total_in_cluster }} real jobs unlocked</span>
           </div>
         </div>
-        <div class="punchcard" style="margin:16px 0 8px">
-          {% for i in range(1, 15) %}
-            {% if day_done_map.get(i) %}
-            <a href="/sprints/{{ sprint.id }}/day/{{ i }}" class="slot done" title="Day {{ i }} — completed">{{ i }}</a>
-            {% elif i == meter.completed_days + 1 %}
-            <a href="/sprints/{{ sprint.id }}/day/{{ i }}" class="slot today" title="Day {{ i }} — current">{{ i }}</a>
-            {% else %}
-            <div class="slot locked" title="Day {{ i }} — locked">{{ i }}</div>
-            {% endif %}
-          {% endfor %}
+        {% set pct_unlocked = (meter.unlocked_count / meter.total_in_cluster * 100) | round | int if meter.total_in_cluster else 0 %}
+        <div style="margin:16px 0 8px">
+          <div style="height:10px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:{{ pct_unlocked }}%;background:var(--accent);border-radius:99px;transition:width .4s"></div>
+          </div>
+          <p class="xs muted" style="margin-top:6px">{{ pct_unlocked }}% of the live postings in your skill are now open to you — finish more days to unlock the rest.</p>
         </div>
         <div class="small" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <span class="mono xs muted" style="letter-spacing:.06em">{{ meter.completed_days }}/14 days punched · {{ meter.unlocked_count }} postings unlocked</span>

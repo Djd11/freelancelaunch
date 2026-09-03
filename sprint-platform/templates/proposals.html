@@ -7,7 +7,7 @@
     <div class="topnav"><div class="logo">Freelance<em>Launch</em></div><div class="navl"><a href="/sprints/{{ sprint.id }}">← Dashboard</a></div></div>
     <div style="padding:26px 0">
       {% if locked %}
-      <span class="chip"><span class="dot"></span>Phase C · Proposal Engineering</span>
+      <span class="chip"><span class="dot"></span>Phase C · Send Proposals</span>
       <span class="eyebrow" style="display:block;margin-top:14px">Bid board</span>
       <h2 style="margin:0 0 6px">Phase C is locked</h2>
       <span class="stamp wait" style="margin-top:4px">Locked — Gate B pending</span>
@@ -16,7 +16,7 @@
         <p class="small">Your next step: <a href="/sprints/{{ sprint.id }}/contract" style="color:var(--accent-ink);font-weight:600">Open the Mock Contract →</a></p>
       </div>
       {% else %}
-      <span class="chip"><span class="dot"></span>Phase C · Day 11 · Proposal Engineering</span>
+      <span class="chip"><span class="dot"></span>Phase C · Day 11 · Send Proposals</span>
       <span class="eyebrow" style="display:block;margin-top:14px">Bid board</span>
       <h2 style="margin:0 0 6px">First-bid challenge — {{ submitted_count }} / 5 proposals</h2>
       <p class="muted small" style="max-width:640px">We pre-write the "I see you need X…" hooks from your job cluster. You send 5 live proposals. If none convert, the system diagnoses why and assigns a fix.</p>

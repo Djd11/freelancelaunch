@@ -12,7 +12,7 @@ this service produces.
 """
 
 # Day → phase. Phase A = days 1-5 (Copy-Work), B = 6-10 (Mock Contract),
-# C = 11-14 (Supply Chain). Mirrors eng-spec §3 J3 and the schema CHECK.
+# C = 11-14 (Send Proposals). Mirrors eng-spec §3 J3 and the schema CHECK.
 PHASE_MAP = {d: "A" for d in range(1, 6)} | {d: "B" for d in range(6, 11)} | {d: "C" for d in range(11, 15)}
 
 
