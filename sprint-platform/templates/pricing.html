@@ -1,15 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Pricing — free sprints now, placement-first monetization later{% endblock %}
-{% block meta_description %}Sprints are free now — all 14 days, three phases, the Job Unlock Meter, and the Demand-Validated badge. Pricing comes after placement, not seat time.{% endblock %}
+{% block title %}Pricing — free preview, then one-time sprint plans | FreelanceLaunch{% endblock %}
+{% block meta_description %}Start any 14-day demand-validated sprint free. Full Sprint $99 one-time, Sprint + Mentor $199. Pay for a job-ready outcome, not seat time — no subscription.{% endblock %}
 {% block og %}
-<meta property="og:title" content="Pricing — free sprints now, placement-first monetization later">
-<meta property="og:description" content="All 14 days, all three phases, the Job Unlock Meter, and the Demand-Validated badge — no card required.">
+<meta property="og:title" content="Pricing — free preview, then one-time sprint plans">
+<meta property="og:description" content="Free Day-1 preview. Full Sprint $99, Sprint + Mentor $199 — one-time, no subscription. Launch offer $49 for the first cohort.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ request.url }}">
 <meta property="og:site_name" content="FreelanceLaunch">
 <meta name="twitter:card" content="summary">
 {% endblock %}
 {% block content %}
+<style>
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+.plan{display:flex;flex-direction:column;border:1px solid var(--hairline-strong);border-radius:var(--radius-lg);padding:24px;background:var(--surface)}
+.plan.popular{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.plan .amt{font-family:var(--font-display);font-size:34px;line-height:1}
+.plan ul{margin:14px 0 0 18px;padding:0}
+.plan li{margin-bottom:8px;font-size:13px;color:var(--ink-2)}
+.plan .btn{margin-top:auto}
+@media(max-width:820px){.plans{grid-template-columns:1fr}}
+</style>
 <section class="screen" id="pricing">
   <div class="wrap" style="padding-top:56px">
     <div class="topnav" style="border:none;padding-bottom:0">
@@ -19,28 +29,44 @@
 
     <div class="pagehead">
       <span class="chip"><span class="dot"></span>Pricing</span>
-      <h1 style="font-size:30px;line-height:1.15;margin:12px 0 6px">Pricing comes after placement</h1>
-      <p class="sub">Monetization is deferred for v1 (engineering-spec §7.3). The first thing we owe you is a demand-validated placement — not a paywall.</p>
+      <h1 style="font-size:30px;line-height:1.15;margin:12px 0 6px">Try it free. Pay once when you're in.</h1>
+      <p class="sub">Start any sprint's Day 1 free — no card. Unlock the full 14-day sprint with a one-time payment. No subscriptions, ever: you're paying for a job-ready outcome, not seat time.</p>
     </div>
 
-    <div style="border-top:1px solid var(--hairline-strong)">
-      <div style="display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--hairline)">
-        <span class="badge b-green" style="height:fit-content;margin-top:2px">Free now</span>
-        <div>
-          <b>Start a sprint free</b>
-          <p class="small muted" style="margin-top:2px">All 14 days, all three phases, the Job Unlock Meter, and the Demand-Validated badge — no card required.</p>
+    <div class="plans">
+      {% for t in pricing.tiers %}
+      <div class="plan{{ ' popular' if t.popular }}">
+        {% if t.popular %}<span class="badge b-accent" style="align-self:flex-start;margin-bottom:8px">Most popular</span>{% endif %}
+        <h3 style="margin:0 0 4px">{{ t.name }}</h3>
+        <p class="small muted" style="min-height:34px">{{ t.blurb }}</p>
+        <div style="margin:10px 0 4px">
+          {% if t.price == 0 %}
+          <span class="amt">Free</span>
+          {% else %}
+          <span class="amt">${{ t.price }}</span>
+          <span class="xs muted" style="display:block;margin-top:2px">one-time · {{ pricing.currency }}</span>
+          {% endif %}
         </div>
+        <ul>
+          {% for f in t.features %}<li>{{ f }}</li>{% endfor %}
+        </ul>
+        <a class="btn {{ 'btn-p' if t.popular else ('btn-ink' if t.price > 0 else 'btn-o') }}" style="margin-top:18px" href="{{ t.href }}">{{ t.cta }}</a>
       </div>
-      <div style="display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--hairline)">
-        <span class="badge b-slate" style="height:fit-content;margin-top:2px">Later</span>
-        <div>
-          <b>Placement-first monetization</b>
-          <p class="small muted" style="margin-top:2px">When pricing arrives it will follow outcomes — interviews and contracts — not seat time.</p>
-        </div>
+      {% endfor %}
+    </div>
+
+    <p class="xs muted" style="margin-top:16px;text-align:center">Launch offer: the first cohort enrolls in the Full Sprint for ${{ pricing.launch_price }} (normally $99). All prices are one-time per sprint — no subscription.</p>
+
+    <div class="card card-flat" style="margin-top:28px;padding:22px">
+      <h3 style="margin-bottom:12px">What you actually get</h3>
+      <div class="grid3">
+        <div><b>14 days, 3 phases</b><p class="small muted">Skill Acquisition → Mock Contract → Send Proposals, against your cluster's live job feed.</p></div>
+        <div><b>Demand-Validated badge</b><p class="small muted">Issued only after your Mock Contract passes verification — proof you fulfilled a real brief.</p></div>
+        <div><b>Job Unlock Meter</b><p class="small muted">Every finished day opens more real postings you can bid on.</p></div>
       </div>
     </div>
 
-    <div style="margin-top:28px"><a class="btn btn-p" href="/sprints">Start free</a></div>
+    <div style="margin-top:28px"><a class="btn btn-p" href="/sprints">Start the free preview →</a></div>
   </div>
 </section>
 {% endblock %}

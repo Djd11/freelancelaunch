@@ -28,7 +28,7 @@
   },
   "offers": {
     "@type": "Offer",
-    "price": "0",
+    "price": "{{ pricing.standard }}",
     "priceCurrency": "USD",
     "availability": "https://schema.org/InStock",
     "category": "{{ cluster.avg_rate }} USD/hr average rate in this cluster"
@@ -70,7 +70,7 @@
       <p style="font-size:15px;line-height:1.6;margin-bottom:24px">{{ cluster.promise if cluster.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <a class="btn btn-p" href="/sprints">Start this sprint</a>
+        <a class="btn btn-p" href="/sprints">Start free preview</a>
         <a class="btn btn-o" href="/topics">Browse all topics</a>
       </div>
     </div>
