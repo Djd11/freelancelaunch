@@ -306,7 +306,7 @@ def llms_txt():
         "",
         "## How it works",
         "- / : Landing — the 14-day demand-validated sprint explained",
-        "- /pricing : Free Day-1 preview; Full Sprint $99 one-time, Sprint + Mentor $199",
+        "- /pricing : Free during v1",
         "- /clients/freelancers : How freelancers find and land clients",
     ]
     body = "\n".join(lines) + "\n"
