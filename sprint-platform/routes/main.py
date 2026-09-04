@@ -182,26 +182,29 @@ def start_sprint(cluster_key):
 
 def _generate_in_background(app, sprint_id):
     """Background LLM content generation — stamps visible errors on failure."""
-    from services.lesson_engine import start_generation, stop_generation
+    from services.lesson_engine import start_generation, stop_generation, _close_client
     start_generation(sprint_id)
     try:
         with app.app_context():
+            from supabase import create_client
+            url = app.config.get("SUPABASE_URL") or ""
+            key = app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or ""
+
+            def _factory():
+                return create_client(url, key)
+
+            sb = _factory()
             try:
-                from supabase import create_client
-                sb = create_client(
-                    app.config.get("SUPABASE_URL") or "",
-                    app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
-                )
-                generate_sprint_content(sb, sprint_id)
+                # client_factory lets the worker give each parallel task its OWN
+                # client — required now that anatomy/lessons run concurrently
+                # (sharing one client across threads is the blocker-#6 bug).
+                generate_sprint_content(sb, sprint_id, client_factory=_factory)
             except Exception as exc:
                 import logging
                 logging.getLogger(__name__).exception("lesson generation failed for %s", sprint_id)
                 # Stamp generation_error on the first empty day so the UI surfaces it
                 try:
-                    sb2 = create_client(
-                        app.config.get("SUPABASE_URL") or "",
-                        app.config.get("SUPABASE_SERVICE_KEY") or app.config.get("SUPABASE_KEY") or "",
-                    )
+                    sb2 = _factory()
                     days = sb2.table("sprint_days").select("day_no, action_payload") \
                         .eq("sprint_id", sprint_id).order("day_no").execute().data
                     for d in (days or []):
@@ -211,8 +214,11 @@ def _generate_in_background(app, sprint_id):
                             sb2.table("sprint_days").update({"action_payload": payload}) \
                                 .eq("sprint_id", sprint_id).eq("day_no", d["day_no"]).execute()
                             break
+                    _close_client(sb2)
                 except Exception:
                     logging.getLogger(__name__).exception("failed to stamp generation_error for %s", sprint_id)
+            finally:
+                _close_client(sb)
     finally:
         stop_generation(sprint_id)
 

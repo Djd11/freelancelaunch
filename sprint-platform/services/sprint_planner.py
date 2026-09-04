@@ -32,16 +32,19 @@ def action_for(day):
 
 def create_plan(sb, sprint_id):
     """Insert the 14 sprint_days rows for a new sprint. Idempotent per sprint
-    (UNIQUE(sprint_id, day_no) makes re-runs a no-op via upsert)."""
-    for d in range(1, 15):
-        sb.table("sprint_days").upsert({
-            "sprint_id": sprint_id,
-            "phase": PHASE_MAP[d],
-            "day_no": d,
-            "title": f"Day {d}",
-            "description": "",
-            "action_type": action_for(d),
-            "action_payload": {},
-            "is_done": False,
-        }, on_conflict="sprint_id,day_no").execute()
+    (UNIQUE(sprint_id, day_no) makes re-runs a no-op via upsert).
+
+    One array upsert, not 14 sequential round-trips — enroll latency was
+    dominated by these (dogfood: 8-16 s). PostgREST applies the same
+    on_conflict to every row in the payload."""
+    sb.table("sprint_days").upsert([{
+        "sprint_id": sprint_id,
+        "phase": PHASE_MAP[d],
+        "day_no": d,
+        "title": f"Day {d}",
+        "description": "",
+        "action_type": action_for(d),
+        "action_payload": {},
+        "is_done": False,
+    } for d in range(1, 15)], on_conflict="sprint_id,day_no").execute()
     return True

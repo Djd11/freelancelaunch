@@ -665,114 +665,150 @@ def _mark_generation_error(sb, sprint_id, message):
         .eq("sprint_id", sprint_id).eq("day_no", target["day_no"]).execute()
 
 
-def generate_sprint_content(sb, sprint_id):
-    """Fill every day's lesson payload + every project's anatomy for a sprint.
+def _close_client(client):
+    """Close a per-thread Supabase client's HTTP sessions (best-effort)."""
+    for holder in (getattr(client, "postgrest", None), getattr(client, "storage", None)):
+        session = getattr(holder, "session", None) if holder else None
+        try:
+            if session is not None:
+                session.close()
+        except Exception:
+            pass
+    try:
+        hc = getattr(getattr(client, "auth", None), "_http_client", None)
+        if hc is not None:
+            hc.close()
+    except Exception:
+        pass
 
-    Runs on a background thread (routes/main.py start_sprint). Each day/project
-    is written to the DB as it completes — the populated-payload count is the
-    progress the frontend polls. Idempotent: only fills empty payloads.
 
-    Content is LLM-only: on failure the worker stamps a visible
-    `generation_error` on a day payload and re-raises; the frontend's
-    /generation polling and day view surface it instead of endless "generating".
+def generate_sprint_content(sb, sprint_id, client_factory=None):
+    """Fill every project's anatomy (rubric/clone_steps) + every day's lesson.
+
+    Runs on a background thread (routes/main.py). Content is LLM-only; on
+    failure a visible `generation_error` is stamped on the day.
+
+    ORDERING (dogfood #1/#5): the three copy-work PROJECTS are generated
+    FIRST and in parallel, THEN the 14 lessons (Phase A days first). The old
+    worker ran all 14 slow lessons before touching a single project, so the
+    Gate-A rubric checkboxes appeared only after ~70 min — the learner hit an
+    honest-but-dead "no checklist yet" wall. Anatomy is what the learner
+    actually submits against, so it now lands in ~2-3 min.
+
+    CONCURRENCY: tasks run on a bounded thread pool. Each task uses its OWN
+    Supabase client (via client_factory) — sharing one client across threads
+    is exactly the stale-socket bug fixed in blocker #6, so a factory is
+    REQUIRED for the parallel path; without one we fall back to sequential on
+    the passed client (tests / callers that don't supply a factory).
     """
+    from concurrent.futures import ThreadPoolExecutor
+    logger = logging.getLogger(__name__)
+
+    def _sb():
+        return client_factory() if client_factory else sb
+
+    def _release(c):
+        if client_factory is not None and c is not sb:
+            _close_client(c)
+
     try:
         sprint_rows = sb.table("sprints").select("*").eq("id", sprint_id).limit(1).execute().data
         if not sprint_rows:
             return
         sprint = sprint_rows[0]
-        cluster_key = sprint.get("cluster_key", "email-automation")
 
+        # ── Phase 1 · project anatomy (Gate A supply) — parallel, first ──
+        def _gen_anatomy(index):
+            c = _sb()
+            try:
+                existing = c.table("copywork_projects").select("id,clone_steps,title") \
+                    .eq("sprint_id", sprint_id).eq("project_index", index).limit(1).execute().data
+                if not existing or existing[0].get("clone_steps"):
+                    return  # row absent or anatomy already present
+                for attempt in range(3):
+                    try:
+                        anatomy = project_anatomy(c, sprint, index)
+                        if anatomy.get("clone_steps") and anatomy.get("rubric"):
+                            update_fields = {
+                                "title": anatomy["title"],
+                                "clone_steps": anatomy["clone_steps"],
+                                "rubric": anatomy["rubric"],
+                            }
+                            if anatomy.get("gap_fill_topic"):
+                                update_fields["gap_fill_topic"] = anatomy["gap_fill_topic"]
+                            c.table("copywork_projects").update(update_fields) \
+                                .eq("sprint_id", sprint_id).eq("project_index", index).execute()
+                            spec = anatomy.get("reference_spec")
+                            if spec:
+                                _store_reference_spec(c, sprint_id, index, spec)
+                            return
+                    except Exception as exc:
+                        if attempt == 2:
+                            logger.warning("project anatomy failed for %s project %d: %s",
+                                           sprint_id, index, exc)
+            finally:
+                _release(c)
+
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            list(ex.map(_gen_anatomy, (1, 2, 3)))
+
+        # ── Phase 2 · lessons — Phase A days first, parallel ──────────────
         days = sb.table("sprint_days").select("*").eq("sprint_id", sprint_id).order("day_no").execute().data
-        for day_row in days:
+        ordered = sorted(days, key=lambda d: (0 if (d.get("day_no") or 99) <= 5 else 1,
+                                              d.get("day_no") or 99))
+
+        def _gen_lesson(day_row):
             payload = day_row.get("action_payload") or {}
             if payload.get("lesson"):
-                continue  # already generated
-            project_index = (payload or {}).get("project_index") or DAY_TO_PROJECT.get(day_row.get("day_no"))
-            project = None
-            if project_index:
-                proj = sb.table("copywork_projects").select("*") \
-                    .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
-                project = proj[0] if proj else None
+                return  # already generated
+            c = _sb()
             try:
-                lesson = lesson_for_day(sb, sprint, day_row, project)
-            except Exception as exc:
-                # Stamp error on this day but continue to next day
+                project_index = payload.get("project_index") or DAY_TO_PROJECT.get(day_row.get("day_no"))
+                project = None
+                if project_index:
+                    proj = c.table("copywork_projects").select("*") \
+                        .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
+                    project = proj[0] if proj else None
                 try:
-                    err_payload = dict(payload)
-                    err_payload["generation_error"] = f"Generation failed: {exc}"
-                    sb.table("sprint_days").update({"action_payload": err_payload}) \
-                        .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
-                except Exception:
-                    pass  # DB also down — just skip this day
-                import logging
-                logging.getLogger(__name__).warning("Day %d generation failed: %s", day_row.get("day_no"), exc)
-                continue
-            new_payload = dict(payload)
-            new_payload.pop("generation_error", None)  # a successful retry heals the marker
-            new_payload["lesson"] = lesson
-            # Two-panel voiceover (D8: kinetic text + TTS): generate edge-tts MP3
-            # + duration and store on the lesson. Best-effort — if the TTS/Storage
-            # pipeline can't run, the lesson still renders as kinetic text.
-            try:
-                from services.video_engine import voiceover_for_lesson
-                vo = voiceover_for_lesson(sb, sprint_id, day_row["day_no"], lesson)
-                if vo:
-                    new_payload["lesson"]["voiceover"] = vo
-            except Exception:
-                pass
-            try:
-                sb.table("sprint_days").update({"action_payload": new_payload}) \
-                    .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
-            except Exception as exc:
-                import logging
-                logging.getLogger(__name__).warning("Day %d DB write failed: %s (will retry next round)", day_row.get("day_no"), exc)
-
-        for index in (1, 2, 3):
-            existing = sb.table("copywork_projects").select("id,clone_steps,title") \
-                .eq("sprint_id", sprint_id).eq("project_index", index).limit(1).execute().data
-            if not existing:
-                continue
-            row = existing[0]
-            if row.get("clone_steps"):
-                continue  # anatomy already generated
-            # Retry logic: try up to 3 times for each project anatomy.
-            # A single failure must not stop the other projects from generating.
-            for attempt in range(3):
-                try:
-                    anatomy = project_anatomy(sb, sprint, index)
-                    if anatomy.get("clone_steps") and anatomy.get("rubric"):
-                        # P1-4: an LLM answer without a gap-fill topic must
-                        # never null an existing flagged focus — only write
-                        # the field when the model actually supplied one.
-                        update_fields = {
-                            "title": anatomy["title"],
-                            "clone_steps": anatomy["clone_steps"],
-                            "rubric": anatomy["rubric"],
-                        }
-                        if anatomy.get("gap_fill_topic"):
-                            update_fields["gap_fill_topic"] = anatomy["gap_fill_topic"]
-                        sb.table("copywork_projects").update(update_fields) \
-                            .eq("sprint_id", sprint_id).eq("project_index", index).execute()
-                        spec = anatomy.get("reference_spec")
-                        if spec:
-                            _store_reference_spec(sb, sprint_id, index, spec)
-                        break  # success, move to next project
+                    lesson = lesson_for_day(c, sprint, day_row, project)
                 except Exception as exc:
-                    if attempt == 2:
-                        # All retries failed — log but don't crash the worker.
-                        # The UI shows "Project anatomy is being generated…"
-                        # and a retry will heal it.
-                        import logging
-                        logging.getLogger(__name__).warning(
-                            "project anatomy failed for %s project %d: %s", sprint_id, index, exc)
+                    try:
+                        err_payload = dict(payload)
+                        err_payload["generation_error"] = f"Generation failed: {exc}"
+                        c.table("sprint_days").update({"action_payload": err_payload}) \
+                            .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
+                    except Exception:
+                        pass
+                    logger.warning("Day %d generation failed: %s", day_row.get("day_no"), exc)
+                    return
+                new_payload = dict(payload)
+                new_payload.pop("generation_error", None)  # a successful retry heals the marker
+                new_payload["lesson"] = lesson
+                # Two-panel voiceover (D8): best-effort — if TTS/Storage can't
+                # run the lesson still renders as kinetic text.
+                try:
+                    from services.video_engine import voiceover_for_lesson
+                    vo = voiceover_for_lesson(c, sprint_id, day_row["day_no"], lesson)
+                    if vo:
+                        new_payload["lesson"]["voiceover"] = vo
+                except Exception:
+                    pass
+                try:
+                    c.table("sprint_days").update({"action_payload": new_payload}) \
+                        .eq("sprint_id", sprint_id).eq("day_no", day_row["day_no"]).execute()
+                except Exception as exc:
+                    logger.warning("Day %d DB write failed: %s (will retry next round)",
+                                   day_row.get("day_no"), exc)
+            finally:
+                _release(c)
+
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            list(ex.map(_gen_lesson, ordered))
     except Exception as exc:
         # P1-3: catch ALL failure types (LLM *and* non-LLM — network/DB/timeout),
         # surface a per-day generation_error, then re-raise non-LLM errors so the
-        # caller (_generate_in_background, main.py:165) also records the failure.
-        import logging
-        logging.getLogger(__name__).exception(
-            "Sprint content generation failed for %s: %s", sprint_id, exc)
+        # caller (_generate_in_background, main.py) also records the failure.
+        logger.exception("Sprint content generation failed for %s: %s", sprint_id, exc)
         try:
             err_days = sb.table("sprint_days").select("day_no, action_payload") \
                 .eq("sprint_id", sprint_id).order("day_no").execute().data or []
@@ -784,7 +820,7 @@ def generate_sprint_content(sb, sprint_id):
                         .eq("sprint_id", sprint_id).eq("day_no", d["day_no"]).execute()
                     break
         except Exception:
-            pass  # DB also down — rely on caller's stamp (main.py:165)
+            pass  # DB also down — rely on caller's stamp
         if not isinstance(exc, LLMGenerationError):
             raise
 

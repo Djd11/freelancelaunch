@@ -205,9 +205,9 @@
               </div>
               {% endif %}
               {% if gen_error %}
-              <p class="small" style="color:var(--ink-2);margin-top:10px">Your step-by-step guide couldn't be written ({{ gen_error }}) — build from the reference below.</p>
+              <p class="small" style="color:var(--ink-2);margin-top:10px">Your step-by-step guide couldn't be written ({{ gen_error }}) — {% if reference_spec %}build from the reference above for now.{% else %}use ↻ Retry below to regenerate it.{% endif %}</p>
               {% elif not clone_steps %}
-              <p class="small muted" style="margin-top:10px">Your step-by-step guide is being written — start with the reference build above.</p>
+              <p class="small muted" style="margin-top:10px">Your step-by-step guide is being written — {% if reference_spec %}start with the reference build above.{% else %}it usually lands within a couple of minutes.{% endif %}</p>
               {% else %}
               <ul class="small" style="margin:10px 0 0 18px;color:var(--ink-2)">
                 {% for step in clone_steps %}<li>{{ step }}</li>{% endfor %}
@@ -232,7 +232,7 @@
                  (dogfood #1). Say what's missing and offer the repair. -->
             <div style="margin:12px 0 0 52px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
               <b class="small">This day's checklist hasn't been written yet</b>
-              <p class="xs muted" style="margin:6px 0 10px">Content generation failed for this project — there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute.</p>
+              <p class="xs muted" style="margin:6px 0 10px">Content generation hasn't written this project's checklist yet — there is nothing to tick, so submitting can't verify it. Retry usually fills it in within a couple of minutes.</p>
               <form method="post" action="/sprints/{{ sprint.id }}/generation/retry" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Retrying…';">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn btn-p btn-sm" type="submit">↻ Retry generation</button>

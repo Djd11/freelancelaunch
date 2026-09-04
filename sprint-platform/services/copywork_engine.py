@@ -81,16 +81,16 @@ def create_projects(sb, sprint_id):
     — the async worker's LLM-only project_anatomy fills every content field so
     it matches the learner's actual cluster. If the LLM is unavailable the
     worker records a visible generation_error instead of template content.
-    """
-    for p in PROJECTS:
-        sb.table("copywork_projects").upsert({
-            "sprint_id": sprint_id,
-            "project_index": p["project_index"],
-            "title": p["title"],
-            "source_url": p["source_url"],
-            "clone_steps": [],
-            "rubric": [],
-            "gap_fill_topic": p["gap_fill_topic"],
-            "done": False,
-        }, on_conflict="sprint_id,project_index").execute()
+
+    One array upsert (was 3 sequential round-trips) to keep enroll fast."""
+    sb.table("copywork_projects").upsert([{
+        "sprint_id": sprint_id,
+        "project_index": p["project_index"],
+        "title": p["title"],
+        "source_url": p["source_url"],
+        "clone_steps": [],
+        "rubric": [],
+        "gap_fill_topic": p["gap_fill_topic"],
+        "done": False,
+    } for p in PROJECTS], on_conflict="sprint_id,project_index").execute()
     return len(PROJECTS)

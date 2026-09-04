@@ -89,6 +89,16 @@ def dashboard(sprint_id):
     today_project = load_project(sb, sprint_id, today_project_index)
     gate_a = gate_a_passed(sb, sprint_id)
 
+    # The stored phase advances by day count, so a learner who marked days done
+    # without passing Gate A would see "SHIFT B · DAY 06" while the contract is
+    # still locked — a label that runs ahead of reality (dogfood MINOR). Correct
+    # the DISPLAYED phase to the highest gate actually passed; the stored value
+    # and day counter are untouched.
+    _gate_b = gate_b_passed(sb, sprint_id)
+    disp_phase = "C" if _gate_b else ("B" if gate_a else "A")
+    if sprint.get("phase") != disp_phase:
+        sprint = {**sprint, "phase": disp_phase}
+
     # Check if all rubric items for all 3 projects are user-checked
     projects = sb.table("copywork_projects").select("rubric_checked, done") \
         .eq("sprint_id", sprint_id).order("project_index").execute().data
@@ -120,7 +130,7 @@ def dashboard(sprint_id):
         "sprint_dashboard.html",
         sprint=sprint, cluster=cluster, cohort=cohort, meter=meter,
         momentum=momentum, today=today, phase_a_days=phase_a_days,
-        gate_a_pass=gate_a, gate_b_pass=gate_b_passed(sb, sprint_id),
+        gate_a_pass=gate_a, gate_b_pass=_gate_b,
         today_lesson_watched=bool(today.get("lesson_watched")),
         today_project_done=bool(today_project and today_project.get("done")),
         today_rubric_checked=all_rubric_checked,

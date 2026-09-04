@@ -134,13 +134,19 @@ def magic():
     except urllib.error.HTTPError as exc:
         detail = ""
         try:
-            detail = json.loads(exc.read().decode()).get("error_description", "")
+            body = json.loads(exc.read().decode())
+            # GoTrue uses different keys by error class: error_description for
+            # OAuth, msg for rate-limit/validation. Read both so the useful
+            # text isn't dropped (dogfood: 429 showed a bare "400").
+            detail = (body.get("error_description") or body.get("msg")
+                      or body.get("error") or "")
         except Exception:
             pass
         if exc.code == 429:
-            flash("Too many link requests — wait a minute and try again.")
+            flash("Too many link requests — wait a minute and try again, "
+                  "or use Google sign-in.")
         else:
-            flash(f"Couldn't send the sign-in link ({detail or exc.code}). Try again.")
+            flash(f"Couldn't send the sign-in link. {detail}".strip() + " Try again.")
         return render_template("login.html", email=email), 200
     except Exception:
         flash("Couldn't reach the auth service — try again in a moment.")
