@@ -111,12 +111,18 @@ with app.test_client() as c:
         sp = obtain_supabase().table("sprints").select("status").eq("id", sid).limit(1).execute().data[0]
         check("sprint NOT marked completed", sp["status"] == "active", sp["status"])
 
-    # 7. insecure email-only auth is gone
-    check("POST /auth/login rejected", c.post("/auth/login", data={"email": "x@y.com"}).status_code == 405)
-    check("POST /auth/signup rejected", c.post("/auth/signup", data={"email": "x@y.com"}).status_code == 405)
-    check("login page offers Google + magic link",
-          "Continue with Google" in c.get("/auth/login").get_data(as_text=True)
-          and "/auth/magic" in c.get("/auth/login").get_data(as_text=True))
+    # 7. auth is email-only again (Google/magic-link reverted pending Supabase
+    #    Site-URL config + provider enablement, to be redone after the Render
+    #    deploy). Signup/login must work end-to-end.
+    import time as _t
+    _email = f"verifyauth{int(_t.time())}@example.com"
+    _tok = csrf_token(c, "/auth/signup")
+    r = c.post("/auth/signup", data={"csrf_token": _tok, "display_name": "Verify Auth", "email": _email}, follow_redirects=False)
+    check("email signup logs in (302 -> /sprints)", r.status_code == 302 and "/sprints" in r.headers.get("Location", ""))
+    c.get("/auth/logout")
+    _tok = csrf_token(c, "/auth/login")
+    r = c.post("/auth/login", data={"csrf_token": _tok, "email": _email}, follow_redirects=False)
+    check("email login works (302 -> /sprints)", r.status_code == 302 and "/sprints" in r.headers.get("Location", ""))
 
 print("\n" + ("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} FAILED: {FAILS}"))
 sys.exit(1 if FAILS else 0)
