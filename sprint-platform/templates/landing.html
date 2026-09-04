@@ -68,9 +68,11 @@
           <div class="stat mono" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
             <div class="n" style="display:flex;align-items:baseline;gap:10px">{{ featured.job_count }} <span class="l" style="margin:0">active jobs</span></div>
           </div>
+          {% if featured.avg_rate %}
           <div class="stat mono" style="text-align:left;padding:10px 0;border-bottom:1px solid var(--hairline)">
             <div class="n" style="display:flex;align-items:baseline;gap:10px">${{ featured.avg_rate }} <span class="l" style="margin:0">median hourly rate</span></div>
           </div>
+          {% endif %}
           <div class="stat mono" style="text-align:left;padding:10px 0">
             <div class="n" style="display:flex;align-items:baseline;gap:10px;color:var(--green-ink)">+{{ featured.growth_score }}% <span class="l" style="margin:0">demand this quarter</span></div>
           </div>

@@ -34,7 +34,7 @@
         </div>
         <h3 style="margin:14px 0 4px">{{ c.display_name }}</h3>
         <p class="xs muted">{{ c.description }}</p>
-        <p class="mono xs" style="margin:14px 0;color:var(--ink-2);letter-spacing:.06em">● {{ c.job_count }} jobs open · ${{ c.avg_rate }}/hr · 14 days</p>
+        <p class="mono xs" style="margin:14px 0;color:var(--ink-2);letter-spacing:.06em">● {{ c.job_count }} jobs open{% if c.avg_rate %} · ${{ c.avg_rate }}/hr{% endif %} · 14 days</p>
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
           <span class="btn btn-o btn-sm" style="display:inline-block">View topic</span>

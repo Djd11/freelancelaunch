@@ -7,16 +7,32 @@ from . import obtain_supabase
 profile_bp = Blueprint("profile", __name__)
 
 
-def _resolve_user(sb, slug):
-    """Resolve a URL slug ('maya') to a user profile by display-name prefix.
+def _first_name(profile):
+    return ((profile.get("display_name") or "").split()[0] or "me").lower()
 
-    Deterministic: an exact full-name match wins over a first-name prefix
-    match, and ties break on created_at so the same slug always resolves to
-    the same profile even when multiple users share a first name.
+
+def _resolve_user(sb, slug):
+    """Resolve a URL slug to a user profile.
+
+    Two slug forms are supported:
+      * unique form 'dana-1a2b3c' — first name + '-' + user_id prefix. Handed
+        out to every user who is NOT the earliest account with that first name,
+        so two people named Dana can never share one public URL.
+      * legacy form 'dana' — exact full-name match wins over a first-name
+        prefix match, and ties break on created_at (earliest account wins),
+        keeping every pre-existing profile link stable.
     """
     rows = sb.table("user_profiles").select("*").execute().data
     rows.sort(key=lambda r: str(r.get("created_at") or ""))
     slug_l = slug.lower()
+    # Unique suffixed form: base-<uidprefix>
+    if "-" in slug_l:
+        base, _, suffix = slug_l.rpartition("-")
+        if len(suffix) >= 4 and all(c in "0123456789abcdef" for c in suffix):
+            for r in rows:
+                if _first_name(r) == base and str(r.get("user_id", "")).startswith(suffix):
+                    return r
+            return None
     prefix_match = None
     for r in rows:
         name = (r.get("display_name") or "").lower()
@@ -25,6 +41,16 @@ def _resolve_user(sb, slug):
         if prefix_match is None and name.split()[0] == slug_l:
             prefix_match = r
     return prefix_match
+
+
+def unique_slug(profile, all_profiles):
+    """The public slug for one profile: bare first name for the earliest
+    account with that first name, 'name-<uid6>' for everyone after it."""
+    base = _first_name(profile)
+    for r in sorted(all_profiles, key=lambda p: str(p.get("created_at") or "")):
+        if _first_name(r) == base:
+            return base if r["user_id"] == profile["user_id"] else f"{base}-{str(profile['user_id'])[:6]}"
+    return base
 
 
 def _days_ago(iso):
@@ -94,7 +120,7 @@ def public(slug):
     profile = _resolve_user(sb, slug)
     if not profile:
         return render_template("profile.html", profile={"display_name": "Not found", "headline": ""},
-                               badges=[], case_studies=[])
+                               badges=[], case_studies=[]), 404
     return render_template(
         "profile.html",
         profile=profile,
@@ -111,6 +137,6 @@ def me():
     sb = obtain_supabase()
     rows = sb.table("user_profiles").select("*").eq("user_id", g.user["id"]).limit(1).execute().data
     if rows:
-        slug = (rows[0].get("display_name") or "me").split()[0].lower()
-        return redirect(url_for("profile.public", slug=slug))
+        all_profiles = sb.table("user_profiles").select("user_id,display_name,created_at").execute().data
+        return redirect(url_for("profile.public", slug=unique_slug(rows[0], all_profiles)))
     return redirect(url_for("main.sprints"))

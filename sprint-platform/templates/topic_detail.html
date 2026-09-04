@@ -3,11 +3,11 @@
 {% set cluster_key = cluster.cluster_key %}
 {% set cluster_promise = cluster.promise or 'Rebuild real projects, fulfill a mock contract, and send live proposals.' %}
 {% block title %}{{ cluster_name }} Sprint — 14 days, demand-validated | FreelanceLaunch{% endblock %}
-{% block meta_description %}{{ cluster_name }} sprint: {{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open, ${{ cluster.avg_rate }}/hr median rate.{% endblock %}
+{% block meta_description %}{{ cluster_name }} sprint: {{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open{% if cluster.avg_rate %}, ${{ cluster.avg_rate }}/hr median rate{% endif %}.{% endblock %}
 {% block canonical %}{{ request.url }}{% endblock %}
 {% block og %}
 <meta property="og:title" content="{{ cluster_name }} Sprint — FreelanceLaunch">
-<meta property="og:description" content="{{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open, ${{ cluster.avg_rate }}/hr.">
+<meta property="og:description" content="{{ cluster_promise | truncate(150) }} Live demand: {{ cluster.job_count }} jobs open{% if cluster.avg_rate %}, ${{ cluster.avg_rate }}/hr{% endif %}.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ request.url }}">
 <meta property="og:site_name" content="FreelanceLaunch">
@@ -31,7 +31,7 @@
     "price": "0",
     "priceCurrency": "USD",
     "availability": "https://schema.org/InStock",
-    "category": "{{ cluster.avg_rate }} USD/hr average rate in this cluster"
+    "category": "{{ (cluster.avg_rate ~ ' USD/hr average rate in this cluster') if cluster.avg_rate else 'Demand-validated freelance skill sprint' }}"
   }
 }
 </script>
@@ -56,10 +56,12 @@
             <span class="eyebrow">Open jobs</span>
             <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px">{{ cluster.job_count }}</div>
           </div>
+          {% if cluster.avg_rate %}
           <div style="flex:1;min-width:120px">
             <span class="eyebrow">Median rate</span>
             <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px">${{ cluster.avg_rate }}/hr</div>
           </div>
+          {% endif %}
           <div style="flex:1;min-width:120px">
             <span class="eyebrow">Demand growth</span>
             <div class="mono" style="font-size:24px;font-weight:600;margin-top:4px;color:var(--green-ink)">+{{ cluster.growth_score }}%</div>

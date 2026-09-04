@@ -36,16 +36,47 @@
 <script>
 document.querySelector('.chat-input').addEventListener('submit', function (e) {
   e.preventDefault();
-  const input = this.querySelector('input[name="question"]');
+  const form = this;
+  const input = form.querySelector('input[name="question"]');
+  const btn = form.querySelector('button[type=submit]');
   const q = input.value.trim();
   if (!q) return;
-  const csrfToken = this.querySelector('input[name="csrf_token"]').value;
+  const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+  // The mentor call is a real LLM round-trip (can take a minute+). The old
+  // code reloaded the page only after it resolved — during the wait the chat
+  // looked broken (dogfood M5). Echo the question, show a "Thinking" bubble,
+  // lock the form, and render the answer in place when it lands.
+  function bubble(role, text) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    const av = document.createElement('div'); av.className = 'av'; av.textContent = role === 'mentor' ? 'M' : 'Y';
+    const box = document.createElement('div'); box.style.flex = '1';
+    const who = document.createElement('b'); who.className = 'small'; who.textContent = role === 'mentor' ? 'Mentor' : 'You';
+    const cp = document.createElement('p'); cp.style.marginTop = '4px'; cp.textContent = text;
+    box.appendChild(who); box.appendChild(cp);
+    d.appendChild(av); d.appendChild(box);
+    return d;
+  }
+  const you = bubble('user', q);
+  const pending = bubble('mentor', 'Thinking… reading your live job post and progress — about a minute.');
+  form.parentNode.insertBefore(you, form);
+  form.parentNode.insertBefore(pending, form);
+  you.scrollIntoView({behavior:'smooth', block:'end'});
+  input.disabled = true; btn.disabled = true; btn.textContent = 'Thinking…';
   fetch('/mentor/turn', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
     body: JSON.stringify({question: q}),
   }).then(r => r.json()).then(data => {
-    location.reload();
+    const p = pending.querySelector('p');
+    if (data && data.answer) p.textContent = data.answer;
+    else p.textContent = (data && data.error) || 'The mentor is unavailable right now — try again in a minute.';
+    input.disabled = false; btn.disabled = false; btn.textContent = 'Send';
+    input.value = '';
+    // The turn is persisted server-side, so a later reload replays it.
+  }).catch(() => {
+    pending.querySelector('p').textContent = 'Connection dropped before the mentor finished — please try again.';
+    input.disabled = false; btn.disabled = false; btn.textContent = 'Send';
   });
 });
 </script>

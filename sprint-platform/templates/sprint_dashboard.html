@@ -20,7 +20,7 @@
             <span class="live">Training live</span>
             <span><b>{{ cluster.live_job_count or cluster.job_count }}</b> active jobs</span>
             {% if cluster.rss_job_count %}<span>RSS <b>{{ cluster.rss_job_count }}</b></span>{% endif %}
-            <span>$<b>{{ cluster.avg_rate }}</b>/hr</span>
+            {% if cluster.avg_rate %}<span>$<b>{{ cluster.avg_rate }}</b>/hr</span>{% endif %}
             <span>{{ cluster.display_name }} demand</span>
           </div>
         </div>
