@@ -22,6 +22,10 @@ csrf = CSRFProtect()
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    # Render/any PaaS terminates TLS at a proxy: trust X-Forwarded-* so
+    # request.scheme is https and cookies/redirects are built correctly.
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     app.config.from_object("config.Config")
     if test_config:
         app.config.update(test_config)
