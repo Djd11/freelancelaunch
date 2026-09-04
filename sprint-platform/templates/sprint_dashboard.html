@@ -66,15 +66,15 @@
             el.href = '/sprints/' + sprintId + '/day/' + i;
             el.title = 'Day ' + i + ' — ' + st;
             el.style.cssText = 'display:block;flex:1;height:18px;border-radius:4px;text-decoration:none;transition:opacity .15s;';
-            if (st === 'ok') el.style.background = '#2E6B3A';
-            else if (st === 'error') el.style.background = '#B3372B';
+            if (st === 'ok') el.style.background = '#16a34a';
+            else if (st === 'error') el.style.background = '#dc2626';
             else el.style.background = 'rgba(0,0,0,.08)';
             var label = document.createElement('span');
             label.textContent = i;
             /* pending cells sit on paper-white (rgba .08 tint over --surface):
                label must be ink; ok/error cells keep white on their dark bg */
             if (st === 'pending') {
-              label.style.cssText = 'display:block;text-align:center;font-size:11px;line-height:18px;color:#20241F;font-weight:600;';
+              label.style.cssText = 'display:block;text-align:center;font-size:11px;line-height:18px;color:#0f172a;font-weight:600;';
             } else {
               label.style.cssText = 'display:block;text-align:center;font-size:11px;line-height:18px;color:#fff;font-weight:600;';
             }
@@ -99,7 +99,7 @@
         function showPartial(d) {
           /* Content partially generated, NOT actively generating — compact status, no auto-poll */
           banner.style.display = 'block';
-          banner.style.borderColor = '#8F6400';
+          banner.style.borderColor = '#b45309';
           banner.querySelector('.spinner').style.display = 'none';
           banner.querySelector('b').textContent = d.generated + ' of ' + d.total + ' days have lessons';
           var failed = (d.failed_days || []);

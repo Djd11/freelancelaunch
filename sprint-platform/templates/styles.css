@@ -1,45 +1,47 @@
 /* ═══════════════════════════════════════════════════════════════════
-   FreelanceLaunch · Sprint Platform — "The Trades Desk" design system
-   Jobsite signage for a work product: safety-orange hi-vis used the
-   way real signage uses it (ink on orange, never white-on-neon),
-   condensed signage type for display, punch-clock mono for numbers
-   and labels, and the PUNCH-CARD day strip as the one signature
-   element. Everything else stays quiet and disciplined.
-   Single source of truth: docs/ui-redesign-brief.md §2–3.
+   FreelanceLaunch · Sprint Platform — design system
+   Visual language matched to the deployed "Explore Skills" look:
+   signal-amber accent (ink-on-amber, never white-on-neon), DM Serif
+   Display headings, DM Sans body, JetBrains Mono for data/labels,
+   20px rounded cards with soft shadows and a gentle hover lift.
+   Token NAMES are unchanged from the prior system so every template
+   and component rule keeps working; only the VALUES were re-skinned.
    This file is included inline into base.html via the Jinja include
    of styles.css — keep that mechanism, and never write literal Jinja
    delimiters in comments here (they execute as template code).
    ═══════════════════════════════════════════════════════════════════ */
 
 :root{
-  /* ground */
-  --canvas:#E8EAE6;        /* concrete sage-gray            */
-  --surface:#FDFDFB;      /* paper white (cards)            */
-  --surface-2:#F0F2EE;    /* shelf gray (inset panels)      */
-  --ink:#20241F;           /* graphite text                  */
-  --ink-2:#3C423B;
-  --muted:#5D645C;
-  --faint:#646B62;         /* AA-safe on canvas/surface/surface-2 (§2.1); old #8A9188 banned */
-  --hairline:#CDD2CB;
-  --hairline-strong:#B4BBB1;
-  /* hi-vis accent — the one brand color */
-  --accent:#D95B08;  --accent-ink:#A84505;  --accent-soft:#FCEADB;
+  /* ground — warm near-white canvas, paper cards */
+  --canvas:#fafaf9;         /* stone-50 page background        */
+  --surface:#ffffff;        /* card surface                    */
+  --surface-2:#f5f5f4;      /* stone-100 inset panels          */
+  --ink:#0f172a;            /* slate-900 primary text          */
+  --ink-2:#292524;          /* stone-800 secondary text        */
+  --muted:#57534e;          /* stone-600 muted text            */
+  --faint:#a8a29e;          /* stone-400 faintest (labels)     */
+  --hairline:#e7e5e4;       /* stone-200 borders               */
+  --hairline-strong:#d6d3d1;/* stone-300 stronger borders      */
+  /* hi-vis accent — the one brand color (signal amber) */
+  --accent:#f59e0b;  --accent-ink:#b45309;  --accent-soft:#fef3c7;
   /* semantics */
-  --steel:#2E5E73;    --steel-soft:#E2EDF1;   /* info/links    */
-  --green:#2E6B3A;    --green-ink:#20492A;    --green-soft:#E4EFE3;  /* pass/verified */
-  --amber:#8F6400;    --amber-ink:#6B4B00;    --amber-soft:#F6EDD2;  /* waiting/locked */
-  --red:#B3372B;      --red-ink:#8C2A20;      --red-soft:#F9E7E1;    /* error/urgent  */
-  --radius:8px; --radius-lg:10px;
-  --shadow:0 1px 2px rgba(32,36,31,.06),0 4px 14px rgba(32,36,31,.06);
-  --font-display:"Barlow Condensed", "Arial Narrow", sans-serif;
-  --font-body:"Barlow", -apple-system, "Segoe UI", sans-serif;
-  --font-mono:"IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  --steel:#1e3a5f;    --steel-soft:#e2e8f0;   /* info/navy blocks */
+  --green:#16a34a;    --green-ink:#166534;    --green-soft:#dcfce7;  /* pass/verified */
+  --amber:#b45309;    --amber-ink:#92400e;    --amber-soft:#fef3c7;  /* waiting/locked */
+  --red:#dc2626;      --red-ink:#991b1b;      --red-soft:#fee2e2;    /* error/urgent  */
+  --radius:12px; --radius-lg:20px;
+  --shadow:0 1px 3px rgba(15,23,42,.04),0 4px 24px rgba(15,23,42,.05);
+  --shadow-lg:0 8px 40px rgba(15,23,42,.08);
+  --font-display:"DM Serif Display", Georgia, serif;
+  --font-body:"DM Sans", -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", monospace;
 
-  /* ── derived + mapped tones (additive; brief §3/§4 values) ── */
-  --accent-deep:#C24F06;   /* .btn-p hover (brief §3)                       */
-  --ink-deep:#191C18;      /* .btn-ink hover                                 */
-  --green-line:#C6DBC5;    /* done-state border (hex map #CBE0CB→#C6DBC5)    */
-  --accent-line:#F2D9C2;   /* accent-tint border (hex map #EBD5C9→#F2D9C2)   */
+  /* ── derived + mapped tones ── */
+  --accent-deep:#d97706;   /* .btn-p hover (amber-strong)                   */
+  --accent-mid:#fbbf24;    /* amber-400                                     */
+  --ink-deep:#0b1120;      /* .btn-ink hover                                */
+  --green-line:#86efac;    /* done-state border                             */
+  --accent-line:#fde68a;   /* accent-tint border                            */
   --line:var(--hairline-strong); /* legacy alias — day.html still calls it */
 }
 
@@ -59,10 +61,10 @@ button{font-family:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ── Type roles ───────────────────────────────────────────────────
-   Display: Barlow Condensed 600/700, tight tracking, sentence case.
-   Body: Barlow 15px/1.55. Mono: IBM Plex Mono 11–13px uppercase. */
-h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;color:var(--ink);line-height:1.05}
-h1{font-size:clamp(40px,5vw,56px);font-weight:700}
+   Display: DM Serif Display 400 (the only weight it ships), tight
+   tracking. Body: DM Sans 15px/1.55. Mono: JetBrains Mono 11–13px. */
+h1,h2,h3{font-family:var(--font-display);font-weight:400;letter-spacing:-.01em;color:var(--ink);line-height:1.1}
+h1{font-size:clamp(38px,5vw,54px)}
 h2{font-size:30px;line-height:1.15}
 h3{font-size:20px;line-height:1.3}
 
@@ -80,13 +82,11 @@ h3{font-size:20px;line-height:1.3}
 
 /* ── Top navigation ─────────────────────────────────────────────── */
 .topnav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;border-bottom:1px solid var(--hairline)}
-/* logo with brand mark: 14px safety-orange square, punched hole */
-.logo{display:inline-flex;align-items:center;font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+/* logo: serif wordmark + a clean amber rounded mark */
+.logo{display:inline-flex;align-items:center;font-family:var(--font-display);font-size:23px;font-weight:400;letter-spacing:-.01em;color:var(--ink)}
 .logo::before{
-  content:"";width:14px;height:14px;border-radius:3px;margin-right:10px;flex-shrink:0;
-  /* hard-stop radial draws the 8px punched hole (canvas shows through)
-     — a drawn shape, not a decorative gradient */
-  background:radial-gradient(circle at 50% 50%,var(--canvas) 0 3.5px,rgba(0,0,0,0) 4px),var(--accent);
+  content:"";width:16px;height:16px;border-radius:5px;margin-right:10px;flex-shrink:0;
+  background:var(--accent);
 }
 .logo em{font-style:normal;color:var(--accent)}
 .navl{display:flex;gap:26px;font-size:14px;font-weight:500;color:var(--muted)}
@@ -108,10 +108,9 @@ h3{font-size:20px;line-height:1.3}
   min-height:44px;padding:10px 20px;border-radius:var(--radius);font-weight:600;font-size:14px;
   cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
 .btn:active{transform:translateY(1px)}
-/* primary: pure black on safety orange — signage-true, 5.45:1 AA (§2.1);
-   hover #CC5407 = 4.84:1 with black. Never var(--ink) here. */
-.btn-p{background:var(--accent);color:#000}
-.btn-p:hover{background:#CC5407;color:#000}
+/* primary: ink on signal amber, hover deepens + lifts (main's btn-primary) */
+.btn-p{background:var(--accent);color:var(--ink);font-weight:700}
+.btn-p:hover{background:var(--accent-deep);color:var(--ink);transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,158,11,.35)}
 .btn-ink{background:var(--ink);color:var(--surface)}
 .btn-ink:hover{background:var(--ink-deep)}
 .btn-o{background:var(--surface);color:var(--ink);border:1.5px solid var(--hairline-strong)}
@@ -123,12 +122,14 @@ h3{font-size:20px;line-height:1.3}
 .btn-sm{min-height:38px;padding:7px 14px;font-size:13px;border-radius:var(--radius)}
 
 /* ── Cards ──────────────────────────────────────────────────────── */
-.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow);transition:border-color .2s ease,box-shadow .2s ease}
+.card:hover{border-color:var(--hairline-strong);box-shadow:var(--shadow-lg)}
 .card-flat{box-shadow:none}
+.card-flat:hover{box-shadow:none}
 
-/* ── Badges & chips (mono ticket tags) ───────────────────────────── */
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:4px;
-  font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+/* ── Badges & chips (pill tags) ──────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .b-green{background:var(--green-soft);color:var(--green-ink)}
 .b-amber{background:var(--amber-soft);color:var(--amber-ink)}
 .b-accent{background:var(--accent-soft);color:var(--accent-ink)}
@@ -136,8 +137,8 @@ h3{font-size:20px;line-height:1.3}
 .b-slate{background:var(--surface-2);color:var(--ink-2)}
 .b-red{background:var(--red-soft);color:var(--red-ink)}
 .chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--hairline-strong);
-  color:var(--ink-2);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.06em;
-  text-transform:uppercase;padding:6px 12px;border-radius:4px}
+  color:var(--ink-2);font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.04em;
+  text-transform:uppercase;padding:6px 14px;border-radius:9999px}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
 
 /* ── Key-value rows (work-order spec lines) ──────────────────────── */
@@ -238,7 +239,7 @@ h3{font-size:20px;line-height:1.3}
 /* avatars are squares: mentor = hi-vis accent square with mono "M"
    (ink-on-orange), user = shelf-gray square "Y" */
 .msg .av{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:600;flex-shrink:0;background:var(--surface-2);color:var(--ink-2)}
-.msg.mentor .av{background:var(--accent);color:#000}
+.msg.mentor .av{background:var(--accent);color:var(--ink)}
 .msg p{font-size:14.5px;color:var(--ink-2)}
 .msg .row{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-ink);font-size:13px;padding:10px 14px;border-radius:var(--radius);margin-top:10px}
 .chat-input{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--hairline);background:var(--surface)}
@@ -298,8 +299,8 @@ input:focus, select:focus, textarea:focus{border-color:var(--accent);box-shadow:
 .tab.active{background:var(--ink);color:var(--surface)}
 
 /* ── Underline sweep — hero key phrase (landing) ────────────────────
-   A single hi-vis stroke drawn under the phrase; animates in once. */
-.sweep{background-image:linear-gradient(var(--accent),var(--accent));
+   A single amber→orange gradient stroke drawn under the phrase. */
+.sweep{background-image:linear-gradient(135deg,#f59e0b,#f97316);
   background-repeat:no-repeat;background-size:100% .16em;background-position:0 88%;
   padding-bottom:.05em}
 @keyframes sweep-in{from{background-size:0% .16em}to{background-size:100% .16em}}
