@@ -139,7 +139,19 @@ def start_sprint(cluster_key):
 
     # Join the latest active cohort for this cluster, else open a new one.
     cohort = sb.table("cohorts").select("*").eq("cluster_key", cluster_key).eq("status", "active").limit(1).execute().data
-    cohort_id = cohort[0]["id"] if cohort else _open_cohort(sb, cluster_key)
+    cohort_id = cohort[0]["id"] if cohort else None
+    if cohort_id and cohort[0].get("end_date"):
+        # A cohort whose end date passed is not a cohort — never enroll a
+        # fresh learner into "Cohort #12 · ends 12 days ago" (dogfood).
+        try:
+            ended = datetime.date.fromisoformat(str(cohort[0]["end_date"])[:10]) < datetime.date.today()
+        except ValueError:
+            ended = False
+        if ended:
+            sb.table("cohorts").update({"status": "completed"}).eq("id", cohort_id).execute()
+            cohort_id = None
+    if not cohort_id:
+        cohort_id = _open_cohort(sb, cluster_key)
 
     sprint = sb.table("sprints").insert({
         "user_id": user_id,

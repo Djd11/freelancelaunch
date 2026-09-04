@@ -45,6 +45,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <textarea name="deliverable_text" rows="3" aria-label="Deliverable description"
               placeholder="Paste or describe what you built so verification can check it against the brief (e.g. the dynamic summary block, trigger used, steps completed)…"></textarea>
+            <p class="xs muted" style="margin:6px 0 0">Mention each client requirement listed above in your own words — verification checks them one by one and tells you exactly what's still missing.</p>
             <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
               <input type="url" name="submission_url" placeholder="Paste a link to your deliverable…" aria-label="Deliverable link">
               <button class="btn btn-g" type="submit">Submit deliverable for verification</button>

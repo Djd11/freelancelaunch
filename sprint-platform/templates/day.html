@@ -225,6 +225,20 @@
               <b style="font-family:var(--font-display);font-size:18px">Check your build matches</b>
             </div>
             <p class="small muted" style="margin:6px 0 0 52px">Tick each point your build actually does. (Saves as you tick.)</p>
+            {% if not rubric %}
+            <!-- Empty rubric = generation failed for this day. The old page
+                 rendered zero checkboxes under "When all 0 points are ticked"
+                 while the server demanded three — Gate A became unwinnable
+                 (dogfood #1). Say what's missing and offer the repair. -->
+            <div style="margin:12px 0 0 52px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:var(--radius)">
+              <b class="small">This day's checklist hasn't been written yet</b>
+              <p class="xs muted" style="margin:6px 0 10px">Content generation failed for this project — there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute.</p>
+              <form method="post" action="/sprints/{{ sprint.id }}/generation/retry" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Retrying…';">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-p btn-sm" type="submit">↻ Retry generation</button>
+              </form>
+            </div>
+            {% else %}
             <div class="xs" style="margin:10px 0 0 52px;color:var(--ink-2)">
               {% set rubric_checked = project.get('rubric_checked', [false, false, false]) if project else [false, false, false] %}
               {% for r in rubric %}
@@ -239,6 +253,7 @@
                 </label>
               {% endfor %}
             </div>
+            {% endif %}
           </div>
 
           <div class="divider"></div>
@@ -256,7 +271,7 @@
               <input type="url" id="rubric_url" name="rubric_url" required placeholder="https://github.com/you/flow" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;margin-bottom:8px">
               <button class="btn btn-p" type="submit">Send</button>
             </form>
-            <p class="xs muted" style="margin:10px 0 0 52px">When all {{ rubric|length }} points are ticked and your link is in, this project counts as done.</p>
+            {% if rubric %}<p class="xs muted" style="margin:10px 0 0 52px">When all {{ rubric|length }} points are ticked and your link is in, this project counts as done.</p>{% endif %}
           </div>
 
           <!-- STATUS — stamps, not checkboxes -->

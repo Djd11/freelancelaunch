@@ -70,7 +70,7 @@
         <p class="small muted" style="flex:1">{{ c.promise if c.promise else 'Rebuild real projects, fulfill a mock contract, and send live proposals.' }}</p>
         <div style="margin-top:18px">
           {% if user %}
-          <form method="post" action="/sprints/{{ c.cluster_key }}/start">
+          <form method="post" action="/sprints/{{ c.cluster_key }}/start" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Starting — building your Day 1…';">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-p btn-sm" type="submit">Start sprint</button>
           </form>

@@ -34,30 +34,36 @@ def csrf_token(client, path, field="csrf_token"):
 
 
 with app.test_client() as c:
-    # 1. two accounts, same first name — each signup in its OWN client so the
-    #    session /auth/signup establishes stays live for that user's /profile/me.
+    # 1. two accounts, same first name — created via Supabase admin (the
+    #    public signup is magic-link now; sessions are set directly here).
     tag = str(int(time.time()))
-    clients = {}
-    for who in ("A", "B"):
-        ca = app.test_client()
-        tok = csrf_token(ca, "/auth/signup")
-        ca.post("/auth/signup", data={
-            "csrf_token": tok, "display_name": f"Dupname {tag}",
-            "email": f"dupname{who}{tag}@example.com"}, follow_redirects=False)
-        clients[who] = ca
-    # set distinct headlines to identify owners
+    ids = []
     with app.app_context():
         from routes import obtain_supabase
+        import secrets as _sec
         sb = obtain_supabase()
-        rows = sb.table("user_profiles").select("user_id,display_name").eq("display_name", f"Dupname {tag}").execute().data
-        ids = sorted(r["user_id"] for r in rows)
-        check("signup created 2 same-name accounts", len(ids) == 2, str(len(ids)))
+        for who in ("A", "B"):
+            res = sb.auth.admin.create_user({
+                "email": f"dupname{who}{tag}@example.com",
+                "password": _sec.token_urlsafe(16), "email_confirm": True,
+                "data": {"display_name": f"Dupname {tag}"}})
+            u = getattr(res, "user", res)
+            uid = getattr(u, "id", None)
+            ids.append(uid)
+            sb.table("user_profiles").upsert(
+                {"user_id": uid, "display_name": f"Dupname {tag}", "is_public": True},
+                on_conflict="user_id").execute()
+        ids = sorted(ids)
+        check("created 2 same-name accounts", len(ids) == 2 and all(ids), str(ids))
         for uid, headline in zip(ids, ("headline-alpha-" + tag, "headline-beta-" + tag)):
-            sb.table("user_profiles").update({"headline": headline, "is_public": True}).eq("user_id", uid).execute()
+            sb.table("user_profiles").update({"headline": headline}).eq("user_id", uid).execute()
 
     # each account's /profile/me must land on a DIFFERENT slug
     slugs = {}
-    for who, ca in clients.items():
+    for who, uid in zip(("A", "B"), ids):
+        ca = app.test_client()
+        with ca.session_transaction() as s:
+            s["user_id"] = uid
         r = ca.get("/profile/me", follow_redirects=False)
         loc = r.headers.get("Location", "")
         m = re.search(r"/profile/([^/?]+)", loc)
@@ -90,6 +96,27 @@ with app.test_client() as c:
     for path in ("/sprints", "/topics", "/topics/email-automation", "/topics/web-scraping", "/"):
         body = c.get(path).get_data(as_text=True)
         check(f"no $0/hr on {path}", "$0/hr" not in body and "$0 <" not in body and ">$0/" not in body)
+
+    # 6. gate locks (dogfood #2/#3): Phase-A sprint must NOT reach contract or complete
+    sid = "89900920-2a44-45c3-81fe-00fe8bf21799"
+    r = c.get(f"/sprints/{sid}/contract", follow_redirects=False)
+    check("contract locked before Gate A", r.status_code == 302 and "/sprints/" in r.headers.get("Location", ""))
+    page = c.get(f"/sprints/{sid}").get_data(as_text=True)
+    m = re.search(r'name="csrf_token" value="([^"]+)"', page)
+    tok = m.group(1) if m else ""
+    r = c.post(f"/sprints/{sid}/complete", data={"csrf_token": tok}, follow_redirects=False)
+    check("complete refused before gates", r.status_code == 302)
+    with app.app_context():
+        from routes import obtain_supabase
+        sp = obtain_supabase().table("sprints").select("status").eq("id", sid).limit(1).execute().data[0]
+        check("sprint NOT marked completed", sp["status"] == "active", sp["status"])
+
+    # 7. insecure email-only auth is gone
+    check("POST /auth/login rejected", c.post("/auth/login", data={"email": "x@y.com"}).status_code == 405)
+    check("POST /auth/signup rejected", c.post("/auth/signup", data={"email": "x@y.com"}).status_code == 405)
+    check("login page offers Google + magic link",
+          "Continue with Google" in c.get("/auth/login").get_data(as_text=True)
+          and "/auth/magic" in c.get("/auth/login").get_data(as_text=True))
 
 print("\n" + ("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} FAILED: {FAILS}"))
 sys.exit(1 if FAILS else 0)

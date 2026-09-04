@@ -4,6 +4,14 @@ admin workers (arch §4.4, fix: anon vs service key split).
 
 Routes use get_client_supabase() (anon key → RLS policies apply).
 Background workers use get_supabase() (service role → bypasses RLS).
+
+Clients are REQUEST-SCOPED (cached on `g`, created fresh per request/app
+context). A process-wide shared client was the root cause of the dogfood
+concurrency 500s: its long-lived HTTP/2 connection goes stale when the
+Supabase edge closes an idle socket, and concurrent writes to the dead
+connection raise httpx.WriteError, which postgrest does not retry. One
+client per request = one fresh TLS connection, shared by that request's
+queries and closed at teardown — no cross-thread socket sharing.
 """
 import logging
 
@@ -11,12 +19,37 @@ from flask import current_app, g
 
 logger = logging.getLogger(__name__)
 
-_live_client = None          # process-wide service-role client
-_client_supabase_client = None  # process-wide anon-key client
+
+def _new_client(url, key):
+    from supabase import create_client
+    return create_client(url, key)
+
+
+def close_request_clients(_exc=None):
+    """Close any per-request Supabase sessions (registered as app teardown)."""
+    for attr in ("supabase", "client_supabase"):
+        client = g.pop(attr, None)
+        if client is None:
+            continue
+        for holder in (getattr(client, "postgrest", None),
+                       getattr(client, "storage", None)):
+            session = getattr(holder, "session", None) if holder else None
+            try:
+                if session is not None:
+                    session.close()
+            except Exception:
+                pass
+        auth = getattr(client, "auth", None)
+        http_client = getattr(auth, "_http_client", None) if auth else None
+        try:
+            if http_client is not None:
+                http_client.close()
+        except Exception:
+            pass
 
 
 def get_supabase():
-    """Return the service-role Supabase client (admin workers only).
+    """Return the service-role Supabase client for this request/context.
 
     Bypasses RLS — use only for server-side admin operations.
     Raises RuntimeError when the project is not configured.
@@ -35,13 +68,9 @@ def get_supabase():
             "SUPABASE_SERVICE_ROLE_KEY in the environment (copy .env.example "
             "to .env — see docs/supabase-setup.md)."
         )
-    global _live_client
-    if _live_client is None:
-        from supabase import create_client
-        _live_client = create_client(url, key)
-        logger.info("Connected to live Supabase at %s (service role)", url)
-    g.supabase = _live_client
-    return g.supabase
+    client = _new_client(url, key)
+    g.supabase = client
+    return client
 
 
 def get_client_supabase():
@@ -60,17 +89,11 @@ def get_client_supabase():
             "Supabase anon key is not configured. Set SUPABASE_ANON_KEY "
             "in the environment (copy .env.example to .env)."
         )
-    global _client_supabase_client
-    if _client_supabase_client is None:
-        from supabase import create_client
-        _client_supabase_client = create_client(url, key)
-        logger.info("Connected to live Supabase at %s (anon key)", url)
-    g.client_supabase = _client_supabase_client
-    return g.client_supabase
+    client = _new_client(url, key)
+    g.client_supabase = client
+    return client
 
 
 def reset_clients():
-    """Reset all cached clients (for tests)."""
-    global _live_client, _client_supabase_client
-    _live_client = None
-    _client_supabase_client = None
+    """No-op kept for test compatibility — clients are request-scoped now."""
+    pass

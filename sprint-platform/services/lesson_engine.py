@@ -464,7 +464,7 @@ def backfill_quiz(sb, sprint_id):
         answers = lesson.get("quiz_answers") or []
         if quiz and answers and len(quiz) == len(answers):
             continue  # already valid — idempotent skip
-        text = call_llm(quiz_from_lesson_prompt(lesson), timeout=90, max_retries=3, backoff_base=2)
+        text = call_llm(quiz_from_lesson_prompt(lesson), timeout=240, max_retries=3, backoff_base=2)
         if not text:
             continue
         parsed = _parse_json(text)
@@ -575,7 +575,7 @@ def lesson_for_day(sb, sprint, day_row, project, gap_fill_topic=None):
         gap_fill_topic=gap_fill_topic,
         domain_context=_domain_context(_domain_tools(sb, sprint.get("cluster_key"), job)),
     )
-    text = call_llm(prompt, timeout=90, max_retries=3, backoff_base=2)
+    text = call_llm(prompt, timeout=240, max_retries=3, backoff_base=2)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the day's lesson")
     parsed = _parse_json(text)
@@ -605,7 +605,7 @@ def project_anatomy(sb, sprint, project_index):
         job, project_index,
         domain_context=_domain_context(_domain_tools(sb, sprint.get("cluster_key"), job)),
     )
-    text = call_llm(prompt, timeout=90, max_retries=3, backoff_base=2)
+    text = call_llm(prompt, timeout=240, max_retries=3, backoff_base=2)
     if not text:
         raise LLMGenerationError("No LLM provider answered for the project anatomy")
     return _parse_project(text)

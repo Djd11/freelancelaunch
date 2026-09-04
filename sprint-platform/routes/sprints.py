@@ -398,9 +398,18 @@ def submit_copywork(sprint_id, day_no):
     # all 3 projects done + self-checked + URLs → pass → Phase B unlocks.
     project_index = DAY_TO_PROJECT.get(day_no)
     if project_index:
-        proj_rows = sb.table("copywork_projects").select("rubric_checked") \
+        proj_rows = sb.table("copywork_projects").select("rubric_checked,rubric") \
             .eq("sprint_id", sprint_id).eq("project_index", project_index).limit(1).execute().data
         rubric_checked = list((proj_rows[0].get("rubric_checked") if proj_rows else None) or [])
+        rubric_items = list((proj_rows[0].get("rubric") if proj_rows else None) or [])
+        if len(rubric_items) < 3:
+            # Generation failed for this day — there is nothing to tick, and
+            # "tick all three" would be a lie (dogfood #1: Gate A unwinnable
+            # on empty rubric rows). Tell the truth and point at the repair.
+            flash("This day's checklist hasn't finished generating, so the build "
+                  "can't be verified yet — use “Retry generation” on the task tab, "
+                  "then tick the rubric and submit again.")
+            return redirect(url_for("sprints.day", sprint_id=sprint_id, day_no=day_no))
         all_ticked = len(rubric_checked) >= 3 and all(rubric_checked)
         sb.table("copywork_projects").update({
             "done": all_ticked,
@@ -473,7 +482,10 @@ def gapfill_check(sprint_id, day_no):
 
 @sprints_bp.route("/sprints/<sprint_id>/complete", methods=["POST"])
 def complete(sprint_id):
-    """Explicit sprint completion (Day 14 or the learner's own call)."""
+    """Explicit sprint completion — only after BOTH gates passed. The old
+    version flipped status on one click from Day 1 and the dashboard then
+    claimed a badge that was never minted (dogfood blocker #2): completion
+    must mean the work, not the button."""
     gate = require_login()
     if gate:
         return gate
@@ -481,6 +493,14 @@ def complete(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
+    if not gate_a_passed(sb, sprint_id):
+        flash("Not yet — Gate A (three verified copy-work builds) must pass "
+              "before your sprint can be completed.")
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+    if not gate_b_passed(sb, sprint_id):
+        flash("Not yet — your Mock Contract deliverable must pass Gate B "
+              "verification before the sprint is complete.")
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
     sb.table("sprints").update({
         "status": "completed",
         "completed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),

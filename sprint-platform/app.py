@@ -84,6 +84,15 @@ def create_app(test_config=None):
         return render_template("error.html", code=500, ref=ref,
                                message="Something went wrong. Our team has been notified."), 500
 
+    @app.teardown_appcontext
+    def _close_supabase_clients(exc):
+        # Request-scoped Supabase clients (see services/supabase_client.py):
+        # close their HTTP sessions when the request/app context ends so
+        # per-request connections don't leak and stale sockets can't be
+        # shared across threads (dogfood blocker #6 — concurrency 500s).
+        from services.supabase_client import close_request_clients
+        close_request_clients(exc)
+
     @app.before_request
     def load_user():
         g.user = None

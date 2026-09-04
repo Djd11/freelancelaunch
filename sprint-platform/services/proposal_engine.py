@@ -179,7 +179,7 @@ def fill_drafts(sb, sprint_id, cluster_key=None):
     except Exception:
         sprint_context = []
     try:
-        parsed = _parse_proposals(call_llm(_proposals_prompt(jobs, sprint_context=sprint_context), timeout=90, max_retries=3, backoff_base=2))
+        parsed = _parse_proposals(call_llm(_proposals_prompt(jobs, sprint_context=sprint_context), timeout=240, max_retries=3, backoff_base=2))
     except LLMGenerationError:
         # Mark every pending draft as failed — the page shows a visible error.
         for d in pending:

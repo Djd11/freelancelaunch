@@ -7,12 +7,44 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 
 from routes import require_login, load_sprint, load_brief
 from services.verification_service import record as record_review
-from services.verification_service import auto_check_gate_b, gate_b_passed, is_valid_url
+from services.verification_service import (auto_check_gate_b, gate_a_passed,
+                                           gate_b_passed, is_valid_url,
+                                           _gate_b_artifact_check)
 from services.mock_contract_engine import synthesize as synthesize_brief
 from services.outcome_service import add_contract, complete_contract
 from . import obtain_supabase
 
 contract_bp = Blueprint("contract", __name__)
+
+
+def _phase_a_lock(sb, sprint_id):
+    """The Mock Contract is Phase B work — it must not be reachable (or
+    submittable) before Gate A passes. The dashboard already renders
+    'SHIFT B · LOCKED'; the routes must enforce the same lock (dogfood #3:
+    /contract was fully open on Day 1 while /proposals was correctly locked)."""
+    if not gate_a_passed(sb, sprint_id):
+        flash("Shift B unlocks when your three copy-work builds pass Gate A "
+              "verification — finish Phase A first.")
+        return redirect(url_for("sprints.dashboard", sprint_id=sprint_id))
+    return None
+
+
+def _gate_b_missing(sb, sprint_id, deliverable_text):
+    """Human-readable list of what Gate B still needs. The old code said
+    'checking your flow' forever while silently failing its own checks
+    (dogfood #4) — a lock never silently breaks."""
+    missing = []
+    case_rows = sb.table("case_studies").select("problem,solution,result") \
+        .eq("sprint_id", sprint_id).limit(1).execute().data
+    cs = case_rows[0] if case_rows else None
+    if not cs or not (cs.get("problem") and cs.get("solution") and cs.get("result")):
+        missing.append("a saved case study with all three fields (Problem, Solution, Result)")
+    ev = _gate_b_artifact_check(sb, sprint_id, deliverable_text)
+    if ev and not ev["passed"]:
+        for c in ev["checked"]:
+            if c not in ev["found"]:
+                missing.append("your description to mention: " + c[:100])
+    return missing
 
 
 def _num(value, cast, default):
@@ -72,6 +104,9 @@ def brief(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
+    lock = _phase_a_lock(sb, sprint_id)
+    if lock:
+        return lock
     brief_row = load_brief(sb, sprint_id)
     if not brief_row:
         # Synthesize an anonymized brief from a real job posting so the mockup
@@ -115,6 +150,9 @@ def submit(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
+    lock = _phase_a_lock(sb, sprint_id)
+    if lock:
+        return lock
 
     url = request.form.get("submission_url", "").strip()
     if not url:
@@ -128,12 +166,19 @@ def submit(sprint_id):
     # content check parses it for the rubric-named observable items (P0-2).
     deliverable_text = request.form.get("deliverable_text", "").strip()
 
-    record_review(sb, sprint_id, "B", status="pending", submitted_url=url)
-    # Gate B auto-check (arch §7: contract submit → inline auto-test): a valid
-    # deliverable URL + a saved case study + (when rubrics exist) the deliverable
-    # content containing those artifacts → pass → Phase C unlocks.
+    # Persist the text as evidence so saving the case study later can re-run
+    # the check — order of the two steps must not matter (dogfood #4).
+    record_review(sb, sprint_id, "B", status="pending", submitted_url=url,
+                  gate_b_evidence={"deliverable_text": deliverable_text})
     auto_check_gate_b(sb, sprint_id, deliverable_text=deliverable_text)
-    flash("Deliverable submitted — verification service is checking your flow.")
+    if not gate_b_passed(sb, sprint_id):
+        missing = _gate_b_missing(sb, sprint_id, deliverable_text)
+        if missing:
+            flash("Gate B still needs — " + "; ".join(missing[:4]) + ".")
+        else:
+            flash("Deliverable submitted — verification service is checking your flow.")
+    else:
+        flash("Deliverable verified — Gate B passed. Phase C (Send Proposals) is unlocked.")
     return redirect(url_for("contract.brief", sprint_id=sprint_id))
 
 
@@ -186,6 +231,9 @@ def save_case_study(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return redirect(url_for("main.dashboard"))
+    lock = _phase_a_lock(sb, sprint_id)
+    if lock:
+        return lock
 
     title = request.form.get("title", "").strip()
     if not title:
@@ -206,5 +254,17 @@ def save_case_study(sprint_id):
         sb.table("case_studies").update(payload).eq("id", existing[0]["id"]).execute()
     else:
         sb.table("case_studies").insert(payload).execute()
+    # Order-independence (dogfood #4): if the deliverable was already
+    # submitted, re-run Gate B now that the case study exists, using the
+    # description persisted as evidence on the review row.
+    if not gate_b_passed(sb, sprint_id):
+        rev = sb.table("verification_reviews").select("submitted_url,gate_b_evidence") \
+            .eq("sprint_id", sprint_id).eq("gate", "B").limit(1).execute().data
+        if rev and is_valid_url(rev[0].get("submitted_url")):
+            saved_text = ((rev[0].get("gate_b_evidence") or {}).get("deliverable_text")) or ""
+            auto_check_gate_b(sb, sprint_id, deliverable_text=saved_text)
+            if gate_b_passed(sb, sprint_id):
+                flash("Case study completed the set — Gate B passed. Phase C is unlocked.")
+                return redirect(url_for("contract.brief", sprint_id=sprint_id))
     flash("Case study saved — it appears on your public profile once the Mock Contract passes.")
     return redirect(url_for("contract.brief", sprint_id=sprint_id))

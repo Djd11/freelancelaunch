@@ -91,7 +91,7 @@ def _omniroute_call(prompt, timeout):
     return _extract_choices(data)
 
 
-def call_llm(prompt, timeout=90, max_retries=1, backoff_base=1):
+def call_llm(prompt, timeout=240, max_retries=1, backoff_base=1):
     """Return a completion string, or None when no provider answered.
     Retries with exponential backoff when max_retries > 1."""
     delays = [backoff_base * (2 ** i) for i in range(max_retries)]
