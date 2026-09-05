@@ -12,3 +12,6 @@ behave-*.log
 pretty.output
 probe_live.py
 seed_live.py
+
+# pre-purge DB dumps (local safety net, contains user emails)
+db/backups/
