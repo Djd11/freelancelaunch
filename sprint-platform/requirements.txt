@@ -3,3 +3,10 @@ gunicorn==26.*
 python-dotenv==1.2.*
 supabase==2.31.*
 edge-tts==7.2.*
+# app.py imports CSRFProtect at module level; without this the gunicorn worker
+# dies on boot with ModuleNotFoundError: flask_wtf.
+Flask-WTF==1.3.*
+# services/platform_connector.fetch_jobs() — admin platform refresh / feed ingest.
+feedparser==6.0.*
+# Optional at boot (guarded import) but needed for the periodic demand refresh.
+APScheduler==3.11.*
