@@ -149,16 +149,28 @@ def _seed_static_data(adapter: LiveDBAdapter):
     for c in clusters:
         sb.table("job_clusters").upsert(c, on_conflict="cluster_key").execute()
 
-    # Cohort - deterministic UUID (idempotent across runs)
+    # Cohort — deterministic UUID (idempotent across runs). COOPERATIVE with the
+    # live site's bi-weekly rotation: cohorts has a partial unique index
+    # (idx_cohorts_active_per_cluster, one ACTIVE cohort per cluster), and the
+    # shared test DB rotates cohorts as real cohorts complete (e.g. #12 →
+    # completed when Cohort #2 opened). Re-upserting #12 as active then violates
+    # the index. Instead: adopt the cluster's existing active cohort when one
+    # exists; only seed the deterministic #12 when no active cohort exists.
     cohort_id = static_uuid("cohort-12")
-    sb.table("cohorts").upsert({
-        "id": cohort_id,
-        "cluster_key": "email-automation",
-        "name": "Cohort #12",
-        "start_date": "2026-08-10",
-        "end_date": "2026-08-23",
-        "status": "active",
-    }, on_conflict="id").execute()
+    active = sb.table("cohorts").select("id").eq("cluster_key", "email-automation") \
+        .eq("status", "active").limit(1).execute().data
+    if active:
+        # Live rotation owns the active slot — adopt it, never fight it.
+        cohort_id = active[0]["id"]
+    else:
+        sb.table("cohorts").upsert({
+            "id": cohort_id,
+            "cluster_key": "email-automation",
+            "name": "Cohort #12",
+            "start_date": "2026-08-10",
+            "end_date": "2026-08-23",
+            "status": "active",
+        }, on_conflict="id").execute()
     # Store cohort_id for other steps to use
     set_static_cohort_id(cohort_id)
 

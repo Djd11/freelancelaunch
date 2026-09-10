@@ -103,9 +103,9 @@ Feature: API Surface & Negative Paths (eng-spec §6, arch §7)
     And the JSON path "job_count" is an integer
 
   Scenario: Login refuses emails with no account
-    When I POST the login form with email "nobody@sprint-platform.local"
+    When I sign in with email "nobody@sprint-platform.local" and password "whatever"
     Then the response status is 200
-    And the page contains the text "No account found"
+    And the page contains the text "Invalid email or password."
 
   Scenario: The dashboard landing redirects to the sprint picker
     When I GET "/dashboard/"

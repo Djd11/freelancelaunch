@@ -470,14 +470,46 @@ def live_db_context():
 _adapter: Optional[LiveDBAdapter] = None
 
 
+def _close_sb_client(sb):
+    """Close a Supabase client's HTTP sessions (mirror of the app's
+    teardown in services/supabase_client.close_request_clients)."""
+    if sb is None:
+        return
+    for holder in (getattr(sb, "postgrest", None), getattr(sb, "storage", None)):
+        session = getattr(holder, "session", None) if holder else None
+        try:
+            if session is not None:
+                session.close()
+        except Exception:
+            pass
+    auth = getattr(sb, "auth", None)
+    http_client = getattr(auth, "_http_client", None) if auth else None
+    try:
+        if http_client is not None:
+            http_client.close()
+    except Exception:
+        pass
+
+
 def get_live_adapter() -> LiveDBAdapter:
-    """Get the current scenario's LiveDBAdapter."""
+    """Get the current scenario's LiveDBAdapter.
+
+    The adapter's Supabase client must OUTLIVE the temporary app context that
+    creates it — steps use it for the whole scenario. But app.py registers a
+    teardown_appcontext that closes every request-scoped client on ``g`` when
+    the context pops (dogfood blocker #6 fix), which would leave the adapter
+    holding a dead client ("Cannot send a request, as the client has been
+    closed"). Pop the client off ``g`` BEFORE the context exits so teardown
+    can't close it; reset_live_adapter() closes it explicitly at scenario end.
+    """
     global _adapter
     if _adapter is None:
+        from flask import g
         from app import create_app
         app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False})
         with app.app_context():
             sb = get_supabase()
+            g.pop("supabase", None)  # detach: teardown must not close it
             _adapter = LiveDBAdapter(sb)
     return _adapter
 
@@ -487,4 +519,5 @@ def reset_live_adapter():
     global _adapter
     if _adapter:
         _adapter.cleanup_scenario()
+        _close_sb_client(_adapter.sb)
         _adapter = None

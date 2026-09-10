@@ -1,11 +1,24 @@
 """Action + verify steps — form submissions, DB-state assertions, iteration diagnosis."""
 import json
 
-from behave import given, when, then
+import parse as _parse
+from behave import given, when, then, register_type
 
 from tests.live_db_adapter import get_live_adapter, TEST_USER_ID, get_static_job_id
-from tests.steps.common_steps import _post
+from tests.steps.common_steps import _post, _location
 from services.iteration_engine import diagnose
+
+
+# Behave's parse matcher treats "{param}" as 1+ chars, so a spec step with an
+# EMPTY quoted value (password "" / email "") never matches and the scenario
+# reports "undefined step" instead of running. Register a 0+ chars type so the
+# auth spec's empty-value scenarios are executable.
+@_parse.with_pattern(r".*")
+def _maybe_empty(text):
+    return text
+
+
+register_type(MaybeEmpty=_maybe_empty)
 
 
 # ── When: form submissions ─────────────────────────────────────────
@@ -17,6 +30,33 @@ def step_post_plain(context, path):
 @when('I POST the login form with email "{email}"')
 def step_login_form(context, email):
     _post(context, "/auth/login", data={"email": email})
+
+
+@when('I sign in with email "{email:MaybeEmpty}" and password "{password:MaybeEmpty}"')
+def step_login_form_with_password(context, email, password):
+    """Behave password-aware login step (BUG-1/2/3 auth-hardening spec).
+    Mirrors the real login form: email + password, POST to /auth/login."""
+    _post(context, "/auth/login", data={"email": email, "password": password})
+
+
+@then('I do not have a session cookie authenticating me')
+def step_no_session_cookie(context):
+    # A failed login must not leave an authenticated session. The Flask test
+    # client shares cookies across requests, so probe a gated route instead
+    # of parsing cookie jars: /sprints must redirect anonymous users away.
+    resp = context.client.get("/sprints", follow_redirects=False)
+    assert resp.status_code in (301, 302, 303, 307, 308), \
+        f"expected redirect on gated route (session leaked?), got {resp.status_code}"
+    loc = resp.headers.get("Location", "")
+    assert "/auth/login" in loc, f"expected redirect to login, got {loc!r}"
+
+
+@then('I am redirected to the login page')
+def step_redirected_to_login(context):
+    assert context.response.status_code in (301, 302, 303, 307, 308), \
+        f"expected redirect, got {context.response.status_code}"
+    loc = _location(context)
+    assert "/auth/login" in loc, f"expected redirect to login, got {loc!r}"
 
 
 @when('I submit a request-a-sprint form for skill "{skill}"')

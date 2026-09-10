@@ -16,7 +16,7 @@ Feature: Landing (mockup screen 1)
     When I GET "/"
     Then the page contains the text "Skill Acquisition"
     And the page contains the text "Mock Contract"
-    And the page contains the text "Supply Chain"
+    And the page contains the text "Send Proposals"
 
   Scenario: Landing renders the live demand counter from the job cluster
     Given a job cluster "email-automation" with job_count 450 and avg_rate 62 and growth_score 18
@@ -36,7 +36,7 @@ Feature: Landing (mockup screen 1)
     And the page contains the text "live job count"
 
   Scenario: Login over HTTP establishes a working session
-    When I POST the login form with email "demo@sprint-platform.local"
+    When I sign in with email "demo@sprint-platform.local" and password "demo-password-123"
     Then the response redirects to "/sprints"
     When I GET "/sprints"
     Then the response status is 200

@@ -82,9 +82,13 @@ def topic_detail(cluster_key):
 
 @main_bp.route("/sprints")
 def sprints():
-    # Public: crawlers must see the full catalog (Course ItemList JSON-LD).
-    # The template renders a login link for anonymous visitors instead of the
-    # POST form (start_sprint stays auth-gated).
+    # Auth-gated picker (auth-hardening BUG-1 probe + sprint-picker spec:
+    # anonymous users are redirected to /auth/login). The public catalog for
+    # crawlers is /topics (per-cluster Course JSON-LD) — see robots.txt, which
+    # already disallows /sprints/ as auth-gated learner content.
+    gate = require_login()
+    if gate:
+        return gate
     sb = obtain_supabase()
     clusters = _active_clusters(sb)
     return render_template("sprint_picker.html", clusters=clusters)
