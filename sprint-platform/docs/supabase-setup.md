@@ -43,5 +43,81 @@ Same names, different shapes → applying both to one database = corruption.
 - [ ] `db/schema.sql` ran cleanly in the new project
 - [ ] `select * from sprints limit 1;` returns "0 rows" (not "relation does not exist")
 
+## 5. Passwordless sign-in — dashboard setup (OTP + social)
+
+The app code for email-OTP + Google/Facebook is done; **everything in this section is
+outside the repo and has to be clicked in the dashboard.** The previous attempt
+(`acfbb9b`) was fully coded and still failed in production for exactly these reasons, so
+treat this as release-blocking, not optional.
+
+Measured on this project on 2026-09-15 via `GET /auth/v1/settings` — this is the "before"
+picture (see `docs/superpowers/spikes/2026-09-15-t1-pkce-otp-spike.md` §4):
+
+| setting | value today | consequence |
+|---|---|---|
+| `external.email` | enabled | OTP send/verify works |
+| `external.google` / `.facebook` | **disabled** | social buttons must stay off |
+| `site_url` | **not set** | OAuth has no canonical origin |
+| `uri_allow_list` | **empty** | any `redirect_to` is rejected |
+| `smtp_admin` | **not set** | built-in SMTP ≈ 2 mail/hr → OTP unusable under any real load |
+| `disable_signup` | false | ✅ new accounts may be created by OTP |
+| `mailer_autoconfirm` | false | ✅ verification is genuinely enforced |
+
+Do these in order:
+
+1. **Authentication → URL Configuration**
+   - *Site URL*: `https://freelancelaunch.onrender.com`
+   - *Additional redirect URLs*:
+     `https://freelancelaunch.onrender.com/auth/oauth/callback` and
+     `http://localhost:5000/auth/oauth/callback`
+   - Both must match `PUBLIC_BASE_URL` in the environment **exactly**, or the callback is
+     refused with a `redirected to the site url` style error rather than a clean 4xx.
+2. **Authentication → Providers → Google**: enable, paste the OAuth client ID/secret from
+   Google Cloud Console (OAuth consent screen: *External*; authorized redirect URI =
+   `https://<project-ref>.supabase.co/auth/v1/callback`).
+3. **Authentication → Providers → Facebook**: same, but it needs **Meta app review**
+   before real users can use it. Until then run with `OAUTH_PROVIDERS=google` on Render —
+   the app hides the button; the code path exists, so appending `,facebook` later is the
+   whole rollout (no redeploy).
+4. **Authentication → One-time tokens (OTP)**: note the **OTP length**. This project
+   issues **8-digit** codes, not 6 — the design doc said 6 and is wrong about that. Keep
+   `Config.OTP_CODE_LENGTH` / the env override matching what you see here, since it drives
+   the code-entry field's `maxlength`.
+5. **Authentication → Email → Templates → Magic link**: replace `{{ .ConfirmationURL }}`
+   with `{{ .Token }}`. That single change is what makes GoTrue deliver a numeric code
+   instead of a link; the same `sign_in_with_otp` call serves both, and
+   `verify_otp({email, token, type: "email"})` is the only literal that verifies it
+   (`"magiclink"` is rejected).
+6. **Authentication → SMTP**: configure Brevo or Resend (free tier) with a verified sender
+   domain — SPF/DKIM must pass. Without this the built-in ~2/hr cap is the exact failure
+   mode of `acfbb9b`.
+7. **Authentication → Rate limits**: keep OTP per email/IP per hour inside the SMTP free
+   tier. The app's own 60 s resend cooldown (`OTP_RESEND_COOLDOWN_SECONDS`) is the inner
+   belt, not the outer one.
+
+**Toggling from the app side** (no secrets involved — the provider credentials live here,
+never in the repo): `OAUTH_PROVIDERS=google,facebook` and `OTP_EMAIL_ENABLED=true|false`.
+`render.yaml` deliberately needs no change for any of this.
+
+## 6. Verifying auth config without sending email
+
+Two of the above steps can be checked before you have SMTP at all, which is how the spike
+tested a real code round-trip:
+
+- `GET /auth/v1/settings` (anon key) answers the provider/site-url/smtp questions above.
+  Note the supabase-py `auth._request()` returns a **raw httpx `Response`** — call `.json()`.
+- `POST /auth/v1/admin/generate_link` (service key) with `{"type":"magiclink","email":…}`
+  returns the numeric code in the **`email_otp`** field instead of mailing it, so a code can
+  be verified end-to-end offline. ⚠️ A code is **single-use**: spend one fresh token per
+  experiment or every "control" after the first verify fails for the wrong reason.
+  ⚠️ supabase-py's `GenerateLinkResponse` models only `.user`, so the token fields are not
+  reachable through the typed client — read the raw body.
+- Throwaway addresses must be syntactically acceptable to GoTrue: `@example.com`,
+  `@example.org` and any `@….invalid` are **rejected** as `email_address_invalid`, so an
+  unregistered-but-well-formed domain (e.g. `@sprintspike-otp.dev`) is the safe choice.
+- If you create users while probing, **delete exactly the ids you created** by id. Never
+  clean up by matching on an email *substring* or a shared domain — that is how a spike can
+  eat somebody else's fixture accounts.
+
 ## Teardown (if you ever stop using it)
 - Pause/delete the project from the Supabase dashboard. The v1 project is untouched.

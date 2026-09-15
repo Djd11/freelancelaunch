@@ -15,19 +15,73 @@ queries and closed at teardown — no cross-thread socket sharing.
 """
 import logging
 
-from flask import current_app, g
+from flask import current_app, g, session
+from supabase_auth import SyncSupportedStorage
 
 logger = logging.getLogger(__name__)
 
+# Session key holding the supabase-auth PKCE blob. Only the code verifier ever
+# lands here (see FlaskSessionStorage docstring), and it is bound to the same
+# signed, HttpOnly cookie as the rest of the session — which is exactly the
+# CSRF binding PKCE wants: whoever holds the browser cookie holds the verifier.
+PKCE_SESSION_KEY = "_sb_pkce"
 
-def _new_client(url, key):
+
+class FlaskSessionStorage(SyncSupportedStorage):
+    """supabase-auth storage backend persisted in ``flask.session``.
+
+    Needed because the PKCE flow spans two requests: ``sign_in_with_oauth``
+    generates the code verifier on the *start* request and
+    ``exchange_code_for_session`` needs it back on the *callback* request. A
+    process-wide memory store would leak verifiers between users (and break
+    across Render's workers), so it goes in the caller's own session.
+
+    The interface is an ABC at ``supabase_auth._sync.storage`` re-exported from
+    the package root, and its methods are ``get_item`` / ``set_item`` /
+    ``remove_item`` — NOT the ``get``/``set``/``delete`` a dict suggests
+    (verified against supabase-auth 2.31.0:
+    docs/superpowers/spikes/2026-09-15-t1-pkce-otp-spike.md §1).
+
+    In practice this object only ever sees the key
+    ``"supabase.auth.token-code-verifier"``: the client guards every session
+    read/write behind ``persist_session``, which ``get_auth_supabase()`` turns
+    off, so the session JSON stays in per-request memory and never touches here.
+    """
+
+    def get_item(self, key):
+        bucket = session.get(PKCE_SESSION_KEY)
+        if not isinstance(bucket, dict):
+            return None
+        return bucket.get(key)
+
+    def set_item(self, key, value):
+        # Reassign the whole sub-dict: mutating the nested dict in place leaves
+        # ``session.modified`` False, and Flask 3.1 then skips Set-Cookie —
+        # silently dropping the verifier and failing the callback with
+        # "invalid flow state".
+        bucket = dict(session.get(PKCE_SESSION_KEY) or {})
+        bucket[key] = value
+        session[PKCE_SESSION_KEY] = bucket
+        session.modified = True
+
+    def remove_item(self, key):
+        bucket = dict(session.get(PKCE_SESSION_KEY) or {})
+        if bucket.pop(key, None) is not None:
+            session[PKCE_SESSION_KEY] = bucket
+            session.modified = True
+
+
+def _new_client(url, key, options=None):
     from supabase import create_client
-    return create_client(url, key)
+    # `options` is positional-or-keyword here, and create_client is resolved at
+    # call time on purpose: the test suite patches `supabase.create_client`,
+    # which only takes effect while this import stays inside the function.
+    return create_client(url, key, options) if options else create_client(url, key)
 
 
 def close_request_clients(_exc=None):
     """Close any per-request Supabase sessions (registered as app teardown)."""
-    for attr in ("supabase", "client_supabase"):
+    for attr in ("supabase", "client_supabase", "auth_supabase"):
         client = g.pop(attr, None)
         if client is None:
             continue
@@ -83,7 +137,12 @@ def get_client_supabase():
     if "client_supabase" in g:
         return g.client_supabase
     url = (current_app.config.get("SUPABASE_URL") or "").strip()
-    key = (current_app.config.get("SUPABASE_ANON_KEY") or "").strip()
+    # Accept both spellings, mirroring the service-role pair above: Config only
+    # publishes `SUPABASE_KEY` (it reads env SUPABASE_ANON_KEY into it), so
+    # looking up `SUPABASE_ANON_KEY` alone always came back empty and this
+    # function raised even on a fully configured project.
+    key = (current_app.config.get("SUPABASE_ANON_KEY")
+           or current_app.config.get("SUPABASE_KEY") or "").strip()
     if not (url and key):
         raise RuntimeError(
             "Supabase anon key is not configured. Set SUPABASE_ANON_KEY "
@@ -91,6 +150,47 @@ def get_client_supabase():
         )
     client = _new_client(url, key)
     g.client_supabase = client
+    return client
+
+
+def get_auth_supabase():
+    """Return the request-scoped ANON client configured for the PKCE auth flow.
+
+    This is the client the OTP and OAuth routes must use (design §5.1): it runs
+    as the browser would, so RLS applies, and unlike the two clients above it is
+    built with ``flow_type="pkce"`` plus a session-backed storage so the code
+    verifier survives the provider round-trip.
+
+    ``persist_session=False`` / ``auto_refresh_token=False`` are deliberate and
+    load-bearing: this app's session contract is ``session["user_id"]`` only, so
+    a Supabase Session must never be written into the cookie (it would carry a
+    refresh token the server has no use for), and a background refresh timer
+    would keep touching an httpx client that teardown already closed.
+    """
+    if "auth_supabase" in g:
+        return g.auth_supabase
+    url = (current_app.config.get("SUPABASE_URL") or "").strip()
+    key = (current_app.config.get("SUPABASE_ANON_KEY")
+           or current_app.config.get("SUPABASE_KEY") or "").strip()
+    if not (url and key):
+        raise RuntimeError(
+            "Supabase anon key is not configured, so the passwordless sign-in "
+            "flow cannot run. Set SUPABASE_URL and SUPABASE_ANON_KEY in the "
+            "environment (copy .env.example to .env — see "
+            "docs/supabase-setup.md)."
+        )
+    # `supabase.ClientOptions` IS `SyncClientOptions` (the package exports only
+    # the former name; importing SyncClientOptions raises AttributeError).
+    from supabase import ClientOptions
+
+    options = ClientOptions(
+        flow_type="pkce",
+        storage=FlaskSessionStorage(),
+        persist_session=False,
+        auto_refresh_token=False,
+    )
+    client = _new_client(url, key, options)
+    g.auth_supabase = client
     return client
 
 
