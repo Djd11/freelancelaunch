@@ -261,6 +261,23 @@ tbody tr:hover td{background:var(--surface-2)}
   outline:none;background:var(--surface);font-family:inherit;color:var(--ink)}
 input:focus, select:focus, textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 
+/* ── Passwordless sign-in (design §5.4) ─────────────────────────────
+   OTP is the primary CTA, so social buttons and the legacy password form
+   must read as clearly secondary without leaving the card. */
+.oauth-btn{width:100%;margin-top:8px;font-weight:600}
+.oauth-btn:first-of-type{margin-top:0}
+.oauth-mark{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:700;line-height:1;flex-shrink:0}
+.oauth-google{background:#fff;color:var(--ink);border:1px solid var(--hairline-strong);font-family:var(--font-display)}
+.oauth-facebook{background:#1877f2;color:#fff;font-family:var(--font-display)}
+.alt{margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline)}
+.alt summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted)}
+.alt summary:hover{color:var(--ink)}
+.alt[open] summary{margin-bottom:14px;color:var(--ink-2)}
+/* Code entry: mono + tracking reads the digits apart without a JS widget. */
+.otp-input{font-family:var(--font-mono);font-size:22px;letter-spacing:.42em;
+  text-align:center;text-indent:.42em}
+
 /* ── CTA band (graphite block) ───────────────────────────────────── */
 .cta-band{background:var(--ink);border-radius:var(--radius-lg);color:var(--surface);padding:48px 40px;margin-top:48px}
 .cta-band h2{color:var(--surface);margin-bottom:10px}
