@@ -271,14 +271,48 @@ Created and **deleted** by these spikes: 6 throwaway `auth.users` rows
 `admin.list_users()` after cleanup = **3** — `admin@`, `demo@`, `other@sprint-platform.local`,
 i.e. the seed set, unchanged.
 
-**Incident (self-reported to captain before hand-off):** the first cleanup pass used an
-over-broad filter (`email contains "spike" OR endswith "@example.com"`) and deleted two
-stale, pre-existing test accounts it did not create — `uat.user.1788795034@example.com`
-(`11c3e099…`) and `live_qa_1788762183@example.com` (`cdb275ae…`). Verified impact: **0**
-rows in `user_profiles` and **0** in `sprints` for both, so no application data was lost —
-they were auth-only husks from earlier QA/UAT runs. All later cleanup is scoped to ids the
-run created (and to the `@sprintspike-otp.dev` spike domain). Anyone holding a fixture with
-those two UUIDs baked in should regenerate.
+**Incident (self-reported, then CORRECTED after the captain challenged my conclusion):**
+the first cleanup pass used an over-broad filter (`email contains "spike" OR endswith
+"@example.com"`) and deleted two accounts it did not create —
+`uat.user.1788795034@example.com` (`11c3e099…`) and `live_qa_1788762183@example.com`
+(`cdb275ae…`).
+
+My first impact report claimed "**0** rows in `user_profiles` and `sprints` for both, so no
+application data was lost". **That claim was wrong, and the error was methodological:** I
+queried *after* my own deletes. Every `user_id` FK in this schema is
+`REFERENCES auth.users(id) ON DELETE CASCADE` (`db/schema.sql:111` for `sprints`), so a
+post-hoc count reads 0 whether the rows never existed **or** were removed by my delete. The
+check measured the damage, not the prior state — the same single-use-token confound I had
+just caught in §2's controls, repeated here.
+
+Re-established by elimination, not by a direct observation (a cascade leaves nothing to
+query):
+
+| evidence | source |
+|---|---|
+| `sprints.user_id → auth.users ON DELETE CASCADE`; cascade closure reaches **14 tables** (`user_profiles`, `user_momentum`, `user_platforms`, `sprints` → `sprint_days`, `copywork_projects`, `proposals`, `contracts`, `badges`, `case_studies`, `capstone_briefs`, `verification_reviews`, `sprint_unlock_snapshots`, `mentor_sessions`) | `db/schema.sql` |
+| The 2026-09-05 pre-purge dump holds 28 sprints; **`1709bde9…` is not among them**, and neither deleted UUID nor either email appears in any dumped table ⇒ all three post-date the purge | `db/backups/pre_purge_20260905_082131.json` |
+| The addresses' embedded epochs decode to **2026-09-07** (15:30 / 06:23 UTC) — 2 days after the purge, 8 days before my delete | email strings |
+| Live `sprints` is now exactly the **3** kept demo sprints (all owned by `admin@`), and no other mechanism for removing a 09-07 sprint is evidenced: `purge_prelaunch_junk.py` ran once (its backups prove `--apply`), and no UAT/dogfood harness performs any cleanup (`delete_user`/`.delete()` grep is empty) | live query + grep |
+
+**Honest conclusion:** `1709bde9-e7e8-4785-b749-bac6a1efae34` — the sprint the captain
+created for `uat.user.1788795034@…` and completed Day 1 on — was almost certainly still
+present at 2026-09-15 19:16 and was **removed by my `delete_user` via FK cascade**, together
+with its `user_profiles` row and its `sprint_days`/progress children. The impact is confined
+to stale synthetic UAT data (no real user, no kept demo sprint), and it is not recoverable
+from the local backups because it post-dates them; only a Supabase point-in-time restore
+would bring it back, which is not worth a restore for a throwaway fixture.
+
+**Rule adopted for this team (captain's instruction, applies to every agent):** no
+bulk/substring delete filters against the live project, ever. Deletes are restricted to
+explicitly enumerated ids created by your own run; anything matching a purge list is left in
+place and reported instead of removed. The committed spike scripts already comply — the only
+`delete_user` loop iterates ids appended to `MADE` in-run — and the violating filter lived
+in an uncommitted ad-hoc command. **Snapshot the tables you are about to affect *before*
+mutating**, so impact can be stated from evidence rather than inferred afterwards.
+
+Anyone holding a fixture with those two UUIDs baked in should regenerate them.
+
 
 > **For UAT (T4/T5):** pick throwaway addresses that GoTrue **accepts**. Measured rejects:
 > `@sprint.invalid`, `@example.com`, `@example.org` (reserved domains →

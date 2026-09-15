@@ -115,9 +115,15 @@ tested a real code round-trip:
 - Throwaway addresses must be syntactically acceptable to GoTrue: `@example.com`,
   `@example.org` and any `@….invalid` are **rejected** as `email_address_invalid`, so an
   unregistered-but-well-formed domain (e.g. `@sprintspike-otp.dev`) is the safe choice.
-- If you create users while probing, **delete exactly the ids you created** by id. Never
-  clean up by matching on an email *substring* or a shared domain — that is how a spike can
-  eat somebody else's fixture accounts.
+- If you create users while probing, **delete exactly the ids you created**, enumerated from
+  your own run. Never clean up by matching on an email *substring* or a shared domain — that
+  is how a spike can eat somebody else's fixture accounts.
+- ⚠️ **`admin.delete_user` cascades.** Every `user_id` FK here is
+  `ON DELETE CASCADE`, and `sprints` cascades onward to `sprint_days`, `proposals`,
+  `contracts`, `badges`, `case_studies`, `capstone_briefs`, `verification_reviews`,
+  `sprint_unlock_snapshots` and `mentor_sessions` — 14 tables reachable from one user row.
+  So **snapshot the tables you are about to affect first**: a "how much did I destroy?"
+  count taken *after* the delete always reads zero and proves nothing.
 
 ## Teardown (if you ever stop using it)
 - Pause/delete the project from the Supabase dashboard. The v1 project is untouched.
