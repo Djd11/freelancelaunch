@@ -20,7 +20,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field">
           <label for="token">Sign-in code</label>
-          <input type="text" id="token" name="token" class="otp-input" {% if otp_length %}maxlength="{{ otp_length }}" {% endif %}inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" placeholder="{% for i in range(otp_length or 8) %}•{% endfor %}" required autofocus>
+          <input type="text" id="token" name="token" class="otp-input" maxlength="{{ otp_length }}" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" placeholder="{% for i in range(otp_length) %}•{% endfor %}" required autofocus>
         </div>
         <button class="btn btn-p" type="submit" style="width:100%">Verify and continue →</button>
       </form>
