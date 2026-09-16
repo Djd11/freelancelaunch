@@ -330,3 +330,39 @@ Anyone holding a fixture with those two UUIDs baked in should regenerate them.
    indistinguishable from a verifier loss, so check the dashboard first.
 3. **`"email"` vs `"signup"` acceptance** (§2, row C) suggests GoTrue's lookup is aud-
    based; harmless, but if a future project sets a different `aud`, prefer `"email"`.
+
+## 8. Queued for T5 (found after T1/T2 shipped; nothing here changes §1–§5's verdicts)
+
+1. **Clear the PKCE verifier on every `oauth_callback` failure branch.** `remove_item` on the
+   verifier only runs if the token request did *not* raise
+   (`_sync/gotrue_client.py:1200`), so a denied/failed exchange leaves
+   `session["_sb_pkce"]` populated — reproduced: `GET /auth/oauth/callback?code=bad` → 302
+   with `{'supabase.auth.token-code-verifier': …}` still in the cookie. Self-heals on the
+   next sign-in (same key is overwritten), so it is hygiene, not a login breaker — but it is
+   residue from a finished flow and it makes "was PKCE state consumed?" unanswerable later.
+   Clear it on logout too.
+2. **No server-side validation of the `token` field.** `"abc"` or a 4 KB string is forwarded
+   to GoTrue, which spends the project's verify rate-limit budget on junk. Add a
+   `^[0-9]{1,OTP_CODE_LENGTH}$` check (regex, *not* `isnumeric()` — that accepts superscript
+   digits from pasted rich text). Must keep leading zeros intact: `"07368987"` is a valid
+   code (~1 in 10) and any `int()` coercion truncates it to 7 chars and hard-fails ~10% of
+   logins — the exact bug security-reviewer predicted. Current code is verified clean
+   (string end to end, asserted in `verify_t2_auth_routes.py`).
+3. **An abandoned signup leaves `session["otp_pending_name"]` behind**, so a later login for
+   *a different address* on the same browser can pick up the stale name as its display_name.
+   Cosmetic/privacy nit, not an auth bypass. Fix: bind the pending name to the address it was
+   captured for and ignore it unless the emails match.
+4. **Pre-existing (outside this spec): the two original clients arm a daemon refresh timer.**
+   Measured: `_save_session` → `_start_auto_refresh_token` arms `threading.Timer`
+   (daemon) at ≈3590 s; forced to fire early it fired at 1.84 s. `auto_refresh_token=False`
+   is what prevents arming — `persist_session` alone does not. Consequence per login: a
+   request-scoped client **plus a valid refresh token** is retained in that closure for ~1 h,
+   and the eventual refresh against the already-closed httpx client is **silently swallowed**
+   (`gotrue_client.py` catches all exceptions and only retries `AuthRetryableError`), so it
+   never surfaces in logs. Harmless to this app's auth model (the session contract is
+   `session["user_id"]`, the Supabase session is never used) — which is why it survived
+   unnoticed. Fix by passing `persist_session=False, auto_refresh_token=False` for all three
+   clients. Blast radius checked: `tests/test_supabase_client.py` asserts only positional
+   `call_args[0]`, so adding an `options` argument is safe.
+5. **Stale comment** at `routes/auth.py:29` — still says "epoch of the last accepted send"
+   since the throttle became a per-address map.
