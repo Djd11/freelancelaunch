@@ -14,7 +14,7 @@ load_dotenv()
 # Supabase dashboard checklist (design §6) can enable on the $0 stack. A name
 # outside this tuple is dropped from OAUTH_PROVIDERS rather than passed on to
 # supabase-auth, so a typo in the env var can never produce a dead button.
-OAUTH_PROVIDER_ALLOW_LIST = ("google", "facebook")
+OAUTH_PROVIDER_ALLOW_LIST = ("google", "facebook", "twitter")
 
 
 def _env_bool(name, default="false"):

@@ -66,8 +66,8 @@
       <div class="divider"></div>
       {% for p in providers %}
       <a class="btn btn-o oauth-btn" href="/auth/oauth/{{ p }}" rel="nofollow">
-        <span class="oauth-mark oauth-{{ p }}" aria-hidden="true">{{ 'G' if p == 'google' else 'f' }}</span>
-        Continue with {{ 'Google' if p == 'google' else 'Facebook' }}
+        <span class="oauth-mark oauth-{{ p }}" aria-hidden="true">{{ {'google':'G','facebook':'f','twitter':'X'}.get(p, '?') }}</span>
+        Continue with {{ {'google':'Google','facebook':'Facebook','twitter':'X (Twitter)'}.get(p, p|capitalize) }}
       </a>
       {% endfor %}
       {% endif %}

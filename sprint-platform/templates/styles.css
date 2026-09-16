@@ -270,6 +270,7 @@ input:focus, select:focus, textarea:focus{border-color:var(--accent);box-shadow:
   justify-content:center;font-size:13px;font-weight:700;line-height:1;flex-shrink:0}
 .oauth-google{background:#fff;color:var(--ink);border:1px solid var(--hairline-strong);font-family:var(--font-display)}
 .oauth-facebook{background:#1877f2;color:#fff;font-family:var(--font-display)}
+.oauth-twitter{background:#000;color:#fff;font-family:var(--font-display)}
 .alt{margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline)}
 .alt summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted)}
 .alt summary:hover{color:var(--ink)}

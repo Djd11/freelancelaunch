@@ -31,5 +31,5 @@ services:
       # button would just surface "Social sign-in didn't complete". Flip this
       # to "google,facebook" once Meta app review passes.
       - key: OAUTH_PROVIDERS
-        value: "google"
+        value: "google,twitter"
     healthCheckPath: /health
