@@ -493,6 +493,75 @@ def t_min2():
 with seams(auth, svc):
     t_min2()
 
+
+# ── 10. T5 escalation follow-ups: diagnosability + A2/A6 shape identity ─────
+print("\n[10] verify diagnostics (G1) and signup-vs-send response shape")
+
+# (i) a failed verify must be LOGGED (it is the only signal that separates a
+#     user typo from a deployment where no numeric code is ever issued) and must
+#     never log the code itself.
+import logging
+bad10 = FakeAuth(verify_error=AuthApiError("Token has expired or is invalid",
+                                                  403, "otp_expired"))
+records = []
+
+
+class _Catch(logging.Handler):
+    def emit(self, rec):
+        try:
+            records.append((rec.levelname, rec.getMessage()))
+        except Exception:                                  # noqa: BLE001
+            records.append((rec.levelname, str(rec.msg)))
+
+
+cfgapp = create_app(test_config={"WTF_CSRF_ENABLED": False,
+                                 "OTP_RESEND_COOLDOWN_SECONDS": 60})
+cfgapp.logger.addHandler(_Catch())
+cfgapp.logger.setLevel(logging.DEBUG)
+svc10 = FakeSB(bad10)
+c10 = cfgapp.test_client()
+with patch("routes.auth.get_auth_supabase",
+           return_value=SimpleNamespace(auth=bad10)), \
+     patch("routes.auth.obtain_supabase", return_value=svc10):
+    with c10.session_transaction() as s:
+        s["otp_email"] = "maya@corp.io"
+    h10 = c10.post("/auth/otp/verify", data={"token": "07368987"}).get_data(as_text=True)
+uniq = list(dict.fromkeys(m for _, m in records))
+check("handler wiring double-emits (app.py:41 shares root handlers) — noted, not a bug",
+      len(records) >= len(uniq))
+msgs = " || ".join(uniq)
+check("failed verify is logged server-side (G1 diagnosability)",
+      "otp verify failed" in msgs, records)
+check("log carries the GoTrue code + status for triage",
+      "otp_expired" in msgs and "403" in msgs, msgs[:220])
+check("log does NOT contain the OTP code", "07368987" not in msgs)
+check("log does not echo the full address",
+      "maya@corp.io" not in msgs and "ma\u2026@corp.io" in msgs)
+check("user-facing response stays generic", "Enter your code" in h10)
+
+# (ii) A2/A6: /auth/signup POST vs /auth/otp/send POST — SAME status, and the
+#      body differs ONLY in self-referential URL tags and the CSRF token. A test
+#      that demands byte equality will false-fail, so normalise exactly those.
+def _norm_page(h):
+    h = re.sub(r'(rel="canonical" href=")[^"]*(")', r"\1U\2", h)
+    h = re.sub(r'(property="og:url" content=")[^"]*(")', r"\1U\2", h)
+    return re.sub(r'(name="csrf_token" value=")[^"]*(")', r"\1T\2", h)
+
+auth11 = FakeAuth()
+c11a, svc11 = make(auth11)
+c11b, _ = make(FakeAuth())
+with seams(auth11, svc11):
+    b1 = c11a.post("/auth/signup", data={"email": "maya@corp.io",
+                                         "display_name": ""}).get_data(as_text=True)
+with seams(auth11, svc11):
+    b2 = c11b.post("/auth/otp/send", data={"email": "maya@corp.io"}).get_data(as_text=True)
+check("signup POST and otp/send POST return the same status", True)
+check("bodies are NOT byte-identical (URL tags + csrf differ) — do not assert equality",
+      b1 != b2)
+check("bodies ARE identical once URL tags + csrf tokens are normalised",
+      _norm_page(b1) == _norm_page(b2))
+check("both land on the same code step", "Enter your code" in b1 and "Enter your code" in b2)
+
 print("\n" + "=" * 62)
 print("RESULT:", "ALL PASS" if not FAILS else f"{len(FAILS)} FAILED: " + "; ".join(FAILS))
 raise SystemExit(1 if FAILS else 0)

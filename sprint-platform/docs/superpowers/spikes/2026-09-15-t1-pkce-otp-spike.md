@@ -401,3 +401,59 @@ Evidence: `verify_t2_auth_routes.py` §9 (junk tiers never reach GoTrue, leading
 still verbatim, padded-valid accepted, verifier cleared on every branch, name not
 cross-applied, password path cleans leftovers, unset base → 503 with the Host header
 unused). Suite: **199 passed, 0 xfail/xpass**, 1 pre-existing mentor-grounding failure.
+
+## 9. The literal question, settled definitively (T5 escalation, captain's G1)
+
+The design risk escalated to me: GoTrue mints an **account-state-dependent** token
+type, so a verify route pinned to one literal might reject validly-issued codes for
+one half of the population. That premise is **correct** — and the conclusion the
+escalation feared is not. Measured on the live project with one fresh token per
+literal (`docs/superpowers/spikes/spike_verify_type_matrix.py`):
+
+| `verify_otp` literal | signup-family token<br>*(first-ever mint, creates the user)* | magiclink-family token<br>*(mint for an address that already exists)* |
+|---|---|---|
+| **`"email"`** | ✅ **OK** | ✅ **OK** |
+| `"signup"` | ✅ OK | ❌ 403 `otp_expired` |
+| `"magiclink"` | ❌ 403 `otp_expired` | ✅ OK |
+| `"recovery"` | ❌ 403 `otp_expired` | ✅ OK |
+
+*(`verification_type` reported by `generate_link`: `'signup'` for the first-ever mint
+on an unknown address, `'magiclink'` once the address exists — 8-digit codes in
+both cases.)*
+
+**`"email"` is the only literal that redeems both families.** Pinning any other
+value breaks exactly one half of the population — and, per the reviewer's point,
+with an error byte-identical to a user typo. So the single pinned literal is kept,
+*with* proof rather than by assumption. This also reconciles my §2 table with
+security-reviewer's T8 matrix, which looked contradictory: §2 measured a true
+signup-family token (where `magiclink` genuinely 403s), while the follow-up pass
+that appeared to disagree was unknowingly measuring magiclink-family tokens because
+its own probe call created the user first. Both observations were right; one label
+was wrong.
+
+Why the alternatives in the escalation were not taken:
+- **Derive the type from the send response** — not possible: `AuthOtpResponse`
+  exposes only `user / session / is_signup_enabled / user_id` (measured §3); there
+  is no `verification_type` on the /otp response. Only the *admin* `generate_link`
+  body carries it, and the app must not use an admin call per sign-in.
+- **Accept the set of literals** — the working set is `{email, magiclink,
+  recovery}` for one family and `{email, signup}` for the other; a retry chain
+  means 2–3 GoTrue verify calls per *typo*, spending the shared free-tier verify
+  quota, to defend a case the matrix shows does not exist.
+- **Fall back to `token_hash`** — that is the magic-link path (needs a hash from a
+  clicked URL); with a code-entry UX the only thing the user possesses is the
+  numeric code + their email, which is the `{email, token, type}` shape.
+
+**The residual G1 risk is real but is NOT a literal problem:** with the default
+Magic-link template (`{{ .ConfirmationURL }}`) GoTrue never sends a numeric code at
+all, so *every* verify 403s and the UI can only say "that code didn't work" — silent
+and undiagnosable. Since the user-facing message must stay generic, the fix is
+server-side observability: `otp_verify` now logs the GoTrue error code + status with
+the masked email (never the code), which is what makes a template/dashboard outage
+distinguishable from user typos in the logs. Design §6.4 / setup §5 item 5 remain
+the actual remedy, and they are operator actions, not code.
+
+Uncovered by any of this, stated plainly: a code that has actually travelled through
+an inbox. That needs custom SMTP + the `{{ .Token }}` template configured (t4/T7) —
+`generate_link` is a proxy for the *minting* path (same code, different delivery),
+not for delivery itself.

@@ -44,6 +44,17 @@ _MAX_NAME_LEN = 80
 # every new signup), and GoTrue replies to a valid token of the wrong type with
 # the SAME 403 it gives a wrong code — so a typo here is a silent,
 # undiagnosable "Invalid code" for 100% of one population. Do not experiment.
+#
+# PROOF, measured on the live project with one FRESH TOKEN PER LITERAL (so a
+# prior success cannot consume the token and fake a later rejection) — see
+# docs/superpowers/spikes/spike_verify_type_matrix.py: the minted token really
+# IS account-state dependent (first-ever mint for an unknown address =>
+# verification_type 'signup'; any mint for an address that already exists =>
+# 'magiclink'), and the redeeming literals differ by family — 'signup' redeems
+# only the signup family, 'magiclink'/'recovery' only the existing-address
+# family, and 'email' redeems BOTH. A single pinned literal is therefore correct
+# precisely because this is the one umbrella value; pinning any other would
+# break exactly one half of the population with an error byte-identical to a typo.
 _OTP_TYPE = "email"
 
 
@@ -411,9 +422,21 @@ def otp_verify():
     try:
         res = _auth_client().auth.verify_otp(
             {"email": email, "token": token, "type": _OTP_TYPE})
-    except AuthError:
+    except AuthError as exc:
         # Wrong, expired or already-used code. No session is set, nothing is
         # half-provisioned: the user stays on the code step and may resend.
+        #
+        # Logged server-side on purpose: the user-facing message must stay
+        # generic and identical for every cause, which makes this line the only
+        # way to tell a user typo apart from a broken deployment — e.g. the
+        # Magic-link template still on {{ .ConfirmationURL }}, so no numeric code
+        # is ever issued and EVERY verify 403s (design §6.4 / t4 G1). Without it
+        # that outage is silent and undiagnosable from outside the process.
+        # The code itself is never logged.
+        current_app.logger.warning(
+            "otp verify failed for %s: %s (code=%s status=%s)",
+            _mask_email(email), exc, getattr(exc, "code", None),
+            getattr(exc, "status", None))
         flash("That code didn't work — request a new one.")
         return _render_login(step="code", status=200, email=email)
 
