@@ -402,6 +402,30 @@ still verbatim, padded-valid accepted, verifier cleared on every branch, name no
 cross-applied, password path cleans leftovers, unset base → 503 with the Host header
 unused). Suite: **199 passed, 0 xfail/xpass**, 1 pre-existing mentor-grounding failure.
 
+## 8b. Provenance chain for `type="email"` (captain's t2 citation request)
+
+Three independent measurements converge, so this is recorded once rather than
+argued per task:
+
+| source | what it measured | result |
+|---|---|---|
+| this doc §2 (`docs/superpowers/spikes/spike_otp_roundtrip.py`) | true **signup-family** token (first-ever mint creates the user) | `email` ✅ · `signup` ✅ · `magiclink` ❌ |
+| `docs/compare/spike_answers.md` §4b (security-reviewer) | real tokens of both families | `email` redeems both; `signup` and `magiclink` each reject one |
+| `docs/superpowers/spikes/spike_verify_type_matrix.py` (§9 below) | both families, **one fresh token per literal** | `email` is the ONLY literal in the intersection |
+
+Convergent conclusion: **`"email"` is the umbrella literal and the only safe pin**;
+`signup` breaks existing/legacy accounts (the population design §8 promises OTP
+login for) and `magiclink`/`recovery` break new signups — each with a 403 byte-identical
+to a user typo, which is why the pin is documented at the code site
+(`routes/auth.py`, `_OTP_TYPE`) and guarded by an exact-payload assertion in
+`tests/test_auth_otp.py`. The captain's earlier "accept multiple literals"
+robustness mandate was retired once these three agreed.
+
+⚠️ Provenance caveat: `docs/compare/spike_answers.md` and the `docs/security/`
+probes it cites are **untracked** as of this writing (`git status` shows
+`?? docs/compare/`), so this table's middle row does not survive a clean
+checkout. Its owner or the captain should commit them before t7/t10 rely on them.
+
 ## 9. The literal question, settled definitively (T5 escalation, captain's G1)
 
 The design risk escalated to me: GoTrue mints an **account-state-dependent** token
