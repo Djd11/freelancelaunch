@@ -373,10 +373,13 @@ def test_otp_verify_non_numeric_token_currently_forwards_verbatim(client):
     """DOCUMENTS THE SHIPPED TRUTH at 6a8f400: no server-side digit/length
     validator exists yet (t5 adds re.fullmatch pre-GoTrue), so a junk code
     reaches the spied client STRING-VERBATIM and GoTrue's AuthError drives
-    the generic failure. t9 (ordered post-t5) flips this to never-called +
-    4xx — this test failing after t5 is the designed flip, not a regression.
-    Break today: any int coercion of the token (int("0abc") would 500) or a
-    silent-acceptance path."""
+    the generic failure. OWNERSHIP OF THIS FLIP: per the reviewer's ordering
+    analysis (adopted as captain ruling), T5 rewrites this test in the same
+    commit that lands the validator — into never-called + generic-failure +
+    no-500 — so every commit stays green by construction. t9 then EXTENDS
+    (does not re-write) the flipped negative with the Unicode tiers and the
+    leading-zero positive. Break today: any int coercion of the token
+    (int("0abc") would 500) or a silent-acceptance path."""
     _send_ok(client)
     client.auth.verify_otp.side_effect = AuthError("invalid token", None)
     r = client.post("/auth/otp/verify", data={"token": "0abc-def"})
