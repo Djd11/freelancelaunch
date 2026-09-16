@@ -27,4 +27,9 @@ services:
         sync: false
       - key: ADMIN_EMAIL
         sync: false
+      # Only Google is enabled in Supabase so far; rendering the Facebook
+      # button would just surface "Social sign-in didn't complete". Flip this
+      # to "google,facebook" once Meta app review passes.
+      - key: OAUTH_PROVIDERS
+        value: "google"
     healthCheckPath: /health
