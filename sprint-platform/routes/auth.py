@@ -12,6 +12,7 @@ Three entry points funnel into one post-auth step (``_complete_auth``): OTP
 verify, OAuth callback, and — unchanged, for accounts that already have a real
 password — ``POST /auth/login``.
 """
+import re
 import time
 
 from flask import (Blueprint, abort, current_app, flash, redirect,
@@ -20,18 +21,29 @@ from flask import (Blueprint, abort, current_app, flash, redirect,
 from supabase_auth.errors import AuthError
 
 from . import obtain_supabase
-from services.supabase_client import get_auth_supabase
+from services.supabase_client import get_auth_supabase, PKCE_SESSION_KEY
 
 auth_bp = Blueprint("auth", __name__)
 
 # Session keys owned by this module.
 _OTP_EMAIL = "otp_email"              # address the last code was sent to
-_OTP_SENT_AT = "otp_last_sent_at"     # epoch of the last accepted send
-_OTP_NAME = "otp_pending_name"        # display name captured at signup funnel
+_OTP_SENT_AT = "otp_last_sent_at"     # {address: epoch} of accepted sends (see _cooldown_left)
+_OTP_NAME = "otp_pending_name"        # display name captured at the signup funnel
+_OTP_NAME_FOR = "otp_pending_name_for"   # the address that name was captured for
 
-# `verify_otp` type literal. Measured on the live project: "email" verifies an
-# email-OTP code; "magiclink" is REJECTED even with a fresh, unused token, so
-# this is load-bearing — do not "try another literal" when a verify fails.
+# The name is free text that is echoed back into the page and written to
+# user_profiles, and the whole session is a signed cookie under a ~4KB browser
+# cap — so bound it rather than trusting the input field's maxlength.
+_MAX_NAME_LEN = 80
+
+# `verify_otp` type literal, pinned. Measured against real issued codes:
+# "email" redeems BOTH token families — a brand-new address gets a
+# signup-family token, an existing confirmed account a magiclink-family one.
+# The narrower literals are family-specific and mutually exclusive ("signup"
+# 403s every legacy login, which spec §8 promises must work; "magiclink" 403s
+# every new signup), and GoTrue replies to a valid token of the wrong type with
+# the SAME 403 it gives a wrong code — so a typo here is a silent,
+# undiagnosable "Invalid code" for 100% of one population. Do not experiment.
 _OTP_TYPE = "email"
 
 
@@ -82,10 +94,76 @@ def _cooldown_left(email=None):
     return max(0, span - int(time.time() - float(last)))
 
 
+def _token_is_plausible(token):
+    """Numeric and exactly ``OTP_CODE_LENGTH`` characters — checked here so junk
+    never reaches GoTrue.
+
+    This is abuse-surface, not an auth bypass: a wrong code is still rejected
+    upstream. But every attempt that reaches GoTrue spends the project's verify
+    rate limit, which on the free tier is shared with real logins, so an
+    unbounded string field is a cheap way to lock everyone out. (MAJOR-1, t4.)
+
+    ``[0-9]`` and not ``\\d``: Python's ``\\d`` is Unicode-aware, so look-alikes
+    pasted from rich text ("²⁰²⁴") pass it — and ``.isdigit()``/``.isnumeric()``
+    have the same hole. ``fullmatch`` also pins the length, which is what makes
+    the 4000-char probe impossible.
+
+    Crucially the token is never converted to a number anywhere: about 1 code in
+    10 starts with a zero (measured: ``07368987``), and ``int()`` would shave it
+    to 7 characters and hard-fail that user's login forever.
+    """
+    n = int(current_app.config.get("OTP_CODE_LENGTH", 8))
+    return bool(re.fullmatch(f"[0-9]{{{n}}}", token or ""))
+
+
+def _remember_name(raw_name, email):
+    """Store the signup name, bounded and tagged with its address.
+
+    The tag matters: without it, a visitor who starts signing up as "Mallory",
+    abandons the code step, and later signs in as a different address on the
+    same browser would stamp "Mallory" onto that account's profile.
+    """
+    name = (raw_name or "").strip()[:_MAX_NAME_LEN]
+    if name:
+        session[_OTP_NAME] = name
+        session[_OTP_NAME_FOR] = (email or "").strip().lower()
+    return name
+
+
+def _pending_name(email):
+    """The stored name, but only if it was captured for *this* address."""
+    name = session.get(_OTP_NAME)
+    if not name:
+        return None
+    return name if session.get(_OTP_NAME_FOR) == (email or "").strip().lower() else None
+
+
 def _clear_otp_state():
     session.pop(_OTP_EMAIL, None)
     session.pop(_OTP_SENT_AT, None)
     session.pop(_OTP_NAME, None)
+    session.pop(_OTP_NAME_FOR, None)
+
+
+def _clear_pkce_verifier():
+    """Drop the PKCE code verifier from the session.
+
+    ``exchange_code_for_session`` only calls ``remove_item`` when the token
+    request did *not* raise (gotrue_client.py:1200), so a denied or failed
+    exchange otherwise leaves the verifier sitting in the cookie from a flow
+    that has already ended — which makes "was the PKCE state consumed?"
+    unanswerable from the session later on. (t4 §8.1 / MINOR follow-up.)
+    """
+    bucket = session.get(PKCE_SESSION_KEY)
+    if not isinstance(bucket, dict):
+        return
+    for key in [k for k in bucket if k.endswith("-code-verifier")]:
+        bucket.pop(key, None)
+    if bucket:
+        session[PKCE_SESSION_KEY] = bucket
+    else:
+        session.pop(PKCE_SESSION_KEY, None)   # leave no empty dict behind
+    session.modified = True
 
 
 def _complete_auth(uid, email=None, name_hint=None, welcome=None):
@@ -193,6 +271,9 @@ def login():
             return _render_login(status=200, email=email)
 
         session["user_id"] = uid
+        # Password logins must not inherit OTP leftovers either (INFO-3): the
+        # pending name and address state belong to a flow this request skipped.
+        _clear_otp_state()
         return redirect(url_for("main.sprints"))
 
     # GET. ?step=code is only honoured when a send actually happened, so the
@@ -221,12 +302,10 @@ def signup():
     """
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
-        name = (request.form.get("display_name") or "").strip()
         if not _email_is_wellformed(email):
             flash("Enter a valid email address.")
             return _render_login(mode="signup", status=200, email=email)
-        if name:
-            session[_OTP_NAME] = name
+        _remember_name(request.form.get("display_name"), email)
         return _send_code(email)
 
     # Single surface: /auth/signup shows the login page in create-account mode
@@ -254,7 +333,7 @@ def _send_code(email):
         flash(f"Please wait {left}s before requesting another code.")
         return _render_login(step="code", status=200, email=email)
 
-    pending_name = session.get(_OTP_NAME)
+    pending_name = _pending_name(email)
     try:
         # `data` is applied by GoTrue only when it creates the user, so the
         # signup name lands in user_metadata without a second write.
@@ -263,11 +342,17 @@ def _send_code(email):
             options["data"] = {"display_name": pending_name}
         _auth_client().auth.sign_in_with_otp({"email": email, "options": options})
     except AuthError as exc:
-        # Supabase-side failures here are never account-specific (bad syntax,
-        # rate limit, SMTP down, signup disabled), so a generic transport error
-        # leaks nothing — and telling the truth beats a fake "code sent" that
-        # leaves the user staring at an empty inbox. (Deviation from the
-        # literal wording of design §5.2; same privacy property.)
+        # Generic transport error instead of a fake "code sent". ⚠️ READ THE
+        # COUPLING BEFORE CHANGING THE DASHBOARD (t4 INFO-1): this branch is
+        # enumeration-safe only because every GoTrue failure on /otp is
+        # currently address-independent (bad syntax, rate limit, SMTP down).
+        # If an operator ever sets disable_signup=true, an UNREGISTERED address
+        # starts failing with `otp_disabled` while a registered one still
+        # succeeds — and this honest branch becomes a live user-enumeration
+        # oracle. The spec's "always show the code step" is the config-proof
+        # alternative; switching to it means flipping a T3 assertion that
+        # currently pins this message, so it is the captain's call, not mine.
+        # Documented for operators in docs/supabase-setup.md §5.
         current_app.logger.warning("otp send failed for %s: %s",
                                    _mask_email(email), exc)
         flash("We couldn't send a code just now — please try again in a minute.")
@@ -292,9 +377,7 @@ def otp_send():
     # In create-account mode the same form carries the first name; hold it for
     # _complete_auth (and for the metadata of the account GoTrue is about to
     # create) instead of round-tripping it through a hidden field.
-    name = (request.form.get("display_name") or "").strip()
-    if name:
-        session[_OTP_NAME] = name
+    _remember_name(request.form.get("display_name"), email)
     if not _email_is_wellformed(email):
         flash("Enter a valid email address.")
         return _render_login(mode="signup" if session.get(_OTP_NAME) else None,
@@ -319,6 +402,11 @@ def otp_verify():
     if not token:
         flash("Enter the code we sent you.")
         return _render_login(step="code", status=200, email=email)
+    if not _token_is_plausible(token):
+        # Checked before GoTrue (MAJOR-1) but reported exactly like a wrong code,
+        # so the response shape teaches an attacker nothing about the address.
+        flash("That code didn't work — request a new one.")
+        return _render_login(step="code", status=200, email=email)
 
     try:
         res = _auth_client().auth.verify_otp(
@@ -336,7 +424,7 @@ def otp_verify():
         return _render_login(step="code", status=200, email=email)
 
     meta = getattr(user, "user_metadata", None) or {}
-    name = meta.get("display_name") or session.get(_OTP_NAME)
+    name = meta.get("display_name") or _pending_name(email)
     return _complete_auth(uid, email=getattr(user, "email", None) or email,
                           name_hint=name)
 
@@ -364,16 +452,32 @@ def oauth_start(provider):
 
 
 def _callback_url():
-    return (current_app.config.get("OAUTH_REDIRECT_BASE")
-            or request.url_root.rstrip("/")) + \
-        current_app.config.get("OAUTH_CALLBACK_PATH", "/auth/oauth/callback")
+    """The OAuth redirect_to, built from config ONLY (t4 MINOR-2).
+
+    Deliberately no `request.url_root` fallback: this value is handed to the
+    provider as the destination for an auth code, so letting a Host header
+    influence it — even in a branch that today's config can never reach — puts
+    a request-controlled string inside an auth redirect. A missing base is a
+    deployment error, so it is turned into a 503 instead of a guess. Whatever
+    this returns must also be present in dashboard → Auth → URL Configuration →
+    Additional redirect URLs, or GoTrue refuses the callback.
+    """
+    base = (current_app.config.get("OAUTH_REDIRECT_BASE") or "").strip()
+    if not base:
+        current_app.logger.error("OAUTH_REDIRECT_BASE is unset; refusing to build "
+                                 "an OAuth redirect from the request host")
+        abort(503)
+    return base + current_app.config.get("OAUTH_CALLBACK_PATH", "/auth/oauth/callback")
 
 
 @auth_bp.route("/auth/oauth/callback")
 def oauth_callback():
-    code = request.args.get("code")
+    # Strip before the truthiness test: `?code=%20` is a *truthy* whitespace
+    # string, and without this it would sail into the exchange (BUG-T3-1).
+    code = (request.args.get("code") or "").strip()
     if not code:
         # Covers user-cancel, provider denial and a stripped query alike.
+        _clear_pkce_verifier()
         flash("Social sign-in didn't complete — try the email code.")
         return redirect(url_for("auth.login"))
 
@@ -388,26 +492,37 @@ def oauth_callback():
         })
     except AuthError as exc:
         current_app.logger.warning("oauth exchange failed: %s", exc)
+        # The library only removes the verifier when the request did NOT raise,
+        # so a failed exchange would otherwise leave it in the cookie.
+        _clear_pkce_verifier()
         flash("Social sign-in didn't complete — try the email code.")
         return redirect(url_for("auth.login"))
 
     user = getattr(res, "user", None)
     uid = getattr(user, "id", None)
     if not uid:
+        _clear_pkce_verifier()
         flash("Social sign-in didn't complete — try the email code.")
         return redirect(url_for("auth.login"))
 
     # Same-email linking is Supabase's job, not ours: legacy accounts are
     # email-confirmed, so the provider attaches to the existing user and no
     # duplicate row is created (design §8). Do not add custom link logic.
+    # Success: the client already removed the verifier, but that leaves an
+    # empty "_sb_pkce" bucket in the cookie; drop it so the session carries no
+    # auth scratch state once the flow is done.
+    _clear_pkce_verifier()
+
     meta = getattr(user, "user_metadata", None) or {}
+    email = getattr(user, "email", None)
     name = meta.get("full_name") or meta.get("name") or meta.get("display_name")
-    return _complete_auth(uid, email=getattr(user, "email", None),
-                          name_hint=name or session.get(_OTP_NAME))
+    return _complete_auth(uid, email=email,
+                          name_hint=name or _pending_name(email))
 
 
 @auth_bp.route("/auth/logout")
 def logout():
     _clear_otp_state()
+    _clear_pkce_verifier()
     session.pop("user_id", None)
     return redirect(url_for("main.index"))

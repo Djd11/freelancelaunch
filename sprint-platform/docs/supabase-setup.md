@@ -95,6 +95,23 @@ Do these in order:
    tier. The app's own 60 s resend cooldown (`OTP_RESEND_COOLDOWN_SECONDS`) is the inner
    belt, not the outer one.
 
+### ⚠️ Two dashboard settings the app's behaviour is coupled to
+
+1. **Do NOT set `disable_signup` (Allow new users to sign up) to OFF while
+   `OTP_EMAIL_ENABLED` is on.** The app sends `should_create_user=true`, so
+   signup-off makes an *unregistered* address fail while a registered one still
+   succeeds — and `routes/auth.py` reports a send failure honestly, so that
+   difference becomes a **user-enumeration oracle**. It must be flipped as a
+   pair: turn off `OTP_EMAIL_ENABLED` (which makes the password form primary
+   again) before disabling signup in the dashboard.
+2. **Set Authentication → Rate limits before launch.** Identity creation here is
+   unauthenticated **by design** (code-possession is the only gate, and the
+   signup funnel exists to make first-run frictionless), and the app's 60s
+   resend throttle is *per session cookie* — a caller can reset it by discarding
+   cookies, so it is a UX guard, not an abuse control. The only real bound on
+   send volume is GoTrue's per-email/per-IP rate limit plus the SMTP free tier.
+   Leaving both at defaults makes OTP abusable and can burn the whole SMTP quota.
+
 **Toggling from the app side** (no secrets involved — the provider credentials live here,
 never in the repo): `OAUTH_PROVIDERS=google,facebook` and `OTP_EMAIL_ENABLED=true|false`.
 `render.yaml` deliberately needs no change for any of this.

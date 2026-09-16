@@ -71,6 +71,30 @@ class FlaskSessionStorage(SyncSupportedStorage):
             session.modified = True
 
 
+def _anon_key_from_config():
+    """The anon key, under either config spelling.
+
+    Both spellings exist for historical reasons: ``Config`` publishes only
+    ``SUPABASE_KEY`` (it reads env ``SUPABASE_ANON_KEY`` into it), while tests
+    and some deployment helpers set ``SUPABASE_ANON_KEY`` directly on the app.
+    Kept in ONE place on purpose (t4 MINOR-3): the same two-name dance is
+    duplicated across three getters, and a drift here fails as a silent
+    request-time RuntimeError rather than at import.
+
+    Note the fallback can never reach the SERVICE key — Config maps env
+    SUPABASE_ANON_KEY|SUPABASE_KEY into SUPABASE_KEY, and the service-role key
+    lives only in SUPABASE_SERVICE_KEY. tests/test_supabase_client.py guards
+    that property.
+    """
+    return (current_app.config.get("SUPABASE_ANON_KEY")
+            or current_app.config.get("SUPABASE_KEY") or "").strip()
+
+
+def _url_and_anon_key():
+    url = (current_app.config.get("SUPABASE_URL") or "").strip()
+    return url, _anon_key_from_config()
+
+
 def _new_client(url, key, options=None):
     from supabase import create_client
     # `options` is positional-or-keyword here, and create_client is resolved at
@@ -174,13 +198,10 @@ def get_client_supabase():
     """
     if "client_supabase" in g:
         return g.client_supabase
-    url = (current_app.config.get("SUPABASE_URL") or "").strip()
-    # Accept both spellings, mirroring the service-role pair above: Config only
-    # publishes `SUPABASE_KEY` (it reads env SUPABASE_ANON_KEY into it), so
-    # looking up `SUPABASE_ANON_KEY` alone always came back empty and this
-    # function raised even on a fully configured project.
-    key = (current_app.config.get("SUPABASE_ANON_KEY")
-           or current_app.config.get("SUPABASE_KEY") or "").strip()
+    # Config only publishes `SUPABASE_KEY` (it folds env SUPABASE_ANON_KEY into
+    # it), so reading `SUPABASE_ANON_KEY` alone used to come back empty and this
+    # function raised even on a fully configured project. See _anon_key_from_config.
+    url, key = _url_and_anon_key()
     if not (url and key):
         raise RuntimeError(
             "Supabase anon key is not configured. Set SUPABASE_ANON_KEY "
@@ -207,9 +228,7 @@ def get_auth_supabase():
     """
     if "auth_supabase" in g:
         return g.auth_supabase
-    url = (current_app.config.get("SUPABASE_URL") or "").strip()
-    key = (current_app.config.get("SUPABASE_ANON_KEY")
-           or current_app.config.get("SUPABASE_KEY") or "").strip()
+    url, key = _url_and_anon_key()
     if not (url and key):
         raise RuntimeError(
             "Supabase anon key is not configured, so the passwordless sign-in "

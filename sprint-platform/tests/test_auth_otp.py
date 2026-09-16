@@ -369,25 +369,37 @@ def test_otp_verify_empty_token_never_reaches_client(client):
     assert _get(client, "user_id") is None
 
 
-def test_otp_verify_non_numeric_token_currently_forwards_verbatim(client):
-    """DOCUMENTS THE SHIPPED TRUTH at 6a8f400: no server-side digit/length
-    validator exists yet (t5 adds re.fullmatch pre-GoTrue), so a junk code
-    reaches the spied client STRING-VERBATIM and GoTrue's AuthError drives
-    the generic failure. OWNERSHIP OF THIS FLIP: per the reviewer's ordering
-    analysis (adopted as captain ruling), T5 rewrites this test in the same
-    commit that lands the validator — into never-called + generic-failure +
-    no-500 — so every commit stays green by construction. t9 then EXTENDS
-    (does not re-write) the flipped negative with the Unicode tiers and the
-    leading-zero positive. Break today: any int coercion of the token
-    (int("0abc") would 500) or a silent-acceptance path."""
+def test_otp_verify_non_numeric_token_never_reaches_client(client):
+    """FLIPPED BY T5, as the previous docstring reserved: routes/auth.py now
+    validates the code shape (`[0-9]{OTP_CODE_LENGTH}`, fullmatch) BEFORE
+    GoTrue, so junk must be rejected locally — never called, generic failure,
+    no 500, no session. Each sample is a distinct escape that used to forward
+    verbatim: mixed alnum, too short, oversized, and Unicode digits that
+    `\\d`/`.isdigit()` would have waved through.
+    Break: any path that forwards a non-conforming token (every forwarded
+    attempt spends the project's shared verify rate limit), or int() coercion
+    (int("0abc") raises), or a 500 instead of the code step."""
     _send_ok(client)
-    client.auth.verify_otp.side_effect = AuthError("invalid token", None)
-    r = client.post("/auth/otp/verify", data={"token": "0abc-def"})
-    assert client.auth.verify_otp.call_count == 1
-    creds = client.auth.verify_otp.call_args[0][0]
-    assert creds["token"] == "0abc-def" and isinstance(creds["token"], str)
-    assert r.status_code == 200 and b"Enter your code" in r.data
-    assert _get(client, "user_id") is None
+    n = int(app_config_length())
+    # NOTE: whitespace-padded digits are NOT in this list — the route strips
+    # first, so " 12345678 " is a legitimately valid code, not a rejection case.
+    junk = ["0abc-def", "123", "1" * (n + 1), "2" * 4000, "²0245678",
+            "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668", "1234567a"]
+    for token in junk:
+        client.auth.verify_otp.reset_mock()
+        r = client.post("/auth/otp/verify", data={"token": token})
+        assert r.status_code == 200, token
+        assert b"Enter your code" in r.data, token
+        client.auth.verify_otp.assert_not_called()
+        assert _get(client, "user_id") is None, token
+
+
+def app_config_length():
+    """The project's OTP length, read not assumed (8 on this project today)."""
+    from flask import current_app
+    from app import create_app
+    with create_app(dict(TEST_CONFIG)).app_context():
+        return current_app.config["OTP_CODE_LENGTH"]
 
 
 def test_otp_verify_without_send_session_is_inert(client):
@@ -505,19 +517,20 @@ def test_oauth_callback_missing_code_generic_flash_no_session(client):
     assert any("Social sign-in didn't complete" in f for f in flashes)
 
 
-@pytest.mark.xfail(raises=(TypeError, AttributeError), strict=False,
-                   reason="BUG-T3-1 (routes/auth.py:374): `if not code` tests the "
-                          "RAW arg — a whitespace-only code ('%20') is truthy and "
-                          "reaches the exchange; if the exchange ever resolves, "
-                          "_complete_auth stores a non-serializable uid in the "
-                          "session. Unreachable with real GoTrue (it rejects "
-                          "whitespace codes with AuthError) — minor robustness.")
 def test_oauth_callback_whitespace_code_is_not_a_valid_code(client):
+    """BUG-T3-1 FIXED IN T5 (was xfail): routes/auth.py now strips the raw
+    `code` arg before the truthiness test, so `?code=%20` collapses to empty
+    and takes the same generic no-code path as a user cancel — the exchange is
+    never attempted, so a whitespace string can no longer reach GoTrue or, in
+    the reviewer's scenario, leave a resolved-but-unverifiable uid to be
+    minted into the session. Break: testing the raw arg again, or calling
+    exchange_code_for_session for a blank-after-strip code."""
     r = client.get("/auth/oauth/callback?code=%20")
-    # A stripped/validated guard would take the same generic path as missing.
     assert r.status_code == 302 and r.headers["Location"].endswith("/auth/login")
+    client.auth.exchange_code_for_session.assert_not_called()
     with client.session_transaction() as s:
         assert "user_id" not in s
+        assert s.get(PKCE_SESSION_KEY) in (None, {})
 
 
 def test_oauth_callback_success_sets_session_via_complete_auth(client):

@@ -392,6 +392,107 @@ with seams(auth10, svc10):
         m = s.get("otp_last_sent_at") or {}
         check("throttle map stays bounded (≤10 entries)", len(m) <= 10, f"{len(m)} entries")
 
+
+# ── 9. T5 fixes (t4 findings + §8 queue) ────────────────────────────────────
+print("\n[9] T5: MAJOR-1 validator, MINOR-1/2/3, INFO-1/3, BUG-T3-1")
+authV = FakeAuth()
+cV, svcV = make(authV)
+with seams(authV, svcV):
+    with cV.session_transaction() as s:
+        s["otp_email"] = "maya@corp.io"
+    for junk in ("0abc-def", "123", "1" * 9, "2" * 4000, "\u00b20245678",
+                 "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668"):
+        n_before = len(authV.verify_calls)
+        h = cV.post("/auth/otp/verify", data={"token": junk}).get_data(as_text=True)
+        ok = len(authV.verify_calls) == n_before and "didn't work" in norm(h) \
+            and "Enter your code" in h
+        if not ok:
+            check(f"MAJOR-1: {junk[:14]!r} rejected locally", False, junk)
+    check("MAJOR-1: all 6 junk tiers rejected locally, none reached GoTrue",
+          len(authV.verify_calls) == 0)
+    authV.verify_calls.clear()
+    authV.verify_error = api_err("Token has expired or is invalid", 403)
+    cV.post("/auth/otp/verify", data={"token": "07368987"})
+    check("leading-zero 8-digit code still forwarded verbatim",
+          authV.verify_calls and authV.verify_calls[-1]["token"] == "07368987")
+    authV.verify_calls.clear()
+    cV.post("/auth/otp/verify", data={"token": " 45480348 "})
+    check("whitespace-padded valid code is accepted (stripped, not rejected)",
+          len(authV.verify_calls) == 1)
+
+    # BUG-T3-1 + verifier residue
+    badX = FakeAuth(exchange_error=api_err("invalid flow state", 404))
+    cX, svcX = make(badX)
+    with seams(badX, svcX):
+        with cX.session_transaction() as s:
+            s["_sb_pkce"] = {"supabase.auth.token-code-verifier": "STALE"}
+        cX.get("/auth/oauth/callback?code=%20")
+        with cX.session_transaction() as s:
+            check("BUG-T3-1: whitespace code never reaches the exchange",
+                  len(badX.exchange_calls) == 0)
+        with cX.session_transaction() as s:
+            check("§8.1: verifier cleared on the no-code branch",
+                  s.get("_sb_pkce") in (None, {}), s.get("_sb_pkce"))
+        badX.exchange_calls.clear()
+        with cX.session_transaction() as s:
+            s["_sb_pkce"] = {"supabase.auth.token-code-verifier": "STALE"}
+        cX.get("/auth/oauth/callback?code=real-looking")
+        check("§8.1: attempted exchange happened once", len(badX.exchange_calls) == 1)
+        with cX.session_transaction() as s:
+            check("§8.1: verifier cleared on the EXCHANGE-FAILURE branch",
+                  s.get("_sb_pkce") in (None, {}), s.get("_sb_pkce"))
+
+    # INFO-3: pending name must not cross addresses
+    authN = FakeAuth()
+    cN, svcN = make(authN, OTP_RESEND_COOLDOWN_SECONDS=0)
+    with seams(authN, svcN):
+        with cN.session_transaction() as s:
+            s.clear()
+        cN.post("/auth/signup", data={"email": "first@corp.io", "display_name": "Mallory"})
+        with cN.session_transaction() as s:
+            check("INFO-3: name stored as a plain string (T3 contract intact)",
+                  s.get("otp_pending_name") == "Mallory")
+            check("INFO-3: name is tagged with its address",
+                  s.get("otp_pending_name_for") == "first@corp.io")
+        authN.otp_calls.clear()
+        cN.post("/auth/otp/send", data={"email": "someone-else@corp.io"})
+        check("abandoned signup name is NOT forwarded for a different address",
+              "data" not in authN.otp_calls[-1]["options"], authN.otp_calls[-1])
+        authN.otp_calls.clear()
+        cN.post("/auth/otp/send", data={"email": "FIRST@corp.io"})
+        check("same address (case-insensitive) still gets its own name",
+              authN.otp_calls[-1]["options"].get("data") == {"display_name": "Mallory"})
+        huge = "N" * 5000
+        cN.post("/auth/signup", data={"email": "big@corp.io", "display_name": huge})
+        with cN.session_transaction() as s:
+            check("INFO-3: pending name length bounded (signed-cookie cap)",
+                  len(s.get("otp_pending_name") or "") <= 80,
+                  len(s.get("otp_pending_name") or ""))
+
+    # password path must not inherit OTP leftovers
+    authP = FakeAuth()
+    cP, svcP = make(authP)
+    pw = FakeSB(pw_user="33333333-3333-3333-3333-333333333333")
+    with seams(authP, pw), patch("routes.auth.obtain_supabase", return_value=pw):
+        with cP.session_transaction() as s:
+            s["otp_email"] = "leftover@corp.io"
+            s["otp_pending_name"] = "Ghost"
+        cP.post("/auth/login", data={"email": "a@b.io", "password": "hunter2"})
+        with cP.session_transaction() as s:
+            check("password login clears OTP leftovers (no inherited name)",
+                  "otp_email" not in s and "otp_pending_name" not in s)
+
+# MINOR-2: redirect base must come from config only, never the Host header
+def t_min2():
+    appZ = create_app(test_config={"WTF_CSRF_ENABLED": False, "OAUTH_REDIRECT_BASE": ""})
+    cZ = appZ.test_client()
+    with patch("routes.auth.get_auth_supabase", return_value=SimpleNamespace(auth=FakeAuth())):
+        r = cZ.get("/auth/oauth/google", headers={"Host": "evil.example"})
+        check("MINOR-2: unset base → 503, and the Host header is never used",
+              r.status_code == 503, str(r.status_code))
+with seams(auth, svc):
+    t_min2()
+
 print("\n" + "=" * 62)
 print("RESULT:", "ALL PASS" if not FAILS else f"{len(FAILS)} FAILED: " + "; ".join(FAILS))
 raise SystemExit(1 if FAILS else 0)

@@ -377,3 +377,27 @@ Anyone holding a fixture with those two UUIDs baked in should regenerate them.
    `code = (request.args.get("code") or "").strip()` in the same failure branch as item 1.
    Left unfixed deliberately while T3 was in flight so qa-eng's `xfail` stays honest — **T5
    owns the flip** (per their note in 2269139), and the marker should become a normal assert.
+
+### Status after T5 (t4 verdict: REQUEST-CHANGES on MAJOR-1 only)
+
+| item | state |
+|---|---|
+| 1 verifier residue on failed exchange | **fixed** — `_clear_pkce_verifier()` on all three failure branches, the no-code branch, the success branch (drops the empty bucket) and logout |
+| 2 token validation | **fixed** — `_token_is_plausible()` = `re.fullmatch("[0-9]{OTP_CODE_LENGTH}")` before GoTrue; `[0-9]` not `\d` (Unicode), reported via the same generic message so it teaches nothing |
+| 3 stale `otp_pending_name` | **fixed** — name now tagged with `otp_pending_name_for` and only consumed for a matching (case-folded) address; length capped at 80. `otp_pending_name` stays a **plain string** so T3's assertions hold |
+| 4 refresh timer on legacy clients | **fixed** in 5ee0009 (amendment #3) — `_no_client_side_session()` on all three; measured: no timer armed on any of them |
+| 5 stale comment at `:29` | **fixed** (throttle map documented as `{address: epoch}`) |
+| 6 BUG-T3-1 whitespace `code` | **fixed** — `(request.args.get("code") or "").strip()`; qa-eng's `xfail` flipped to a normal assert (it was xpassing) |
+| t4 MINOR-2 Host fallback | **fixed** — `_callback_url()` is config-only, `abort(503)` when unset, never `request.url_root` |
+| t4 MINOR-3 DRY | **fixed** — `_anon_key_from_config()` / `_url_and_anon_key()`; documented that the fallback cannot reach the service key |
+| t4 INFO-3 password path | **fixed** — `login()` now calls `_clear_otp_state()` |
+| t4 INFO-1 send-failure oracle | **comment + operator doc only** — collapsing the branch to spec-literal would flip `tests/test_auth_otp.py:249`, which pins the current message and belongs to T3, so it is escalated to the captain rather than rewritten unilaterally |
+| t4 INFO-2 attacker-resettable cooldown | **documented as accepted risk** with the operator line the reviewer drafted (§"Two dashboard settings") |
+| t4 INFO-4 promote spike scripts to tests/ | left for **T6** (qa-eng owns the suite) |
+| t4 INFO-5 dead `Config.ADMIN_EMAIL` | untouched — spec §5.5 known-cleanup item, out of scope |
+| t4 "magiclink is REJECTED" wording | **corrected** in this doc §2 and in `routes/auth.py`: that was one token *family*; `"email"` is the umbrella that redeems both |
+
+Evidence: `verify_t2_auth_routes.py` §9 (junk tiers never reach GoTrue, leading-zero
+still verbatim, padded-valid accepted, verifier cleared on every branch, name not
+cross-applied, password path cleans leftovers, unset base → 503 with the Host header
+unused). Suite: **199 passed, 0 xfail/xpass**, 1 pre-existing mentor-grounding failure.
