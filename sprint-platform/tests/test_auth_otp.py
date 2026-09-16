@@ -15,7 +15,9 @@ forward). OTP codes are taken from the measured samples in
 docs/compare/spike_answers.md §4b and must always travel as str — length is
 asserted against Config.OTP_CODE_LENGTH, never hardcoded.
 """
+import ast
 import html
+import inspect
 import re
 import time
 import uuid
@@ -690,6 +692,69 @@ def test_flask_session_storage_single_key_and_removal():
 def flask_keys():
     from flask import session as fsession
     return list(fsession.keys())
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Session-mint INVENTORY (captain ownership assignment, T3 addendum): routes/
+# auth.py may write session["user_id"] from EXACTLY two functions —
+# _complete_auth (the single passwordless mint) and login (the legacy password
+# path, intentionally unchanged per spec §5.2/§8). Matching is by ENCLOSING
+# FUNCTION via AST, so line drift under t5 edits cannot false-fail this.
+# Failure-path cleanliness (send-fail / verify-fail / callback-fail / signup
+# leave the session clean) is asserted dynamically by every failure test above
+# (`_get(client, "user_id") is None`); this pins that no NEW mint appears.
+# ──────────────────────────────────────────────────────────────────────────────
+import routes.auth as _auth_mod
+
+
+def _mint_sites(source_module):
+    """[(enclosing_fn, lineno)] for every `session["user_id"] = ...` assign."""
+    tree = ast.parse(inspect.getsource(source_module))
+    sites = []
+    for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+        for node in ast.walk(fn):
+            if (isinstance(node, ast.Assign)
+                    and any(isinstance(t, ast.Subscript)
+                            and isinstance(t.value, ast.Name)
+                            and t.value.id == "session"
+                            and isinstance(t.slice, ast.Constant)
+                            and t.slice.value == "user_id"
+                            for t in node.targets)):
+                sites.append((fn.name, node.lineno))
+    return sites
+
+
+def test_session_user_id_mint_inventory_is_exactly_two():
+    mints = _mint_sites(_auth_mod)
+    assert sorted(fn for fn, _ in mints) == ["_complete_auth", "login"], (
+        f"session['user_id'] mint inventory changed: {mints} — a THIRD mint "
+        "or a renamed owner needs captain sign-off (spec §5.2, §8)")
+    # Each owner writes exactly once — no double-mint sneaked into one fn.
+    assert [fn for fn, _ in mints].count("_complete_auth") == 1
+    assert [fn for fn, _ in mints].count("login") == 1
+
+
+def test_passwordless_entries_funnel_only_through_complete_auth():
+    """otp_verify and oauth_callback must acquire sessions ONLY by calling
+    _complete_auth — never by writing session state themselves. Break: an
+    entry path bypassing the single mint (the exact shape of the deleted
+    signup collision bug)."""
+    tree = ast.parse(inspect.getsource(_auth_mod))
+    for fname in ("otp_verify", "oauth_callback"):
+        fn = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == fname)
+        inner_mints = [node for node in ast.walk(fn)
+                       if isinstance(node, ast.Assign)
+                       and any(isinstance(t, ast.Subscript)
+                               and isinstance(t.value, ast.Name)
+                               and t.value.id == "session"
+                               and isinstance(t.slice, ast.Constant)
+                               and t.slice.value == "user_id"
+                               for t in node.targets)]
+        assert not inner_mints, f"{fname} writes session['user_id'] directly"
+        called = {n.func.id for n in ast.walk(fn)
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        assert "_complete_auth" in called, f"{fname} no longer funnels auth"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
