@@ -66,6 +66,10 @@ picture (see `docs/superpowers/spikes/2026-09-15-t1-pkce-otp-spike.md` §4):
 Do these in order:
 
 1. **Authentication → URL Configuration**
+   - A production boot with `PUBLIC_BASE_URL` unset now **fails fast**
+     (`RuntimeError` from `create_app`) instead of quietly defaulting to
+     `http://localhost:5000`, which would send every real user's post-auth
+     redirect to localhost while looking like an upstream outage.
    - *Site URL*: `https://freelancelaunch.onrender.com`
    - *Additional redirect URLs*:
      `https://freelancelaunch.onrender.com/auth/oauth/callback` and

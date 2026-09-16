@@ -77,6 +77,16 @@ class Config:
     # URLs, or the callback is rejected. Defaults to the local dev origin.
     PUBLIC_BASE_URL = _PUBLIC_BASE
     OAUTH_REDIRECT_BASE = _PUBLIC_BASE
+
+    # Deployment guard inputs (see app.create_app). The base above has a DEV
+    # default, so "did the operator actually set it?" cannot be recovered from
+    # the value alone — record the provenance explicitly. Without this, a
+    # production deploy with PUBLIC_BASE_URL cleared would quietly hand Supabase
+    # an http://localhost:5000 redirect_to: every social sign-in ends on the
+    # operator's own machine, and the user-visible symptom ("Social sign-in
+    # didn't complete") looks exactly like a Supabase or Google outage.
+    FLASK_ENV = (os.getenv("FLASK_ENV") or "").strip().lower()
+    PUBLIC_BASE_URL_SET = bool((os.getenv("PUBLIC_BASE_URL") or "").strip())
     OAUTH_CALLBACK_PATH = "/auth/oauth/callback"
 
     # Server-side resend throttle (design §5.2). Tests lower this to avoid

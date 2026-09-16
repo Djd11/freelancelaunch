@@ -30,6 +30,30 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
+    # Fail fast on a production deploy with no explicit origin (t5 / reviewer
+    # item 3). PUBLIC_BASE_URL is the base we hand Supabase as the OAuth
+    # `redirect_to` (routes/auth.py::_callback_url) and the origin that must
+    # appear in dashboard → Auth → URL Configuration; it carries a dev default of
+    # http://localhost:5000, so an unset value is silently plausible rather than
+    # obviously broken. Refusing to boot is deliberate: the alternative failure
+    # is every real user's post-auth redirect landing on localhost while the
+    # visible symptom is a generic "Social sign-in didn't complete", which reads
+    # as a Supabase/Google outage and is very hard to trace back here.
+    # Normalise here as well: config.py lowercases, but a test_config override
+    # or any later caller can hand us raw .env text ("PRODUCTION "), and a guard
+    # that only fires on the exact spelling is a guard that can be misconfigured
+    # shut.
+    env = (app.config.get("FLASK_ENV") or "").strip().lower()
+    if env == "production" and not app.config.get("PUBLIC_BASE_URL_SET"):
+        raise RuntimeError(
+            "PUBLIC_BASE_URL must be set to the deployment's public origin when "
+            "FLASK_ENV=production — the OAuth redirect target and the Supabase "
+            "redirect allow-list are both derived from it, and the fallback "
+            "default is http://localhost:5000. Set it (see .env.example and "
+            "docs/supabase-setup.md §5 item 1) or unset FLASK_ENV for a local "
+            "run."
+        )
+
     # P0-2: structured, leveled, module-tagged logging. Under gunicorn this is a
     # no-op if the server already configured the root logger; the app logger
     # still forwards via propagation.
