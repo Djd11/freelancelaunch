@@ -79,6 +79,44 @@ def _new_client(url, key, options=None):
     return create_client(url, key, options) if options else create_client(url, key)
 
 
+def _no_client_side_session():
+    """ClientOptions with Supabase's own session machinery switched off.
+
+    Applies to ALL three clients, not just the PKCE one. This is a
+    server-rendered Flask app whose only auth authority is
+    ``session["user_id"]`` (set by routes/auth.py and read by app.load_user);
+    a Supabase ``Session`` object is never read back, so there is nothing for
+    client-side persistence or token refresh to accomplish here.
+
+    Leaving ``auto_refresh_token=True`` (the library default) is not inert:
+    ``_save_session`` arms a **daemon ``threading.Timer``** for
+    ``expires_in - 10s`` (~55 min at a 1 h TTL). Measured on supabase-auth
+    2.31.0 — armed with the defaults, and with a near-term expiry it really fired
+    at 1.84 s. ``persist_session`` does *not* gate the arming; only
+    ``auto_refresh_token`` does. Since these clients are request-scoped, that
+    timer outlives ``close_request_clients()`` and then calls the refresh
+    endpoint on an httpx session that teardown already closed — and because
+    ``refresh_token_function`` catches everything and retries only
+    ``AuthRetryableError``, a closed-client ``RuntimeError`` is swallowed in
+    silence, so the failure never reaches a log. Net cost per login: a whole
+    client plus a valid refresh token pinned in the timer's closure for an hour,
+    and a refresh that can never succeed. Killing it removes the thread, the
+    retention and the post-teardown path in one line.
+
+    No behavioural risk to RLS: ``create_client`` reads ``auth.get_session()``
+    once at construction to build the Authorization header, and a fresh
+    request-scoped client has no stored session either way — so both clients keep
+    sending the apikey header exactly as before (anon for RLS-scoped reads,
+    service-role only for admin workers).
+
+    A fresh ``ClientOptions`` (and so a fresh ``SyncMemoryStorage``) is built per
+    call — never hoist it to a module constant, or the clients would share one
+    storage instance.
+    """
+    from supabase import ClientOptions
+    return ClientOptions(persist_session=False, auto_refresh_token=False)
+
+
 def close_request_clients(_exc=None):
     """Close any per-request Supabase sessions (registered as app teardown)."""
     for attr in ("supabase", "client_supabase", "auth_supabase"):
@@ -122,7 +160,7 @@ def get_supabase():
             "SUPABASE_SERVICE_ROLE_KEY in the environment (copy .env.example "
             "to .env — see docs/supabase-setup.md)."
         )
-    client = _new_client(url, key)
+    client = _new_client(url, key, _no_client_side_session())
     g.supabase = client
     return client
 
@@ -148,7 +186,7 @@ def get_client_supabase():
             "Supabase anon key is not configured. Set SUPABASE_ANON_KEY "
             "in the environment (copy .env.example to .env)."
         )
-    client = _new_client(url, key)
+    client = _new_client(url, key, _no_client_side_session())
     g.client_supabase = client
     return client
 

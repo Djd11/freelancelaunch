@@ -78,7 +78,10 @@ start is one line, exactly as predicted:
 ```
 storage calls during PKCE authorize: [('set', 'supabase.auth.token-code-verifier')]
 flask.session['_sb_pkce'] keys:      ['supabase.auth.token-code-verifier']
-stored code_verifier length: 64   urlsafe base64 (no + / =): True
+stored code_verifier length: 64   RFC 7636 unreserved charset only: True
+# NOT base64url: generate_pkce_verifier (helpers.py) draws from
+# ascii_letters + digits + "-._~", so '.' and '~' can appear. All are
+# unreserved/cookie-safe; my first probe mislabelled this as "urlsafe base64".
 authorize url: .../auth/v1/authorize?redirect_to=…&code_challenge=…&code_challenge_method=s256&provider=google
 ```
 
@@ -366,3 +369,11 @@ Anyone holding a fixture with those two UUIDs baked in should regenerate them.
    `call_args[0]`, so adding an `options` argument is safe.
 5. **Stale comment** at `routes/auth.py:29` — still says "epoch of the last accepted send"
    since the throttle became a per-address map.
+
+6. **BUG-T3-1 (from qa-eng's T3 suite, `tests/test_auth_otp.py:505`, currently `xfail`):**
+   `oauth_callback` tests the **raw** `request.args.get("code")`, so a whitespace-only code
+   (`?code=%20`) is truthy and reaches `exchange_code_for_session`. Unreachable against real
+   GoTrue (it rejects whitespace codes with `AuthError`), so it is robustness only; fix is
+   `code = (request.args.get("code") or "").strip()` in the same failure branch as item 1.
+   Left unfixed deliberately while T3 was in flight so qa-eng's `xfail` stays honest — **T5
+   owns the flip** (per their note in 2269139), and the marker should become a normal assert.
