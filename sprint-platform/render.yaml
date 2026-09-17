@@ -27,9 +27,11 @@ services:
         sync: false
       - key: ADMIN_EMAIL
         sync: false
-      # Only Google is enabled in Supabase so far; rendering the Facebook
-      # button would just surface "Social sign-in didn't complete". Flip this
-      # to "google,facebook" once Meta app review passes.
+      # Only Google and X are enabled in Supabase so far; rendering the
+      # Facebook button would just surface "Social sign-in didn't complete".
+      # Flip this to "google,facebook,x" once Meta app review passes.
+      # NOTE: slug must match the dashboard card — "x" (OAuth 2.0), not the
+      # deprecated "twitter" (OAuth 1.0a) — or GoTrue rejects the authorize.
       - key: OAUTH_PROVIDERS
-        value: "google,twitter"
+        value: "google,x"
     healthCheckPath: /health

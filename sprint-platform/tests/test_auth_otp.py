@@ -484,6 +484,58 @@ def test_oauth_start_facebook_also_allow_listed(client):
     assert client.get("/auth/oauth/facebook").status_code == 302
 
 
+# ── X (Twitter) slug regression ──────────────────────────────────────────────
+# The Supabase dashboard's "X" provider registers under the GoTrue slug "x"
+# (OAuth 2.0). The deprecated "twitter" slug is a SEPARATE provider (OAuth
+# 1.0a) — requesting it against an X-enabled project fails at GoTrue with
+# 400 "Unsupported provider: provider is not enabled", the exact "provider
+# not found" failure seen on localhost:5000.
+
+def test_oauth_start_x_slug_redirects_with_provider_x(client):
+    """Break: allow-listing or requesting the deprecated 'twitter' slug."""
+    client.application.config["OAUTH_PROVIDERS"] = {"google", "x"}
+    client.auth.sign_in_with_oauth.return_value = SimpleNamespace(
+        url="https://x.example/authorize")
+    r = client.get("/auth/oauth/x")
+    assert r.status_code == 302
+    payload = client.auth.sign_in_with_oauth.call_args[0][0]
+    assert payload["provider"] == "x"
+
+
+def test_x_and_twitter_both_admitted_by_the_allow_list():
+    """"x" (dashboard X, OAuth 2.0) must survive OAUTH_PROVIDERS validation;
+    "twitter" stays admitted for legacy OAuth 1.0a projects.
+    Break: removing either slug from OAUTH_PROVIDER_ALLOW_LIST."""
+    from config import OAUTH_PROVIDER_ALLOW_LIST
+    assert "x" in OAUTH_PROVIDER_ALLOW_LIST
+    assert "twitter" in OAUTH_PROVIDER_ALLOW_LIST
+
+
+def test_oauth_providers_env_with_x_parses_to_x():
+    """OAUTH_PROVIDERS=google,x — the shipped env on this project — validates
+    to {'google', 'x'} instead of silently dropping the X button.
+    Break: 'x' missing from the allow-list."""
+    from config import _oauth_providers
+    with patch.dict("os.environ", {"OAUTH_PROVIDERS": "google,x"}):
+        assert _oauth_providers() == {"google", "x"}
+
+
+def test_login_page_renders_the_x_button_with_provider_x():
+    """/auth/login renders 'Continue with X …' linking to /auth/oauth/x when
+    the provider is enabled — the template label map must know the 'x' slug.
+    Break: template dicts keyed only by 'twitter' (mark falls back to '?')."""
+    app = create_app(dict(TEST_CONFIG, OAUTH_PROVIDERS={"x"}))
+    with patch("services.supabase_client.get_supabase", return_value=MagicMock()):
+        with app.test_client() as c:
+            r = c.get("/auth/login")
+    assert r.status_code == 200
+    assert b"Continue with X" in r.data
+    assert b'href="/auth/oauth/x"' in r.data
+    # The mark map must know the slug too: the fallback renders a literal '?'
+    # inside the badge, which is how a forgotten label shows up in the UI.
+    assert b'oauth-x" aria-hidden="true">?</span>' not in r.data
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 6) oauth_callback
 # ──────────────────────────────────────────────────────────────────────────────

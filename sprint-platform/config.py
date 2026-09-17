@@ -14,7 +14,14 @@ load_dotenv()
 # Supabase dashboard checklist (design §6) can enable on the $0 stack. A name
 # outside this tuple is dropped from OAUTH_PROVIDERS rather than passed on to
 # supabase-auth, so a typo in the env var can never produce a dead button.
-OAUTH_PROVIDER_ALLOW_LIST = ("google", "facebook", "twitter")
+#
+# "x" and "twitter" are DISTINCT GoTrue providers: the dashboard's current
+# "X" card (OAuth 2.0) registers under slug "x", while the deprecated
+# "Twitter" card (OAuth 1.0a) is slug "twitter". Requesting one against a
+# project that enabled the other fails at GoTrue with 400 "provider is not
+# enabled" — so the OAUTH_PROVIDERS env value must match the card that is
+# actually switched on (measured live on this project 2026-09-17).
+OAUTH_PROVIDER_ALLOW_LIST = ("google", "facebook", "twitter", "x")
 
 
 def _env_bool(name, default="false"):
