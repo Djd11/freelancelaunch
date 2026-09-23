@@ -117,9 +117,11 @@ def apply_library_to_sprint(sb, sprint_id, cluster_key):
         if not lesson:
             continue
         payload = d.get("action_payload") or {}
-        if payload.get("lesson"):
+        if payload.get("lesson") and not payload.get("generation_error"):
             populated += 1
             continue  # never clobber an already-populated day
+        if "generation_error" in payload:
+            del payload["generation_error"]
         payload["lesson"] = lesson
         sb.table("sprint_days").update({"action_payload": payload}) \
             .eq("sprint_id", sprint_id).eq("day_no", day_no).execute()
@@ -150,11 +152,16 @@ def try_fill_from_library(sb, sprint_id):
             return False
         if not is_ready(sb, cluster_key):
             return False
-        # Only act when there is something to heal: apply_library_to_sprint
-        # skips non-empty days, so an already-full sprint is a no-op.
         days = sb.table("sprint_days").select("day_no,action_payload") \
             .eq("sprint_id", sprint_id).execute().data or []
-        if not any(not (d.get("action_payload") or {}).get("lesson") for d in days):
+        def _day_needs_heal(d):
+            payload = d.get("action_payload") or {}
+            if not payload.get("lesson"):
+                return True
+            if payload.get("generation_error"):
+                return True
+            return False
+        if not any(_day_needs_heal(d) for d in days):
             return False
         apply_library_to_sprint(sb, sprint_id, cluster_key)
         return True
