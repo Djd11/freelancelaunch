@@ -23,7 +23,7 @@ Three pillars:
 |---|-----------|-------------|
 | 1 | **Free-tier economics** | Everything on $0–15/mo: Render free, Supabase free, OpenRouter free models, local HTML previews |
 | 2 | **No-500 philosophy** | Requests never crash. Generated content is LLM-only: LLM failure surfaces a visible error (`generation_error` on the day payload, 503 on the mentor turn) — never template content. Async generation, deterministic proposal templates, and the "thinking…" loading state stay. |
-| 3 | **Cohort amortization** | Generate one sprint plan per cluster; users in a cohort share content, each keeps their own day counter |
+| 3 | **Cohort amortization** | Generate one sprint plan per cluster; users in a cohort share content, each keeps their own day counter. **Implemented via `cluster_content_library`:** admin provisions a cluster's 14 lessons + 3 project anatomies once (`/admin/content/<key>`); every learner enrolling consumes those rows instantly with zero per-user LLM calls — the per-sprint LLM worker remains only as the fallback for clusters without a library |
 | 4 | **Sprint owns the outcome** | `sprints` is the single source of truth for proposals → contracts → earnings. No separate pipeline module |
 | 5 | **Async generation** | Long LLM work is backgrounded, DB-persisted, and polled — never blocks a request |
 | 6 | **Public marketing surface** | Badge + job counters are public reads pre-launch — they *are* the acquisition hook |
@@ -55,7 +55,7 @@ Three pillars:
  │ Supabase  — Postgres (schema.sql) · Auth · Storage                │
  │  job_clusters · job_feed · demand_snapshots · cohorts · sprints   │
  │  sprint_days · copywork_projects · capstone_briefs · proposals    │
- │  verification_reviews · contracts · badges · unlock_snapshots     │
+ │  cluster_content_library · verification_reviews · contracts       │
  │  user_momentum · mentor_sessions · public_freelancers (view)      │
  └─────────────────────────────────────────────────────────────────┘
         ▲
@@ -82,7 +82,7 @@ Server-rendered Jinja2 views (Tailwind CDN + vanilla JS/Alpine). Screens mirror 
 | `profile` | `/profile/<slug>`, `/profile/me` | Public demand profile + badges + portfolio |
 | `mentor` | `/mentor`, `/mentor/turn` | AI mentor chat |
 | `clients` | `/clients/freelancers` | Badge-filtered freelancer search (`public_freelancers` view) |
-| `admin` | `/admin/*` — clusters, feed, cohorts, `POST /clusters/<key>/refresh` | Feed curation, cohort creation, **demand refresh + snapshots** |
+| `admin` | `/admin/*` — clusters, feed, cohorts, **`/content/*` (cluster content library)**, `POST /clusters/<key>/refresh` | Feed curation, cohort creation, **course-content provisioning (once per cluster)**, demand refresh + snapshots |
 | `auth` | `/auth/login` (GET/POST), `/auth/logout` | Session login (Supabase Auth) |
 
 Full endpoint reference: [`api.md`](./api.md).
@@ -94,6 +94,7 @@ Pure-ish Python modules callable in-request (nudge, meter recompute, mentor) and
 |---------|----------------|
 | `llm` | The **one shared LLM provider chain** (`call_llm`): env → OpenRouter → Omniroute local → `None` → callers raise `LLMGenerationError` (content is LLM-only) |
 | `demand_intelligence` | Feed ingest, normalize, cluster, score, `unlock_day` quantile bucketing, live counters, demand snapshots |
+| `content_library` | **Cluster-amortized course content** (arch §2 P3, implemented): the 14 lessons + 3 project anatomies are provisioned ONCE per cluster in `cluster_content_library` (admin-triggered LLM generation or admin edits) and applied to every new sprint with ZERO per-user LLM calls. `generate_for_cluster` reuses lesson_engine's prompts/parsers so library rows are shape-identical to the old per-sprint output; edited rows are never auto-regenerated |
 | `sprint_planner` | 14-day skeleton (`sprint_days` phase/action map) — synchronous, idempotent upsert |
 | `lesson_engine` | Per-day lesson (title/objective/script/key_points/pitfalls) + project anatomy (clone steps/rubric) — **LLM-only** (no deterministic content); **the async worker** (`generate_sprint_content`) + progress count; on LLM failure stamps a visible `generation_error` on a day payload (never template content). Day 5's lesson is the targeted Gap-Fill micro-lesson on the flagged nuance |
 | `video_engine` | Two-panel lesson voiceover — edge-tts synthesizes the lesson script, ffprobe measures duration, MP3 uploaded to the `voiceovers` Supabase Storage bucket; called from the async content worker, best-effort (None → kinetic-text fallback) |
@@ -136,7 +137,13 @@ User: POST /sprints/<cluster_key>/start   (POST-only — no GET side effects)
   → create_plan() → 14 sprint_days rows (skeleton, sync — request never waits)
   → create_projects() → 3 copywork_projects placeholder skeleton (sync; mockup
     titles/source, empty anatomy)
-  → background thread: lesson_engine.generate_sprint_content() fills each day's
+  → COHORT AMORTIZATION (arch §2 P3): when the cluster's content library is
+    ready (admin provisioned it under /admin/content), the sprint is filled
+    from `cluster_content_library` instantly — ZERO per-user LLM calls
+    (individual users were failing with "generation failed" on free-tier LLM
+    rate limits)
+  → otherwise (no library yet) background thread:
+    lesson_engine.generate_sprint_content() fills each day's
     action_payload.lesson + project anatomy (LLM-only — no deterministic content;
     on failure stamps a visible generation_error on a day payload); the
     populated-payload count IS the DB progress log
@@ -222,7 +229,8 @@ requires the answer to echo the job's terminology) and raise on failure.
 
 | Job | Trigger | Mechanism |
 |-----|---------|-----------|
-| Sprint content generation | `POST /sprints/<cluster_key>/start` | background thread, populated-payload count = DB log, `GET /sprints/<id>/generation` polling; each day's lesson also gets an edge-tts voiceover (`video_engine`) stored in the `voiceovers` Storage bucket |
+| Sprint content generation | `POST /sprints/<cluster_key>/start` | Library path (default): content applied instantly from `cluster_content_library` — zero per-user LLM calls. Fallback (no library): background thread, populated-payload count = DB log, `GET /sprints/<id>/generation` polling; each day's lesson also gets an edge-tts voiceover (`video_engine`) stored in the `voiceovers` Storage bucket |
+| Library provisioning | Admin `POST /admin/content/<key>/generate` (or per-day JSON edit / seed-from-sprint) | One LLM run per cluster reusing lesson_engine prompts; edited rows never regenerated |
 | Gap-Fill detection | project 2 anatomy (deterministic in v1) | inline — `gap_fill_topic` on the day view |
 | Badge issuance | `GET /sprints/<id>/badge` (after completion) | `badge_engine`, idempotent (gate B pass + completed) |
 | Feed refresh / demand snapshots | admin `POST /admin/clusters/<key>/refresh` or nightly cron | `demand_intelligence` |

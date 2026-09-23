@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Content operations</span>
+  <h2>Content Library — {{ cluster.display_name }}</h2>
+  <p class="sub">{{ status.days }}/14 days · {{ status.projects }}/3 projects provisioned. Learners enrolling in <b>{{ cluster.cluster_key }}</b> consume exactly this content.</p>
+</div>
+
+<div class="card" style="max-width:720px">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <form method="POST" action="/admin/content/{{ cluster.cluster_key }}/generate" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-p" type="submit" {% if generating %}disabled{% endif %}>
+        {% if generating %}Generating…{% else %}Generate missing content (AI){% endif %}
+      </button>
+    </form>
+    <span class="small muted">Fills only the missing days/projects. Days you edited are never overwritten. Existing full content is left untouched.</span>
+  </div>
+  {% if status.ready %}
+  <p class="small" style="margin-top:12px"><span class="stamp ok">Ready</span> <span class="muted small">Every new sprint for this cluster is provisioned instantly from this library.</span></p>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:18px">
+  <span class="eyebrow">Course days (14)</span>
+  <table>
+    <thead>
+      <tr><th>Day</th><th>Lesson title</th><th>Engagement</th><th>Origin</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for d in range(1, 15) %}
+      {% set row = days.get(d) %}
+      {% set lesson = row.get('content') if row else None %}
+      <tr>
+        <td>Day {{ d }}</td>
+        {% if lesson %}
+        <td>{{ lesson.get('title') or '—' }}</td>
+        <td>{{ '✓' if lesson.get('hook') else '—' }}</td>
+        <td>{{ row.get('origin') or 'generated' }}</td>
+        <td><a class="btn btn-o btn-sm" href="/admin/content/{{ cluster.cluster_key }}/day/{{ d }}">Edit</a></td>
+        {% else %}
+        <td class="muted">— not provisioned —</td><td></td><td></td>
+        <td><a class="btn btn-o btn-sm" href="/admin/content/{{ cluster.cluster_key }}/day/{{ d }}">Add</a></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <span class="eyebrow">Copy-work projects (3)</span>
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Steps</th><th>Rubric</th></tr></thead>
+    <tbody>
+      {% for p in range(1, 4) %}
+      {% set anatomy = projects.get(p) %}
+      <tr>
+        <td>Project {{ p }}</td>
+        {% if anatomy %}
+        <td>{{ anatomy.get('title') or '—' }}</td>
+        <td>{{ (anatomy.get('clone_steps') or []) | length }}</td>
+        <td>{{ (anatomy.get('rubric') or []) | length }}</td>
+        {% else %}
+        <td class="muted">— not provisioned —</td><td></td><td></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card card-flat" style="margin-top:18px">
+  <span class="eyebrow">Bootstrap from an existing sprint</span>
+  <p class="small muted">Already generated great content inside one of your own sprints? Publish it to the library so every future learner of this cluster consumes it. Needs the sprint's UUID (from the dashboard URL).</p>
+  <form method="POST" action="/admin/content/{{ cluster.cluster_key }}/seed-from-sprint" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input name="sprint_id" placeholder="sprint UUID" required style="min-width:280px">
+    <label class="small muted"><input type="checkbox" name="overwrite" value="true"> overwrite existing library rows</label>
+    <button class="btn btn-o" type="submit">Seed library from sprint</button>
+  </form>
+</div>
+{% endblock %}

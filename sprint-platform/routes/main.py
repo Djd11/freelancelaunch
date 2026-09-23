@@ -166,7 +166,7 @@ def start_sprint(cluster_key):
         "status": "active",
     }).execute().data[0]
 
-    # Skeleton first (fast, always works), then LLM content fills in async —
+    # Skeleton first (fast, always works), then content fills in async —
     # the request never waits on the LLM (eng-spec §5: async generation, DB
     # progress log, frontend polling). Each sprint_days payload the worker
     # populates IS the progress the dashboard polls.
@@ -177,10 +177,29 @@ def start_sprint(cluster_key):
         "completed_days": 0, "unlocked_count": 0, "total_in_cluster": 0, "last_delta": 0,
     }, on_conflict="sprint_id,user_id").execute()
 
-    app = current_app._get_current_object()
-    threading.Thread(
-        target=_generate_in_background, args=(app, sprint["id"],), daemon=True,
-    ).start()
+    # Cohort amortization (arch §2 P3): when the cluster's content library has
+    # been provisioned by admin, the new sprint consumes it instantly — ZERO
+    # per-user LLM calls (individual users were failing with "generation
+    # failed" because the free-tier LLM chain cannot absorb ~31 calls per
+    # enrollment). Only clusters without a library still fall back to the
+    # per-sprint LLM worker.
+    consumed_library = False
+    try:
+        from services import content_library
+        if content_library.is_ready(sb, cluster_key):
+            consumed_library = True
+            content_library.apply_library_to_sprint(sb, sprint["id"], cluster_key)
+    except Exception:
+        current_app.logger.exception(
+            "content library apply failed for %s — falling back to per-sprint generation",
+            cluster_key)
+        consumed_library = False
+
+    if not consumed_library:
+        app = current_app._get_current_object()
+        threading.Thread(
+            target=_generate_in_background, args=(app, sprint["id"],), daemon=True,
+        ).start()
     return redirect(url_for("sprints.dashboard", sprint_id=sprint["id"]))
 
 

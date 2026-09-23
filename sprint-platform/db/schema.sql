@@ -167,6 +167,31 @@ CREATE TABLE IF NOT EXISTS copywork_projects (
     UNIQUE(sprint_id, project_index)
 );
 
+-- ─── CLUSTER CONTENT LIBRARY (admin-provisioned, cohort-amortized) ────
+-- The 14-day course content is provisioned ONCE per job cluster (LLM
+-- generation under admin control + admin edits). Every learner enrolling
+-- consumes these rows instantly — zero per-user LLM calls (arch §2
+-- principle 3). Migration: db/migrations/005_cluster_content_library.sql
+CREATE TABLE IF NOT EXISTS cluster_content_library (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cluster_key TEXT NOT NULL REFERENCES job_clusters(cluster_key) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('day', 'project')),
+    day_no INT NOT NULL DEFAULT 0,        -- kind='day': 1..14; kind='project': 0
+    project_index INT NOT NULL DEFAULT 0, -- kind='project': 1..3; kind='day': 0
+    content JSONB NOT NULL DEFAULT '{}',  -- lesson JSON (day) / anatomy (project)
+    origin TEXT NOT NULL DEFAULT 'generated' CHECK (origin IN ('generated','edited')),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (cluster_key, kind, day_no, project_index),
+    CHECK (
+      (kind = 'day' AND day_no BETWEEN 1 AND 14 AND project_index = 0)
+      OR
+      (kind = 'project' AND project_index BETWEEN 1 AND 3 AND day_no = 0)
+    )
+);
+CREATE INDEX IF NOT EXISTS idx_content_library_cluster
+    ON cluster_content_library(cluster_key, kind);
+
 -- ─── VERIFICATION GATES (A→B and B→C) ────────────────────────────────
 -- Gate 'A' = Phase A passes verification → Phase B unlocks
 -- Gate 'B' = Mock Contract passes verification → Phase C unlocks

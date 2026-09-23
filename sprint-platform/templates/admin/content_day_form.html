@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Content operations</span>
+  <h2>Edit Day {{ day_no }} — {{ cluster_key }}</h2>
+  <p class="sub">The lesson JSON below is exactly what enrolled learners see on that day. Save marks it <b>edited</b> — AI regeneration never overwrites it.</p>
+</div>
+
+<div class="card" style="max-width:860px">
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="content_json">Lesson JSON (title, objective, script, key_points, pitfalls, quiz, quiz_answers, hook, day_overview, usefulness_context, pre_quiz)</label>
+      <textarea id="content_json" name="content_json" rows="24" style="font-family:monospace">{{ lesson | tojson }}</textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-p" type="submit">Save day {{ day_no }}</button>
+      <a class="btn btn-o" href="/admin/content/{{ cluster_key }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

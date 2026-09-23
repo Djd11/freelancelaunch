@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% block admin %}
+<div class="pagehead">
+  <span class="chip"><span class="dot"></span>Content operations</span>
+  <h2>Content Library</h2>
+  <p class="sub">Provision the 14-day course content ONCE per cluster — every learner then consumes it instantly, with zero per-user AI generation. This is what keeps individual enrollments from failing on free AI tiers.</p>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Cluster</th><th>Days</th><th>Projects</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for c in clusters %}
+      <tr>
+        <td><b>{{ c.display_name }}</b> <span class="muted small">({{ c.cluster_key }})</span></td>
+        <td>{{ c.library.days }}/14</td>
+        <td>{{ c.library.projects }}/3</td>
+        <td>
+          {% if c.library.ready %}
+            <span class="stamp ok">Ready</span>
+          {% elif c.library.days or c.library.projects %}
+            <span class="stamp wait">Partial</span>
+          {% else %}
+            <span class="stamp err">Empty</span>
+          {% endif %}
+        </td>
+        <td><a class="btn btn-o btn-sm" href="/admin/content/{{ c.cluster_key }}">Manage</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card card-flat" style="margin-top:18px">
+  <span class="eyebrow">How learners get content</span>
+  <p class="small muted">When a cluster's library is <b>Ready</b>, new sprinters are enrolled with the full course instantly — no per-user generation, nothing to fail. Clusters without a library still fall back to per-sprint AI generation.</p>
+</div>
+{% endblock %}
