@@ -362,6 +362,7 @@ def _resume_stuck_generations(app):
     import threading
     from routes.main import _generate_in_background
     from services.lesson_engine import should_resume_generation, start_generation
+    from services.content_library import try_fill_from_library
     from supabase import create_client
 
     sb = create_client(
@@ -375,6 +376,12 @@ def _resume_stuck_generations(app):
         if not sprint_id:
             continue
         try:
+            # Library-first repair: sprints stranded by pre-library per-user
+            # generation failures heal instantly from the cluster library —
+            # zero LLM calls — before any background worker is considered.
+            if try_fill_from_library(sb, sprint_id):
+                app.logger.info("healed sprint %s from the cluster content library", sprint_id)
+                continue
             if not should_resume_generation(sb, sprint_id):
                 continue
             start_generation(sprint_id)  # mark generating before the thread wakes

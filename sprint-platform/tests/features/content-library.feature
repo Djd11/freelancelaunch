@@ -76,3 +76,20 @@ Feature: Cluster content library — admin provisions content, all users consume
     And a logged-in user with an active sprint "s1" for cluster "email-automation"
     When the sprint "s1" is deleted
     Then the library for cluster "email-automation" still has a lesson for every day 1-14
+
+  Scenario: A sprint stranded by failed per-user generation heals from the library
+    Given a logged-in user with an active sprint "s1" for cluster "email-automation" whose days are empty
+    And the content library worker has run for cluster "email-automation"
+    When I GET "/sprints/s1/day/1"
+    Then the response status is 200
+    And the page contains the text "Day lesson for Klaviyo flow setup for store"
+    And the page does not contain the text "generation failed"
+    And the LLM was called zero times during the repair
+
+  Scenario: The retry endpoint heals a stranded sprint from the library instantly
+    Given a logged-in user with an active sprint "s1" for cluster "email-automation" whose days are empty
+    And the content library worker has run for cluster "email-automation"
+    When I POST to "/sprints/s1/generation/retry"
+    Then the response status is 200
+    And the JSON has field "status" equal to "ready"
+    And every day of sprint "s1" has a lesson

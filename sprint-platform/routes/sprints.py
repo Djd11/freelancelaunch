@@ -38,6 +38,13 @@ def _try_resume_generation(sprint_id):
         return False
     try:
         sb = obtain_supabase()
+        # Library-first repair (arch §2 P3): a sprint created before the
+        # cluster's content library existed is healed from it instantly —
+        # zero LLM calls — instead of re-running the per-user LLM worker
+        # that was failing on free-tier rate limits.
+        from services.content_library import try_fill_from_library
+        if try_fill_from_library(sb, sprint_id):
+            return True
         if not should_resume_generation(sb, sprint_id):
             return False
     except Exception:
@@ -315,6 +322,19 @@ def retry_generation(sprint_id):
     sprint = load_sprint(sb, sprint_id)
     if not sprint or sprint.get("user_id") != g.user["id"]:
         return jsonify({"error": "not found"}), 404
+
+    # Library-first repair (arch §2 P3): when the cluster's library is ready,
+    # the retry instantly heals every empty day from it — zero LLM calls —
+    # instead of re-running the per-user LLM worker that failed before.
+    from services.content_library import try_fill_from_library
+    try:
+        if try_fill_from_library(sb, sprint_id):
+            from services.lesson_engine import generation_progress
+            generated, total = generation_progress(sb, sprint_id)
+            return jsonify({"status": "ready" if generated >= total else "partial",
+                            "generated": generated, "total": total})
+    except Exception:
+        current_app.logger.exception("library retry failed for %s", sprint_id)
 
     import threading
     from flask import current_app

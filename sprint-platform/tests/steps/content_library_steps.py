@@ -13,7 +13,7 @@ import time
 
 from behave import given, when, then
 
-from tests.live_db_adapter import get_live_adapter, OTHER_USER_ID
+from tests.live_db_adapter import get_live_adapter, OTHER_USER_ID, TEST_USER_ID
 from tests.steps.common_steps import _get, _post, _login, _html
 from tests.steps.action_steps import _fake_generation_llm
 
@@ -95,6 +95,22 @@ def step_logged_in_with_sprint(context, sid, cluster):
     adapter._fixture_to_real_sprint[sid] = real_id
     if real_id not in adapter._created_sprints:
         adapter._created_sprints.append(real_id)
+
+
+@given('a logged-in user with an active sprint "{sid}" for cluster "{cluster}" '
+       'whose days are empty')
+def step_logged_in_with_empty_sprint(context, sid, cluster):
+    """Model the REPORTED deployment gap: a sprint created before the library
+    existed, whose per-user LLM generation failed → all 14 days still empty.
+    Direct-seed (not the start route) so the state exists even when the
+    library is already provisioned earlier in the scenario ordering."""
+    from tests.steps.seed_steps import seed_sprint
+    adapter = get_live_adapter()
+    seed_sprint(adapter, sid, cluster, TEST_USER_ID, current_day=1)
+    real_id = adapter.resolve_sprint_id(sid, cluster, TEST_USER_ID)
+    for i in range(1, 15):
+        adapter.sb.table("sprint_days").update({"action_payload": {}}) \
+            .eq("sprint_id", real_id).eq("day_no", i).execute()
 
 
 # ── When ──────────────────────────────────────────────────────────────
@@ -199,6 +215,20 @@ def step_both_sprints_same_day4(context):
 @then('the LLM was called zero times for either learner')
 def step_llm_zero_for_learners(context):
     _assert_no_new_llm_calls(context)
+
+
+@then('the LLM was called zero times during the repair')
+def step_llm_zero_during_repair(context):
+    _assert_no_new_llm_calls(context)
+
+
+@then('every day of sprint "{sid}" has a lesson')
+def step_every_day_has_lesson(context, sid):
+    import services.lesson_engine as le
+    adapter = get_live_adapter()
+    real_id = adapter.resolve_sprint_id(sid, resolve_only=True)
+    generated, total = le.generation_progress(adapter.sb, real_id)
+    assert generated == total, f"sprint {sid} not fully healed: {generated}/{total}"
 
 
 @then("a new learner's day 7 shows the admin-edited title")

@@ -127,6 +127,42 @@ def apply_library_to_sprint(sb, sprint_id, cluster_key):
     return populated
 
 
+def try_fill_from_library(sb, sprint_id):
+    """Repair an EXISTING sprint from its cluster's library — zero LLM calls.
+
+    The cohort-amortization gap this closes: a sprint created BEFORE the
+    library was provisioned (enrollment fell back to per-user LLM generation,
+    which failed on free-tier rate limits) stays empty forever — "generating"
+    or "generation failed" on every day view. When the admin later provisions
+    the library, this heals the sprint from the same rows new enrollments get.
+
+    Returns True when content was (partially) applied, False when there was
+    nothing to do (no library, or no empty days left). Never raises on a
+    missing table — callers use it on hot request paths.
+    """
+    try:
+        sprint = sb.table("sprints").select("cluster_key") \
+            .eq("id", sprint_id).limit(1).execute().data
+        if not sprint:
+            return False
+        cluster_key = sprint[0].get("cluster_key")
+        if not cluster_key:
+            return False
+        if not is_ready(sb, cluster_key):
+            return False
+        # Only act when there is something to heal: apply_library_to_sprint
+        # skips non-empty days, so an already-full sprint is a no-op.
+        days = sb.table("sprint_days").select("day_no,action_payload") \
+            .eq("sprint_id", sprint_id).execute().data or []
+        if not any(not (d.get("action_payload") or {}).get("lesson") for d in days):
+            return False
+        apply_library_to_sprint(sb, sprint_id, cluster_key)
+        return True
+    except Exception:
+        logger.exception("try_fill_from_library failed for %s", sprint_id)
+        return False
+
+
 # ─── Admin-side generation (LLM, once per cluster) ────────────────────
 
 def generate_for_cluster(sb, cluster_key, client_factory=None):
