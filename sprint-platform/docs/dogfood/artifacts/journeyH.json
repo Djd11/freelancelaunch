@@ -1,0 +1,84 @@
+{
+ "steps": [
+  {
+   "name": "mentor turn",
+   "secs": 80.5
+  },
+  {
+   "name": "mentor ui changed",
+   "delta": 0,
+   "tail": "b's language |  | The mentor reads your live job description and your progress, then guides you \u2014 it never just hands you the answer. |  | M | Mentor |  | You're on Day 6 of Email Automation. Your target job says: \"Anonymized real job posting \u2014 checkout recovery + segmentation.\" \u2014 what's one part you're unsure about? |  | \ud83d\udccc Context: job #a0b0ab96-b639-59ab-8ae0-6fd34ec78a24 \u00b7 Email Automation \u00b7 progress 36% | Send |  | Guided & Socratic \u00b7 uses the exact terminology of the job post you're targeting \u00b7 never just answers."
+  },
+  {
+   "name": "anon /profile/dana",
+   "status": 200,
+   "headline": [
+    "Freelance",
+    "Launch",
+    "Dashboard",
+    "Mentor",
+    "For clients",
+    "YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE",
+    "Dana",
+    "None",
+    "Demand-Validated Badges",
+    "No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification.",
+    "Badges are only issued when the Mock Contract passes verification \u2014 never for \"finishing a course.\"",
+    "Case Study Portfolio"
+   ]
+  },
+  {
+   "name": "clients filter",
+   "status": 200,
+   "text": "Freelance | Launch | Sprints | Pricing | CLIENT FILTER | LABOR BOARD \u00b7 VERIFIED SUPPLY | Fresh, verified freelancers |  | Completed \"any skill\" sprint within the last 30 days. Badges are verification-backed \u2014 never self-reported. |  | Skill | Email Automation | Web Scraping | AI Chatbots | Notion Automation | Filter |  | No verified freelancers match this filter yet. |  | Freelancers appear here when their Mock Contract passes verification and the badge is issued."
+  },
+  {
+   "name": "clients filter error",
+   "err": "Locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"input[name=badge], input[name=q], input[type=search], input\").first\n"
+  },
+  {
+   "name": "account B signed up",
+   "url": "/sprints"
+  },
+  {
+   "name": "IDOR: account B opens account A's sprint",
+   "status": 200,
+   "leaked": false,
+   "blocked": false,
+   "first": [
+    "Freelance",
+    "Launch",
+    "Sprints",
+    "Pricing",
+    "Mentor",
+    "Sign out",
+    "DEMAND-VALIDATED SPRINTS",
+    "Choose your sprint"
+   ]
+  },
+  {
+   "name": "IDOR day view",
+   "status": 200,
+   "leaked": true
+  },
+  {
+   "name": "account B own profile slug",
+   "url": "/profile/dana",
+   "status": 200
+  },
+  {
+   "name": "csrf token present in page",
+   "present": true
+  },
+  {
+   "name": "POST without csrf token",
+   "status": 400,
+   "info": "<!doctype html>\n<html lang=en>\n<title>400 Bad Request</title>\n<h1>Bad Request</h1>\n<p>The CSRF token is missing.</p>\n"
+  },
+  {
+   "name": "enroll POST without csrf",
+   "status": 400,
+   "info": "<!doctype html>\n<html lang=en>\n<title>400 Bad Request</title>\n<h1>Bad Request</h1>\n<p>The CSRF token is missing.</p>\n"
+  }
+ ]
+}

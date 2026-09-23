@@ -296,6 +296,7 @@ def before_scenario(context, scenario):
     try:
         with context.client.session_transaction() as sess:
             sess.pop("user_id", None)
+            sess.pop("is_admin", None)
             sess.pop("_flashes", None)
     except Exception:
         pass

@@ -3,6 +3,8 @@ llm — the one shared LLM provider chain (architecture.md §6, eng-spec §5).
 
 call_llm() tries, in order:
   1. env-configured endpoint  (LLM_API_URL / LLM_API_KEY / LLM_MODEL)
+     LLM_API_URL accepts the full endpoint (…/v1/chat/completions) or the
+     provider base (…/v1 or bare origin) — _chat_url() normalizes it.
   2. OpenRouter               (OPENROUTER_API_KEY)
   3. Omniroute local          (127.0.0.1:20128, socket probe)
   4. ❌ → None (caller raises LLMGenerationError — content is LLM-only,
@@ -41,6 +43,26 @@ def _post_json(url, payload, headers, timeout):
         return json.loads(resp.read().decode("utf-8"))
 
 
+def _chat_url(url):
+    """Normalize LLM_API_URL to the full chat-completions endpoint.
+
+    Operators naturally paste the provider's *base* URL (…/v1) — that was the
+    2026-09-17 Render outage: POST …/v1 answers HTTP 405 and every generation
+    reports "No LLM provider answered". Accept the base form here rather than
+    demanding a doc lookup; a URL that already names a resource passes through
+    untouched so custom routes keep working.
+    """
+    base = url.rstrip("/")
+    if base.endswith("/chat/completions"):
+        return base
+    if base.endswith("/v1"):
+        return base + "/chat/completions"
+    if not base.rsplit("/", 1)[-1].count(".") and "/" in base:
+        # A path with a non-version last segment is a named route; leave it.
+        return base
+    return base + "/v1/chat/completions"
+
+
 def _extract_choices(data):
     choices = data.get("choices") or []
     if not choices:
@@ -54,6 +76,7 @@ def _env_call(prompt, timeout):
     url = (os.getenv("LLM_API_URL") or "").strip()
     if not url:
         return None
+    url = _chat_url(url)
     key = (os.getenv("LLM_API_KEY") or "").strip()
     model = (os.getenv("LLM_MODEL") or "gpt-4o-mini").strip()
     headers = {"Authorization": f"Bearer {key}"} if key else {}

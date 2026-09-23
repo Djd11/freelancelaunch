@@ -1,0 +1,32 @@
+{
+ "signup_page_load_s": 0.22,
+ "signup_form_fields": [
+  {
+   "name": "csrf_token",
+   "type": "hidden",
+   "placeholder": "",
+   "required": false
+  },
+  {
+   "name": "display_name",
+   "type": "text",
+   "placeholder": "Maya",
+   "required": false
+  },
+  {
+   "name": "email",
+   "type": "email",
+   "placeholder": "you@example.com",
+   "required": false
+  }
+ ],
+ "signup_page_text": "Freelance\nLaunch\n\nSTART FREE\nCreate your free account\n\nSee live demand for your skill and start Day 1 \u2014 no card, no password.\n\nFirst name\nEmail\nCreate free account \u2192\n\nAlready have an account? Sign in\n\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+ "signup_submit_to_land_s": 3.33,
+ "post_signup_url": "https://freelancelaunch.onrender.com/sprints",
+ "post_signup_text": " Welcome! Pick a skill to see live demand and start Day 1 free.\nFreelance\nLaunch\nSprints\nPricing\nMentor\nSign out\nDEMAND-VALIDATED SPRINTS\nChoose your sprint\n\nEvery sprint is built against a live job cluster. The badge shows how many jobs are open right now.\n\n\ud83d\udce7\nTRENDING\nEmail Automation\n\nKlaviyo \u00b7 Mailchimp \u00b7 n8n flows\n\n\u25cf 127 jobs open \u00b7 $92/hr \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nStart sprint\n\ud83d\udd77\ufe0f\nWeb Scraping\n\nPython \u00b7 BeautifulSoup \u00b7 APIs\n\n\u25cf 105 jobs open \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nStart sprint\n\ud83e\udd16\nAI Chatbots\n\nOpenAI API \u00b7 RAG \u00b7 deployment\n\n\u25cf 50 jobs open \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nStart sprint\n\nDon't see your skill? Request a sprint \u2014 we curate the live demand feed before we build it.\n\nRequest a sprint\n\nTell us the skill \u2014 we curate the live demand feed before we build it.\n\nRequest\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+ "post_signup_flash": [
+  "Welcome! Pick a skill to see live demand and start Day 1 free."
+ ],
+ "console_errors": [],
+ "bad_responses": []
+}

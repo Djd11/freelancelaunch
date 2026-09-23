@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "total": 7,
+    "pass": 6,
+    "fail": 1,
+    "skip_or_gap": 0
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A3",
+      "claim": "first send reaches the transport with should_create_user in options",
+      "class": "FAKE-TRANSPORT",
+      "pass": false,
+      "detail": "status=200 args={\"email\": \"uat-otp-a3@example.com\", \"options\": {\"should_create_user\": true}}",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "resend to the SAME address inside 60s is refused server-side (no GoTrue call)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=1 status=200",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "refused resend shows a countdown, not a silent success",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "Please wait 60s before requesting another code.",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "per-address throttle: a fresh address in the same session is NOT locked out",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=2 (expect 2)",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "\u2026but that new address is now itself throttled",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=2 (still 2)",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown state lives in the session (per-address dict)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "keys=['otp_email', 'otp_last_sent_at']",
+      "ts": "2026-09-15 19:17:43"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown is per-session, not global (fresh cookie jar can send)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=1",
+      "ts": "2026-09-15 19:17:43"
+    }
+  ]
+}

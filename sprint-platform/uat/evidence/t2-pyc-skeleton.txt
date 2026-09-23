@@ -1,0 +1,1116 @@
+
+======================================================================
+OBJECT: <module>  argcount=0 posonly=0 kwonly=0 firstlineno=1
+varnames: ()
+freevars: () cellvars: ()
+NAMES: ('__doc__', '__future__', 'annotations', 'argparse', 'json', 'os', 're', 'subprocess', 'sys', 'time', 'pathlib', 'Path', '__file__', 'resolve', 'parent', 'HERE', 'parents', 'REPO', 'path', 'insert', 'str', 'otp_uat_harness', 'H', 'EVID', 'T_REQUIRED_ROUTES', 'SEAM', '_INNER_VERIFIER_KEY', 'BASELINE', 'recs', '__annotations__', 'rec', '_fingerprint', 'step0_p1_gate', 'LIVE_IDENTITIES', 'audit_myself', '_login_html_with_env', '_surface', '_send_accepted', '_surface_keys', '_no_live_writes', 'step1_p0_roundtrip', 'step2_a2_live_pair', 'step3_a4_happy', 'step4b_a5_argshape', 'step4_a5_bad_codes', 'step5_a3_cooldown', 'step6_a6_collision', 'step7_oauth', 'step8_a11_config', 'step9_behave', 'step10_browser', '_wait_for', 'write_report_skeleton', '_pkce_key', '_verifier_value', '_flash', '_norm_shape', '_set_cookies', 'main', '__name__', 'SystemExit')
+--- STRING CONSTS (in order) ---
+  [0] 'T7 — end-to-end UAT driver for passwordless OTP + social login (uat-validator).\n\nPREPARED, NOT EXECUTED. Nothing here runs without `--execute`, and `--execute` additionally\nrefuses to start unless the code under test actually contains the T2 routes (P1) — so a stale\nor missing build cannot produce evidence.\n\nOrder is fixed and deliberate (captain\'s ruling 18:31):\n  step 0  P1 gate          — routes/templates exist at all (grep the committed code)\n  step 1  P0 round-trip    — one throwaway user, 0 SMTP slots; escalate on failure\n  step 2  A2 live pair     — the ONLY two SMTP slots of the window\n  step 3  A4 happy path    — live, 0 SMTP (generate_link sends no mail)\n  step 4  A5 bad codes     — LIVE and free: verifying a wrong code never sends mail\n  step 5  A3 cooldown      — fake-primary (proves the GoTrue call is not made), live secondary\n  step 6  A6 collision     — fake-primary "no Set-Cookie", live shape comparison from A2\n  step 7  A8/A9/A9b OAuth  — fake transport; PKCE asserted by invariant, key read from the code\n  step 8  A11 config       — env matrix through the same app factory\n  step 9  behave           — targeted files always; full suite only with --full-suite\n  step 10 A1/A12 browser   — playwright/system Chrome, screenshots (finalize in-window: templates churn)\n\nEvidence classes stamped on EVERY record: LIVE | FAKE-TRANSPORT | STATIC. Output:\n  uat/evidence/t7-<ts>.json      machine-readable, one record per assertion\n  uat/reports/otp-social-login.md  skeleton the report is written from\n  uat/reports/otp_live_budget.json ledger (purge list + live-send budget)\n\nNOTE — address space (blocker pending captain): spike §6 measured GoTrue rejecting reserved\ndomains (`@example.com` -> code=email_address_invalid), while the sanctioned write space is\n`uat-otp-*@example.com`. `--domain` flips the whole suite to a measured-accepted space\n(`sprintspike-otp.dev`) once re-approved; the harness guard rejects anything else either way.\n'
+  [6] 'uat'
+  [7] 'evidence'
+  [9] 'get_auth_supabase'
+  [10] 'supabase.auth.token-code-verifier'
+  [16] '30min 38.477s'
+  [17] 'uat/reports/behave-full-run1.log'
+  [19] 'list[dict]'
+  [20] 'recs'
+  [50] '__main__'
+--- OTHER CONSTS ---
+  [(1, '0'), (2, "('annotations',)"), (3, 'None'), (4, "('Path',)"), (5, '1'), (8, "('/auth/otp/send', '/auth/otp/verify', '/auth/oauth/', '/auth/oauth/callback')"), (11, '210'), (12, '145'), (13, '58'), (14, '7'), (15, '15'), (18, "('scenarios', 'passed', 'failed', 'error', 'features_failed', 'wall', 'source')"), (24, "('uat-otp-p0', 'uat-otp-a2new', 'uat-otp-a2exist', 'uat-otp-a4', 'uat-otp-a5', 'uat-otp-a6')"), (51, "('',)"), (52, "('area', 'str', 'claim', 'str', 'cls', 'str', 'ok', 'bool | None', 'detail', 'str', 'return', 'None')"), (53, "('return', 'str')"), (54, "('return', 'bool')"), (55, "('return', 'None')"), (56, '(None,)'), (57, "('oauth_providers', 'str', 'otp_enabled', 'str | None', 'return', 'str')"), (58, "('html_l', 'str', 'return', 'dict')"), (59, "('html', 'str', 'return', 'bool')"), (60, "('html', 'str')"), (61, "('step', 'str', 'return', 'None')"), (62, "('url', 'str', 'timeout_s', 'int', 'return', 'None')"), (63, "('return', 'Path')"), (64, "('return', 'str | None')"), (65, "('html', 'str', 'return', 'str')"), (66, "('return', 'tuple')"), (67, "('return', 'list')"), (68, "('return', 'int')")]
+
+======================================================================
+OBJECT: <module>.rec  argcount=5 posonly=0 kwonly=0 firstlineno=58
+varnames: ('area', 'claim', 'cls', 'ok', 'detail', 'flag')
+freevars: () cellvars: ()
+NAMES: ('recs', 'append', 'H', 'stamp', 'print')
+--- STRING CONSTS (in order) ---
+  [0] 'Stamp one assertion. cls ∈ {LIVE, FAKE-TRANSPORT, STATIC}.'
+  [5] 'PASS'
+  [7] 'FAIL'
+  [8] 'SKIP'
+  [9] '['
+  [10] '] '
+  [11] '15s'
+  [12] ' '
+  [13] '4s'
+  [14] ' — '
+  [16] ''
+--- OTHER CONSTS ---
+  [(1, "frozenset({'LIVE', 'FAKE-TRANSPORT', 'STATIC'})"), (2, 'None'), (3, '2000'), (4, "('area', 'claim', 'class', 'pass', 'detail', 'ts')"), (6, 'False'), (15, '160')]
+
+======================================================================
+OBJECT: <module>._fingerprint  argcount=0 posonly=0 kwonly=0 firstlineno=68
+varnames: ('hashlib', 'h', 'rel', 'p')
+freevars: () cellvars: ()
+NAMES: ('hashlib', 'sha256', 'REPO', 'update', 'encode', 'exists', 'read_bytes', 'hexdigest')
+--- STRING CONSTS (in order) ---
+  [0] 'Content hash of the files under test — how evidence stays pinned when the build is dirty.'
+  [4] '='
+--- OTHER CONSTS ---
+  [(1, '0'), (2, 'None'), (3, "('routes/auth.py', 'services/supabase_client.py', 'config.py', 'templates/login.html', 'templates/signup.html')"), (5, "b'<missing>'"), (6, '12')]
+
+======================================================================
+OBJECT: <module>.step0_p1_gate  argcount=1 posonly=0 kwonly=0 firstlineno=81
+varnames: ('args', 'top', 'head', 'anc', 'src', 'r', 'missing', 'p', 'hits', 'joined', 'six', 'with_no_auth', 'c', 'a', 'b', 'ka', 'kb', 'exc')
+freevars: () cellvars: ()
+NAMES: ('subprocess', 'run', 'str', 'REPO', 'stdout', 'strip', 'expect_commit', 'returncode', 'rec', '_fingerprint', 'allow_dirty', 'read_text', 'T_REQUIRED_ROUTES', 'SEAM', 'sorted', 'rglob', 'lower', 'relative_to', 'bool', 'join', 're', 'findall', 'all', 'H', 'make_app', 'FakeAuth', 'test_client', 'get', 'get_data', '_surface_keys', 'Exception', 'type', '__name__', 'audit_myself', 'recs')
+--- STRING CONSTS (in order) ---
+  [1] 'git'
+  [2] '-C'
+  [3] 'rev-parse'
+  [4] '--show-toplevel'
+  [7] '--short'
+  [8] 'HEAD'
+  [9] 'merge-base'
+  [10] '--is-ancestor'
+  [12] 'P1'
+  [13] 'test tree identity'
+  [14] 'STATIC'
+  [15] 'toplevel='
+  [16] ' HEAD='
+  [17] ' expect='
+  [18] ' '
+  [20] 'is-ancestor OK'
+  [21] 'COMMIT NOT PRESENT IN THIS TREE'
+  [22] ' fingerprint='
+  [23] 'commit '
+  [24] ' reachable from HEAD'
+  [26] 'the implementation is not in the tree I can test — report the blocker, do not improvise'
+  [27] 'NOT PRESENT — testing an uncommitted working tree pinned by fingerprint '
+  [28] '; flag to the captain, the final t6 build must be committed before the report is signed'
+  [29] 'routes/auth.py'
+  [30] 'T2 routes present in routes/auth.py'
+  [31] 'missing '
+  [32] 'session["user_id"] = existing'
+  [33] 'otp'
+  [34] 'signup collision auto-login deleted (static)'
+  [35] 'found `session["user_id"] = existing` still in routes/auth.py'
+  [36] 'auth client factory present'
+  [37] 'services/supabase_client.py'
+  [38] 'templates'
+  [39] '*.html'
+  [40] 'an OTP surface exists in the template tree'
+  [41] ','
+  [44] 'maxlength=["\\\']?(\\d)'
+  [45] 'pattern=["\\\'][^"\\\']*\\{(\\d+)\\}?["\\\']'
+  [46] 'A1'
+  [47] 'code-entry length limit is not hardcoded to 6'
+  [49] 'length hints '
+  [50] ''
+  [51] ' — none in source (otp_length comes from config); the browser pass must confirm 8 digits are typeable'
+  [52] '00000000000000000000000000000000'
+  [53] 'uat-otp-x@example.com'
+  [55] '/auth/login'
+  [57] '/auth/signup'
+  [58] '/auth/login and /auth/signup expose the same OTP form + provider buttons'
+  [59] 'FAKE-TRANSPORT'
+  [60] 'actions/forms google='
+  [62] '/facebook='
+  [64] ' vs '
+  [65] '/'
+  [66] 'surface comparison'
+  [67] ': '
+--- OTHER CONSTS ---
+  [(0, 'None'), (5, 'True'), (6, "('capture_output', 'text')"), (11, "('capture_output',)"), (19, '0'), (25, 'False'), (42, '6'), (54, "('uid', 'email')"), (56, "('as_text',)"), (61, '1'), (63, '2')]
+
+======================================================================
+OBJECT: <module>.step0_p1_gate.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=125
+varnames: ('.0', 'h')
+freevars: () cellvars: ()
+NAMES: ('REPO', 'read_text')
+--- STRING CONSTS (in order) ---
+  [0] 'templates'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.step0_p1_gate.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=131
+varnames: ('.0', 'x')
+freevars: () cellvars: ()
+NAMES: ('int',)
+--- STRING CONSTS (in order) ---
+--- OTHER CONSTS ---
+  [(0, '8'), (1, 'None')]
+
+======================================================================
+OBJECT: <module>.step0_p1_gate.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=147
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'area'
+  [1] 'P1'
+  [2] 'pass'
+--- OTHER CONSTS ---
+  [(3, 'False'), (4, 'None')]
+
+======================================================================
+OBJECT: <module>.audit_myself  argcount=1 posonly=0 kwonly=0 firstlineno=156
+varnames: ('args', 'ast', 'hits', 'f', 'tree', 'node', 'fn', 'name', 'stale', 'tokens', 'root', 'text', 't', 'used', 'cap', 'planned', 'spent_hr')
+freevars: () cellvars: ('args', 'ledger')
+NAMES: ('ast', 'sorted', 'HERE', 'glob', 'parse', 'read_text', 'walk', 'isinstance', 'Call', 'func', 'getattr', 'Name', 'append', 'name', 'lineno', 'rec', 'join', 'len', 'list', 'REPO', 'rglob', 'suffix', 'str', 'H', '_ledger', 'get', 'MAX_TEST_USERS', 'sum', 'LIVE_IDENTITIES', 'MAX_LIVE_SENDS_PER_HOUR')
+--- STRING CONSTS (in order) ---
+  [0] 'Self-enforcement of the team\'s create-only rule and of the purge-list discipline.\n\n    backend-eng\'s spike cleanup deleted two stale husks it did not create, with an over-broad\n    filter; the captain made create-only a hard team rule. It binds me hardest, because I hold a\n    service-role key and could quietly "tidy up" between runs — so this is an executed check on my\n    own source, not a comment I wrote to feel better.\n    '
+  [3] '*.py'
+  [4] 'attr'
+  [5] 'id'
+  [6] ''
+  [8] ':'
+  [9] 'RULE'
+  [10] 'my tooling makes no delete/drop/purge call (create-only)'
+  [11] 'STATIC'
+  [12] '; '
+  [14] ' files parsed via ast'
+  [16] 'tests'
+  [17] 'templates'
+  [18] '*'
+  [20] '__pycache__'
+  [21] 'ignore'
+  [23] 'no live dependency on the two deleted husk accounts (tests/, templates/)'
+  [24] 'my A12 baseline is unaffected; fresh uat-otp-* identities at run time'
+  [25] 'users'
+  [27] 'user cap headroom: '
+  [28] ' spent + '
+  [29] ' to mint <= cap '
+  [30] 'spent='
+  [31] ' projected '
+  [32] '/'
+  [33] ' — OVER CAP: drop an identity or ask the captain'
+  [34] 'sends'
+  [35] 'live SMTP sends in the last hour: '
+  [36] 'only step 2 (A2) may spend slots; the ledger refuses more'
+--- OTHER CONSTS ---
+  [(1, '0'), (2, 'None'), (7, "frozenset({'truncate', 'delete', 'drop', 'delete_user', 'purge'})"), (13, '3'), (15, "('11c3e099', 'cdb275ae', 'uat.user.1788795034', 'live_qa_1788762183')"), (19, "frozenset({'.feature', '.html', '.py'})"), (22, "('errors',)")]
+
+======================================================================
+OBJECT: <module>.audit_myself.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=194
+varnames: ('.0', 'e')
+freevars: ('args', 'ledger') cellvars: ()
+NAMES: ('domain', 'get')
+--- STRING CONSTS (in order) ---
+  [0] '@'
+  [1] 'users'
+--- OTHER CONSTS ---
+  [(2, '1'), (3, 'None')]
+
+======================================================================
+OBJECT: <module>._login_html_with_env  argcount=2 posonly=0 kwonly=0 firstlineno=204
+varnames: ('oauth_providers', 'otp_enabled', 'env', 'code', 'r')
+freevars: () cellvars: ()
+NAMES: ('dict', 'os', 'environ', 'str', 'REPO', 'subprocess', 'run', 'stdout', 'lower')
+--- STRING CONSTS (in order) ---
+  [0] 'Render /auth/login in a FRESH process with the env set before `config` is imported.\n\n    Config.OAUTH_PROVIDERS is evaluated in the class body (config.py:72-73), so it can only be\n    influenced by the environment the way Render/production actually provides it: at process start.\n    '
+  [2] 'OTP_EMAIL_ENABLED'
+  [3] "import sys; sys.path.insert(0, %r)\nfrom app import create_app\nprint(create_app().test_client().get('/auth/login').get_data(as_text=True))\n"
+  [4] '.venv/bin/python'
+  [5] '-c'
+--- OTHER CONSTS ---
+  [(1, "('OAUTH_PROVIDERS',)"), (6, 'True'), (7, "('cwd', 'capture_output', 'text', 'env')")]
+
+======================================================================
+OBJECT: <module>._surface  argcount=1 posonly=0 kwonly=0 firstlineno=221
+varnames: ('html_l',)
+freevars: () cellvars: ()
+NAMES: ('sorted', 'set', 're', 'findall', 'bool', 'search')
+--- STRING CONSTS (in order) ---
+  [0] 'What the auth surface actually offers, read from ACTIONS not words.\n\n    My first draft asserted `"facebook" not in html` — which is permanently true-negative because\n    the inlined stylesheet carries a `.oauth-facebook{…}` rule. Only a rendered form action proves a\n    button exists, so every provider claim below goes through this.\n    '
+  [1] '/auth/oauth/(google|facebook)'
+  [2] '/auth/otp/send'
+  [3] '/auth/otp/verify'
+  [4] 'action="/auth/login"'
+--- OTHER CONSTS ---
+  [(5, "('providers', 'otp_form', 'code_step', 'password_form')")]
+
+======================================================================
+OBJECT: <module>._send_accepted  argcount=1 posonly=0 kwonly=0 firstlineno=236
+varnames: ('html', 'low')
+freevars: () cellvars: ()
+NAMES: ('lower',)
+--- STRING CONSTS (in order) ---
+  [0] "True only when the page shows the code-entry step, not T5's transport-failure message."
+  [1] ''
+  [2] 'couldn&#39;t send'
+  [3] "couldn't send"
+  [5] '/auth/otp/verify'
+  [6] 'step=code'
+  [7] 'on its way'
+--- OTHER CONSTS ---
+  [(4, 'False')]
+
+======================================================================
+OBJECT: <module>._surface_keys  argcount=1 posonly=0 kwonly=0 firstlineno=244
+varnames: ('html', 'actions', 'low')
+freevars: () cellvars: ()
+NAMES: ('re', 'findall', 'lower', 'next')
+--- STRING CONSTS (in order) ---
+  [0] '(otp-form-action, google-button?, facebook-button?) — the identity of the auth surface.'
+  [1] 'action="(/auth/[^"]+)"'
+  [4] 'google'
+  [5] 'facebook'
+--- OTHER CONSTS ---
+  [(3, 'None')]
+
+======================================================================
+OBJECT: <module>._surface_keys.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=248
+varnames: ('.0', 'a')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'otp'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>._no_live_writes  argcount=2 posonly=0 kwonly=0 firstlineno=252
+varnames: ('args', 'step')
+freevars: () cellvars: ()
+NAMES: ('getattr', 'RuntimeError')
+--- STRING CONSTS (in order) ---
+  [0] "--selftest must be write-free BY CONSTRUCTION, not by the parent's skip list.\n\n    Reality check: an explicit `--only 4 --selftest` ran step 4 for real and minted\n    uat-otp-a5@example.com in the live project (uuid 9c2714bf-aa18-4ab6-a2e9-ee2306560cee) while I\n    believed nothing was being written — the skip set only guarded the fan-out path. This gate now\n    protects both paths; a live write during a self-test is not allowed to be possible.\n    "
+  [1] 'selftest'
+  [3] ' performs live auth writes and is banned under --selftest (use the fan-out path, or drop --selftest deliberately)'
+--- OTHER CONSTS ---
+  [(2, 'False'), (4, 'None')]
+
+======================================================================
+OBJECT: <module>.step1_p0_roundtrip  argcount=1 posonly=0 kwonly=0 firstlineno=265
+varnames: ('args', 'email', 'minted', 'exc', 'tok', 'code', 'create_app', 'real_app', 'c', 'r', 'body', 's', 'uid', 'k', 'v', 'rows')
+freevars: () cellvars: ()
+NAMES: ('_no_live_writes', 'domain', 'H', 'mint_user', 'Exception', 'rec', 'type', '__name__', 'print', 'otp_for', 'get', 'bool', 'len', 'app', 'create_app', 'test_client', 'post_form', 'get_data', 'status_code', 'headers', '_flash', 'session_transaction', 'json', 'dumps', 'items', 'profile_rows')
+--- STRING CONSTS (in order) ---
+  [1] 'step 1 (P0)'
+  [2] 'uat-otp-p0@'
+  [3] 'P0'
+  [4] 'mint throwaway user via admin generate_link'
+  [5] 'LIVE'
+  [6] ': '
+  [7] 'ESCALATE: cannot mint the P0 user — see message above; NOT substituting another path.'
+  [9] 'email_otp'
+  [10] 'email_otp present in generate_link response'
+  [11] 'len='
+  [12] ''
+  [13] ' (spike §3.1: this project issues 8-digit codes)'
+  [16] '/auth/otp/verify'
+  [21] 'POST /auth/otp/verify → 302'
+  [23] 'status='
+  [24] ' loc='
+  [25] 'Location'
+  [26] ' body_snip='
+  [27] 'user_id'
+  [28] "session['user_id'] == auth.users.id"
+  [29] 'id'
+  [30] 'session='
+  [31] ' minted='
+  [32] '\n*** P0 FAILED — ESCALATE TO CAPTAIN. Exact transport payload follows; do NOT route A2/A4 through a substitute. ***'
+  [36] '_complete_auth provisioned exactly one user_profiles row'
+  [38] 'rows='
+  [39] ' '
+--- OTHER CONSTS ---
+  [(0, 'None'), (8, 'False'), (14, '0'), (15, "('create_app',)"), (17, "('email', 'token')"), (18, "('follow_redirects',)"), (19, 'True'), (20, "('as_text',)"), (22, '302'), (33, "('status', 'flash', 'minted')"), (34, '2'), (35, "('indent',)"), (37, '1')]
+
+======================================================================
+OBJECT: <module>.step2_a2_live_pair  argcount=1 posonly=0 kwonly=0 firstlineno=304
+varnames: ('args', 'create_app', 'c_new', 'new_email', 'ext_email', 't0', 'r1', 'dur1', 'b1', 'c1', 'c_ext', 't1', 'r2', 'dur2', 'b2', 'c2', 'norm', 'accepted1', 'accepted2', 'both_ok')
+freevars: () cellvars: ()
+NAMES: ('_no_live_writes', 'app', 'create_app', 'test_client', 'domain', 'H', 'mint_user', 'time', 'live_otp_send', 'get_data', '_set_cookies', 'sleep', '_send_accepted', 'rec', 'status_code', 'len', 'lower', 'EVID', 'write_text', 'json', 'dumps')
+--- STRING CONSTS (in order) ---
+  [1] 'step 2 (A2)'
+  [4] 'uat-otp-a2new@'
+  [5] 'uat-otp-a2exist@'
+  [10] 'A2'
+  [11] 'live send (new address) ACCEPTED by GoTrue'
+  [12] 'LIVE'
+  [14] 'live send (existing address) ACCEPTED by GoTrue'
+  [15] 'no user enumeration: status identical'
+  [16] ' vs '
+  [17] 'no user enumeration: body byte-identical after flash-normalisation'
+  [18] 'raw_equal='
+  [19] ' len='
+  [20] '/'
+  [21] ''
+  [22] ' — WITHHELD: a send failed, so identical bodies prove nothing'
+  [23] 'no user enumeration: no session cookie on either'
+  [24] 'cookies='
+  [25] ' / '
+  [26] 'response does not promise delivery (SMTP is not configured — spike §4)'
+  [27] 'on its way'
+  [28] 'if that address'
+  [30] 'a2-bodies.json'
+--- OTHER CONSTS ---
+  [(0, 'None'), (2, '0'), (3, "('create_app',)"), (6, 'True'), (7, "('as_text',)"), (8, '61'), (13, '160'), (29, '200'), (31, "('status', 'body', 'secs')"), (32, "('new', 'exist')"), (33, '2'), (34, "('indent',)")]
+
+======================================================================
+OBJECT: <module>.step2_a2_live_pair.<lambda>  argcount=1 posonly=0 kwonly=0 firstlineno=327
+varnames: ('s',)
+freevars: () cellvars: ()
+NAMES: ('re', 'sub', '_flash')
+--- STRING CONSTS (in order) ---
+  [1] '\\s+'
+  [2] ' '
+--- OTHER CONSTS ---
+  [(0, 'None'), (3, '400')]
+
+======================================================================
+OBJECT: <module>.step3_a4_happy  argcount=1 posonly=0 kwonly=0 firstlineno=353
+varnames: ('args', 'email', 'tok', 'create_app', 'c', 'r', 's', 'uid', 'rp', 'r2', 'still', 'rows')
+freevars: () cellvars: ()
+NAMES: ('_no_live_writes', 'domain', 'H', 'user_id', 'mint_user', 'otp_for', 'app', 'create_app', 'test_client', 'post_form', 'rec', 'status_code', 'headers', 'get', 'session_transaction', '_flash', 'get_data', 'profile_rows', 'len')
+--- STRING CONSTS (in order) ---
+  [1] 'step 3 (A4)'
+  [2] 'uat-otp-a4@'
+  [5] '/auth/otp/verify'
+  [6] 'email_otp'
+  [10] 'A4'
+  [11] 'verify → 302 (to the post-auth target)'
+  [12] 'LIVE'
+  [14] 'status='
+  [15] ' loc='
+  [16] 'Location'
+  [17] 'user_id'
+  [18] 'session uid == auth.users.id'
+  [19] 'id'
+  [20] ' vs '
+  [21] '/sprints'
+  [22] 'authenticated /sprints is 200 (not a redirect)'
+  [24] 'single-use code: replay does not mint a fresh session'
+  [25] 'replay_status='
+  [26] ' flash='
+  [29] 'exactly one user_profiles row after two passes'
+  [31] 'rows='
+--- OTHER CONSTS ---
+  [(0, 'None'), (3, '0'), (4, "('create_app',)"), (7, "('email', 'token')"), (8, 'False'), (9, "('follow_redirects',)"), (13, '302'), (23, '200'), (27, 'True'), (28, "('as_text',)"), (30, '1')]
+
+======================================================================
+OBJECT: <module>.step4b_a5_argshape  argcount=1 posonly=0 kwonly=0 firstlineno=383
+varnames: ('args', 'uid', 'email', 'reaches', 'never', 'token', 'fake', 'c', 'call', 's', 'sess', 'ok')
+freevars: () cellvars: ()
+NAMES: ('domain', 'sorted', 'H', 'FakeAuth', 'verify_result', 'make_app', 'test_client', 'post_form', 'last', 'session_transaction', 'bool', 'get', 'isinstance', 'str', 'rec', 'json', 'dumps')
+--- STRING CONSTS (in order) ---
+  [0] "The token our route hands to GoTrue, byte for byte (T5's [0-9]{8} gate + leading zeros).\n\n    T5 added `_token_is_plausible()` BEFORE GoTrue, so the interesting property is two-sided:\n    junk must never REACH the transport, and a leading-zero code must reach it as a *string* —\n    an int() anywhere on the path would silently truncate `07368987` to 7 digits and lock real\n    users out. Only a recording fake can see the argument, so this half is FAKE-TRANSPORT by nature.\n    "
+  [1] '44444444-4444-4444-4444-444444444444'
+  [2] 'uat-otp-a5b@'
+  [6] 'error'
+  [7] '/auth/otp/verify'
+  [11] 'verify_otp'
+  [12] 'user_id'
+  [14] 'token'
+  [15] 'type'
+  [16] 'email'
+  [17] 'A5'
+  [18] " reaches GoTrue verbatim as a string, type='email'"
+  [19] 'FAKE-TRANSPORT'
+  [20] 'never reached the transport'
+  [21] ' rejected by the local gate (GoTrue never called)'
+  [22] 'call='
+  [23] ' session='
+--- OTHER CONSTS ---
+  [(3, "frozenset({'07368987', '00000000', '45480348'})"), (4, "('7368987', '073689870', 'abcdefgh', '²0245678', '١٢٣٤٥٦٧٨', '1', '07368 987', '0abc-def')"), (5, "('uid', 'email')"), (8, "('email', 'token')"), (9, 'True'), (10, "('follow_redirects',)"), (13, 'None')]
+
+======================================================================
+OBJECT: <module>.step4_a5_bad_codes  argcount=1 posonly=0 kwonly=0 firstlineno=415
+varnames: ('args', 'email', 'create_app', 'leaks', 'cases', 'label', 'token', 'c', 'r', 'body', 's', 'uid', 'l', 'hit')
+freevars: () cellvars: ()
+NAMES: ('_no_live_writes', 'domain', 'H', 'user_id', 'mint_user', 'app', 'create_app', 'items', 'test_client', 'post_form', 'get_data', 'session_transaction', 'get', 'rec', 'status_code', 'bool', 'lower', '_flash')
+--- STRING CONSTS (in order) ---
+  [1] 'step 4 (A5)'
+  [2] 'uat-otp-a5@'
+  [6] '00000000'
+  [7] '12345'
+  [8] 'abcdefg'
+  [9] ''
+  [10] '999999999999999999999999999999999999999999999999999999999999'
+  [11] "1' OR 1=1 --<script>"
+  [13] '/auth/otp/verify'
+  [18] 'user_id'
+  [19] 'A5'
+  [20] ' rejected without session or 5xx'
+  [21] 'LIVE'
+  [23] 'status='
+  [24] ' session='
+  [25] ': no GoTrue internals leaked to HTML'
+  [26] 'leaked='
+  [27] 'uat-otp-nope@'
+  [28] '12345678'
+  [29] 'unknown address at verify = generic error, no 5xx'
+--- OTHER CONSTS ---
+  [(0, 'None'), (3, '0'), (4, "('create_app',)"), (5, "('otp_expired', 'Token has expired', 'email not confirmed', 'signup', 'invalid flow state', 'AuthApiError', 'email_address_invalid')"), (12, "('wrong 8-digit', 'too short', 'non-numeric', 'empty', 'oversized', 'sqli/xss string')"), (14, "('email', 'token')"), (15, 'True'), (16, "('follow_redirects',)"), (17, "('as_text',)"), (22, '200')]
+
+======================================================================
+OBJECT: <module>.step5_a3_cooldown  argcount=1 posonly=0 kwonly=0 firstlineno=452
+varnames: ('args', 'app', 'c', 'a', 'b', 'n', 'r1', 'sent_args', 'r2', 'body2', 'keys', 'per_addr', 'c2')
+freevars: () cellvars: ('fake', 's')
+NAMES: ('H', 'FakeAuth', 'domain', 'make_app', 'test_client', 'post_form', 'last', 'rec', 'get', 'status_code', 'json', 'dumps', 'get_data', 'bool', 're', 'search', '_flash', 'session_transaction', 'sorted', 'any', 'calls', 'clear')
+--- STRING CONSTS (in order) ---
+  [1] '11111111-1111-1111-1111-111111111111'
+  [2] 'uat-otp-a3@'
+  [4] 'uat-otp-a3b@'
+  [6] '/auth/otp/send'
+  [7] 'email'
+  [8] 'sign_in_with_otp'
+  [9] 'A3'
+  [10] 'first send reaches the transport with should_create_user inside options (spike §3.2)'
+  [11] 'FAKE-TRANSPORT'
+  [13] 'options'
+  [14] 'should_create_user'
+  [16] 'status='
+  [17] ' args='
+  [18] 'resend to the SAME address inside 60s is refused server-side (no GoTrue call)'
+  [19] 'calls='
+  [20] ' status='
+  [22] 'refused resend shows a countdown, not a silent success'
+  [23] 'wait\\s+\\d+'
+  [24] '60'
+  [25] 'per-address throttle: a fresh address in the same session is NOT locked out'
+  [27] ' (expect 2)'
+  [28] '…but that new address is now itself throttled'
+  [29] ' (still 2)'
+  [32] 'cooldown state lives in the session, keyed per address'
+  [33] 'keys='
+  [34] 'cooldown is per-session, not global (fresh cookie jar can send)'
+--- OTHER CONSTS ---
+  [(0, 'None'), (3, "('uid', 'email')"), (12, '1'), (15, 'True'), (21, "('as_text',)"), (26, '2')]
+
+======================================================================
+OBJECT: <module>.step5_a3_cooldown.<lambda>  argcount=0 posonly=0 kwonly=0 firstlineno=458
+varnames: ('x',)
+freevars: ('fake',) cellvars: ()
+NAMES: ('len', 'calls')
+--- STRING CONSTS (in order) ---
+  [1] 'm'
+  [2] 'sign_in_with_otp'
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>.step5_a3_cooldown.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=487
+varnames: ('.0', 'k')
+freevars: () cellvars: ()
+NAMES: ('lower',)
+--- STRING CONSTS (in order) ---
+  [0] 'otp'
+  [1] 'sent'
+  [2] 'cooldown'
+--- OTHER CONSTS ---
+  [(3, 'None')]
+
+======================================================================
+OBJECT: <module>.step5_a3_cooldown.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=488
+varnames: ('.0', 'k')
+freevars: ('s',) cellvars: ()
+NAMES: ('isinstance', 'dict', 'any')
+--- STRING CONSTS (in order) ---
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.step5_a3_cooldown.<genexpr>.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=488
+varnames: ('.0', 'x')
+freevars: () cellvars: ()
+NAMES: ('str',)
+--- STRING CONSTS (in order) ---
+  [0] '@'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.step6_a6_collision  argcount=1 posonly=0 kwonly=0 firstlineno=498
+varnames: ('args', 'existing', 'uid', 'fake', 'app', 'c', 'r', 's', 'sess_uid', 'path', 'rp', 'final')
+freevars: () cellvars: ()
+NAMES: ('domain', 'getattr', 'H', 'user_id', 'mint_user', 'FakeAuth', 'make_app', 'test_client', 'post_form', 'session_transaction', 'get', 'rec', 'status_code', '_set_cookies', '_norm_shape')
+--- STRING CONSTS (in order) ---
+  [1] 'uat-otp-a6@'
+  [2] 'selftest'
+  [4] '33333333-3333-3333-3333-333333333333'
+  [5] 'id'
+  [7] '/auth/signup'
+  [8] 'Attacker'
+  [11] 'user_id'
+  [12] 'A6'
+  [13] 'signup with EXISTING email sets no session (takeover closed)'
+  [14] 'FAKE-TRANSPORT'
+  [15] 'status='
+  [16] ' session='
+  [17] ' set-cookie='
+  [21] 'request'
+  [22] 'path'
+  [23] ''
+  [24] ' still lands the anonymous caller on the login page'
+  [25] '/auth/login'
+  [26] 'final='
+  [27] ' status='
+  [28] 'collision response is the same generic shape as otp_send'
+  [29] '/auth/otp/send'
+  [30] 'email'
+  [31] 'uat-otp-a6b@'
+  [32] 'signup='
+  [33] 'RESIDUAL GAP: admin@sprint-platform.local collision never tested live (captain authorized 2 SMTP slots, both spent on A2)'
+  [34] 'STATIC'
+  [35] 'named in the report; not silently covered'
+--- OTHER CONSTS ---
+  [(0, 'None'), (3, 'False'), (6, "('uid', 'email')"), (9, "('email', 'display_name')"), (10, "('follow_redirects', 'token_page')"), (18, "('/sprints', '/admin')"), (19, 'True'), (20, "('follow_redirects',)")]
+
+======================================================================
+OBJECT: <module>.step7_oauth  argcount=1 posonly=0 kwonly=0 firstlineno=528
+varnames: ('args', 'uid', 'email', 'fake', '_create', 'app', 'c', 'r', 'loc', 'qs', 'k', 'want', 'got', 'ok', '_up', 'rt', 'keys', 'has_verifier', 'inner', 'first', 'r_b', 'second', 'bad', 'rb', 'both', 'only_g', 'none_p', 'off', 'on', 'label', 'url', 'want_session', 'f2', 'cc', 'rr', 'body', 'logged_in', 'l', 'leaks', 'f3', 'logged', 'app_b', 'bucket', 'uid_seen', 'ex', 'b', 'cc2app', 'cc2', 'f4', 'cc3', 'replay', 'again', 'rp')
+freevars: () cellvars: ('s',)
+NAMES: ('domain', 'H', 'FakeAuth', 'app', 'create_app', 'test_client', 'get', 'headers', 'rec', 'status_code', 'dict', 're', 'findall', 'str', 'lower', 'bool', 'urllib.parse', 'parse', 'unquote', 'endswith', 'session_transaction', 'keys', 'any', 'get_data', 'items', '_verifier_value', '_pkce_key', 'len', '_surface', '_login_html_with_env', 'exchange_result', 'make_app', '_flash', '_INNER_VERIFIER_KEY', 'modified', 'last', 'json', 'dumps', 'pop')
+--- STRING CONSTS (in order) ---
+  [1] '22222222-2222-2222-2222-222222222222'
+  [2] 'uat-otp-a8@'
+  [3] 'Uat Otp'
+  [7] 'OAUTH_PROVIDERS'
+  [8] 'google'
+  [9] 'facebook'
+  [10] '/auth/oauth/google'
+  [13] 'Location'
+  [14] ''
+  [15] 'A8'
+  [16] 'oauth_start issues a 302 (not a 5xx)'
+  [17] 'LIVE'
+  [19] 'status='
+  [20] ' loc_head='
+  [22] '302 targets <project>.supabase.co/auth/v1/authorize'
+  [23] '/auth/v1/authorize'
+  [24] 'supabase.co'
+  [26] '[?&]([^=]+)=([^&]*)'
+  [28] 'authorize URL carries '
+  [29] '='
+  [30] 'got '
+  [31] " (method 'plain' would mean PKCE is NOT active)"
+  [32] 'challenge != verifier (real S256 hash, not the plain fallback)'
+  [33] 'code_challenge'
+  [34] 'code_challenge_method'
+  [35] 's256'
+  [36] 'redirect_to'
+  [37] 'redirect_to is our own /auth/oauth/callback under PUBLIC_BASE_URL'
+  [38] '/auth/oauth/callback'
+  [41] "verifier persisted in THIS cookie jar's session (key name read from code, not assumed)"
+  [42] 'session keys='
+  [43] 'no verifier/challenge text in the response body'
+  [45] 'oauth_start response persists the session (Set-Cookie present)'
+  [47] 'without it the verifier is dropped and the callback cannot succeed'
+  [48] "verifier is a non-empty value under the client's own storage key"
+  [49] 'key='
+  [50] ' verifier_len='
+  [51] 'second oauth_start rotates the stored verifier (no stale challenge reuse)'
+  [52] 'rotated='
+  [53] "cross-jar binding: a fresh jar cannot redeem another jar's code"
+  [54] 'start_in_fresh_jar='
+  [56] 'non-allow-listed provider '
+  [57] ' refused without 5xx'
+  [60] 'google,facebook'
+  [61] 'A11'
+  [62] 'both buttons render for OAUTH_PROVIDERS=google,facebook (shipped default)'
+  [63] 'providers'
+  [64] 'FB button removed for OAUTH_PROVIDERS=google (plumbing we own)'
+  [65] "no provider buttons for OAUTH_PROVIDERS='' (deliberate opt-out)"
+  [66] 'false'
+  [68] 'OTP form hidden and password path kept for OTP_EMAIL_ENABLED=false'
+  [69] 'otp_form'
+  [70] 'password_form'
+  [71] 'OTP is the primary surface when enabled (send form present)'
+  [74] 'error'
+  [77] 'user_id'
+  [79] 'A9'
+  [80] 'callback '
+  [81] ': 200 + generic recovery copy, no session, no 5xx'
+  [82] 'FAKE-TRANSPORT'
+  [84] ' session='
+  [85] ' flash='
+  [86] ': no raw GoTrue error text'
+  [87] 'leaked='
+  [88] '/auth/oauth/callback?code=uat-fake-code'
+  [89] 'failed exchange (verifier-less, as GoTrue rejects it) -> generic copy, no session'
+  [90] 'ok'
+  [92] '/auth/login'
+  [93] 'uat-scripted-verifier'
+  [94] 'A9b'
+  [95] 'successful exchange → session uid + 302 to the post-auth target'
+  [97] 'session='
+  [98] ' loc='
+  [99] 'exchange_code_for_session'
+  [100] 'exchange called once with the code + a verifier our code controls (or the documented storage fallback)'
+  [101] 'auth_code'
+  [102] 'uat-fake-code'
+  [103] 'code_verifier'
+  [105] 'replayed code does not re-auth (generic recovery, no session)'
+  [106] '/sprints'
+  [107] 'the OAuth-issued session is a normal session (require_login honours it)'
+--- OTHER CONSTS ---
+  [(0, 'None'), (4, "('uid', 'email', 'name_hint')"), (5, '0'), (6, "('create_app',)"), (11, 'False'), (12, "('follow_redirects',)"), (18, '(302, 307)'), (21, '80'), (25, '120'), (27, "(('provider', 'google'), ('code_challenge', None), ('code_challenge_method', 's256'), ('redirect_to', None))"), (39, '140'), (44, "b'code-verifier'"), (55, "('/auth/oauth/evil', '/auth/oauth/twitter', '/auth/oauth/facebook;x', '/auth/oauth/%2e%2e', '/auth/oauth/<script>alert(1)</script>', '/auth/oauth/')"), (58, '(302, 400, 404)'), (59, '500'), (67, "('otp_enabled',)"), (72, "(('no code', '/auth/oauth/callback', False), ('invalid code', '/auth/oauth/callback?code=uat-bogus', False), ('stateless code', '/auth/oauth/callback?code=uat-bogus&state=x', False))"), (73, "('uid', 'email')"), (75, 'True'), (76, "('as_text',)"), (78, "('invalid flow state', 'no valid flow state found', 'AuthApiError', 'code_verifier')"), (83, '200'), (91, "('oauth_providers',)"), (96, '302'), (104, "('', None)")]
+
+======================================================================
+OBJECT: <module>.step7_oauth.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=567
+varnames: ('.0', 'k')
+freevars: ('s',) cellvars: ()
+NAMES: ('str', 'lower')
+--- STRING CONSTS (in order) ---
+  [0] 'verifier'
+  [1] 'pkce'
+--- OTHER CONSTS ---
+  [(2, 'None')]
+
+======================================================================
+OBJECT: <module>.step7_oauth.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=576
+varnames: ('.0', 'k', '_')
+freevars: () cellvars: ()
+NAMES: ('lower',)
+--- STRING CONSTS (in order) ---
+  [0] 'set-cookie'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.step8_a11_config  argcount=1 posonly=0 kwonly=0 firstlineno=699
+varnames: ('args', 'importlib', 'matrix', 'config_mod', 'raw', 'want', 'got', 'dflt', 'var', 'enabled', 'val', 'want_v', 'ex', 'p')
+freevars: () cellvars: ()
+NAMES: ('importlib', 'set', 'config', 'items', 'os', 'environ', 'reload', 'getattr', 'Config', 'rec', 'sorted', 'pop', 'str', 'REPO', 'read_text', 'subprocess', 'run', 'stdout', 'strip')
+--- STRING CONSTS (in order) ---
+  [0] 'Config plumbing, zero live writes: the knobs that decide what ships enabled.'
+  [3] 'google'
+  [4] 'facebook'
+  [6] 'OAUTH_PROVIDERS'
+  [7] 'A11'
+  [8] 'OAUTH_PROVIDERS='
+  [9] ' -> '
+  [10] 'STATIC'
+  [11] ''
+  [12] 'want '
+  [13] 'unset OAUTH_PROVIDERS defaults to google,facebook (Render has no such var yet)'
+  [15] ' == '
+  [17] 'OTP_EMAIL_ENABLED'
+  [18] 'true'
+  [19] 'OTP_EMAIL_ENABLED='
+  [20] 'false-y values must all read False; truthy default is what Render inherits'
+  [21] '.env.example'
+  [22] '.env.example documents OAUTH_PROVIDERS + OTP_EMAIL_ENABLED'
+  [23] 'git'
+  [24] '-C'
+  [25] 'diff'
+  [26] '--name-only'
+  [27] 'f3face8..HEAD'
+  [28] '--'
+  [29] 'render.yaml'
+  [32] 'render.yaml untouched (spec §5.3: no new secrets)'
+--- OTHER CONSTS ---
+  [(1, '0'), (2, 'None'), (5, "('google,facebook', 'google', 'GOOGLE,Facebook', 'google,facebook,github', '', '  google , facebook ')"), (14, "(('OTP_CODE_LENGTH', 8), ('OTP_RESEND_COOLDOWN_SECONDS', 60))"), (16, "('false', '0', 'garbage', 'true')"), (30, 'True'), (31, "('capture_output', 'text')")]
+
+======================================================================
+OBJECT: <module>.step9_behave  argcount=1 posonly=0 kwonly=0 firstlineno=746
+varnames: ('args', 'targeted', 'cmd', 'p', 'tail', 'p2', 'fails')
+freevars: () cellvars: ()
+NAMES: ('str', 'REPO', 'subprocess', 'run', 'stdout', 'strip', 'splitlines', 'rec', 'returncode', 'join', 'full_suite', 'BASELINE', 'sorted', 'set', 're', 'findall')
+--- STRING CONSTS (in order) ---
+  [2] '.venv/bin/python'
+  [3] '-m'
+  [4] 'behave'
+  [8] 'P3'
+  [9] 'targeted behave files green (auth-hardening/landing/api)'
+  [10] 'LIVE'
+  [12] ' / '
+  [13] 'A12'
+  [14] 'full-suite diff'
+  [15] 'STATIC'
+  [16] 'OPT-IN ONLY. Baseline '
+  [17] 'scenarios'
+  [18] ' scenarios / '
+  [19] 'failed'
+  [20] ' fail / '
+  [21] 'wall'
+  [22] ' ('
+  [23] 'source'
+  [24] "). Run with --full-suite outside qa's t6 window."
+  [25] '(?:failed .*?:|Scenario:) ?([\\w ./-]+\\.feature)'
+  [26] 'full-suite NEW failures vs the 58-fail baseline only'
+  [27] 'exit='
+  [28] ' tail='
+--- OTHER CONSTS ---
+  [(0, 'None'), (1, "('tests/features/auth-hardening.feature', 'tests/features/landing.feature', 'tests/features/api.feature')"), (5, 'True'), (6, "('cwd', 'capture_output', 'text')"), (7, '-4'), (11, '0'), (29, '-3')]
+
+======================================================================
+OBJECT: <module>.step10_browser  argcount=1 posonly=0 kwonly=0 firstlineno=766
+varnames: ('args', 'shots', 'port', 'srv', 'sync_playwright', 'pw', 'b', 'ctx', 'pg', 'code_len', 'typed', 'why', 'box', 'masked', 'exc', 'ctx2', 'm', 'over')
+freevars: () cellvars: ('errors',)
+NAMES: ('browser', 'rec', 'REPO', 'mkdir', 'subprocess', 'Popen', 'str', 'DEVNULL', '_wait_for', 'playwright.sync_api', 'sync_playwright', 'chromium', 'launch', 'new_context', 'new_page', 'on', 'goto', 'screenshot', 'locator', 'count', 'content', 'int', 'os', 'environ', 'get', 'fill', 'domain', 'click', 'wait_for_load_state', 'wait_for', 'input_value', 'inner_text', 'replace', 'Exception', 'type', '__name__', 'evaluate', 'close', 'terminate')
+--- STRING CONSTS (in order) ---
+  [0] 'A1 + A12 in a real browser. Guarded by --browser: the captain ruled that no browser evidence\n    may come from an intermediate build, so this stays dormant until the t6 SHA.'
+  [1] 'A1'
+  [2] 'browser pass'
+  [3] 'STATIC'
+  [5] '--browser not given (no browser evidence from an intermediate build). Assertions are coded and ready; they run inside the t6 window.'
+  [6] 'uat'
+  [7] 'screenshots'
+  [11] '.venv/bin/python'
+  [12] '-c'
+  [13] 'import sys; sys.path.insert(0,'
+  [14] ');from app import create_app;create_app().run(port='
+  [15] ', debug=False, use_reloader=False)'
+  [17] 'http://127.0.0.1:'
+  [18] '/auth/login'
+  [22] 'chrome'
+  [29] 'console'
+  [31] 'pageerror'
+  [33] 'networkidle'
+  [35] 'otp-01-login.png'
+  [37] 'login renders in Chrome; OTP send form is the primary block; no console errors'
+  [38] 'LIVE'
+  [39] 'form[action="/auth/otp/send"]'
+  [41] 'console_errors='
+  [43] 'password form is present but secondary'
+  [44] 'form[action="/auth/login"]'
+  [45] ''
+  [46] 'provider buttons render as real links to /auth/oauth/<provider>'
+  [47] 'a[href^="/auth/oauth/"], button[data-provider]'
+  [48] '/auth/oauth/google'
+  [49] 'OTP_CODE_LENGTH'
+  [50] '8'
+  [52] 'form[action="/auth/otp/send"] input[name="email"]'
+  [53] 'uat-otp-a1@'
+  [54] 'form[action="/auth/otp/send"] button[type="submit"]'
+  [55] 'form[action="/auth/otp/verify"] input[name="token"]'
+  [58] '1'
+  [59] 'otp-02-code-step.png'
+  [60] 'body'
+  [61] 'code step shows a MASKED email (not the full address)'
+  [62] '…@'
+  [63] '…'
+  [65] '\n'
+  [66] ' '
+  [67] ': '
+  [69] "code entry accepts the project's "
+  [70] '-digit codes'
+  [73] 'otp-03-mobile-login.png'
+  [74] '() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2'
+  [75] 'no horizontal overflow at 375px'
+  [76] 'overflow='
+--- OTHER CONSTS ---
+  [(4, 'None'), (8, 'True'), (9, "('parents', 'exist_ok')"), (10, '5057'), (16, "('cwd', 'stdout', 'stderr')"), (19, '40'), (20, '0'), (21, "('sync_playwright',)"), (23, 'False'), (24, "('channel', 'headless')"), (25, '1280'), (26, '900'), (27, "('width', 'height')"), (28, "('viewport',)"), (34, "('wait_until',)"), (36, "('path', 'full_page')"), (40, '1'), (42, '3'), (51, "(False, '')"), (56, '8000'), (57, "('timeout',)"), (64, '120'), (68, '200'), (71, '375'), (72, '720')]
+
+======================================================================
+OBJECT: <module>.step10_browser.<lambda>  argcount=1 posonly=0 kwonly=0 firstlineno=790
+varnames: ('m',)
+freevars: ('errors',) cellvars: ()
+NAMES: ('type', 'append', 'text')
+--- STRING CONSTS (in order) ---
+  [1] 'error'
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>.step10_browser.<lambda>  argcount=1 posonly=0 kwonly=0 firstlineno=791
+varnames: ('e',)
+freevars: ('errors',) cellvars: ()
+NAMES: ('append', 'str')
+--- STRING CONSTS (in order) ---
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>._wait_for  argcount=2 posonly=0 kwonly=0 firstlineno=833
+varnames: ('url', 'timeout_s', 'urllib', 'end', 'r')
+freevars: () cellvars: ()
+NAMES: ('urllib.request', 'time', 'request', 'urlopen', 'status', 'Exception', 'sleep', 'RuntimeError')
+--- STRING CONSTS (in order) ---
+  [6] 'local app never answered at '
+  [7] ' within '
+  [8] 's'
+--- OTHER CONSTS ---
+  [(0, 'None'), (1, '0'), (2, '2'), (3, "('timeout',)"), (4, '500'), (5, '1')]
+
+======================================================================
+OBJECT: <module>.write_report_skeleton  argcount=0 posonly=0 kwonly=0 firstlineno=847
+varnames: ('files', 'data', 'summ', 'st', 'out', 'lines', 'r')
+freevars: () cellvars: ()
+NAMES: ('sorted', 'EVID', 'glob', 'SystemExit', 'json', 'loads', 'read_text', 'bool', 'get', 'REPO', 'H', 'stamp', 'name', 'len', 'join', 'BASELINE', 'append', 'format', 'replace', 'write_text')
+--- STRING CONSTS (in order) ---
+  [0] 'Assemble the committed report skeleton FROM the evidence JSON — never hand-counted.'
+  [1] 't7-*-merged-*.json'
+  [2] 'no merged evidence; run without --only first'
+  [4] 'summary'
+  [5] 'selftest'
+  [6] 'uat'
+  [7] 'reports'
+  [8] 'otp-social-login.SELFTEST-preview.md'
+  [9] 'otp-social-login.md'
+  [10] '# UAT REPORT — Passwordless email OTP + Google/Facebook OAuth'
+  [11] ''
+  [12] '> **NOT UAT EVIDENCE — tooling self-test.** Every number below came from a --selftest run (scripted users, zero live writes, no browser). The real report replaces this file.'
+  [13] '- Assembled '
+  [14] ' from `'
+  [15] '` (edit the verdict by hand after reading it)'
+  [16] '- Verdict: **PENDING — uat-validator sign-off**'
+  [17] '- Evidence classes: LIVE / FAKE-TRANSPORT / STATIC on every row'
+  [18] '- Assertions: '
+  [19] 'total'
+  [20] ' total — '
+  [21] 'pass'
+  [22] ' pass, **'
+  [23] 'fail'
+  [24] ' fail**, '
+  [25] 'skip_or_gap'
+  [26] ' gap/skip'
+  [27] '- Live SMTP sends spent: '
+  [28] 'live_sends_spent'
+  [29] ' (cap 2/hour, captain ruling)'
+  [30] '- **Purge list** — every `auth.users` identity this run created ('
+  [31] 'purge_list'
+  [32] " of cap 8). **I delete nothing**; this list is for the user's post-launch cleanup: "
+  [33] ', '
+  [35] '(none)'
+  [36] "- Team rule note: backend-eng's spike cleanup removed two stale husks it did not create (`11c3e099-…` uat.user.1788795034@example.com, `cdb275ae-…` live_qa_1788762183@example.com). Neither is referenced anywhere in this UAT's tooling, plan, evidence or the behave fixtures (audited by the RULE check in step 0), so the recorded behave baseline is unaffected."
+  [37] '- behave baseline for A12: '
+  [38] 'scenarios'
+  [39] ' scenarios / '
+  [40] 'failed'
+  [41] ' pre-existing failures / '
+  [42] 'wall'
+  [43] ' (`'
+  [44] 'source'
+  [45] '`) — NEW failures only'
+  [46] '## Evidence'
+  [47] '| area | class | result | claim | detail |'
+  [48] '|---|---|---|---|---|'
+  [49] 'records'
+  [50] '| {} | {} | {} | {} | {} |'
+  [51] 'area'
+  [52] 'class'
+  [53] 'PASS'
+  [55] '**FAIL**'
+  [56] 'gap'
+  [57] 'claim'
+  [58] '|'
+  [59] '/'
+  [60] 'detail'
+  [61] '\n'
+  [62] ' '
+--- OTHER CONSTS ---
+  [(3, '-1'), (54, 'False'), (63, 'None'), (64, '180'), (65, '(\'\', \'## Gaps (named, with owner)\', "- **G1** real email delivery — user\'s dashboard (Brevo/Resend + `{{ .Token }}` template)", "- **G2** live Google/Facebook round-trip — user\'s provider credentials + Meta app review", \'- **G6** full-suite behave diff — opt-in, ~30 min, needs captain authorization\', \'- **G7** admin-address collision never tested live (both SMTP slots spent on A2)\', \'- **G8** no real-provider click-through: covered to the 302, not to a completed Google login\', \'\')')]
+
+======================================================================
+OBJECT: <module>.write_report_skeleton.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=871
+varnames: ('.0', 'e')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] '`'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.write_report_skeleton.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=898
+varnames: ('.0', 'x')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] ''
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>._pkce_key  argcount=0 posonly=0 kwonly=0 firstlineno=905
+varnames: ('sc', 'attr', 'v')
+freevars: () cellvars: ()
+NAMES: ('services.supabase_client', 'supabase_client', 'getattr', 'isinstance', 'str', 'AssertionError')
+--- STRING CONSTS (in order) ---
+  [0] "The session container name, READ FROM THE CODE — never hardcoded (captain ruling).\n\n    T1 named it `PKCE_SESSION_KEY`; a later task may rename it. If the symbol is gone,\n    fall back to scanning the session for the key that holds the client's own\n    `supabase.auth.token-code-verifier` entry (see A8 invariant records).\n    "
+  [4] 'no PKCE session-key symbol in services/supabase_client.py — assert the invariant by scanning session keys instead of guessing a name'
+--- OTHER CONSTS ---
+  [(1, '0'), (2, 'None'), (3, "('PKCE_SESSION_KEY', 'PKCE_SESSION_ATTR', '_SB_PKCE_KEY')")]
+
+======================================================================
+OBJECT: <module>._verifier_value  argcount=1 posonly=0 kwonly=0 firstlineno=922
+varnames: ('client', 'key', 's', 'bucket', 'k', 'v')
+freevars: () cellvars: ()
+NAMES: ('_pkce_key', 'session_transaction', 'get', 'isinstance', 'dict', 'items', 'lower', 'str')
+--- STRING CONSTS (in order) ---
+  [0] 'The stored PKCE verifier, found by shape (container key + inner client key), never by guess.'
+  [1] 'verifier'
+--- OTHER CONSTS ---
+  [(2, 'None')]
+
+======================================================================
+OBJECT: <module>._flash  argcount=1 posonly=0 kwonly=0 firstlineno=936
+varnames: ('html', 'm')
+freevars: () cellvars: ()
+NAMES: ('re', 'findall', 'join')
+--- STRING CONSTS (in order) ---
+  [1] '(?s)class="[^"]*(?:flash|alert|error)[^"]*"[^>]*>([^<]{3,200})'
+  [2] ''
+  [3] ' | '
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>._flash.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=938
+varnames: ('.0', 'x')
+freevars: () cellvars: ()
+NAMES: ('strip',)
+--- STRING CONSTS (in order) ---
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>._norm_shape  argcount=1 posonly=0 kwonly=0 firstlineno=941
+varnames: ('resp',)
+freevars: () cellvars: ()
+NAMES: ('status_code', '_flash', 'get_data')
+--- STRING CONSTS (in order) ---
+  [3] ''
+--- OTHER CONSTS ---
+  [(0, 'None'), (1, 'True'), (2, "('as_text',)")]
+
+======================================================================
+OBJECT: <module>._set_cookies  argcount=1 posonly=0 kwonly=0 firstlineno=945
+varnames: ('resp', 'k', 'v')
+freevars: () cellvars: ()
+NAMES: ('headers', 'items', 'lower', 'str')
+--- STRING CONSTS (in order) ---
+  [1] 'set-cookie'
+  [2] 'user_id'
+--- OTHER CONSTS ---
+  [(0, 'None')]
+
+======================================================================
+OBJECT: <module>.main  argcount=0 posonly=0 kwonly=0 firstlineno=949
+varnames: ('ap', 'args', 'steps', 'x', 'n', '_', 'want', 'fn', 'merged', 'codes', 'skip', 'child', 'flag', 'val', 'r', 'latest', 'out', 'ledger', 'halted', 'ok', 'exc', 'tag')
+freevars: () cellvars: ()
+NAMES: ('argparse', 'ArgumentParser', '__doc__', 'add_argument', 'parse_args', 'step0_p1_gate', 'step1_p0_roundtrip', 'step2_a2_live_pair', 'step3_a4_happy', 'step4_a5_bad_codes', 'step4b_a5_argshape', 'step5_a3_cooldown', 'step6_a6_collision', 'step7_oauth', 'step8_a11_config', 'step9_behave', 'step10_browser', 'only', 'split', 'int', 'report', 'print', 'write_report_skeleton', 'execute', '__name__', 'EVID', 'mkdir', 'inline', 'selftest', 'set', 'str', 'REPO', 'Path', '__file__', 'resolve', 'domain', 'expect_commit', 'out_tag', 'full_suite', 'append', 'allow_dirty', 'subprocess', 'run', 'returncode', 'sorted', 'glob', 'extend', 'json', 'loads', 'read_text', 'get', 'time', 'H', '_ledger', 'write_text', 'dumps', 'len', 'sum', 'BASELINE', 'bool', 'Exception', 'rec', 'type', 'sleep', 'replace', 'recs')
+--- STRING CONSTS (in order) ---
+  [2] '--execute'
+  [3] 'store_true'
+  [4] 'actually run (without it: dry plan print)'
+  [6] '--domain'
+  [7] 'example.com'
+  [8] 'test address space (pending captain re-approval; see module docstring)'
+  [10] '--expect-commit'
+  [11] ''
+  [12] 'the t6-final commit sha to assert P1 against'
+  [13] '--inline'
+  [14] 'run all steps in ONE process (not recommended: patching bleeds between steps)'
+  [15] '--out-tag'
+  [16] 'run'
+  [18] '--selftest'
+  [19] 'tooling check only: scripted uids, ZERO live writes; output is not UAT evidence'
+  [20] '--allow-dirty'
+  [21] 'permit testing an uncommitted working tree, pinned by content fingerprint (prep-window only; the signed report must cite a SHA)'
+  [22] '--full-suite'
+  [23] 'also run the ~30-min behave diff'
+  [24] '--only'
+  [25] 'comma list of steps to run (e.g. 0,1)'
+  [26] '--browser'
+  [27] 'run the playwright/system-Chrome pass (A1/A12) — t6 window only'
+  [28] '--report'
+  [29] 'write the report skeleton from evidence'
+  [41] ','
+  [42] 'REPORT SKELETON ->'
+  [43] 'DRY RUN — nothing executed. Steps queued:'
+  [44] '  step '
+  [45] ': '
+  [46] '\nPreconditions this run enforces: P1 gate -> P0 round-trip -> (A2 costs the only 2 SMTP slots) -> everything else free/fake.'
+  [50] '\n=== step '
+  [51] ' ('
+  [52] ') SKIPPED by --selftest (needs live writes / long suite) ==='
+  [53] '.venv/bin/python'
+  [54] '\n=== spawning step '
+  [55] ') in its own process ==='
+  [57] 't7-'
+  [58] '-step'
+  [59] '-*.json'
+  [61] 'records'
+  [62] 'HALTED by the P1/P0 gate; downstream steps are not run.'
+  [63] '-merged-'
+  [64] '.json'
+  [69] 'users'
+  [70] 'sends'
+  [73] '\nMERGED EVIDENCE -> '
+  [76] '\n--- step '
+  [77] ' ---'
+  [78] 'step'
+  [79] 'STATIC'
+  [81] '\nHALTED: P1/P0 failed — nothing downstream is trustworthy.'
+  [83] '_'
+  [84] '-'
+  [89] '\nEVIDENCE -> '
+  [90] '\npurge list: '
+--- OTHER CONSTS ---
+  [(0, 'None'), (1, "('description',)"), (5, "('action', 'help')"), (9, "('default', 'help')"), (17, "('default',)"), (30, '0'), (31, '1'), (32, '2'), (33, '3'), (34, '4'), (35, '5'), (36, '6'), (37, '7'), (38, '8'), (39, '9'), (40, '10'), (47, 'True'), (48, "('parents', 'exist_ok')"), (49, 'frozenset({1, 2, 3, 4, 9})'), (56, "('cwd',)"), (60, '-1'), (68, "('total', 'pass', 'fail', 'skip_or_gap')"), (71, "('summary', 'purge_list', 'live_sends_spent', 'baseline', 'records', 'child_exit_codes', 'selftest')"), (72, "('indent', 'default')"), (75, 'False'), (80, '(0, 1)'), (82, '0.2'), (88, "('summary', 'purge_list', 'live_sends_spent', 'baseline', 'records')")]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1025
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'True'), (2, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1026
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'False'), (2, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1027
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1033
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'False'), (2, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1055
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'True'), (2, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1056
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'False'), (2, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1057
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'None')]
+
+======================================================================
+OBJECT: <module>.main.<genexpr>  argcount=1 posonly=0 kwonly=0 firstlineno=1064
+varnames: ('.0', 'r')
+freevars: () cellvars: ()
+NAMES: ()
+--- STRING CONSTS (in order) ---
+  [0] 'pass'
+--- OTHER CONSTS ---
+  [(1, 'False'), (2, 'None')]

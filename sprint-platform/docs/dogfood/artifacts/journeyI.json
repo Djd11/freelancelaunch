@@ -1,0 +1,15 @@
+{
+ "a_day3_has_marker": true,
+ "b_landed_on": "/sprints",
+ "b_leaked_marker": false,
+ "b_sees_own_picker": true,
+ "b_post_complete": {
+  "status": 404,
+  "body": "{\"error\":\"not found\",\"ok\":false}\n"
+ },
+ "a_day3_still_incomplete": false,
+ "b_profile_url": "/profile/dana",
+ "b_profile_email_hint": false,
+ "slug_page": "Freelance | Launch | Dashboard | Mentor | For clients | YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE | Dana |  | None |  | Demand-Validated Badges |  | No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification. |  | Badges are only issued when the Mock Contract passes verification \u2014 never for \"finishing a course.\" |  | Case Study Portfolio |  | For clients: filter freelancers by \"Completed [Skill] ",
+ "a_slug_page": "Freelance | Launch | Dashboard | Mentor | For clients | YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE | Dana |  | None |  | Demand-Validated Badges |  | No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification. |  | Badges are only issued when the Mock Contract passes verification \u2014 never for \"finishing a course.\" |  | Case Study Portfolio |  | For clients: filter freelancers by \"Completed [Skill] "
+}

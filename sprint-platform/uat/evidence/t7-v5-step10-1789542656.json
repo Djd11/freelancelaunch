@@ -1,0 +1,31 @@
+{
+  "summary": {
+    "total": 1,
+    "pass": 0,
+    "fail": 0,
+    "skip_or_gap": 1
+  },
+  "purge_list": [
+    "uat-otp-a5@example.com"
+  ],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A1",
+      "claim": "browser pass",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "--browser not given (no browser evidence from an intermediate build). Assertions are coded and ready; they run inside the t6 window.",
+      "ts": "2026-09-16 12:40:55"
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+ "events": [
+  {
+   "t": 9.75,
+   "kind": "console",
+   "level": "warning",
+   "msg": "Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license\nPass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear."
+  },
+  {
+   "t": 9.99,
+   "kind": "console",
+   "level": "warning",
+   "msg": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio"
+  },
+  {
+   "t": 10.44,
+   "kind": "requestfailed",
+   "level": "error",
+   "msg": "GET https://tzfohwzgxlecsilvqmjq.supabase.co/storage/v1/object/public/voiceovers/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day-3.mp3 :: net::ERR_ABORTED"
+  },
+  {
+   "t": 15.15,
+   "kind": "console",
+   "level": "warning",
+   "msg": "Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license\nPass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear."
+  },
+  {
+   "t": 19.04,
+   "kind": "console",
+   "level": "warning",
+   "msg": "Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license\nPass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear."
+  },
+  {
+   "t": 19.1,
+   "kind": "console",
+   "level": "warning",
+   "msg": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio"
+  },
+  {
+   "t": 19.21,
+   "kind": "requestfailed",
+   "level": "error",
+   "msg": "GET https://tzfohwzgxlecsilvqmjq.supabase.co/storage/v1/object/public/voiceovers/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day-3.mp3 :: net::ERR_ABORTED"
+  },
+  {
+   "t": 45.81,
+   "kind": "console",
+   "level": "warning",
+   "msg": "Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license\nPass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear."
+  },
+  {
+   "t": 45.93,
+   "kind": "console",
+   "level": "warning",
+   "msg": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio"
+  },
+  {
+   "t": 46.06,
+   "kind": "requestfailed",
+   "level": "error",
+   "msg": "GET https://tzfohwzgxlecsilvqmjq.supabase.co/storage/v1/object/public/voiceovers/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day-3.mp3 :: net::ERR_ABORTED"
+  }
+ ],
+ "timings": [
+  {
+   "url": "http://localhost:5000/auth/login",
+   "ms": 405,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/3",
+   "ms": 1810,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/3",
+   "ms": 1720,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 403,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/contract",
+   "ms": 876,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/contract",
+   "ms": 912,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/",
+   "ms": 441,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "ms": 4153,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/3",
+   "ms": 2605,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/auth/signup",
+   "ms": 441,
+   "status": 200
+  }
+ ]
+}

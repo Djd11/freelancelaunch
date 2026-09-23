@@ -73,24 +73,23 @@
       {% endif %}
 
       {% if otp_enabled %}
-      <details class="alt">
-        <summary>Use my password instead</summary>
+      <div class="divider"></div>
       {% endif %}
-        <form method="post" action="/auth/login"{% if otp_enabled %} style="margin-top:14px"{% endif %}>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="field">
-            <label for="pw_email">Email</label>
-            <input type="email" id="pw_email" name="email" placeholder="you@example.com" autocomplete="email" value="{{ email or '' }}" required>
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Your password" autocomplete="current-password" required>
-          </div>
-          <button class="btn {% if otp_enabled %}btn-o{% else %}btn-p{% endif %}" type="submit" style="width:100%">Sign in with password →</button>
-        </form>
-      {% if otp_enabled %}
-      </details>
-      {% endif %}
+      {# Password sign-in stays a first-class option (it is the only way the
+         pre-created operator/admin account signs in), so it renders expanded —
+         the old collapsed <details> hid it from demo audiences (UAT). #}
+      <form method="post" action="/auth/login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label for="pw_email">Email</label>
+          <input type="email" id="pw_email" name="email" placeholder="you@example.com" autocomplete="email" value="{{ email or '' }}" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Your password" autocomplete="current-password" required>
+        </div>
+        <button class="btn {% if otp_enabled %}btn-o{% else %}btn-p{% endif %}" type="submit" style="width:100%">Sign in with password →</button>
+      </form>
 
       <div class="divider"></div>
       <p class="xs muted" style="text-align:center">

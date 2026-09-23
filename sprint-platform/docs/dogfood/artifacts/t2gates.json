@@ -1,0 +1,117 @@
+{
+ "steps": [
+  {
+   "name": "day1 task",
+   "zero_points": false,
+   "honest_state": true,
+   "retry_btn": 1,
+   "checkboxes": 0,
+   "submit_disabled": false,
+   "copy": [
+    "This day's checklist hasn't been written yet",
+    "Content generation failed for this project \u2014 there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute.",
+    "\u21bb Retry generation"
+   ]
+  },
+  {
+   "name": "day2 task",
+   "zero_points": false,
+   "honest_state": true,
+   "retry_btn": 1,
+   "checkboxes": 0,
+   "submit_disabled": false,
+   "copy": [
+    "This day's checklist hasn't been written yet",
+    "Content generation failed for this project \u2014 there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute.",
+    "\u21bb Retry generation"
+   ]
+  },
+  {
+   "name": "day3 task",
+   "zero_points": false,
+   "honest_state": true,
+   "retry_btn": 1,
+   "checkboxes": 0,
+   "submit_disabled": false,
+   "copy": [
+    "This day's checklist hasn't been written yet",
+    "Content generation failed for this project \u2014 there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute.",
+    "\u21bb Retry generation"
+   ]
+  },
+  {
+   "name": "day4 task",
+   "zero_points": false,
+   "honest_state": false,
+   "retry_btn": 0,
+   "checkboxes": 3,
+   "submit_disabled": false,
+   "copy": [
+    "When all 3 points are ticked and your link is in, this project counts as done."
+   ]
+  },
+  {
+   "name": "day5 task",
+   "zero_points": false,
+   "honest_state": false,
+   "retry_btn": 0,
+   "checkboxes": 3,
+   "submit_disabled": false,
+   "copy": [
+    "When all 3 points are ticked and your link is in, this project counts as done."
+   ]
+  },
+  {
+   "name": "empty-rubric submit flash",
+   "flash": "This day's checklist hasn't finished generating, so the build can't be verified yet \u2014 use \u201cRetry generation\u201d on the task tab, then tick the rubric and submit again.",
+   "still_says_three": false
+  },
+  {
+   "name": "contract phase A",
+   "status": 200,
+   "url": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "redirected_to_picker": true,
+   "gate_flash": [
+    "Shift B unlocks when your three copy-work builds pass Gate A verification \u2014 finish Phase A first.",
+    "Unlocks when Phase A passes verification",
+    "Job Unlock Meter"
+   ],
+   "contract_open": true
+  },
+  {
+   "name": "complete button present",
+   "n": 1,
+   "phase_before": [
+    "SHIFT B \u00b7 DAY 06/14"
+   ]
+  },
+  {
+   "name": "after POST /complete",
+   "url": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "site_error": false,
+   "refuses": true,
+   "claims_finished_all_14": false,
+   "claims_badge": false,
+   "flash": [
+    "Not yet \u2014 Gate A (three verified copy-work builds) must pass before your sprint can be completed.",
+    "Complete sprint",
+    "\u2713 day complete",
+    "\u2713 day complete"
+   ]
+  },
+  {
+   "name": "sprint still active after attempt",
+   "phase_after": [
+    "SHIFT B \u00b7 DAY 06/14"
+   ],
+   "still_generating_or_active": true,
+   "status_line": [
+    "TRAINING LIVE"
+   ]
+  },
+  {
+   "name": "vague deliverable",
+   "note": "contract not reachable on this Phase-A sprint (expected lock)"
+  }
+ ]
+}

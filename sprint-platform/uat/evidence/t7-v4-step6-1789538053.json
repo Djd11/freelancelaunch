@@ -1,0 +1,63 @@
+{
+  "summary": {
+    "total": 5,
+    "pass": 4,
+    "fail": 0,
+    "skip_or_gap": 1
+  },
+  "purge_list": [
+    "uat-otp-a5@example.com"
+  ],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A6",
+      "claim": "signup with EXISTING email sets no session (takeover closed)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 session=None set-cookie=[]",
+      "ts": "2026-09-16 11:24:13"
+    },
+    {
+      "area": "A6",
+      "claim": "/sprints still lands the anonymous caller on the login page",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "final='/auth/login' status=200",
+      "ts": "2026-09-16 11:24:13"
+    },
+    {
+      "area": "A6",
+      "claim": "/admin still lands the anonymous caller on the login page",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "final='/auth/login' status=200",
+      "ts": "2026-09-16 11:24:13"
+    },
+    {
+      "area": "A6",
+      "claim": "collision response is the same generic shape as otp_send",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "signup=200",
+      "ts": "2026-09-16 11:24:13"
+    },
+    {
+      "area": "A6",
+      "claim": "RESIDUAL GAP: admin@sprint-platform.local collision never tested live (captain authorized 2 SMTP slots, both spent on A2)",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "named in the report; not silently covered",
+      "ts": "2026-09-16 11:24:13"
+    }
+  ]
+}

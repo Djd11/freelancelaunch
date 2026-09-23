@@ -167,3 +167,34 @@ Feature: UI/UX — every page's CTAs work end to end (no dead ends, no fake func
     When I GET "/sprints"
     Then the response status is 200
     And the page contains the text "Choose your sprint"
+
+  # ── AUTH / ADMIN SURFACE ──────────────────────────────────────────
+  # UAT demo blocker: the password sign-in form (the only way the pre-created
+  # operator/admin account signs in) sat behind a collapsed disclosure that
+  # demo audiences never find; /admin/ had no nav entry point at all.
+  Scenario: Login — the password sign-in form is a visible option
+    Given I am not logged in
+    When I GET "/auth/login"
+    Then the response status is 200
+    And the page contains the text "Sign in with password"
+    And the page does not contain the text "Use my password instead"
+
+  Scenario: Admin — the Admin nav link reaches the admin dashboard
+    Given I am logged in as the admin operator
+    When I GET "/sprints"
+    Then the page contains a link to "/admin/"
+    When I follow the link to "/admin/"
+    Then the response status is 200
+    And the page contains the text "Admin Dashboard"
+
+  Scenario: Admin — regular users are not offered the admin surface
+    Given I am logged in as a regular user
+    When I GET "/sprints"
+    Then the page does not contain a link to "/admin/"
+    And the page does not contain the text "Admin"
+
+  Scenario: Admin — anonymous visitors are not offered the admin surface
+    Given I am not logged in
+    When I GET "/"
+    Then the response status is 200
+    And the page does not contain a link to "/admin/"

@@ -1,0 +1,3 @@
+{"t": 4.41, "kind": "http", "level": "error", "msg": "400 GET https://tzfohwzgxlecsilvqmjq.supabase.co/auth/v1/authorize?redirect_to=http%3A%2F%2Flocalhost%3A5000%2Fauth%2Fcallback&code_challenge=QAvp_3AoP2eYxHsa1a9NiuhkPcAsRwwRQhx_Z65JfDs&code_challenge_method=s256&state=jwFf-cEY-m9HXdBj&provider=google"}
+{"t": 4.45, "kind": "console", "level": "error", "msg": "Failed to load resource: the server responded with a status of 400 ()"}
+{"t": 4.47, "kind": "nav", "level": "error", "msg": "400 on http://localhost:5000/auth/google"}

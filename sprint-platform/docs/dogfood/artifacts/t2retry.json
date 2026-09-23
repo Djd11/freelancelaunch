@@ -1,0 +1,30 @@
+{
+ "steps": [
+  {
+   "name": "before retry",
+   "checkboxes": 0,
+   "empty_state": true
+  },
+  {
+   "name": "retry control",
+   "count": 1,
+   "label": "\u21bb Retry generation",
+   "href": null
+  },
+  {
+   "name": "retry click",
+   "ms": 5769,
+   "flash": "(NO MESSAGE)",
+   "url": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/generation/retry"
+  },
+  {
+   "name": "checklist still missing after 5 min",
+   "checkboxes": 0,
+   "copy": [
+    "Your step-by-step guide couldn't be written (Generation failed: No LLM provider answered for the day's lesson) \u2014 build from the reference below.",
+    "This day's checklist hasn't been written yet",
+    "Content generation failed for this project \u2014 there is nothing to tick, so submitting can't verify yet. Retry and it fills in within a minute."
+   ]
+  }
+ ]
+}

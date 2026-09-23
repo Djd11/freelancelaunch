@@ -177,7 +177,20 @@ def _clear_pkce_verifier():
     session.modified = True
 
 
-def _complete_auth(uid, email=None, name_hint=None, welcome=None):
+def _stamp_admin_flag(user):
+    """Stamp ``session["is_admin"]`` from the auth user's own metadata.
+
+    The admin nav link (sprint picker/dashboard) reads this session flag; the
+    admin routes themselves re-verify role=email/admin metadata server-side
+    (routes/admin.py::_require_admin), so the flag is presentational only —
+    tampering with the cookie shows or hides a link, it never unlocks /admin/*.
+    """
+    meta = getattr(user, "user_metadata", None) or {}
+    if meta.get("role") == "admin":
+        session["is_admin"] = True
+
+
+def _complete_auth(uid, email=None, name_hint=None, welcome=None, user=None):
     """The single post-auth step for OTP + OAuth (design §4).
 
     Sets the session, then creates a ``user_profiles`` row **only when none
@@ -191,6 +204,7 @@ def _complete_auth(uid, email=None, name_hint=None, welcome=None):
     and load_user() tolerates a missing row. So it is logged and swallowed.
     """
     session["user_id"] = uid
+    _stamp_admin_flag(user)
     display = (name_hint or "").strip()
     if not display and email:
         display = email.split("@")[0]
@@ -282,6 +296,7 @@ def login():
             return _render_login(status=200, email=email)
 
         session["user_id"] = uid
+        _stamp_admin_flag(user)
         # Password logins must not inherit OTP leftovers either (INFO-3): the
         # pending name and address state belong to a flow this request skipped.
         _clear_otp_state()
@@ -449,7 +464,7 @@ def otp_verify():
     meta = getattr(user, "user_metadata", None) or {}
     name = meta.get("display_name") or _pending_name(email)
     return _complete_auth(uid, email=getattr(user, "email", None) or email,
-                          name_hint=name)
+                          name_hint=name, user=user)
 
 
 # ── social OAuth (PKCE) ──────────────────────────────────────────────────────
@@ -540,7 +555,7 @@ def oauth_callback():
     email = getattr(user, "email", None)
     name = meta.get("full_name") or meta.get("name") or meta.get("display_name")
     return _complete_auth(uid, email=email,
-                          name_hint=name or _pending_name(email))
+                          name_hint=name or _pending_name(email), user=user)
 
 
 @auth_bp.route("/auth/logout")
@@ -548,4 +563,5 @@ def logout():
     _clear_otp_state()
     _clear_pkce_verifier()
     session.pop("user_id", None)
+    session.pop("is_admin", None)
     return redirect(url_for("main.index"))

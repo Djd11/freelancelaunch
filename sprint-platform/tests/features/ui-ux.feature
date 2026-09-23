@@ -169,3 +169,25 @@ Feature: UI/UX — every page's CTAs work end to end (no dead ends, no fake func
     When I GET "/sprints"
     Then the response status is 200
     And the page contains the text "Choose your sprint"
+
+  # ── ADMIN SURFACE ─────────────────────────────────────────────────
+  # UAT demo blocker: /admin/ had no nav entry point — an operator had to type
+  # the URL manually in front of a customer. Admins get a nav link; nobody else does.
+  Scenario: Admin — the Admin nav link reaches the admin dashboard
+    Given I am logged in as an admin user
+    When I GET "/sprints"
+    Then the page contains a link to "/admin/"
+    When I follow the link to "/admin/"
+    Then the response status is 200
+    And the page contains the text "Admin Dashboard"
+
+  Scenario: Admin — regular users are not offered the admin surface
+    When I GET "/sprints"
+    Then the page does not contain a link to "/admin/"
+    And the page does not contain the text "Admin"
+
+  Scenario: Admin — anonymous visitors are not offered the admin surface
+    Given I am not logged in
+    When I GET "/"
+    Then the response status is 200
+    And the page does not contain a link to "/admin/"

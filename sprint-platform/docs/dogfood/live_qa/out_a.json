@@ -1,0 +1,52 @@
+{
+ "console_errors": [],
+ "bad_responses": [],
+ "timings": {
+  "landing": {
+   "seconds": 1.24,
+   "status": 200
+  },
+  "topics": {
+   "seconds": 0.91,
+   "status": 200
+  },
+  "health": {
+   "seconds": 0.8,
+   "status": 200
+  },
+  "topic_detail": {
+   "seconds": 0.9,
+   "status": 200,
+   "url": "/topics/ai-chatbots"
+  }
+ },
+ "links": {
+  "https://freelancelaunch.onrender.com/mentor": 200,
+  "https://freelancelaunch.onrender.com/pricing": 200,
+  "https://freelancelaunch.onrender.com/sprints": 200,
+  "https://freelancelaunch.onrender.com/topics": 200,
+  "https://freelancelaunch.onrender.com/topics/ai-chatbots": 200,
+  "https://freelancelaunch.onrender.com/topics/email-automation": 200,
+  "https://freelancelaunch.onrender.com/topics/web-scraping": 200
+ },
+ "pages": {
+  "topics_topic_links": [
+   "/topics/ai-chatbots",
+   "/topics/email-automation",
+   "/topics/web-scraping"
+  ],
+  "internal_links_found": [
+   "https://freelancelaunch.onrender.com/mentor",
+   "https://freelancelaunch.onrender.com/pricing",
+   "https://freelancelaunch.onrender.com/sprints",
+   "https://freelancelaunch.onrender.com/topics",
+   "https://freelancelaunch.onrender.com/topics/ai-chatbots",
+   "https://freelancelaunch.onrender.com/topics/email-automation",
+   "https://freelancelaunch.onrender.com/topics/web-scraping"
+  ],
+  "landing_text": "Freelance\nLaunch\nSprints\nTopics\nHow it works\nPricing\nStart free\n14 DAYS \u00b7 3 PHASES \u00b7 FIRST CLIENT\nStop learning skills.\nStart landing clients.\n\nA 14-day demand-validated sprint that teaches you to fulfill a real contract \u2014 not just watch videos \u2014 then hands you a proposal and sends you to bid.\n\nStart your sprint\nSee how it works\nDEMAND LIVE\nCLUSTER \u00b7 EMAIL AUTOMATION\nDEMAND \u00b7 EMAIL AUTOMATION\n127\nactive jobs\n$92\nmedian hourly rate\n+18%\ndemand this quarter\n\nThis is the demand you're training against \u2014 not a generic course.\n\nTHE SPRINT \u00b7 14 NUMBERED SHIFTS\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n\nEvery completed day is punched out \u2014 and unlocks another batch of the live job feed.\n\nThree shifts. One loop.\n\nTeach \u2192 fulfill \u2192 sell, compressed into 14 days.\n\nSHIFT A \u00b7 DAYS 01\u201305\nSkill Acquisition\n\nThe Copy-Work method: rebuild 3 real projects from scratch to build muscle memory, then a gap-fill micro-lesson on what's missing.\n\nSHIFT B \u00b7 DAYS 06\u201310\nMock Contract\n\nFulfill a real anonymized job brief under deadline + constraints \u2014 and package it as a case-study portfolio that doubles as your first proposal.\n\nSHIFT C \u00b7 DAYS 11\u201314\nSend Proposals\n\nEngineered proposals with \"I see you need X\u2026\" hooks, a 5-proposal First-Bid challenge, and an auto-adapting iteration loop.\n\nYour skill has a live job count. Prove it.\n\nEarn a Demand-Validated badge with a live \"N jobs open\" counter \u2014 so clients can filter straight to freelancers who've recently completed this exact sprint.\n\nPick a demand-validated topic \u2192\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+  "topics_text": "Freelance\nLaunch\nSprints\nTopics\nPricing\nMentor\nDEMAND-VALIDATED TOPICS\nSprint topics\n\nEvery topic is a 14-day sprint built against a live job cluster \u2014 the numbers show how much real demand exists right now.\n\n\ud83d\udce7\nTRENDING\nEmail Automation\n\nKlaviyo \u00b7 Mailchimp \u00b7 n8n flows\n\n\u25cf 127 jobs open \u00b7 $92/hr \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nView topic\n\ud83d\udd77\ufe0f\nWeb Scraping\n\nPython \u00b7 BeautifulSoup \u00b7 APIs\n\n\u25cf 105 jobs open \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nView topic\n\ud83e\udd16\nAI Chatbots\n\nOpenAI API \u00b7 RAG \u00b7 deployment\n\n\u25cf 50 jobs open \u00b7 14 days\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nView topic\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+  "topic_detail_text": "Freelance\nLaunch\nSprints\nTopics\nPricing\nMentor\n\n\u2190 All topics\n\n14-DAY SPRINT\n\ud83e\udd16\nAI Chatbots\n\nOpenAI API \u00b7 RAG \u00b7 deployment\n\nOPEN JOBS\n50\nDEMAND GROWTH\n+15%\n\nRebuild real projects, fulfill a mock contract, and send live proposals.\n\nStart this sprint\nBrowse all topics\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+  "topic_detail_url": "https://freelancelaunch.onrender.com/topics/ai-chatbots"
+ }
+}

@@ -47,7 +47,7 @@
   <div class="wrap">
     <div class="topnav">
       <div class="logo">Freelance<em>Launch</em></div>
-      <div class="navl"><a href="/sprints">Sprints</a><a href="/pricing">Pricing</a><a href="/mentor">Mentor</a></div>
+      <div class="navl"><a href="/sprints">Sprints</a><a href="/pricing">Pricing</a><a href="/mentor">Mentor</a>{% if is_admin %}<a href="/admin/">Admin</a>{% endif %}</div>
       {% if user %}<a class="btn btn-o btn-sm" href="/auth/logout">Sign out</a>{% endif %}
     </div>
 

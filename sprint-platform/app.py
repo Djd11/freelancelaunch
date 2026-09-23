@@ -154,7 +154,11 @@ def create_app(test_config=None):
         # PUBLIC_BASE_URL wins so social/AI crawlers see the real domain even
         # when the app runs behind a proxy; falls back to the request host.
         site_base = (os.getenv("PUBLIC_BASE_URL") or request.url_root).rstrip("/")
-        return {"user": g.get("user"), "site_base": site_base}
+        # Presentational admin flag (nav link visibility only) — routes/auth.py
+        # stamps it from auth.users metadata at login; /admin/* re-verifies
+        # server-side on every request (routes/admin.py::_require_admin).
+        return {"user": g.get("user"), "site_base": site_base,
+                "is_admin": bool(session.get("is_admin"))}
 
     @app.route("/favicon.ico")
     def favicon():

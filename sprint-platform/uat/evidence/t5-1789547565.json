@@ -1,0 +1,74 @@
+{
+  "task": "t5 qa live-localhost OTP round-trip",
+  "revision": "6447d584748160176f681155451d9efcfc1d0bd3",
+  "when": "2026-09-16 14:02:45",
+  "smtp_slots_spent_by_this_run": 0,
+  "addresses_for_purge_list": [
+    "uat-otp-a5@example.com",
+    "uat-otp-p0legacy@sprintspike-otp.dev",
+    "uat-otp-p0@sprintspike-otp.dev"
+  ],
+  "ledger_after": [
+    "uat-otp-a5@example.com",
+    "uat-otp-p0legacy@sprintspike-otp.dev",
+    "uat-otp-p0@sprintspike-otp.dev"
+  ],
+  "results": [
+    {
+      "claim": "signup-family mint returned a plausible first-ever address code",
+      "id": "P0.code-shape",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "code_len=8 minted=5c231f20-448b-4506-8e93-ba231df02a18 created_by_this_call=True confirmed_at=None"
+    },
+    {
+      "claim": "POST /auth/otp/verify redeems via real HTTP and yields a session for first-ever address",
+      "id": "P0.roundtrip",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "verify=302 -> '/sprints' follow=200 sprints_is_login=False"
+    },
+    {
+      "claim": "exactly one user_profiles row for first-ever address",
+      "id": "P0.provision",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "rows=1 display=['uat-otp-p0']"
+    },
+    {
+      "claim": "replayed signup code rejected with generic copy, no session (first-ever address)",
+      "id": "P0.replay",
+      "transport": "LIVE-HTTP",
+      "ok": false,
+      "evidence": "status=200 flash_ok=False"
+    },
+    {
+      "claim": "magiclink-family mint returned a plausible existing confirmed address code",
+      "id": "P0.code-shape",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "code_len=8 minted=910c4d00-706e-427e-9f61-53ffd05b39b0 created_by_this_call=False confirmed_at=None"
+    },
+    {
+      "claim": "POST /auth/otp/verify redeems via real HTTP and yields a session for existing confirmed address",
+      "id": "P0.roundtrip",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "verify=302 -> '/sprints' follow=200 sprints_is_login=False"
+    },
+    {
+      "claim": "exactly one user_profiles row for existing confirmed address",
+      "id": "P0.provision",
+      "transport": "LIVE-HTTP",
+      "ok": true,
+      "evidence": "rows=1 display=['uat-otp-p0legacy']"
+    },
+    {
+      "claim": "replayed magiclink code rejected with generic copy, no session (existing confirmed address)",
+      "id": "P0.replay",
+      "transport": "LIVE-HTTP",
+      "ok": false,
+      "evidence": "status=200 flash_ok=False"
+    }
+  ]
+}

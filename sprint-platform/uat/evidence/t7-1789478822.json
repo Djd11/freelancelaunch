@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "total": 6,
+    "pass": 5,
+    "fail": 0,
+    "skip_or_gap": 1
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "P1",
+      "claim": "test tree identity",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "toplevel=/home/dhruba/Documents/exp_money/daily_learning_freelance HEAD=b27ba5c expect=b27ba5c is-ancestor OK fingerprint=3e8e67dabd81",
+      "ts": "2026-09-15 18:56:58"
+    },
+    {
+      "area": "P1",
+      "claim": "signup collision auto-login deleted (static)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 18:56:58"
+    },
+    {
+      "area": "P1",
+      "claim": "auth client factory present",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "get_auth_supabase",
+      "ts": "2026-09-15 18:56:58"
+    },
+    {
+      "area": "P1",
+      "claim": "an OTP surface exists in the template tree",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "_auth_panel.html,signup.html",
+      "ts": "2026-09-15 18:56:58"
+    },
+    {
+      "area": "A1",
+      "claim": "code-entry length limit is not hardcoded to 6",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "length hints [] \u2014 none in source (otp_length comes from config); the browser pass must confirm 8 digits are typeable",
+      "ts": "2026-09-15 18:56:58"
+    },
+    {
+      "area": "A1",
+      "claim": "/auth/login and /auth/signup expose the same OTP form + provider buttons",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "actions/forms google=True/facebook=True vs True/True",
+      "ts": "2026-09-15 18:57:02"
+    }
+  ]
+}

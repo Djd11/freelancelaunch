@@ -1,0 +1,78 @@
+{
+ "events": [
+  {
+   "t": 38.01,
+   "kind": "http",
+   "level": "error",
+   "msg": "500 GET http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/generation"
+  },
+  {
+   "t": 38.01,
+   "kind": "console",
+   "level": "error",
+   "msg": "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"
+  }
+ ],
+ "timings": [
+  {
+   "url": "http://localhost:5000/auth/signup",
+   "ms": 428,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 551,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/day/1",
+   "ms": 1911,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b",
+   "ms": 3830,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/day/2",
+   "ms": 2036,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/day/3",
+   "ms": 1888,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/day/4",
+   "ms": 1937,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/day/5",
+   "ms": 1897,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/contract",
+   "ms": 1532,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2a719493-1ce1-4bcf-bca0-0b5234dd9c0b/proposals",
+   "ms": 830,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/mentor",
+   "ms": 1190,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/profile/me",
+   "ms": 2076,
+   "status": 200
+  }
+ ]
+}

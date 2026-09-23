@@ -1,0 +1,493 @@
+{
+  "summary": {
+    "total": 59,
+    "pass": 41,
+    "fail": 17,
+    "skip_or_gap": 1
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A3",
+      "claim": "first send reaches the transport",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 calls=1 args={\"email\": \"uat-otp-a3@example.com\", \"options\": {\"should_create_user\": true}}",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A3",
+      "claim": "resend inside cooldown is refused SERVER-SIDE (no GoTrue call)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=1 status=200",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A3",
+      "claim": "refused resend shows a countdown/wait, not a silent 200",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "Please wait 60s before requesting another code.",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown state stored in the session",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "keys=['otp_email', 'otp_last_sent_at']",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A3",
+      "claim": "per-address throttle: a different address is NOT locked out by the first send",
+      "class": "FAKE-TRANSPORT",
+      "pass": false,
+      "detail": "calls=1 (expect 2: same-address resend was refused earlier, this address is fresh)",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown is per-session, not global",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:05"
+    },
+    {
+      "area": "A6",
+      "claim": "signup with EXISTING email sets no session (takeover closed)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 session=None set-cookie=[]",
+      "ts": "2026-09-15 19:08:06"
+    },
+    {
+      "area": "A6",
+      "claim": "/sprints still lands the anonymous caller on the login page",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "final='/auth/login' status=200",
+      "ts": "2026-09-15 19:08:06"
+    },
+    {
+      "area": "A6",
+      "claim": "/admin still lands the anonymous caller on the login page",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "final='/auth/login' status=200",
+      "ts": "2026-09-15 19:08:06"
+    },
+    {
+      "area": "A6",
+      "claim": "collision response is the same generic shape as otp_send",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "signup=200",
+      "ts": "2026-09-15 19:08:06"
+    },
+    {
+      "area": "A6",
+      "claim": "RESIDUAL GAP: admin@sprint-platform.local collision never tested live (captain authorized 2 SMTP slots, both spent on A2)",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "named in the report; not silently covered",
+      "ts": "2026-09-15 19:08:06"
+    },
+    {
+      "area": "A8",
+      "claim": "oauth_start issues a 302 (not a 5xx)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "status=500 loc_head=''",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "302 targets <project>.supabase.co/auth/v1/authorize",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "authorize URL carries provider=google",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "got None (method 'plain' would mean PKCE is NOT active)",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "authorize URL carries code_challenge",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "got None (method 'plain' would mean PKCE is NOT active)",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "authorize URL carries code_challenge_method=s256",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "got None (method 'plain' would mean PKCE is NOT active)",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "authorize URL carries redirect_to",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "got None (method 'plain' would mean PKCE is NOT active)",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "challenge != verifier (real S256 hash, not the plain fallback)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "redirect_to is our own /auth/oauth/callback under PUBLIC_BASE_URL",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "verifier persisted in THIS cookie jar's session (key name read from code, not assumed)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "session keys=[]",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "no verifier/challenge text in the response body",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "oauth_start response persists the session (Set-Cookie present)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "without it the verifier is dropped and the callback cannot succeed",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "verifier is a non-empty value under the client's own storage key",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "key='_sb_pkce' verifier_len=0",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "second oauth_start rotates the stored verifier (no stale challenge reuse)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "rotated=False",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "cross-jar binding: a fresh jar cannot redeem another jar's code",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "start_in_fresh_jar=500",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/evil' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/twitter' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/facebook;x' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/%2e%2e' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/<script>alert(1)</script>' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A8",
+      "claim": "non-allow-listed provider '/auth/oauth/' refused without 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=404",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A11",
+      "claim": "both buttons render for OAUTH_PROVIDERS=google,facebook",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A11",
+      "claim": "FB button hidden for OAUTH_PROVIDERS=google (plumbing we own)",
+      "class": "LIVE",
+      "pass": false,
+      "detail": "",
+      "ts": "2026-09-15 19:08:07"
+    },
+    {
+      "area": "A9",
+      "claim": "callback no code: 200 + generic recovery copy, no session, no 5xx",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 session=False flash='Social sign-in didn&#39;t complete \u2014 try the email code.'",
+      "ts": "2026-09-15 19:08:09"
+    },
+    {
+      "area": "A9",
+      "claim": "callback no code: no raw GoTrue error text",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "leaked=[]",
+      "ts": "2026-09-15 19:08:09"
+    },
+    {
+      "area": "A9",
+      "claim": "callback invalid code: 200 + generic recovery copy, no session, no 5xx",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 session=False flash='Social sign-in didn&#39;t complete \u2014 try the email code.'",
+      "ts": "2026-09-15 19:08:11"
+    },
+    {
+      "area": "A9",
+      "claim": "callback invalid code: no raw GoTrue error text",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "leaked=[]",
+      "ts": "2026-09-15 19:08:11"
+    },
+    {
+      "area": "A9",
+      "claim": "callback stateless code: 200 + generic recovery copy, no session, no 5xx",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 session=False flash='Social sign-in didn&#39;t complete \u2014 try the email code.'",
+      "ts": "2026-09-15 19:08:13"
+    },
+    {
+      "area": "A9",
+      "claim": "callback stateless code: no raw GoTrue error text",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "leaked=[]",
+      "ts": "2026-09-15 19:08:13"
+    },
+    {
+      "area": "A9",
+      "claim": "callback with NO stored verifier is refused (no silent login)",
+      "class": "FAKE-TRANSPORT",
+      "pass": false,
+      "detail": "status=200 session=True flash='Welcome back \u2014 pick a sprint to continue.'",
+      "ts": "2026-09-15 19:08:16"
+    },
+    {
+      "area": "A9b",
+      "claim": "successful exchange \u2192 session uid + 302 to the post-auth target",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "session=22222222-2222-2222-2222-222222222222 loc=/sprints",
+      "ts": "2026-09-15 19:08:16"
+    },
+    {
+      "area": "A9b",
+      "claim": "exchange called once with the code (verifier resolved from storage by the client)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"auth_code\": \"uat-fake-code\", \"code_verifier\": \"\", \"redirect_to\": \"http://localhost:5000/auth/oauth/callback\"}",
+      "ts": "2026-09-15 19:08:16"
+    },
+    {
+      "area": "A9b",
+      "claim": "verifier cleared after redemption (replay cannot re-auth)",
+      "class": "FAKE-TRANSPORT",
+      "pass": false,
+      "detail": "leftover=True",
+      "ts": "2026-09-15 19:08:16"
+    },
+    {
+      "area": "A9b",
+      "claim": "the OAuth-issued session is a normal session (require_login honours it)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google,facebook' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google' -> ['google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='GOOGLE,Facebook' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google,facebook,github' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='' -> []",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='  google , facebook ' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "unset OAUTH_PROVIDERS defaults to google,facebook (Render has no such var yet)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "{'google', 'facebook'}",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_CODE_LENGTH == 8",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "8",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_RESEND_COOLDOWN_SECONDS == 60",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "60",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='false' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='0' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='garbage' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='true' -> True",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": ".env.example documents OAUTH_PROVIDERS + OTP_EMAIL_ENABLED",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    },
+    {
+      "area": "A11",
+      "claim": "render.yaml untouched (spec \u00a75.3: no new secrets)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:08:17"
+    }
+  ]
+}

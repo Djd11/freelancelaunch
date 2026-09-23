@@ -1,0 +1,1213 @@
+{
+ "polls": [
+  {
+   "t_s": 10.0,
+   "gen": {
+    "day_status": {
+     "1": "pending",
+     "2": "pending",
+     "3": "pending",
+     "4": "pending",
+     "5": "pending",
+     "6": "pending",
+     "7": "pending",
+     "8": "pending",
+     "9": "pending",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": null,
+    "failed_days": [],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 24.0,
+   "gen": {
+    "day_status": {
+     "1": "pending",
+     "2": "pending",
+     "3": "pending",
+     "4": "pending",
+     "5": "pending",
+     "6": "pending",
+     "7": "pending",
+     "8": "pending",
+     "9": "pending",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": null,
+    "failed_days": [],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 37.7,
+   "gen": {
+    "day_status": {
+     "1": "pending",
+     "2": "pending",
+     "3": "pending",
+     "4": "pending",
+     "5": "pending",
+     "6": "pending",
+     "7": "pending",
+     "8": "pending",
+     "9": "pending",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": null,
+    "failed_days": [],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 53.0,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "pending",
+     "6": "pending",
+     "7": "pending",
+     "8": "pending",
+     "9": "pending",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 70.3,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "pending",
+     "7": "pending",
+     "8": "error",
+     "9": "pending",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     8
+    ],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 85.1,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "pending",
+     "11": "pending",
+     "12": "pending",
+     "13": "pending",
+     "14": "pending"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 99.6,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "pending"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "generated": 0,
+    "status": "generating",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 114.9,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 128.0,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 139.4,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 150.9,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 162.4,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 173.9,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 185.2,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 196.7,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 208.1,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 219.3,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 230.7,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 242.1,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 253.4,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 264.7,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 275.9,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 287.2,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 298.8,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 310.1,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 321.9,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 333.3,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 344.7,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 356.1,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  },
+  {
+   "t_s": 367.5,
+   "gen": {
+    "day_status": {
+     "1": "error",
+     "2": "error",
+     "3": "error",
+     "4": "error",
+     "5": "error",
+     "6": "error",
+     "7": "error",
+     "8": "error",
+     "9": "error",
+     "10": "error",
+     "11": "error",
+     "12": "error",
+     "13": "error",
+     "14": "error"
+    },
+    "error": "Generation failed: No LLM provider answered for the day's lesson",
+    "failed_days": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "generated": 0,
+    "status": "partial",
+    "total": 14
+   },
+   "banner_live_page": "VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No LLM provider answered for the day's lesson 0 / 14 Retry generation 1 2 3 4 5 6 7 8 9 10 11 12 13 14"
+  }
+ ],
+ "console_errors": [],
+ "bad_responses": [],
+ "notes": [
+  "t=10s banner changed (no reload): VISIBLE: Generating your sprint content\u2026 Each day's lesson is being written from your cluster's live job postings. 0 / 1",
+  "t=128s banner changed (no reload): VISIBLE: 0 of 14 days have lessons Days 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 had errors. Generation failed: No "
+ ],
+ "enroll_to_dashboard_s": 9.8,
+ "dashboard_url": "https://freelancelaunch.onrender.com/sprints/5f3819b3-fff9-4b81-a636-e8eb84f93309",
+ "sprint_id": "5f3819b3-fff9-4b81-a636-e8eb84f93309",
+ "dashboard_text_at_enroll": "Freelance\nLaunch\nDashboard\nMentor\nProfile\nSign out\nCOHORT #2 \u00b7 ENDS 2026-09-17\n\ud83d\udce7 Email Automation Sprint\nTRAINING LIVE\n127 ACTIVE JOBS\n$92/HR\nEMAIL AUTOMATION DEMAND\nSHIFT A \u00b7 DAY 01/14\nComplete sprint\nYOUR NEXT STEP\n\nContinue Day 01 \u2014 build the skill\n\nOpen Day 1 \u2192\nNew here? What the words on this page mean\nSHIFT A \u00b7 DAYS 01\u201305\nIN PROGRESS\nSkill Acquisition\n\nCopy-Work: 3 replication projects + gap-fill\n\n1\n2\n3\n4\n5\n\n0/5 days punched\n\nSHIFT B \u00b7 DAYS 06\u201310\nLOCKED\nMock Contract\n\nFulfill a real brief + case study\n\n6\n7\n8\n9\n10\n\nUnlocks when Phase A passes verification\n\nSHIFT C \u00b7 DAYS 11\u201314\nLOCKED\nSend Proposals\n\nProposals + First-Bid challenge\n\n11\n12\n13\n14\n\nLocked until Mock Contract passes\n\nSprint Content\n0 / 14 DAYS GENERATED\nDay 1 \u00b7 Setup\nPending generation\nDay 2 \u00b7 Copywork\nPending generation\nDay 3 \u00b7 Copywork\nPending generation\nDay 4 \u00b7 Copywork\nPending generation\nDay 5 \u00b7 Copywork\nPending generation\nDay 6 \u00b7 Contract\nPending generation\nDay 7 \u00b7 Contract\nPending generation\nDay 8 \u00b7 Contract\nPending generation\nDay 9 \u00b7 Case-study\nPending generation\nDay 10 \u00b7 Case-study\nPending generation\nDay 11 \u00b7 Proposal\nPending generation\nDay 12 \u00b7 Proposal\nPending generation\nDay 13 \u00b7 Proposal\nPending generation\nDay 14 \u00b7 Proposal\nPending generation\nJob Unlock Meter\n\nEvery day you finish opens more real job postings in your skill.\n\n0 of 127 real jobs unlocked\n\n0% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.\n\n0/14 days punched \u00b7 0 postings unlocked\n+0 POSTINGS UNLOCKED SO FAR\nHOW THIS BECOMES A PAID CONTRACT\n1 \u00b7 Build the skill (Days 1\u20135)\n\u2192\n2 \u00b7 Pass verification (Days 6\u201310)\n\u2192\n3 \u00b7 Send proposals (Days 11\u201314)\n\u2192\n4 \u00b7 Land your first client\nToday \u00b7 Day 01\nSETUP \u00b7 PROJECT 1 OF 3\n\nComplete today's action to unlock the next batch of live job postings.\n\nWatch lesson\nLearn the flow anatomy (5 min)\nReplicate the project\nRebuild from a blank canvas (~35 min)\nCheck your build matches\n3 points (~10 min)\nOpen Day 1 \u2192\nMomentum\nDay streak\n0 days\nConfidence\n50 / 100\nProposals sent\n0\nContracts\n0\n\nNUDGE\n\nYou're past the hardest part of a new skill. 3 days of Copy-Work builds more muscle memory than 30 days of videos \u2014 keep going.\n\nContracts & Earnings\n0 WON \u00b7 $0 EARNED\n\nYou'll send your first proposals in Phase C (Days 11\u201314). When a client says yes, log it here \u2014 earnings roll up on your sprint record.\n\nLog a contract you've won\n\nAdd contract\nLive Job Feed\n\nReal postings in your skill \u2014 bid on them when you reach Phase C (Day 11).\n\n127 TOTAL\nJOB TITLE\tSOURC",
+ "generation_ready_after_s": null,
+ "dashboard_text_after": "Freelance\nLaunch\nDashboard\nMentor\nProfile\nSign out\nCOHORT #2 \u00b7 ENDS 2026-09-17\n\ud83d\udce7 Email Automation Sprint\nTRAINING LIVE\n127 ACTIVE JOBS\n$92/HR\nEMAIL AUTOMATION DEMAND\nSHIFT A \u00b7 DAY 01/14\nComplete sprint\nYOUR NEXT STEP\n\nContinue Day 01 \u2014 build the skill\n\nOpen Day 1 \u2192\nNew here? What the words on this page mean\nSHIFT A \u00b7 DAYS 01\u201305\nIN PROGRESS\nSkill Acquisition\n\nCopy-Work: 3 replication projects + gap-fill\n\n1\n2\n3\n4\n5\n\n0/5 days punched\n\nSHIFT B \u00b7 DAYS 06\u201310\nLOCKED\nMock Contract\n\nFulfill a real brief + case study\n\n6\n7\n8\n9\n10\n\nUnlocks when Phase A passes verification\n\nSHIFT C \u00b7 DAYS 11\u201314\nLOCKED\nSend Proposals\n\nProposals + First-Bid challenge\n\n11\n12\n13\n14\n\nLocked until Mock Contract passes\n\nSprint Content\n0 / 14 DAYS GENERATED\nDay 1 \u00b7 Setup\nGeneration failed\nDay 2 \u00b7 Copywork\nGeneration failed\nDay 3 \u00b7 Copywork\nGeneration failed\nDay 4 \u00b7 Copywork\nGeneration failed\nDay 5 \u00b7 Copywork\nGeneration failed\nDay 6 \u00b7 Contract\nGeneration failed\nDay 7 \u00b7 Contract\nGeneration failed\nDay 8 \u00b7 Contract\nGeneration failed\nDay 9 \u00b7 Case-study\nGeneration failed\nDay 10 \u00b7 Case-study\nGeneration failed\nDay 11 \u00b7 Proposal\nGeneration failed\nDay 12 \u00b7 Proposal\nGeneration failed\nDay 13 \u00b7 Proposal\nGeneration failed\nDay 14 \u00b7 Proposal\nGeneration failed\nJob Unlock Meter\n\nEvery day you finish opens more real job postings in your skill.\n\n0 of 127 real jobs unlocked\n\n0% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.\n\n0/14 days punched \u00b7 0 postings unlocked\n+0 POSTINGS UNLOCKED SO FAR\nHOW THIS BECOMES A PAID CONTRACT\n1 \u00b7 Build the skill (Days 1\u20135)\n\u2192\n2 \u00b7 Pass verification (Days 6\u201310)\n\u2192\n3 \u00b7 Send proposals (Days 11\u201314)\n\u2192\n4 \u00b7 Land your first client\nToday \u00b7 Day 01\nSETUP \u00b7 PROJECT 1 OF 3\n\nComplete today's action to unlock the next batch of live job postings.\n\nWatch lesson\nLearn the flow anatomy (5 min)\nReplicate the project\nRebuild from a blank canvas (~35 min)\nCheck your build matches\n3 points (~10 min)\nOpen Day 1 \u2192\nMomentum\nDay streak\n0 days\nConfidence\n50 / 100\nProposals sent\n0\nContracts\n0\n\nNUDGE\n\nYou're past the hardest part of a new skill. 3 days of Copy-Work builds more muscle memory than 30 days of videos \u2014 keep going.\n\nContracts & Earnings\n0 WON \u00b7 $0 EARNED\n\nYou'll send your first proposals in Phase C (Days 11\u201314). When a client says yes, log it here \u2014 earnings roll up on your sprint record.\n\nLog a contract you've won\n\nAdd contract\nLive Job Feed\n\nReal postings in your skill \u2014 bid on them when you reach Phase C (Day 11).\n\n127 TOTAL\nJOB TITLE\tSOURCE\tSKILLS\tPOSTED\nModern College Resume Design\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nMulti-Use Professional Logo Enhancement -- 2\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nDrive YouTube Views & Subscribers\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nHigh-Detail Horned Viking Helmet. NOT MINIATURE\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nAnimated Promo Video Editing\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nAI-Powered Skit Development\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nE-Commerce Live Stream Setup\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nGoogle SERP and Reputation Management Specialist\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nPhysics 3D Models for Education\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\nNon-Profit WordPress Site Migration\nOpen posting \u2192\tFREELANCER\tEMAIL AUTOMATION\t2026-09-04\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates.",
+ "uuids_in_dashboard_html": [
+  "5f3819b3-fff9-4b81-a636-e8eb84f93309"
+ ],
+ "day1_url": "https://freelancelaunch.onrender.com/sprints/5f3819b3-fff9-4b81-a636-e8eb84f93309/day/1",
+ "day1_load_s": 2.7,
+ "day1_text_head": "Freelance\nLaunch\n\u2190 Dashboard\nSHIFT A \u00b7 DAY 01 \u00b7 SETUP\nDay 1\n\nReplicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.\n\nLesson\nTask\nWatch \u00b7 Lesson\nTwoPanel video \u00b7 Hook \u2192 Lesson \u2192 Key points \u2192 Outro\nLesson generation failed\n\nGeneration failed: No LLM provider answered for the day's lesson\n\nMark lesson watched\n~5 min\n\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app\nWe show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates."
+}

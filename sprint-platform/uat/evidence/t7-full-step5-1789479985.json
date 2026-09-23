@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "total": 6,
+    "pass": 5,
+    "fail": 1,
+    "skip_or_gap": 0
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A3",
+      "claim": "first send reaches the transport",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "status=200 calls=1 args={\"email\": \"uat-otp-a3@example.com\", \"options\": {\"should_create_user\": true}}",
+      "ts": "2026-09-15 19:16:25"
+    },
+    {
+      "area": "A3",
+      "claim": "resend inside cooldown is refused SERVER-SIDE (no GoTrue call)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "calls=1 status=200",
+      "ts": "2026-09-15 19:16:25"
+    },
+    {
+      "area": "A3",
+      "claim": "refused resend shows a countdown/wait, not a silent 200",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "Please wait 60s before requesting another code.",
+      "ts": "2026-09-15 19:16:25"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown state stored in the session",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "keys=['otp_email', 'otp_last_sent_at']",
+      "ts": "2026-09-15 19:16:25"
+    },
+    {
+      "area": "A3",
+      "claim": "per-address throttle: a different address is NOT locked out by the first send",
+      "class": "FAKE-TRANSPORT",
+      "pass": false,
+      "detail": "calls=1 (expect 2: same-address resend was refused earlier, this address is fresh)",
+      "ts": "2026-09-15 19:16:25"
+    },
+    {
+      "area": "A3",
+      "claim": "cooldown is per-session, not global",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 19:16:25"
+    }
+  ]
+}

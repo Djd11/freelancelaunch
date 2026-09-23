@@ -1,0 +1,2 @@
+{"t": 107.7, "kind": "http", "level": "error", "msg": "503 POST http://localhost:5000/mentor/turn"}
+{"t": 107.71, "kind": "console", "level": "error", "msg": "Failed to load resource: the server responded with a status of 503 (SERVICE UNAVAILABLE)"}

@@ -1,57 +1,212 @@
-# FreelanceLaunch — First-Run Dogfood Report
+# FreelanceLaunch · Sprint Platform — First-Run Dogfood Report
 
-**Tester:** Dana (QE cum end-user agent) · **Date:** 2026-09-04 · **Method:** real Chromium (Playwright), fresh accounts, full journey signup → Day-1 tasks → locked surfaces, desktop + mobile 390×844. Artifacts: `docs/dogfood/` (journey scripts, logs, 77 screenshots in `shots/`).
+> **⚠️ Round 3 supersedes this header block.** A re-test against commit `dda94e2` follows at the end of this file and changes the verdict: **4/10 → 6/10**, with blockers **#2, #3 and #6 fixed**, **#1 and #5 improved but still blocking**, and **#4 untestable** from outside. The earlier text is kept so each finding's history stays auditable.
 
-## Market-readiness score: 6.5 / 10
+**Tester:** Dana (qe-enduser) — I played both roles: a first-time freelancer deciding whether to trust this with my evenings, and a QA engineer trying to break it.
+**Date:** 2026-09-04 · **Target:** the live server at `http://localhost:5000` (Flask + Supabase `tzfohwzgxlecsilvqmjq`, `/health` → `mode: supabase, status: ok`).
+**Method:** real headless Chromium (Playwright 1.62) driving the live product end-to-end. **I edited no app code, no templates, no routes, and never restarted the server.** 6 fresh accounts were created; every finding below was **re-verified against the current build** at the end of the session (`docs/dogfood/reverify.py`, `final_check.py`, `check_shortcut.py`) so nothing stale is reported.
+**Evidence:** 110+ screenshots in `docs/dogfood/shots/`, structured logs in `docs/dogfood/artifacts/`, scripts in `docs/dogfood/*.py`.
 
-The core loop is genuinely good and the funnel converts: signup → sprint start → content generation → Day-1 lesson → rubric → copywork submit all work end-to-end with zero 500s on the happy path. What drags the score: an account-takeover auth model, a mentor that is broken for exactly the new users the first run creates, and placeholder job data that undercuts the "demand-validated" promise.
+> **Correction after the 19:45 server death.** The Flask process died silently ~19:45 and the captain restarted it at 20:43. My `journeyJ` run landed at **19:43** — right on the way down — so I re-ran every journeyJ-era claim against the healthy server (`reverify_journeyJ.py`, `diag_generation.py`, `read_completed.py`, all 21:46–22:00). Two consequences: **(a)** the `GET /sprints/<id>/badge` **HTTP 500** I originally reported is **withdrawn** — on a healthy server it returns **200** and redirects to the dashboard; **(b)** the far more serious thing those 500s were masking is now characterised properly as a **concurrency defect in the whole authenticated read path** (issue #6, upgraded to BLOCKER). The zero-work false-completion claim was re-proved cleanly and is **not** a dying-server artifact.
 
-## First-hand value narrative
+---
 
-I signed up as "Dana" with a throwaway email. One field, no password — I was on the sprint picker in seconds and the "Start free — create account" CTA actually worked (this was the old blocker; it's fixed). I started the Email Automation sprint. Content generation ran visibly with a spinner; the dashboard kept me informed. Day 1 opened with a real lesson about Klaviyo flows — specific, actionable, with a knowledge check. The task tab gave me a reference build spec, a 3-point rubric, and a link box. When I pasted "not-a-url" the app rejected it with a clear message. Completing Day 1 moved the Job Unlock Meter — that dopamine hit is real and it's the product's best moment.
+## 1. First-hand experience
 
-Where the value broke: the Mentor. As a brand-new user I asked it about my target job and got "You have no live job post yet" — the job it referenced didn't exist. The dashboard's "Open posting →" links went to example.com. And my public profile URL was shared with another user.
+I arrived as someone who has "meaninged to learn Klaviyo" for a year. The landing page is the best pitch I've read off a solo-built edtech app: *"Stop learning skills. Start landing clients."* plus a live counter — **127 active jobs, $92/hr**. That counter is the entire reason I'd click, and unlike most products, **this one is now telling the truth**: I cross-checked the database and `job_clusters.job_count` (127 / 105 / 50) matches `job_feed` rows exactly, all sourced `freelancer`/`rss`. Early in my session those numbers were 450/322/268 against 5/0/0 hand-typed rows; the team re-seeded mid-test and it holds now. Credit where due.
 
-## Issues
+Signup is audaciously frictionless: **first name + email, no password**. Two seconds and I was in. Then I pressed **"Start sprint"** and my browser **froze for 8.0 seconds** (measured 8022 / 8474 / 8541 ms across three independent accounts) at the single most important moment of commitment. No spinner, no feedback — just a dead tab. It came back with a dashboard, so I stayed.
 
-### BLOCKERS
-| # | Issue | Evidence |
-|---|-------|----------|
-| B1 | **Email-only auth = account takeover.** Anyone can log in as anyone by typing their email. No password, no verification. | `/auth/login` accepts email alone; session set from `session["user_id"]`. |
-| B2 | **Mentor broken for new users.** Intro references a target job whose description is the literal placeholder "Anonymized real job posting — …"; replies can take ~80 s with zero UI feedback, so the chat looks dead. | `shots/H1-mentor.png`, journeyH log (`delta 0`, 80.5 s). |
-| B3 | *(reclassified by captain)* "Mark lesson watched" click-timeout was a test-script artifact — the button lives in the default Lesson tab and is visible; journeyE clicked it successfully. | `day.html` panel-lesson default-visible. |
+The first sentence on my brand-new dashboard was **"COHORT #12 · ENDS 2026-08-23"**. Today is 2026-09-04. I had just joined a cohort that finished **twelve days ago**. For a product whose retention engine is *"you're doing this alongside other people right now"*, the very first thing it told me is that nobody is here.
 
-### MAJOR
-| # | Issue | Evidence |
-|---|-------|----------|
-| M1 | **Profile slug collision.** Two accounts named "Dana" both resolve to `/profile/dana` (oldest wins); the second user's public link is someone else's page. | journeyI log, I5/I6. |
-| M2 | **example.com "Open posting" links + placeholder job descriptions** in the live job table — the demand-validated promise is seeded fake data. | journeyF2 log, dashboard HTML. |
-| M3 | **Missing voiceover mp3s** (ERR_ABORTED on day-3.mp3 for one sprint). *(Captain re-check: all 221 stored voiceover URLs return 200 — ERR_ABORTED is the browser cancelling audio when the video layer starts; not a missing file.)* | journeyI errors. |
-| M4 | **500s on sprint pages during testing.** *(Captain diagnosis: the dev server process died mid-run — environmental, not reproducible after restart; all routes now 200/302.)* | journeyJ jsonl. |
-| M5 | **80 s mentor latency with no feedback.** | journeyH log. |
+Then I met the Job Unlock Meter — and this is where I genuinely felt the product work. I completed Day 1 and the meter went:
 
-### MINOR
-- `$0/hr` rendered on cluster cards where no rate data exists.
-- Unknown profile slug returned 200 instead of 404.
-- Clients-page filter is a `<select>`; automation-friendly labels would help (script friction only).
+> **15 of 127 real jobs unlocked · +15 POSTINGS UNLOCKED SO FAR**
 
-## What's genuinely good
-- One-field signup, instant start — the frictionless first run the product wants.
-- Generation progress is visible and honest; resume-after-restart works.
-- Day-1 lesson quality is high and specific; knowledge checks reinforce.
-- Junk-URL rejection with a clear, friendly message.
-- Job Unlock Meter movement after completing a day is a real motivator.
-- CSRF protection solid (400 without token); sprint/day routes all owner-checked (no IDOR found — captain verified every route checks `sprint.user_id == g.user["id"]`).
-- Mobile 390×844 layout holds.
+That is a real, immediate, visible reward for 20 minutes of attention. It is the best moment in the first run and it is the reason the thesis is interesting. (Earlier in the session this printed **"+0 POSTINGS UNLOCKED"** and *"0 of 5 real jobs unlocked"* because the whole cluster's feed was bucketed to days 9–13; the re-seed fixed the distribution to days 1–14.)
 
-## Captain's fix log (same day)
-1. **B2/M2 (data):** scraped 386 real live gigs from Freelancer.com skill pages (`scripts/seed_freelancer_jobs.py`), applied to `job_feed` (`scripts/apply_freelancer_seed.py`): 127 email-automation / 105 web-scraping / 50 ai-chatbots. The 5 FK-locked placeholder rows were updated in place with real gigs — no more example.com, mentor now quotes a real job description. Cluster counts recomputed honestly (was 450/322/268 fabricated).
-2. **M5:** mentor chat now echoes the question, shows a "Thinking…" bubble, disables send, and renders the answer in place (no silent reload).
-3. **M1:** unique public slugs — earliest account keeps the bare first-name slug, later same-name users get `name-<uid6>`; legacy links unchanged; unknown slug → 404 (`routes/profile.py`).
-4. **Minor:** `$0/hr` guards in landing/picker/topics/topic-detail/dashboard templates.
-5. **Verified:** `scripts/verify_dogfood_fixes.py` — 16/16 checks pass; pytest baseline unchanged (164 passed, 1 pre-existing failure).
+Then I tried to do the actual work, and this is where I lost the plot.
 
-## Still open before public launch
-- **B1 auth** — needs a product decision (password or magic-link); deliberately not changed mid-flight.
-- **Feed freshness** — the seeded gigs are real but will age; the scheduled RSS connector is misconfigured (backend feed → email-automation) and Freelancer.com search needs an API JWT. Wire a key or a working source before launch.
-- **growth_score / "demand this quarter"** on landing/topic pages is still seed data.
+Day 1's lesson had failed: *"Generation failed: No LLM provider answered for the day's lesson."* I watched the progress endpoint for 15 minutes and content arrived erratically — Day 3 ok at ~11 min, Day 4 at ~13 min — and on my primary sprint **7 of 14 days ended permanently in `error`**. I measured why, rather than blaming the weather: the configured provider answers a *trivial* prompt in **53.8 / 62.7 / 80.7 / 87.3 / 100.4 seconds**, and the real Day-1 lesson prompt took **91.7 s → nothing** at the app's `timeout=90` but **71.6 s → 4,394 good characters** at `timeout=240`. The documented three-provider chain is really one coin-flip provider, because the OpenRouter fallback returns **HTTP 402 "Insufficient credits"**.
+
+I opened Day 1's Task tab anyway. Step 2 — the self-check that is supposed to make practice real — rendered **no checkboxes at all**, above the sentence:
+
+> **"When all 0 points are ticked and your link is in, this project counts as done."**
+
+I pasted a real GitHub link and pressed Send. **Nothing happened.** No message, and all three status stamps stayed unlit — Day 1 isn't mapped to a project server-side, so my one completed action was silently discarded.
+
+I pushed through Days 2, 3, 4 and 5 the honest way: tick every rubric box that exists, submit a link on each. Every single day answered:
+
+> **"Tick off all three rubric items before submitting — your build only counts once you've self-checked it."**
+
+**There were no rubric items to tick.** All three `copywork_projects` rows had `rubric = []` and `clone_steps = []`. The server requires `len(rubric_checked) >= 3 and all(...)`; the UI gives me zero boxes to satisfy it. **Phase A is unwinnable.** I could not reach Gate A on any of my four sprints, and the product never once told me that's what had happened — it just kept saying "tick the items".
+
+And here's the part that made me stop trusting the whole thing. While my dashboard read **"SHIFT B · LOCKED — Unlocks when Phase A passes verification"**, I typed the Phase B URL in and it was **wide open**: the full Mock Contract brief, the deliverable form, the case-study editor — on a Day-1 account. (The brief itself is now real — *"Lifecycle / Email Personalization Expert — Paid Platform Review (Ongoing Panel)"* — the placeholder sentence I found earlier is gone.) So the gate that the badge's credibility rests on is decorative on Gate A, while Gate B's lock on `/proposals` works perfectly.
+
+I did the honest Gate B path too: wrote a real Problem/Solution/Result case study (nice confirmation message), pasted a valid deliverable URL, submitted. *"Deliverable submitted — verification service is checking your flow."* Then, forever: **GATE B PENDING**. Phase C — proposals, the First-Bid challenge, the entire "sell" leg — never opened. **Both gates are unreachable: one by missing data, one by a check that never fires.**
+
+So I ran the test I run on anything that wants to sell me a certificate. New account. Day 2. One click on **"Complete sprint"**. The server threw a **500** (reference `339f8440-0419-46b0-9bba-5c881e08f3e1`), and then the dashboard told me:
+
+> **"Sprint complete 🎉 — You finished all 14 days. Your Demand-Validated badge is on your public profile."**
+
+I checked the database: `status: completed`, `phase: A`, `current_day: 2`, `completed_days: 1`, **`badge_id: None`**, Gate A `pending`. I had finished one day of fourteen and the product was asserting to the world that I hold a Demand-Validated badge. The badge *mint* is properly guarded (`badge_engine.issue` requires Gate B pass **and** completion — the client filter stayed honestly empty), but `sprints.status` is writable by anyone in one click, and *"Completed [Skill] Sprint within the last 30 days"* is the exact filter clients are being sold.
+
+I tried the AI Mentor twice. The team fixed the silence mid-test — it now echoes my question and shows a **"Thinking…"** bubble, which changed my experience from "broken" to "waiting". But after **60 seconds** there was still no answer, and on my earlier runs it was 61 s and 80 s with nothing. A mentor that makes a stuck learner wait a minute and then says nothing is worse than the honest error the spec asks for.
+
+My public profile, seen by a client, renders my name and then the literal word **"None"** where the headline should be. (The slug collision I found — two "Dana" accounts resolving to the same `/profile/dana` — was fixed during my session; slugs are now unique and unknown slugs 404.)
+
+**Would I continue to Day 2?** No — not from impatience, but because Day 2 is the same dead lesson, the same zero rubric boxes, and there is no path forward that the product will acknowledge. **Would I ever pay?** Not today. I'd have to believe the badge means something, and I watched it get asserted for doing one day, watched Gate A demand ticks that don't exist, and watched Gate B ignore honest work. The one thing that made me believe — a generated lesson — is genuinely excellent: it named the exact Klaviyo metric (`Started Checkout`), the exact split (`Profile property 'Number of Orders' equals 0`), the exact tags (`{{ event.extra.checkout_url }}`), a 1-hour Time Delay, four real pitfalls. I read it and thought *"I could build that tonight."* That content is the product. Right now you get it maybe half the time, and it doesn't let you finish anything.
+
+---
+
+## 2. Market-readiness verdict
+
+### **4 / 10 — not market-ready. Do not charge for this yet.**
+
+The shell is stronger than most funded edtech MVPs and the team is clearly fixing things live: signup is 2 seconds, CSRF and cross-user authorization are genuinely correct (I attacked them with a second account and failed to leak anything), the demand counters are now honest, mobile at 390px has zero horizontal overflow, and **the Job Unlock Meter now fires a real +15 on Day 1** — the product's best moment. But the core loop is **uncompletable**: Gate A is mathematically unreachable because copy-work projects can hold `rubric=[]` while the server still demands three ticks (I hit this on all four sprints, days 2–5, with no error surfaced), and Gate B stays `pending` after a fully honest submission, so Phase C, proposals and the entire "sell" leg can never be reached. Worse for a product whose only asset is a credible badge, a Day-1 learner can click "Complete sprint" and be told *"You finished all 14 days. Your Demand-Validated badge is on your public profile"* with `badge_id: NULL` — and Phase B is open to a Day-1 account while the UI claims it's locked. On top of that, **the authenticated read path collapses under ordinary concurrency**: from ~6 simultaneous reads upward `/generation` fails a majority of the time and the dashboard returned **12/12 500s at `k=12`** from a single session — while sequential requests always succeed and the anonymous landing page is unaffected. Layer on a first-run lesson that fails outright for ~50% of days (primary LLM p50 latency 54–100 s straddling a 90 s timeout, with the documented OpenRouter fallback dead at HTTP 402), a 7.5–8.5 s blocking enroll, and a cohort banner that announces a cohort that ended twelve days ago, and the modal first run is: *freeze, failed lesson, impossible rubric, dead end — while a shortcut tells a lazy stranger they're certified.*
+
+**Scorecard** — Positioning/marketing 8 · Onboarding 6 · Core learning loop 3 · Verification gates 1 · Demand-data integrity 8 (was 1; fixed today) · Trust/badge integrity 1 · Reliability 2 (was 3; the concurrency defect is worse than the flaky endpoint I first logged) · Legal/launch readiness 2.
+
+**To reach 7/10:** fix Gate A's empty-rubric dead end, make Gate B's auto-check actually fire, gate `POST /complete`, give each request its own Supabase client so two concurrent reads don't 500, raise the LLM timeout and repair the fallback, and enforce Gate A on the contract route. Those six are the difference between a demo and a product.
+
+---
+
+## 3. Prioritized issues
+
+**BLOCKER** = breaks the core promise or the money path · **MAJOR** = damage a user will feel · **MINOR** = polish. Every row was re-confirmed on the current build unless marked *(fixed during test)*.
+
+| # | Sev | Area | What happened | Evidence (URL · screenshot · log) | Suggested fix |
+|---|-----|------|---------------|-----------------------------------|---------------|
+| 1 | **BLOCKER** | Gate A / copy-work | All three `copywork_projects` rows can hold `rubric=[]` and `clone_steps=[]`. The UI then renders **0 checkboxes** with *"When all 0 points are ticked…"*, while `submit_copywork` requires `len(rubric_checked) >= 3 and all(...)`. On a fresh sprint, **Days 2, 3, 4 and 5 all returned "Tick off all three rubric items" with zero boxes present**. **Phase A is unwinnable** and the learner is never told why. | `/sprints/2a719493…/day/{2,3,4,5}` · `shots/65-v-day2-task.png`, `shots/75-w-day3-gateA.png`; `artifacts/finalcheck.log` W4, `artifacts/reverify.json` V4 | Treat an empty rubric as *content not ready*: disable Step 3 and show a retry; gate `done` on `len(rubric)` not a hardcoded 3; have `project_anatomy` retry per-project independently of lesson generation. |
+| 2 | **BLOCKER** | Badge / completion integrity | On a **fresh account, healthy server**: one click on **"Complete sprint"** on **Day 1** returned `302` and set `sprints.status = "completed"`. The dashboard then renders, **on the same screen**, `SHIFT A · DAY 01/14` and `Generating your sprint content… 0 / 14` **and** **"Sprint complete 🎉 — You finished all 14 days. Your Demand-Validated badge is on your public profile."** DB truth: `phase: A`, `current_day: 1–2`, `completed_days: 0–1`, **`badge_id: None`**, Gate A `pending`. `POST /sprints/<id>/complete` checks no gate and no day. (Re-proved on a second account on Day 2, ref `339f8440-0419-46b0-9bba-5c881e08f3e1`.) | `/sprints/27bbc8ee…` → `/sprints/2a719493…` · `shots/84-rj-completed-dashboard.png`, `shots/77-zero-work-complete-current.png`, `shots/J1-after-complete-click.png`; `artifacts/rj-completed-dashboard.txt`, `reverifyJ.log` RJ2, `shortcut2.log`, `state_audit.json` | Require `gate_b_passed` (and ideally `current_day >= 14`) before `complete`; never render the "badge is on your profile" banner unless a `badges` row exists for this sprint; return a clear "not eligible — missing X, Y" page. |
+| 3 | **BLOCKER** | Phase locking (Gate A not enforced) | The dashboard renders **"SHIFT B · LOCKED — Unlocks when Phase A passes verification"** while `GET /sprints/<id>/contract` is **fully open and submittable** to a Day-1/Day-2 account (`locked: false, open_page: true`). Gate B's lock on `/proposals` *is* correctly enforced — so the enforcement is inconsistent, and the gate that makes the badge credible is decorative. | `/sprints/a49c13f4…/contract`, `/sprints/2a719493…/contract` · `shots/29-contract.png`, `shots/66-v-contract-day1.png`, `shots/30-proposals.png`; `artifacts/journeyK.json` K8, `reverify.json` V5 | Apply the same `gate_a_passed()` guard used in `proposals.py` to the contract route, and stop flipping `sprints.phase` to `B` without it. |
+| 4 | **BLOCKER** | Gate B never passes | The honest path — saved a full Problem/Solution/Result case study **and** submitted a valid `http(s)` deliverable URL — returned *"Deliverable submitted — verification service is checking your flow"* and then left **GATE B PENDING** permanently. Phase C (proposals, First-Bid challenge) stayed locked. `auto_check_gate_b` either never fires or silently declines. | `/sprints/2e2566d8…/contract`, `/sprints/2e2566d8…/proposals` · `shots/44-case-study-saved.png`, `shots/45-gateB-honest-submit.png`, `shots/53-proposals-locked.png`; `artifacts/audit2.log` (gate B `pending`) | Make the auto-check deterministic on its two documented inputs and **surface the reason** it declined on the page; add a re-run affordance. |
+| 5 | **BLOCKER** | Lesson generation reliability | Day 1 fails outright with *"Generation failed: No LLM provider answered for the day's lesson"*; **7 of 14 days** ended in `error` on one sprint. Measured cause: primary provider latency on trivial prompts **53.8 / 62.7 / 80.7 / 87.3 / 100.4 s**; the real Day-1 lesson prompt took **91.7 s → None** at `timeout=90` but **71.6 s → 4,394 chars** at `timeout=240`. The documented fallback is dead: **OpenRouter HTTP 402 "Insufficient credits"** — so the "3-provider chain" is one coin flip. | `/sprints/2e2566d8…/day/1` · `shots/23-day1-lesson-failed.png`, `shots/C1-day1-while-generating.png`; `artifacts/llm_chain.log`, `artifacts/lesson_prompt.log`, `artifacts/watch.json` (55 polls), `artifacts/state_audit.json` | Raise the lesson timeout to ≥240 s (or stream), fix or remove the dead fallback so the chain is honest, add a per-day retry on the day page, and re-drive `error` days on a schedule. |
+| 6 | **BLOCKER** | Concurrency — the authenticated read path collapses under load | Measured on the healthy server with a single session cookie, **reproduced twice** (21:5x and 22:0x). `/generation`: sequential `k=1` → **always 200** (4/4, then 5/5); `k=2` → 500/500 on the first run but **200/200 on the re-run** *(so two requests are not reliably enough — my first read overstated this)*; `k=4` → all 200; `k=6` → **4/6 = 500**; `k=8` → 5/8; `k=12` → **7/12** then **11/12 = 500**. **`GET /sprints/<id>` (the dashboard) at `k=12` → 11/12 then 12/12 = 500.** The anonymous landing page at `k=8` was clean (all 200), so this is specific to the authenticated Supabase-reading routes. **It fails reliably from ~6 concurrent reads upward** — and the dashboard fires several reads per paint while a background generation thread is writing, so one learner can trip it unaided. Most likely explanation for the intermittent 500s I hit on Day 1, the dashboard and `/generation` all session. Signature: a shared/module-level Supabase client (or its `requests` session) driven from multiple threads without isolation. | `artifacts/diag.log`, `docs/dogfood/diag_generation.py` (reproducible burst harness), `reverifyJ.log` RJ6; `shots/80-rj-zero-work-complete.png` (dashboard 500 after a 302 complete) | Give each request its own client (or a thread-local), and wrap the progress reads in try/except returning a degraded `{status:"unknown"}` so a transient failure never 500s the page. Add a concurrency smoke test — sequential-only tests will never catch this. |
+| 7 | **MAJOR** | Enrollment latency | `POST /sprints/<cluster>/start` blocks **7469 / 8022 / 8474 / 8541 ms** across four independent accounts — a dead, spinner-less tab at the moment of commitment. The code comment claims "the request never waits on the LLM", but `create_plan` + `create_projects` + the snapshot upsert run synchronously. | `/sprints` → `/sprints/27bbc8ee…` · `artifacts/journeyB.json`, `journeyK.json` K3, `reverify.json` V1, `reverifyJ.log` RJ1 | Move those writes into the background thread and redirect immediately; add a pending state to the Start button. |
+| 8 | **MAJOR** | AI Mentor | Still no answer: **61 s** and **80.5 s** before the fix, **60 s with no reply** after, and **51 s with no reply** on the re-verified healthy run. *(Improved during test: the question now echoes and a "Thinking…" bubble appears — `echoed: true, thinking: true`.)* The documented 20 s timeout is not enforced and a total LLM failure still produces no error state. Caveat: one re-verify attempt logged `net::ERR_NETWORK_IO_SUSPENDED`, a browser/OS-level network suspension, so that single sample is not attributable to the app — the 60 s and 51 s no-reply samples are. | `/mentor` · `shots/67-v-mentor-thinking.png`, `shots/68-v-mentor-reply.png`, `shots/83-rj-mentor.png`; `artifacts/reverify.json` V6, `reverifyJ.log` RJ6, `journeyH.json` H1 | Enforce the 20 s timeout client-side, render a visible error bubble with a retry, and keep the echo/thinking work. |
+| 9 | **MAJOR** | Cohort framing | A user enrolling **2026-09-04** is placed in **"COHORT #12 · ENDS 2026-08-23"** — a cohort that ended twelve days ago and is still `status: active`. The first sentence about the learner's commitment is in the past. | `/sprints/2a719493…` · `shots/60-v-dashboard-fresh.png`, `shots/21-dashboard-fresh.png`; `artifacts/state_audit.json` → `cohorts` | In `_open_cohort`, roll a fresh cohort when the active one's `end_date < today` (and close expired rows). |
+| 10 | **MAJOR** | Public profile | The client-facing profile renders the literal word **"None"** as the headline under the freelancer's name. This is the storefront the client loop sells. *(Slug collision fixed during test: `/profile/reverify` is now unique and unknown slugs 404.)* | `/profile/me` → `/profile/reverify` · `shots/69-v-profile-me.png`, `shots/31-profile-me.png`; `artifacts/reverify.json` V7 | Default the headline to an empty string and hide the row when absent. |
+| 11 | **MAJOR** | Day 1 silent discard | Day 1 (`action_type: setup`) renders a copy-work form; submitting a valid link produces **no flash message and no stamp change** — Day 1 is not in `DAY_TO_PROJECT`, so the write is skipped. The learner's only requested action on Day 1 is thrown away without a word. | `/sprints/2a719493…/day/1` · `shots/62-v-day1-after-submit.png`; `artifacts/reverify.json` V3 (`flash: "(NO MESSAGE)"`) | Give Day 1 a real setup task with its own endpoint, or hide the copy-work form when `project_index` is unmapped. |
+| 12 | **MAJOR** | Legal / trust readiness | **No footer, no privacy policy, no terms, no contact/support anywhere** (`templates/base.html` has no footer; a repo-wide grep for `footer\|privacy\|terms\|refund\|cookie` returns zero hits) — while the product collects emails, publishes public freelancer profiles, and makes earnings claims (*"Turn a single Klaviyo flow into a **$2k+** checkout-recovery gig"*, *"$92/hr"*, *"127 active jobs"*). | `/`, `/pricing`, `/auth/signup` · `shots/01-landing.png`, `shots/05-pricing.png` | Add Privacy / Terms / Contact before collecting a real email; add an earnings-claims disclaimer. |
+| 13 | **MINOR** | Lesson player | The "TwoPanel Remotion player" is not present: **0 canvas, 0 video**, and 5 `<audio>` elements of which **4 are `data:audio/mp3` placeholder stubs**. The real voiceover URL returns 200 but logs `net::ERR_ABORTED` on every day page. | `/sprints/2e2566d8…/day/3` · `shots/Q2-day3-lesson.png`; `artifacts/journeyL.json` L3 | Remove the stub audio elements; preload only the active source; handle the abort so the console stays clean. |
+| 14 | **MINOR** | Kinetic text | The player's headline renders with **all whitespace stripped**: `TurnasingleKlaviyoflowintoa$2k+checkout‑recoverygig—clientspayforthe` — on the signature feature's hero moment. | `/sprints/2e2566d8…/day/3` · `shots/Q2-day3-lesson.png`; `artifacts/journeyL.json` L3b | Split on `\s+` into word spans instead of characters. |
+| 15 | **MINOR** | Request-a-sprint dead end | Submitting "Shopify Apps" returns to the picker with **no confirmation message** and the skill appears nowhere on the page the user is looking at. It *does* persist — the new cluster later showed up in the client-filter dropdown — but the learner has no way to know it worked. | `/sprints` · `shots/42-after-request-sprint.png`; `artifacts/journeyL.json` L4, `reverifyJ.log` RJ5 | Flash "Requested — we'll build it when the feed is ready" and list pending requests. |
+| 16 | **MINOR** | SEO thin page | `/topics/email-automation` is **355 characters** of chrome repeating the demand counters — no curriculum, no days, no substance — yet it's the page the sitemap exists to promote. Unknown cluster keys `302 → /topics` (200) instead of 404. | `/topics/email-automation` · `shots/04-topics-email-automation.png` | Put the 14-day outline and real postings on the page; return a genuine 404. |
+| 17 | **MINOR** | Heading structure | `h1` count is **0** on the sprint dashboard and day pages — the most-viewed authenticated screens. (Input labels and ARIA are otherwise clean: 0 unlabeled inputs, 0 unnamed controls.) | `/sprints/<id>`, `/sprints/<id>/day/3` · `artifacts/journeyL.json` L6 | Give each screen a real `<h1>`. |
+| 18 | **MINOR** | Unearned momentum | After clicking through days with no lesson and no rubric, the Momentum card reported **"Day streak 4 days · Confidence 62/100"** — a number with no visible derivation. | `/sprints/2e2566d8…` · `shots/G1-dashboard-now.png` | Derive confidence from verifiable signals and label them, or drop it. |
+
+### Fixed while I was testing (verified by re-run)
+- **Demand counters are now honest** — `job_clusters.job_count` 127/105/50 exactly matches `job_feed` rows, sources `freelancer`/`rss` (was 450/322/268 vs 5/0/0 fabricated). `artifacts/state_audit.json`.
+- **Job Unlock Meter now fires on Day 1** — `unlock_day` distribution spans 1–14 (was 9–13), and completing Day 1 produced **+15 POSTINGS UNLOCKED**. `shots/74-w-meter-after-day1.png`.
+- **Mock Contract brief is now a real posting** — *"Lifecycle / Email Personalization Expert — Paid Platform Review (Ongoing Panel)"*; the placeholder *"Anonymized real job posting — …"* is gone. `shots/66-v-contract-day1.png`.
+- **Profile slug collision fixed** — unique slugs per user, unknown slug → 404. `artifacts/reverify.json` V7.
+- **Mentor now echoes the question and shows a "Thinking…" bubble.** `shots/67-v-mentor-thinking.png`.
+
+### Withdrawn / corrected after the 19:45 server death (re-tested on the healthy server)
+- **`GET /sprints/<id>/badge` → HTTP 500 is withdrawn.** That sample came from `journeyJ` at 19:43, minutes before the process died. On the healthy server it returns **200** and redirects to the dashboard (`shots/81-rj-badge-endpoint.png`, `reverifyJ.log` RJ3). The *false completion claim* it was attached to still stands — it was re-proved cleanly and independently.
+- **The scattered intermittent 500s** I logged on Day 1, the dashboard and `/generation` are now attributed to one reproducible cause (issue #6, concurrency) rather than reported as unexplained flakiness. Sequential requests always succeed; ~6+ concurrent reads fail a majority of the time.
+- **The lesson-player findings were re-confirmed current, not stale** (as the sprint owner, `shots/85-player-state-now.png`): the day page still mounts **0 canvas, 0 video, 0 iframe, no `#player`** and **5 `<audio>` elements of which 4 are `data:audio/mp3;base64` placeholder stubs**, and the kinetic headline still renders `TurnasingleKlaviyoflowintoa$2k+checkout‑recoverygig…`. Your M3 reclassification proves the *voiceover URLs* are healthy (I agree — the one real Supabase storage src is live), but that is a different question from the player never mounting a canvas and shipping four stubs, which is what issues #13/#14 describe.
+- **`journeyJ`'s "Not found" public profile is not reproducible** — a fresh zero-work account's profile renders its name correctly (`reverifyJ.log` RJ4). The real, reproducible profile defect is the literal **"None"** headline (issue #10).
+
+---
+
+## 4. What's genuinely good (keep)
+
+- **The Job Unlock Meter, working.** *"15 of 127 real jobs unlocked · +15 POSTINGS UNLOCKED SO FAR"* twenty minutes after signing up is the single best product moment I found. It's why the thesis is interesting. Protect it fiercely — it is one bad feed-bucket away from printing `+0`, which is what I saw earlier the same day.
+- **The lesson content, when it lands, is excellent.** The Day-3 lesson named the exact Klaviyo metric (`Started Checkout`), the exact conditional split (`Profile property 'Number of Orders' equals 0`), the exact dynamic tags (`{{ event.extra.checkout_url }}`, `{{ event.extra.line_items.0.title }}`), a 1-hour Time Delay, a pre-lesson intuition quiz, four genuine pitfalls and a four-question knowledge check. *"Publishing without a test event – live flow sends to real customers with broken links"* is advice a practitioner would give. **This is the moat.**
+- **Passwordless first-run.** First name + email, in and out in ~2 s, with a warm flash (*"Welcome! Pick a skill to see live demand and start Day 1 free."*). Lowest-friction onboarding I've tested this year. (The email-only *login* is a separate, known auth-model decision — I'm praising the signup friction, not the recovery story.)
+- **Authorization is actually correct.** I created a second account and attacked account A's sprint: `GET /sprints/<A>/day/3` redirects to the picker, and `POST /sprints/<A>/day/3/complete` returns `404 {"error":"not found"}`. Verified with a marker string unique to A's content — **no leak, and no false positive on my side**. The `_is_uuid` guard that prevents Postgres `22P02` 500s from junk URLs is disciplined engineering.
+- **CSRF is enforced** — a token-less state-changing POST is rejected with `400 The CSRF token is missing.`
+- **Server-side URL validation with human copy.** `javascript:alert(1)` and `ftp://…` are refused with *"That doesn't look like a valid link — paste the full URL (starting with http:// or https://)."* Empty submissions are caught. Most MVPs skip this entirely.
+- **The badge mint is honestly guarded.** `badge_engine.issue` requires Gate B pass **AND** `status == completed`, and the client filter correctly reported *"No verified freelancers match this filter yet"* rather than inventing supply. The problem is the `status` field feeding it (issue #2), not the mint.
+- **Mobile layout holds up.** At 390×844 on landing, dashboard and day view: **0 px horizontal overflow, 0 clipped text blocks, 1 small tap target.**
+- **Clean public pages.** No broken images, no `{{ }}` template leakage, no `None` on marketing surfaces, zero console errors on any anonymous page.
+- **Real crawler/SEO plumbing.** `/robots.txt`, `/sitemap.xml`, `/llms.txt` and a Course JSON-LD block all 200 with sensible content; `noindex` on auth pages.
+- **Good failure hygiene where it counts.** The 500 page shows a **correlation reference id** and tells the user to contact support with it — that's how you get a useful bug report from a stranger. (I've cited two of them above.)
+- **A collapsible glossary** on the dashboard that actually expands (+594 chars) — thoughtful for a first-timer drowning in "Gate A / Shift B / Job Unlock Meter".
+- **An honest pricing page.** *"Pricing comes after placement … we owe you a demand-validated placement, not a paywall."* Right instinct; it needs a completable product behind it.
+
+---
+
+### Appendix — reproduce this
+
+```bash
+# from the project root, using the project venv (Playwright 1.62 + cached chromium)
+.venv/bin/python docs/dogfood/journeyA_anon.py         # public surfaces + authz probe
+.venv/bin/python docs/dogfood/journeyB_signup.py       # signup -> enroll -> dashboard
+.venv/bin/python docs/dogfood/journeyK_full.py         # the full pristine 10-step journey
+.venv/bin/python docs/dogfood/journeyL_gaps.py         # gates, player, a11y, concurrency
+.venv/bin/python docs/dogfood/journeyJ_credibility.py  # zero-work "Complete sprint" test
+.venv/bin/python docs/dogfood/journeyI_authz.py        # cross-user access + slug collision
+.venv/bin/python docs/dogfood/reverify.py              # re-verification vs current build
+.venv/bin/python docs/dogfood/final_check.py           # meter + Gate A reachability
+.venv/bin/python docs/dogfood/check_shortcut.py        # the Day-2 false-completion proof
+.venv/bin/python docs/dogfood/reverify_journeyJ.py     # re-run of every journeyJ-era claim
+.venv/bin/python docs/dogfood/diag_generation.py       # concurrency harness (k=1..12 bursts)
+.venv/bin/python docs/dogfood/read_completed.py        # clean render of the zero-work dashboard
+.venv/bin/python docs/dogfood/audit_state.py           # read-only DB cross-check of UI claims
+.venv/bin/python docs/dogfood/probe_llm_chain.py       # provider latency + fallback status
+.venv/bin/python docs/dogfood/probe_lesson_prompt.py   # real lesson prompt vs timeout=90
+```
+
+Evidence: `artifacts/*.json` (structured findings), `artifacts/*.jsonl` (console/network), `artifacts/watch.json` (55 generation polls), `artifacts/state_audit.json` (DB vs UI), `artifacts/llm_chain.log` + `lesson_prompt.log` (LLM root cause), `shots/*.png` (100+ screenshots).
+No app code, templates, routes or server process were modified by this test.
+
+---
+
+# Round 3 re-test — commit `dda94e2` (2026-09-04, 22:10–23:10)
+
+**Tester:** Dana (qe-enduser) · **Build:** `dda94e2` "Verified-email auth (Google + magic link) and dogfood blocker fixes #1-#6", server on :5000, `/health` → `status: ok`.
+**Method:** same Playwright harness, same burst script, same DB cross-checks. **No app code touched, no server restart.** Scripts: `t2_auth.py`, `t2_concurrency.py`, `t2_gates.py`, `t2_gen_count2.py`, `t2_retry.py`, `t2_misc.py`.
+
+## Verdict: **6 / 10** — up from 4/10. Credible private beta; still not sellable.
+
+Three of the six blockers are genuinely dead, auth — the biggest open risk — is properly solved, and the product has stopped lying to users. What keeps it at 6 and not 8 is that **a new learner still cannot finish Phase A**: copy-work rubrics never arrive, so Gate A remains unreachable on every fresh sprint. The failure is now honest, explained and retryable — but it is still a dead end, and the retry's own promise ("fills in within a minute") is false.
+
+## Blocker scorecard
+
+| # | Round 2 blocker | Round 3 status | Evidence |
+|---|---|---|---|
+| 1 | Gate A unwinnable ("all 0 points" + server demands 3 ticks) | **PARTIALLY FIXED — still blocking** | The lie is gone: empty-rubric days now read *"This day's checklist hasn't been written yet — Content generation failed for this project — there is nothing to tick, so submitting can't verify yet"* with a working **↻ Retry generation** control, and `submit_copywork` answers *"This day's checklist hasn't finished generating, so the build can't be verified yet — use 'Retry generation'…"* (`still_says_three: false`). Days with content correctly show 3 boxes and *"When all 3 points are ticked"*. **But** on two fresh sprints all three `copywork_projects` still had `rubric=0, clone_steps=0` after **22.6 min**, and clicking Retry left day 2 at **0 checkboxes after 5 more minutes**. Gate A is still unreachable. `shots/94-t2-day2-empty-rubric.png`, `shots/95-t2-empty-rubric-flash.png`, `shots/d3-t2-rubric-still-missing.png`, `artifacts/t2gates.log` G1-G2, `artifacts/t2retry.log` |
+| 2 | Zero-work "Complete sprint" certifies a Day-1 learner | **FIXED** | `POST /complete` now refuses: *"Not yet — Gate A (three verified copy-work builds) must pass before your sprint can be completed."* `claims_finished_all_14: false`, `claims_badge: false`, no 500, and the sprint stays `TRAINING LIVE` at its real day. `shots/97-t2-complete-refused.png`, `shots/98-t2-still-active.png`, `artifacts/t2gates.log` G4 |
+| 3 | Phase B open while UI says LOCKED | **FIXED** (one cosmetic residue) | `GET /contract` on a Phase-A sprint now redirects to the dashboard with the flash *"Shift B unlocks when your three copy-work builds pass Gate A verification — finish Phase A first."* `shots/96-t2-contract-gateA.png`, G3. **Residue:** `sprints.phase` still advances on day count, not on gate pass — the legacy sprint reads **"SHIFT B · DAY 06/14"** on the dashboard while Gate A is `pending` and the contract route correctly refuses. The lock holds; the label misleads. |
+| 4 | Gate B never passes on honest work | **NOT REACHABLE — unverified** | The Gate-A lock that fixed #3 now prevents me from ever loading `/contract`, and Gate A can't pass, so **I could not exercise Gate B at all this round** (vague-deliverable flash, order-independence, flip to pass). The fix is in `routes/contract.py` and the captain's own 22-check script covers it, but from where I sit it is **unconfirmed**. This is a testability consequence, not a regression. G5: *"contract not reachable on this Phase-A sprint (expected lock)"* |
+| 5 | ~50% of days permanently `error` | **IMPROVED — still blocking, new cause** | `timeout=240` did what it promised: **0 error days** on both fresh sprints (round 2: 7/14 permanently errored). Nothing is lost now — but nothing arrives in time either. After **22.6 min**: web-scraping **4/14** lessons (29%), ai-chatbots **3/14** (21%); at the 6-minute mark it was 2/14 and 1/14. Throughput is roughly one lesson per 5–6 minutes per sprint, so Day 1 is usable and Day 5 is not. The blocker moved from *failure* to *latency*, and the copy over-promises: *"Retry and it fills in within a minute"* — measured 5+ minutes, still empty. `artifacts/t2genc.log`, `artifacts/t2genc2.log`, `t2gen_count.json` |
+| 6 | Authenticated read path collapses under concurrency | **FIXED — clean** | Same harness that produced 11/12 and 12/12 500s last round: **0 non-200 out of 84 requests** — `/generation`, dashboard, `day/3` and landing each at k=1/2/6/12. The request-scoped Supabase client was the right call. `artifacts/t2conc.log`, `t2_concurrency.py` |
+
+## Auth (B1) — solved, with two honest gaps
+
+| Check | Result |
+|---|---|
+| `POST /auth/login`, `POST /auth/signup` | **405 Method Not Allowed**, no session set. The email-only identity assumption is gone. |
+| Login/signup pages | Google + email-link paths, **0 password fields**, and good self-explaining copy: *"clicking the link proves the email is yours, so your account can't be taken over."* `shots/90-t2-auth-login.png` |
+| `/auth/google` redirect shape | **302** → `https://<project>.supabase.co/auth/v1/authorize` with `provider=google`, `code_challenge` present, `code_challenge_method=s256`, `state`, `redirect_to=http://localhost:5000/auth/callback`. Correct PKCE. GoTrue then returns **400 — config-pending, not a bug** (provider not enabled in the dashboard), as the captain noted. `shots/91-t2-google-redirect.png` |
+| `/auth/callback` with bogus code, wrong state, omitted state, and **replay of a consumed flow** | Every case → **302 to `/auth/login`**, and critically **no authenticated session**: `/profile/me` under the post-callback cookie itself redirects to `/auth/login` (`authenticated: false`, verdict *"no session established"*). Flow state is single-use (`session.pop`). `shots/d4-t2-callback-fail-landing.png`, `artifacts/authcb.log`, `authcb2.json` |
+| `/auth/magic` happy path | **UNVERIFIED — I could not complete a real sign-in.** Two independent reasons, both worth knowing: (a) as a black-box tester I cannot read the mailbox, and (b) Supabase's **built-in SMTP rate limit** kicked in — GoTrue returned `429 over_email_send_rate_limit`, which the app surfaces honestly as *"Too many link requests — wait a minute and try again."* That 429 is itself a launch constraint: onboarding is capped at a handful of signups per hour until custom SMTP is configured. `shots/d5-t2-magic-result.png` |
+| Legacy sessions from the insecure flow | Still authenticate — a round-1/2 email-only cookie resolves `/profile/me` → `/profile/dana-cea291` and `/sprints` 200. Harmless pre-launch (only test accounts exist) but the migration should invalidate old session keys before real users. |
+
+## MISC — all four confirmed fixed
+
+- **Cohort date** ✓ — Cohort #12 (ended 2026-08-23) is now `status=completed`; both new enrollees landed in **Cohort #1, ending 2026-09-07 — in the future**. Auto-complete on enroll works.
+- **Footer + disclaimer** ✓ — a real `<footer>` on all six pages sampled, with contact (`hello@freelancelaunch.app`) and *"We show live job demand; earnings depend on your work — no income guarantees. Your email is used only for your account and sprint updates."* **Still missing:** actual Terms and Privacy documents — `a[href*=terms]` and `a[href*=privacy]` counts are **0** everywhere. The disclaimer is a good instinct, not a substitute, now that the product collects *verified* emails and publishes profiles. `shots/c1-t2-footer-landing.png`
+- **$0/hr** ✓ — 0 zero-rate hits across 7 surfaces; rates render as `$92/hr` where data exists and are omitted where it doesn't.
+- **Enroll spinner** ✓ — verified the handler's actual effect in-page: `Start sprint`/enabled → **`Starting — building your Day 1…`/disabled**. `shots/c2-t2-enroll-spinner.png`
+
+## New issues found this round
+
+| Sev | Area | What happened | Evidence | Suggested fix |
+|---|---|---|---|---|
+| **MAJOR** | Enrollment latency | Worse, not better: **8607 ms** and **16366 ms** for two near-simultaneous enrolls (round 2 was 7.5–8.5 s). The spinner masks it; the block is still server-side and now appears to serialise. | `artifacts/t2gen.log`, `t2gen_count.json` | Move `create_plan`/`create_projects`/snapshot into the background thread; check whether the request-scoped client added per-request connection setup. |
+| **MAJOR** | Retry copy over-promises | *"Retry and it fills in within a minute"* — after clicking Retry and polling 5 minutes the day still had 0 checkboxes and the provider had failed again. Setting a expectation the product can't meet on the one control you give a stuck user. | `shots/d3-t2-rubric-still-missing.png`, `t2retry.log` | Say "this can take several minutes" or show real progress; disable re-click while a retry is in flight. |
+| **MINOR** | Contradictory day copy | When the guide fails but the shell renders, one page says *"build from the reference below"* (proceed) and, below it, *"submitting can't verify yet"* (you can't). | `t2retry.log` R2 | Pick one message per state; if neither the guide nor the rubric exists, the day should be visibly "not ready", not partially inviting. |
+| **MINOR** | GoTrue error mapping | `/auth/magic` failure showed *"Couldn't send the sign-in link (400)"* with no reason. The handler reads `error_description`, but GoTrue's rate-limit body uses `msg` — so the useful text is dropped and users see a bare code. | `artifacts/t2auth.log` A4, `artifacts/gotrue_otp_probe.log` (`{"code":429,"error_code":"over_email_send_rate_limit","msg":"email rate limit exceeded"}`) | Fall back to `msg` / `error_code` when `error_description` is absent. |
+| **MINOR** | Phase label vs gate state | Dashboard shows **"SHIFT B · DAY 06/14"** while Gate A is `pending` and the contract route refuses access. | `t2gates.log` G3/G4 | Derive the displayed phase from gate state, or label it "Phase A — verification pending". |
+
+## What I could not test, and why (no guesses dressed as results)
+
+1. **Gate B end-to-end** (#4) — blocked by the Gate-A lock, which is itself the fix for #3. Needs a sprint with three verified copy-work builds; none exists because rubrics don't generate.
+2. **A real magic-link sign-in** — no mailbox access, and the built-in SMTP quota was exhausted during testing.
+3. **Google sign-in completion** — provider not enabled in Supabase (config-pending).
+
+**Suggested unblock for round 4:** seed one sprint with generated copy-work rubrics (or run `project_anatomy` for all three projects synchronously at enroll), so a tester — and a real learner — can walk Phase A → Gate A → Gate B → proposals in one sitting. Until then, the deepest question about this product (does the verification chain actually certify anyone?) is unanswerable from outside.

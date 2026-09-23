@@ -1,0 +1,180 @@
+URL: http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750
+--- visible text ---
+Freelance
+Launch
+Dashboard
+Mentor
+Profile
+Sign out
+COHORT #12 · ENDS 2026-08-23
+📧 Email Automation Sprint
+TRAINING LIVE
+5 ACTIVE JOBS
+$62/HR
+EMAIL AUTOMATION DEMAND
+SHIFT A · DAY 01/14
+Complete sprint
+Generating your sprint content…
+
+Each day's lesson is being written from your cluster's live job postings.
+
+0 / 14
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+YOUR NEXT STEP
+
+Continue Day 01 — build the skill
+
+Open Day 1 →
+New here? What the words on this page mean
+SHIFT A · DAYS 01–05
+IN PROGRESS
+Skill Acquisition
+
+Copy-Work: 3 replication projects + gap-fill
+
+1
+2
+3
+4
+5
+
+0/5 days punched
+
+SHIFT B · DAYS 06–10
+LOCKED
+Mock Contract
+
+Fulfill a real brief + case study
+
+6
+7
+8
+9
+10
+
+Unlocks when Phase A passes verification
+
+SHIFT C · DAYS 11–14
+LOCKED
+Send Proposals
+
+Proposals + First-Bid challenge
+
+11
+12
+13
+14
+
+Locked until Mock Contract passes
+
+Sprint Content
+0 / 14 DAYS GENERATED
+Day 1 · Setup
+Pending generation
+Day 2 · Copywork
+Pending generation
+Day 3 · Copywork
+Pending generation
+Day 4 · Copywork
+Pending generation
+Day 5 · Copywork
+Pending generation
+Day 6 · Contract
+Pending generation
+Day 7 · Contract
+Pending generation
+Day 8 · Contract
+Pending generation
+Day 9 · Case-study
+Pending generation
+Day 10 · Case-study
+Pending generation
+Day 11 · Proposal
+Pending generation
+Day 12 · Proposal
+Pending generation
+Day 13 · Proposal
+Pending generation
+Day 14 · Proposal
+Pending generation
+Job Unlock Meter
+
+Every day you finish opens more real job postings in your skill.
+
+0 of 5 real jobs unlocked
+
+0% of the live postings in your skill are now open to you — finish more days to unlock the rest.
+
+0/14 days punched · 0 postings unlocked
++0 POSTINGS UNLOCKED SO FAR
+HOW THIS BECOMES A PAID CONTRACT
+1 · Build the skill (Days 1–5)
+→
+2 · Pass verification (Days 6–10)
+→
+3 · Send proposals (Days 11–14)
+→
+4 · Land your first client
+Today · Day 01
+SETUP · PROJECT 1 OF 3
+
+Complete today's action to unlock the next batch of live job postings.
+
+Watch lesson
+Learn the flow anatomy (5 min)
+Replicate the project
+Rebuild from a blank canvas (~35 min)
+Check your build matches
+3 points (~10 min)
+Open Day 1 →
+Momentum
+Day streak
+0 days
+Confidence
+50 / 100
+Proposals sent
+0
+Contracts
+0
+
+NUDGE
+
+You're past the hardest part of a new skill. 3 days of Copy-Work builds more muscle memory than 30 days of videos — keep going.
+
+Contracts & Earnings
+0 WON · $0 EARNED
+
+You'll send your first proposals in Phase C (Days 11–14). When a client says yes, log it here — earnings roll up on your sprint record.
+
+Log a contract you've won
+
+Add contract
+Live Job Feed
+
+Real postings in your skill — bid on them when you reach Phase C (Day 11).
+
+5 TOTAL
+JOB TITLE	SOURCE	SKILLS	POSTED
+Segment + campaign build
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-24
+Abandoned cart series
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-24
+Post-purchase upsell flow
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-23
+Email automation revamp
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-23
+Klaviyo flow setup for store
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-15

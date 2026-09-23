@@ -1,0 +1,41 @@
+{
+ "steps": [
+  {
+   "name": "no-flow",
+   "status": 302,
+   "location": "/auth/login",
+   "sets_session": true
+  },
+  {
+   "name": "google flow",
+   "status": 302,
+   "got_session": true
+  },
+  {
+   "name": "bogus code + wrong state",
+   "status": 302,
+   "location": "/auth/login",
+   "sets_session": true
+  },
+  {
+   "name": "bogus code, state omitted",
+   "status": 302,
+   "location": "/auth/login",
+   "sets_session": true
+  },
+  {
+   "name": "REPLAY after flow consumed",
+   "status": 302,
+   "location": "/auth/login",
+   "sets_session": true,
+   "note": "flow must be single-use; replay must not authenticate"
+  },
+  {
+   "name": "magic",
+   "status": 400,
+   "flow_set": false,
+   "link_sent": false,
+   "flash": []
+  }
+ ]
+}

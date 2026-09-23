@@ -1,0 +1,19 @@
+URL: http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/1
+Freelance
+Launch
+← Dashboard
+SHIFT A · DAY 01 · SETUP
+Day 1
+
+Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.
+
+Lesson
+Task
+Watch · Lesson
+TwoPanel video · Hook → Lesson → Key points → Outro
+Lesson generation failed
+
+Generation failed: No LLM provider answered for the day's lesson
+
+Mark lesson watched
+~5 min

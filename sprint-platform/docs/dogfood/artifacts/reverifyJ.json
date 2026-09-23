@@ -1,0 +1,97 @@
+{
+ "steps": [
+  {
+   "name": "health",
+   "status": 200,
+   "body": "{\"clusters_reachable\":true,\"mode\":\"supabase\",\"project\":\"tzfohwzgxlecsilvqmjq.supabase.co\",\"sample_count\":1,\"status\":\"ok\",\"tables\":\"live\"}\n"
+  },
+  {
+   "name": "enroll",
+   "ms": 7469,
+   "sprint": "27bbc8ee-a55d-40f0-adbc-666f0e046021",
+   "email": "rejverify_1788538618@example.com"
+  },
+  {
+   "name": "complete btn present on day 1",
+   "n": 1
+  },
+  {
+   "name": "POST /complete",
+   "exchanges": [
+    [
+     302,
+     "/sprints/27bbc8ee-a55d-40f0-adbc-666f0e046021/complete"
+    ]
+   ],
+   "site_error": true,
+   "claims": []
+  },
+  {
+   "name": "GET /badge",
+   "status": 200,
+   "site_error": false,
+   "text": [
+    "Freelance",
+    "Launch",
+    "Dashboard",
+    "Mentor",
+    "Profile",
+    "Sign out",
+    "COHORT #1 \u00b7 ENDS 2026-09-07",
+    "\ud83d\udd77\ufe0f Web Scraping Sprint",
+    "TRAINING LIVE",
+    "105 ACTIVE JOBS",
+    "WEB SCRAPING DEMAND",
+    "SHIFT A \u00b7 DAY 01/14"
+   ]
+  },
+  {
+   "name": "anon profile",
+   "status": 200,
+   "not_found": false,
+   "claims_badge": true,
+   "lines": [
+    "Freelance",
+    "Launch",
+    "Dashboard",
+    "Mentor",
+    "For clients",
+    "YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE",
+    "ReJVerify",
+    "None",
+    "Demand-Validated Badges",
+    "No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification.",
+    "Badges are only issued when the Mock Contract passes verification \u2014 never for \"finishing a course.\"",
+    "Case Study Portfolio"
+   ]
+  },
+  {
+   "name": "clients filter",
+   "status": 200,
+   "text": "Freelance | Launch | Sprints | Pricing | CLIENT FILTER | LABOR BOARD \u00b7 VERIFIED SUPPLY | Fresh, verified freelancers |  | Completed \"any skill\" sprint within the last 30 days. Badges are verification-backed \u2014 never self-reported. |  | Skill | Email Automation | Web Scraping | AI Chatbots | Shopify Apps | Notion Automation | Filter"
+  },
+  {
+   "name": "mentor",
+   "replied": false,
+   "secs": 51
+  },
+  {
+   "name": "generation 12 parallel polls",
+   "codes": [
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500
+   ],
+   "non200": 12
+  }
+ ]
+}

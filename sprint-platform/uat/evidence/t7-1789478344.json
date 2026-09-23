@@ -1,0 +1,37 @@
+{
+  "summary": {
+    "total": 2,
+    "pass": 0,
+    "fail": 1,
+    "skip_or_gap": 1
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "P1",
+      "claim": "test tree identity",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "toplevel=/home/dhruba/Documents/exp_money/daily_learning_freelance HEAD=b27ba5c expect=0e3785a COMMIT NOT PRESENT IN THIS TREE",
+      "ts": "2026-09-15 18:49:04"
+    },
+    {
+      "area": "P1",
+      "claim": "commit 0e3785a reachable from HEAD",
+      "class": "STATIC",
+      "pass": false,
+      "detail": "the implementation is not in the tree I can test \u2014 report the blocker, do not improvise",
+      "ts": "2026-09-15 18:49:04"
+    }
+  ]
+}

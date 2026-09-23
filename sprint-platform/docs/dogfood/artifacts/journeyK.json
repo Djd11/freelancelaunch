@@ -1,0 +1,374 @@
+{
+ "steps": [
+  {
+   "name": "page /",
+   "status": 200,
+   "chars": 1505,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "page /sprints",
+   "status": 200,
+   "chars": 911,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "page /topics",
+   "status": 200,
+   "chars": 736,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "page /topics/email-automation",
+   "status": 200,
+   "chars": 300,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "page /pricing",
+   "status": 200,
+   "chars": 474,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "page /clients/freelancers",
+   "status": 200,
+   "chars": 430,
+   "broken_images": [],
+   "has_none_literal": false,
+   "braces": false
+  },
+  {
+   "name": "start free CTA",
+   "n": 1,
+   "href": "/sprints"
+  },
+  {
+   "name": "picker signup link",
+   "n": 0,
+   "text": null
+  },
+  {
+   "name": "at signup",
+   "url": "/auth/signup"
+  },
+  {
+   "name": "signup",
+   "ms": 2046,
+   "url": "/sprints",
+   "flash": "Welcome! Pick a skill to see live demand and start Day 1 free."
+  },
+  {
+   "name": "enroll",
+   "ms": 8541,
+   "sprint_id": "a49c13f4-b61d-40f2-9f9d-804ee2c1d1be",
+   "url": "/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be"
+  },
+  {
+   "name": "next step bar",
+   "present": true,
+   "line": [
+    "Open Day 1 \u2192"
+   ]
+  },
+  {
+   "name": "glossary control",
+   "n": 1
+  },
+  {
+   "name": "glossary expands",
+   "grew": true,
+   "delta": 594
+  },
+  {
+   "name": "meter",
+   "lines": [
+    "0/5 days punched",
+    "Unlocks when Phase A passes verification",
+    "Job Unlock Meter",
+    "0 of 5 real jobs unlocked",
+    "0% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.",
+    "0/14 days punched \u00b7 0 postings unlocked",
+    "+0 POSTINGS UNLOCKED SO FAR",
+    "Complete today's action to unlock the next batch of live job postings."
+   ]
+  },
+  {
+   "name": "generation banner",
+   "present": true
+  },
+  {
+   "name": "cohort line",
+   "line": [
+    "COHORT #12 \u00b7 ENDS 2026-08-23"
+   ]
+  },
+  {
+   "name": "demand chips",
+   "chips": [
+    "5 ACTIVE JOBS",
+    "$62/HR"
+   ]
+  },
+  {
+   "name": "day1 lesson state",
+   "failed": false,
+   "has_video": 0,
+   "lines": [
+    "Freelance",
+    "Launch",
+    "\u2190 Dashboard",
+    "SHIFT A \u00b7 DAY 01 \u00b7 SETUP",
+    "Day 1",
+    "Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.",
+    "Lesson",
+    "Task",
+    "Watch \u00b7 Lesson",
+    "TwoPanel video \u00b7 Hook \u2192 Lesson \u2192 Key points \u2192 Outro",
+    "Generating your lesson\u2026",
+    "Each day's lesson is written from your cluster's live job postings.",
+    "Mark lesson watched",
+    "~5 min"
+   ]
+  },
+  {
+   "name": "day3 lesson",
+   "chars": 413
+  },
+  {
+   "name": "day3 quiz controls",
+   "n": 0
+  },
+  {
+   "name": "step1 reference",
+   "has_spec": true,
+   "clone_steps": 0,
+   "fallback_copy": []
+  },
+  {
+   "name": "step2 rubric checkboxes",
+   "n": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ]
+  },
+  {
+   "name": "status stamps",
+   "stamps": [
+    {
+     "label": "BUILD SUBMITTED",
+     "ok": false
+    },
+    {
+     "label": "MATCHES ALL POINTS",
+     "ok": false
+    },
+    {
+     "label": "VERIFIED",
+     "ok": false
+    }
+   ]
+  },
+  {
+   "name": "after submit",
+   "flash": "(no message)",
+   "stamps": [
+    {
+     "label": "Build submitted",
+     "ok": false
+    },
+    {
+     "label": "Matches all points",
+     "ok": false
+    },
+    {
+     "label": "Verified",
+     "ok": false
+    }
+   ]
+  },
+  {
+   "name": "watch control",
+   "n": 1
+  },
+  {
+   "name": "after watched",
+   "url": "/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/1",
+   "site_error": false
+  },
+  {
+   "name": "complete control",
+   "n": 1
+  },
+  {
+   "name": "after day complete",
+   "url": "/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/2",
+   "site_error": false,
+   "banner": [
+    "Each day's lesson is written from your cluster's live job postings."
+   ]
+  },
+  {
+   "name": "meter after day1",
+   "lines": [
+    "1/5 days punched",
+    "Unlocks when Phase A passes verification",
+    "Job Unlock Meter",
+    "0 of 5 real jobs unlocked",
+    "0% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.",
+    "1/14 days punched \u00b7 0 postings unlocked",
+    "+0 POSTINGS UNLOCKED SO FAR",
+    "Complete today's action to unlock the next batch of live job postings."
+   ]
+  },
+  {
+   "name": "next step now",
+   "line": [
+    "Open Day 2 \u2192",
+    "Open Day 2 \u2192"
+   ]
+  },
+  {
+   "name": "/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/contract",
+   "status": 200,
+   "locked": false,
+   "site_error": false,
+   "chars": 1209,
+   "first": [
+    "Freelance",
+    "Launch",
+    "\u2190 Dashboard",
+    "PHASE B \u00b7 DAY 6 \u00b7 MOCK CONTRACT",
+    "CLIENT BRIEF \u00b7 WORK ORDER",
+    "Your first \"client\" \u2014 fulfill it like it's paid",
+    "This brief is an anonymized real job post. Same deadline, same constraints. Most platforms teach skills \u2014 this one teaches fulfillment.",
+    "Client Brief \u00b7 \"Klaviyo flow setup for store\""
+   ]
+  },
+  {
+   "name": "/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/proposals",
+   "status": 200,
+   "locked": true,
+   "site_error": false,
+   "chars": 294,
+   "first": [
+    "Freelance",
+    "Launch",
+    "\u2190 Dashboard",
+    "PHASE C \u00b7 SEND PROPOSALS",
+    "BID BOARD",
+    "Phase C is locked",
+    "LOCKED \u2014 GATE B PENDING",
+    "Phase C stays locked until the Mock Contract passes verification. Fulfill your brief and submit the deliverable to unlock the proposal challenge."
+   ]
+  },
+  {
+   "name": "profile",
+   "status": 200,
+   "url": "/profile/dana",
+   "none_literal": false,
+   "lines": [
+    "Freelance",
+    "Launch",
+    "Dashboard",
+    "Mentor",
+    "For clients",
+    "YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE",
+    "Dana",
+    "None",
+    "Demand-Validated Badges",
+    "No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification.",
+    "Badges are only issued when the Mock Contract passes verification \u2014 never for \"finishing a course.\"",
+    "Case Study Portfolio"
+   ]
+  },
+  {
+   "name": "mentor",
+   "status": 200,
+   "chars": 608
+  },
+  {
+   "name": "mentor turn",
+   "secs": 61,
+   "got_reply": false,
+   "chars": 608
+  },
+  {
+   "name": "mobile landing",
+   "overflowX": 0,
+   "tinyTargets": 0,
+   "clippedText": 0
+  },
+  {
+   "name": "mobile dashboard",
+   "overflowX": 0,
+   "tinyTargets": 1,
+   "clippedText": 0
+  },
+  {
+   "name": "mobile day1",
+   "overflowX": 0,
+   "tinyTargets": 1,
+   "clippedText": 0
+  }
+ ],
+ "account": "dana_1788535032@example.com",
+ "generation_polls": [
+  {
+   "t": 0,
+   "status": 200,
+   "body": {
+    "status": "generating",
+    "generated": 0,
+    "total": 14,
+    "failed_days": []
+   }
+  },
+  {
+   "t": 15,
+   "status": 200,
+   "body": {
+    "status": "generating",
+    "generated": 0,
+    "total": 14,
+    "failed_days": []
+   }
+  },
+  {
+   "t": 30,
+   "status": 200,
+   "body": {
+    "status": "generating",
+    "generated": 0,
+    "total": 14,
+    "failed_days": []
+   }
+  },
+  {
+   "t": 45,
+   "status": 200,
+   "body": {
+    "status": "generating",
+    "generated": 0,
+    "total": 14,
+    "failed_days": []
+   }
+  },
+  {
+   "t": 60,
+   "status": 500,
+   "body": {}
+  }
+ ],
+ "mobile_console_errors": []
+}

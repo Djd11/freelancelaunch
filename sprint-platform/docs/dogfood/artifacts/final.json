@@ -1,0 +1,42 @@
+{
+ "meter_lines": [
+  "4/5 days punched",
+  "Unlocks when Phase A passes verification",
+  "Job Unlock Meter",
+  "63 of 127 real jobs unlocked",
+  "50% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.",
+  "5/14 days punched \u00b7 63 postings unlocked",
+  "+0 POSTINGS UNLOCKED SO FAR",
+  "Complete today's action to unlock the next batch of live job postings."
+ ],
+ "day3": {
+  "checkboxes": 0,
+  "steps": 0,
+  "copy": [
+   "When all 0 points are ticked and your link is in, this project counts as done."
+  ]
+ },
+ "day4": {
+  "checkboxes": 3,
+  "steps": 0,
+  "copy": [
+   "When all 3 points are ticked and your link is in, this project counts as done."
+  ]
+ },
+ "day5": {
+  "checkboxes": 3,
+  "steps": 0,
+  "copy": [
+   "When all 3 points are ticked and your link is in, this project counts as done."
+  ]
+ },
+ "contract": [
+  "Steps to complete: execute flow (Day 6\u20138) \u2192 write Problem / Solution / Result case study (Day 9\u201310)",
+  "Verification gate \u2014 locks Phase C",
+  "GATE B PENDING",
+  "Case study written",
+  "Case study \u00b7 Problem / Solution / Result",
+  "Save case study"
+ ],
+ "proposals": "Freelance | Launch | \u2190 Dashboard | PHASE C \u00b7 SEND PROPOSALS | BID BOARD | Phase C is locked | LOCKED \u2014 GATE B PENDING |  | Phase C stays locked until the Mock Contract passes verification. Fulfill your brief and submit the deliverable to unlock the proposal challenge. |  | Your next step: Open the Mock Contract \u2192"
+}

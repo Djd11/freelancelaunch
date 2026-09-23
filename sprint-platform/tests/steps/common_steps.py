@@ -93,6 +93,11 @@ def step_not_logged_in(context):
 @given('I am logged in as an admin user')
 def step_admin_login(context):
     _login(context, ADMIN_USER_ID)
+    # routes/auth.py stamps is_admin on every real login path (OTP verify,
+    # OAuth callback, password form) — mirror that here so nav-gating
+    # scenarios see the same session shape a real admin login produces.
+    with context.client.session_transaction() as sess:
+        sess["is_admin"] = True
 
 
 # ── When: HTTP surface ─────────────────────────────────────────────
@@ -200,6 +205,21 @@ def step_contains(context, text):
 @then('the page does not contain the text "{text}"')
 def step_not_contains(context, text):
     assert text not in _html(context), f"page unexpectedly contains: {text!r}"
+
+
+@when('I follow the link to "{path}"')
+def step_follow_link(context, path):
+    """Click a rendered nav link: assert the page carried this href, then GET it
+    (proves the CTA is wired to a live route, not a dead end)."""
+    html = _html(context)
+    assert f'href="{path}"' in html, f"page has no link to {path!r} to follow"
+    _get(context, path)
+
+
+@then('the page does not contain a link to "{path}"')
+def step_not_contains_link(context, path):
+    assert f'href="{path}"' not in _html(context), \
+        f"page unexpectedly links to {path!r}"
 
 
 @then('the page contains a link to "{path}"')

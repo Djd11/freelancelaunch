@@ -1,0 +1,155 @@
+{
+ "steps": [
+  {
+   "name": "POST /auth/login",
+   "status": 405,
+   "session_set": false,
+   "body_snip": "<!doctype html> <html lang=en> <title>405 Method Not Allowed</title> <h1>Method Not Allowe"
+  },
+  {
+   "name": "POST /auth/signup",
+   "status": 405,
+   "session_set": false,
+   "body_snip": "<!doctype html> <html lang=en> <title>405 Method Not Allowed</title> <h1>Method Not Allowe"
+  },
+  {
+   "name": "GET /auth/login",
+   "has_google": true,
+   "has_magic": true,
+   "password_field": 0,
+   "first_lines": [
+    "Freelance",
+    "Launch",
+    "SHIFT SIGN-IN",
+    "Sign in to your sprints",
+    "No passwords. One tap with Google, or we email you a secure link.",
+    "Continue with Google",
+    "Or sign in with an email link",
+    "Email me a sign-in link \u2192",
+    "Works with Gmail, Outlook, iCloud \u2014 clicking the link proves the email is yours, so your account can't be taken over.",
+    "New here? Create a free account \u2192",
+    "\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app",
+    "We show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates."
+   ]
+  },
+  {
+   "name": "GET /auth/signup",
+   "has_google": true,
+   "has_magic": true,
+   "password_field": 0,
+   "first_lines": [
+    "Freelance",
+    "Launch",
+    "FREE WHILE IN V1",
+    "Start your 14-day sprint",
+    "No password needed \u2014 Google takes one tap, or we email you a secure link.",
+    "Continue with Google",
+    "Your name (shown on your public profile)",
+    "Email (we send one link \u2014 that's the whole signup)",
+    "Create free account \u2192",
+    "Your email is verified when you click the link \u2014 nobody else can sign in as you, and we only email you about your sprint.",
+    "Already have an account? Sign in \u2192",
+    "\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app"
+   ]
+  },
+  {
+   "name": "google POST status",
+   "status": 405
+  },
+  {
+   "name": "google redirect (followed)",
+   "http_error": 400,
+   "note": "GoTrue error page expected until provider enabled"
+  },
+  {
+   "name": "google Location header",
+   "status": 302,
+   "base": "tzfohwzgxlecsilvqmjq.supabase.co",
+   "path": "/auth/v1/authorize",
+   "has_provider": [
+    "google"
+   ],
+   "has_challenge": true,
+   "challenge_method": [
+    "s256"
+   ],
+   "state": [
+    "-OpDXMtfoZNp4mWz"
+   ],
+   "redirect_to": [
+    "http://localhost:5000/auth/callback"
+   ]
+  },
+  {
+   "name": "magic via form",
+   "url": "/auth/magic",
+   "link_sent": false,
+   "email_echoed": false,
+   "lines": [
+    "Couldn't send the sign-in link (400). Try again.",
+    "Freelance",
+    "Launch",
+    "SHIFT SIGN-IN",
+    "Sign in to your sprints",
+    "No passwords. One tap with Google, or we email you a secure link.",
+    "Continue with Google",
+    "Or sign in with an email link",
+    "Email me a sign-in link \u2192",
+    "Works with Gmail, Outlook, iCloud \u2014 clicking the link proves the email is yours, so your account can't be taken over.",
+    "New here? Create a free account \u2192",
+    "\u00a9 FreelanceLaunch \u00b7 hello@freelancelaunch.app",
+    "We show live job demand; earnings depend on your work \u2014 no income guarantees. Your email is used only for your account and sprint updates."
+   ]
+  },
+  {
+   "name": "invalid email",
+   "status": 400,
+   "rejected": false,
+   "session_set": false
+  },
+  {
+   "name": "callback no-flow",
+   "status": 405,
+   "location": null,
+   "session_set": false
+  },
+  {
+   "name": "callback bogus code (flow present)",
+   "status": 405,
+   "location": "",
+   "session_cookie_reset": "",
+   "session_established": false,
+   "note": "must redirect to /auth/login and NOT set an authenticated session"
+  },
+  {
+   "name": "after bogus callback",
+   "flash": [],
+   "logged_in": false
+  },
+  {
+   "name": "callback state mismatch",
+   "status": 405,
+   "location": null,
+   "session_set": false
+  },
+  {
+   "name": "flow single use",
+   "first": 405,
+   "first_loc": null,
+   "replay": 405,
+   "replay_loc": null,
+   "replay_sets_session": false
+  },
+  {
+   "name": "legacy session GET /profile/me",
+   "status": 200,
+   "final": "/profile/dana-cea291",
+   "signed_in": false
+  },
+  {
+   "name": "legacy session /sprints",
+   "status": 200,
+   "url": "/sprints"
+  }
+ ]
+}

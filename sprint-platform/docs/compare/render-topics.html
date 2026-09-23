@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f59e0b'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%230f172a' font-family='Arial,sans-serif' font-weight='700'%3EFL%3C/text%3E%3C/svg%3E">
+    <title>Explore Skills — FreelanceLaunch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        * { font-family: 'DM Sans', sans-serif; }
+        .font-display { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+        .font-mono-data { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace; }
+
+        /* ─── Design Tokens ─────────────────────────────── */
+        :root {
+            --accent: #f59e0b;        /* Signal amber — money, action */
+            --accent-strong: #d97706; /* hover amber */
+            --accent-light: #fef3c7;  /* amber-50 wash */
+            --accent-mid: #fbbf24;    /* amber-400 */
+            --surface: #ffffff;
+            --surface-subtle: #f5f5f4;
+            --border: #e7e5e4;
+            --border-strong: #d6d3d1;
+            --text: #0f172a;          /* Ink */
+            --text-secondary: #57534e;
+            --text-muted: #a8a29e;
+            --deep: #1e3a5f;          /* deep navy — secondary blocks */
+            --success: #16a34a;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow: 0 4px 24px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.06);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow);
+        }
+        .card-active {
+            border-color: var(--accent);
+            box-shadow: 0 4px 24px rgba(245, 158, 11, 0.12);
+        }
+        .btn-primary {
+            background: #f59e0b;
+            color: #0f172a;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            font-weight: 700;
+        }
+        .btn-primary:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .btn-ghost:hover {
+            background: var(--surface-subtle);
+            border-color: #a8a29e;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .flash-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+        .flash-error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+        .flash-info { background: #e0f2fe; border: 1px solid #7dd3fc; color: #075985; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide { animation: slideUp 0.4s ease; }
+    </style>
+</head>
+<body class="bg-[#fafaf9] text-[#0f172a] antialiased min-h-screen">
+    <!-- NAV -->
+    <nav class="fixed top-0 w-full bg-white/70 backdrop-blur-2xl border-b border-[#e7e5e4] z-50">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+            <div class="flex justify-between h-18 items-center">
+                <a href="/" class="font-display text-2xl tracking-tight">
+                    <span class="gradient-text">FreelanceLaunch</span>
+                </a>
+                <div class="flex items-center gap-8">
+                    <a href="/topics" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Topics</a>
+                    
+                        <a href="/auth/login" class="text-sm font-medium text-[#57534e] hover:text-[#0f172a] transition">Sign in</a>
+                        <a href="/auth/signup" class="btn-primary px-5 py-2 text-sm">Get Started</a>
+                    
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PLATFORM SETUP BANNER -->
+    
+
+    <!-- FLASH MESSAGES -->
+    
+        
+    
+
+    <!-- MAIN -->
+    <main class="pt-18">
+        
+<!-- HERO + SEARCH -->
+<section class="pt-24 pb-8 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+        <h1 class="font-display text-4xl md:text-5xl tracking-tight mb-4">
+            Explore <span class="gradient-text">Skills</span>
+        </h1>
+        <p class="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
+            Search any skill to see live freelance demand, or pick from our curated list.
+        </p>
+        
+        <!-- SEARCH BAR -->
+        <div class="max-w-2xl mx-auto relative" id="search-container">
+            <div class="flex items-center bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-amber-500 overflow-hidden">
+                <span class="pl-5 text-gray-400 text-lg">🔍</span>
+                <input type="text" id="topic-search" 
+                       placeholder="Search any skill... (e.g., machine learning, react, data entry)"
+                       class="flex-1 px-4 py-4 text-base outline-none border-none bg-transparent"
+                       autocomplete="off">
+                <button id="search-btn" 
+                        class="btn-primary m-1.5 px-6 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap">
+                    Search
+                </button>
+            </div>
+            <!-- Suggestions dropdown -->
+            <div id="search-suggestions" class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg hidden z-50 max-h-80 overflow-y-auto"></div>
+        </div>
+    </div>
+</section>
+
+<!-- SEARCH RESULTS (hidden initially) -->
+<section id="search-results" class="hidden pb-24 px-4">
+    <div class="max-w-5xl mx-auto">
+        <!-- Platform demand card -->
+        <div id="platform-demand" class="card p-8 mb-8"></div>
+        <!-- Matched curated topics -->
+        <div id="curated-matches" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</section>
+
+<!-- CURATED TOPICS GRID (shown by default) -->
+<section id="curated-topics" class="pb-24 px-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-display text-xl tracking-tight">Curated <span class="gradient-text">Skills</span></h2>
+            <span class="text-sm text-gray-400">Verified by market data</span>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="topics-grid">
+            
+            <a href="/topics/web-scraping-python" class="card p-6 group hover:card-active transition-all topic-card" data-name="web scraping with python">
+                <div class="flex items-start justify-between mb-5">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: #2563eb12;">
+                        🕷️
+                    </div>
+                    <span class="badge 
+                        bg-emerald-50 text-emerald-700
+                        ">
+                        Growing
+                    </span>
+                </div>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">Web Scraping with Python</h3>
+                <p class="text-sm text-gray-500 mb-5 leading-relaxed">Extract data from websites at scale</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
+                    <span><strong class="text-[#0f172a] font-semibold">247</strong> open contracts</span>
+                    <span><strong class="text-[#0f172a] font-semibold">$30</strong>/hr avg</span>
+                    <span><strong class="text-[#0f172a] font-semibold">3wk</strong> to first gig</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">Python</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">HTTP</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">HTML/CSS</span>
+                    
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400">+2</span>
+                    
+                </div>
+            </a>
+            
+            <a href="/topics/n8n-automation" class="card p-6 group hover:card-active transition-all topic-card" data-name="n8n workflow automation">
+                <div class="flex items-start justify-between mb-5">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: #7c3aed12;">
+                        ⚡
+                    </div>
+                    <span class="badge 
+                        bg-emerald-50 text-emerald-700
+                        ">
+                        Growing
+                    </span>
+                </div>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">n8n Workflow Automation</h3>
+                <p class="text-sm text-gray-500 mb-5 leading-relaxed">Automate repetitive business processes</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
+                    <span><strong class="text-[#0f172a] font-semibold">89</strong> open contracts</span>
+                    <span><strong class="text-[#0f172a] font-semibold">$45</strong>/hr avg</span>
+                    <span><strong class="text-[#0f172a] font-semibold">2wk</strong> to first gig</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">n8n</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">APIs</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">JSON</span>
+                    
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400">+2</span>
+                    
+                </div>
+            </a>
+            
+            <a href="/topics/seo-content-writing" class="card p-6 group hover:card-active transition-all topic-card" data-name="seo content writing">
+                <div class="flex items-start justify-between mb-5">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: #05966912;">
+                        ✍️
+                    </div>
+                    <span class="badge 
+                        bg-gray-50 text-gray-600">
+                        Stable
+                    </span>
+                </div>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">SEO Content Writing</h3>
+                <p class="text-sm text-gray-500 mb-5 leading-relaxed">Write content that ranks on Google</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
+                    <span><strong class="text-[#0f172a] font-semibold">1240</strong> open contracts</span>
+                    <span><strong class="text-[#0f172a] font-semibold">$25</strong>/hr avg</span>
+                    <span><strong class="text-[#0f172a] font-semibold">1wk</strong> to first gig</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">Writing</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">SEO</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">Keyword Research</span>
+                    
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400">+2</span>
+                    
+                </div>
+            </a>
+            
+            <a href="/topics/data-analysis-pandas" class="card p-6 group hover:card-active transition-all topic-card" data-name="data analysis with pandas">
+                <div class="flex items-start justify-between mb-5">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: #dc262612;">
+                        📊
+                    </div>
+                    <span class="badge 
+                        bg-gray-50 text-gray-600">
+                        Stable
+                    </span>
+                </div>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">Data Analysis with Pandas</h3>
+                <p class="text-sm text-gray-500 mb-5 leading-relaxed">Turn messy data into actionable insights</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
+                    <span><strong class="text-[#0f172a] font-semibold">340</strong> open contracts</span>
+                    <span><strong class="text-[#0f172a] font-semibold">$35</strong>/hr avg</span>
+                    <span><strong class="text-[#0f172a] font-semibold">4wk</strong> to first gig</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">Python</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">Pandas</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">CSV/Excel</span>
+                    
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400">+2</span>
+                    
+                </div>
+            </a>
+            
+            <a href="/topics/wordpress-development" class="card p-6 group hover:card-active transition-all topic-card" data-name="basic wordpress development">
+                <div class="flex items-start justify-between mb-5">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: #d9770612;">
+                        🌐
+                    </div>
+                    <span class="badge 
+                        bg-gray-50 text-gray-600">
+                        Stable
+                    </span>
+                </div>
+                <h3 class="font-bold text-[#0f172a] text-lg mb-1.5 group-hover:text-amber-600 transition">Basic WordPress Development</h3>
+                <p class="text-sm text-gray-500 mb-5 leading-relaxed">Build and customize WordPress sites</p>
+                <div class="flex items-center gap-4 text-xs text-gray-400 pb-5 border-b border-gray-100 mb-4">
+                    <span><strong class="text-[#0f172a] font-semibold">2100</strong> open contracts</span>
+                    <span><strong class="text-[#0f172a] font-semibold">$30</strong>/hr avg</span>
+                    <span><strong class="text-[#0f172a] font-semibold">2wk</strong> to first gig</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">WordPress</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">PHP basics</span>
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 font-medium">CSS</span>
+                    
+                    
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400">+2</span>
+                    
+                </div>
+            </a>
+            
+        </div>
+        <div class="mt-10 card p-6 text-center">
+            <p class="text-sm text-gray-500">
+                📊 Demand data updated weekly from Upwork and Fiverr. Skills with <strong class="text-[#0f172a]">80+ demand score</strong> are verified for freelance viability.
+            </p>
+        </div>
+    </div>
+</section>
+
+<script>
+const searchInput = document.getElementById('topic-search');
+const searchBtn = document.getElementById('search-btn');
+const suggestions = document.getElementById('search-suggestions');
+const searchResults = document.getElementById('search-results');
+const platformDemand = document.getElementById('platform-demand');
+const curatedMatches = document.getElementById('curated-matches');
+const curatedTopics = document.getElementById('curated-topics');
+
+let searchTimeout;
+
+// Live suggestions as user types
+searchInput.addEventListener('input', function() {
+    const q = this.value.trim();
+    if (q.length < 2) {
+        suggestions.classList.add('hidden');
+        return;
+    }
+    
+    // Filter curated topics locally (instant)
+    const cards = document.querySelectorAll('.topic-card');
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        if (name.includes(q.toLowerCase())) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Show suggestions
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => fetchSuggestions(q), 200);
+});
+
+async function fetchSuggestions(q) {
+    try {
+        const resp = await fetch(`/search/suggestions`);
+        const all = await resp.json();
+        const filtered = all.filter(s => s.name.toLowerCase().includes(q));
+        
+        if (filtered.length === 0) {
+            suggestions.classList.add('hidden');
+            return;
+        }
+        
+        suggestions.innerHTML = filtered.map(s => 
+            `<div class="suggestion-item px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 flex items-center gap-3"
+                  onclick="doSearch('${s.name}')">
+                <span class="text-gray-400">💼</span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-[#0f172a]">${s.name}</div>
+                    <div class="text-xs text-gray-400">${s.jobs} jobs · $${s.rate}/hr avg</div>
+                </div>
+            </div>`
+        ).join('');
+        suggestions.classList.remove('hidden');
+    } catch(e) {
+        console.error('Suggestions error:', e);
+    }
+}
+
+// Full search on Enter or button click
+searchBtn.addEventListener('click', () => doSearch(searchInput.value.trim()));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value.trim()); });
+
+async function doSearch(query) {
+    if (query.length < 2) return;
+    suggestions.classList.add('hidden');
+    
+    // Show loading state
+    searchResults.classList.remove('hidden');
+    platformDemand.innerHTML = '<div class="text-center py-8 text-gray-400">🔍 Searching freelance platforms...</div>';
+    curatedMatches.innerHTML = '';
+    
+    try {
+        const resp = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
+        const data = await resp.json();
+        
+        if (data.error) {
+            platformDemand.innerHTML = `<div class="text-center py-8 text-red-500">${data.error}</div>`;
+            return;
+        }
+        
+        // Check if platforms are linked
+        if (data.platforms_linked === false) {
+            platformDemand.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-4xl mb-4">🔗</div>
+                    <h3 class="text-lg font-bold text-[#0f172a] mb-2">Link your platforms to see live demand data</h3>
+                    <p class="text-gray-500 mb-4">Connect Upwork, Fiverr, or Contra to get real-time job counts and rates.</p>
+                    <a href="/platforms/setup" class="btn-primary px-6 py-2.5 rounded-xl font-medium inline-block">
+                        Link Platforms
+                    </a>
+                </div>`;
+            return;
+        }
+        
+        // Show platform results
+        const pr = data.platform_results;
+        if (pr) {
+            const platformCards = ['upwork', 'fiverr', 'contra'].map(p => {
+            const pl = pr[p];
+            if (!pl || pl.status === 'unreachable') {
+            return `<div class="p-4 bg-gray-50 rounded-xl text-center">
+                <div class="text-lg font-bold text-gray-400">⚠️</div>
+                <div class="text-xs text-gray-500 mt-1">${p} unreachable</div>
+            </div>`;
+            }
+            const pName = p.charAt(0).toUpperCase() + p.slice(1);
+            return `<div class="p-4 rounded-xl text-center" style="background: ${p === 'upwork' ? '#f0fdf4' : p === 'fiverr' ? '#fefce8' : '#eef2ff'}">
+            <div class="text-sm font-semibold text-gray-700">${pName}</div>
+            <div class="text-2xl font-bold text-[#0f172a] mt-1">${pl.jobs.toLocaleString()}</div>
+            <div class="text-xs text-gray-500">jobs at $${pl.avg_rate}/hr avg</div>
+            <a href="${pl.url}" target="_blank" class="text-xs text-amber-600 hover:underline mt-2 inline-block">Visit →</a>
+            </div>`;
+            }).join('');
+            
+            const trendColor = pr.trend === 'growing' ? 'text-emerald-600' : 'text-gray-600';
+            const trendLabel = pr.trend.charAt(0).toUpperCase() + pr.trend.slice(1);
+            
+            platformDemand.innerHTML = `
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-3xl flex-shrink-0">📊</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-xl">Market Demand for "${query}"</h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Demand score: <strong class="text-[#0f172a]">${pr.demand_score}/100</strong> · 
+                            Trend: <strong class="${trendColor}">${trendLabel}</strong> · 
+                            Difficulty: <strong>${pr.difficulty}</strong> · 
+                            First gig: ~${pr.estimated_time_to_gig}
+                        </p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    ${platformCards}
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="enrollNewTopic('${query}')" 
+                            class="btn-primary px-6 py-2.5 rounded-xl font-semibold text-sm">
+                        📚 Create 30-Day Curriculum for "${query}"
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Show curated matches
+        if (data.curated_matches && data.curated_matches.length > 0) {
+            curatedMatches.innerHTML = `
+                <div class="col-span-full mb-4">
+                    <h3 class="font-semibold text-sm text-gray-700">Matching curated skills</h3>
+                </div>
+                ${data.curated_matches.map(t => `
+                    <a href="/topics/${t.slug}" class="card p-6 group hover:card-active transition-all">
+                        <h3 class="font-bold text-[#0f172a] group-hover:text-amber-600 transition">${t.name}</h3>
+                        <p class="text-sm text-gray-500 mt-2">${t.tagline}</p>
+                    </a>
+                `).join('')}
+            `;
+        } else {
+            curatedMatches.innerHTML = `
+                <div class="col-span-full text-center py-8 text-gray-400">
+                    No matching curated skills. But the market data looks promising!
+                </div>
+            `;
+        }
+        
+    } catch(e) {
+        platformDemand.innerHTML = `<div class="text-center py-8 text-red-500">Search failed: ${e.message}</div>`;
+    }
+}
+
+function enrollNewTopic(topic) {
+    fetch('/enroll/new', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topic})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else if (data.error && data.error.includes('Not logged in')) {
+            window.location.href = '/auth/login?next=/topics';
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(e => {
+        alert('Failed to create curriculum: ' + e.message);
+    });
+}
+
+// Close suggestions on click outside
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('search-container').contains(e.target)) {
+        suggestions.classList.add('hidden');
+    }
+});
+</script>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#e7e5e4] bg-white mt-32">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-16">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-center md:text-left">
+                    <p class="font-display text-2xl tracking-tight">
+                        <span class="gradient-text">FreelanceLaunch</span>
+                    </p>
+                    <p class="text-sm text-[#a8a29e] mt-1">Learn a skill. Land a client. Earn your freedom.</p>
+                </div>
+                <div class="flex gap-8 text-sm text-[#a8a29e]">
+                    <a href="/topics" class="hover:text-[#57534e] transition">Topics</a>
+                    <a href="/payments/pricing" class="hover:text-[#57534e] transition">Pricing</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('[class^="flash-"]').forEach(el => {
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.5s'; }, 3500);
+        });
+    </script>
+    
+</body>
+</html>

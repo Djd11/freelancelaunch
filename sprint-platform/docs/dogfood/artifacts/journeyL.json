@@ -1,0 +1,200 @@
+{
+ "steps": [
+  {
+   "name": "day3 task",
+   "checkboxes": 0,
+   "steps": 0,
+   "vacuous": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "stamps": [
+    {
+     "label": "DAY COMPLETE \u2014 +0 POSTINGS UNLOCKED",
+     "lit": true
+    },
+    {
+     "label": "BUILD SUBMITTED",
+     "lit": false
+    },
+    {
+     "label": "MATCHES ALL POINTS",
+     "lit": false
+    },
+    {
+     "label": "VERIFIED",
+     "lit": false
+    }
+   ]
+  },
+  {
+   "name": "ticking",
+   "n": 0
+  },
+  {
+   "name": "after honest submit",
+   "flash": "Tick off all three rubric items before submitting \u2014 your build only counts once you've self-checked it.",
+   "stamps": [
+    {
+     "label": "DAY COMPLETE \u2014 +0 POSTINGS UNLOCKED",
+     "lit": true
+    },
+    {
+     "label": "Build submitted",
+     "lit": false
+    },
+    {
+     "label": "Matches all points",
+     "lit": false
+    },
+    {
+     "label": "Verified",
+     "lit": false
+    }
+   ]
+  },
+  {
+   "name": "player",
+   "canvas": 0,
+   "video": 0,
+   "audio": [
+    {
+     "src": "https://tzfohwzgxlecsilvqmjq.supabase.co/storage/v1/object/public/voiceovers/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day-3.mp3",
+     "ready": 4,
+     "err": null
+    },
+    {
+     "src": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNHmf///////+MYxBUGkAGIMAAAAP/29Xt6lUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDUAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+     "ready": 4,
+     "err": null
+    },
+    {
+     "src": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNHmf///////+MYxBUGkAGIMAAAAP/29Xt6lUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDUAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+     "ready": 4,
+     "err": null
+    },
+    {
+     "src": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNHmf///////+MYxBUGkAGIMAAAAP/29Xt6lUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDUAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+     "ready": 4,
+     "err": null
+    },
+    {
+     "src": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNHmf///////+MYxBUGkAGIMAAAAP/29Xt6lUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDUAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV",
+     "ready": 4,
+     "err": null
+    }
+   ],
+   "js": [
+    "http://localhost:5000/static/video/lesson-player.js",
+    "http://localhost:5000/static/js/day.js"
+   ],
+   "kineticSuspects": [
+    "TurnasingleKlaviyoflowintoa$2k+checkout\u2011recoverygig\u2014clientspayforthe\nexactStartedCheckouta"
+   ]
+  },
+  {
+   "name": "voiceover HEAD",
+   "status": 200,
+   "url": "https://tzfohwzgxlecsilvqmjq.supabase.co/storage/v1/object/public/voiceovers/2e2566d8-ac2e-4a58-935d-e71c26a3c"
+  },
+  {
+   "name": "voiceover HEAD",
+   "status": null,
+   "url": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNH"
+  },
+  {
+   "name": "voiceover HEAD",
+   "status": null,
+   "url": "data:audio/mp3;base64,/+MYxAAJcAV8AAgAABn//////+/gQ5BAMA+D4Pg+BAQBAEAwD4Pg+D4EBAEAQDAPg++hYBH///hUFQVBUFREDQNH"
+  },
+  {
+   "name": "no-space text blocks",
+   "blocks": [
+    "TurnasingleKlaviyoflowintoa$2k+checkout\u2011recoverygig\u2014clientspayforthe\nexactStartedCheckoutautomationyou\u2019llmastertoday."
+   ]
+  },
+  {
+   "name": "request sprint",
+   "url": "/sprints",
+   "flash": "(no confirmation)",
+   "appears": false
+  },
+  {
+   "name": "contract submit control",
+   "n": 1
+  },
+  {
+   "name": "gate B empty submit",
+   "flash": "Paste a link to your deliverable before submitting.",
+   "url": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/contract"
+  },
+  {
+   "name": "gate B state",
+   "lines": [
+    "Verification gate \u2014 locks Phase C",
+    "GATE B PENDING"
+   ]
+  },
+  {
+   "name": "case study saved",
+   "flash": "Case study saved \u2014 it appears on your public profile once the Mock Contract passes."
+  },
+  {
+   "name": "gate B after honest submit",
+   "flash": "Deliverable submitted \u2014 verification service is checking your flow.",
+   "gate_lines": [
+    "Verification gate \u2014 locks Phase C",
+    "GATE B PENDING"
+   ]
+  },
+  {
+   "name": "a11y /",
+   "unlabeled": 0,
+   "totalInputs": 0,
+   "unnamedControls": 0,
+   "h1": 1,
+   "lang": "en"
+  },
+  {
+   "name": "a11y /sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "unlabeled": 0,
+   "totalInputs": 5,
+   "unnamedControls": 0,
+   "h1": 0,
+   "lang": "en"
+  },
+  {
+   "name": "a11y /sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/3",
+   "unlabeled": 0,
+   "totalInputs": 1,
+   "unnamedControls": 0,
+   "h1": 0,
+   "lang": "en"
+  },
+  {
+   "name": "a11y /auth/signup",
+   "unlabeled": 0,
+   "totalInputs": 2,
+   "unnamedControls": 0,
+   "h1": 1,
+   "lang": "en"
+  },
+  {
+   "name": "parallel generation polls",
+   "codes": [
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    200,
+    500,
+    500,
+    500,
+    500,
+    200
+   ],
+   "non200": 10
+  }
+ ]
+}

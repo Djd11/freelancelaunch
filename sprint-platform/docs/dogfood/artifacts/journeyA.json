@@ -1,0 +1,201 @@
+{
+ "findings": [
+  {
+   "check": "landing renders hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "landing shows a live demand counter",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "no template/placeholder leakage",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "footer/legal present",
+   "ok": false,
+   "detail": "footer text: Pick a demand-validated topic \u2192"
+  },
+  {
+   "check": "GET /pricing -> 200",
+   "ok": true,
+   "detail": "status=200"
+  },
+  {
+   "check": "GET /topics -> 200",
+   "ok": true,
+   "detail": "status=200"
+  },
+  {
+   "check": "GET /sprints -> 200",
+   "ok": true,
+   "detail": "status=200"
+  },
+  {
+   "check": "pricing states a price",
+   "ok": true,
+   "detail": "no price found"
+  },
+  {
+   "check": "anonymous picker shows a way in",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "GET /robots.txt -> 200",
+   "ok": true,
+   "detail": "status=200 body=User-agent: * | Disallow: /sprints/ | Disallow: /mentor | Disallow: /profile | Disallow: /admin | Allow: / |  | Sitemap:"
+  },
+  {
+   "check": "GET /sitemap.xml -> 200",
+   "ok": true,
+   "detail": "status=200 body=This XML file does not appear to have any style information associated with it. The document tree is shown below. |  | <"
+  },
+  {
+   "check": "GET /llms.txt -> 200",
+   "ok": true,
+   "detail": "status=200 body=# FreelanceLaunch | > FreelanceLaunch runs 14-day demand-validated freelance sprints: copy-work skill acquisition, a moc"
+  },
+  {
+   "check": "/dashboard/ gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/mentor gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/profile/me gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/sprints/1 gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/sprints/1/day/1 gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/sprints/1/proposals gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/sprints/1/contract gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/admin/ gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "/admin/clusters gated",
+   "ok": true,
+   "detail": "landed on /auth/login"
+  },
+  {
+   "check": "GET /sprints/does-not-exist-xyz handled",
+   "ok": true,
+   "detail": "status=200"
+  },
+  {
+   "check": "GET /topics/nope-nope handled",
+   "ok": true,
+   "detail": "status=200"
+  },
+  {
+   "check": "GET /day/99 handled",
+   "ok": true,
+   "detail": "status=404"
+  },
+  {
+   "check": "GET /totally-bogus handled",
+   "ok": true,
+   "detail": "status=404"
+  }
+ ],
+ "timings": [
+  {
+   "url": "http://localhost:5000/",
+   "ms": 430,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/pricing",
+   "ms": 85,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/topics",
+   "ms": 235,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 284,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/pricing",
+   "ms": 63,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/topics",
+   "ms": 224,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 244,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/robots.txt",
+   "ms": 63,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sitemap.xml",
+   "ms": 271,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/llms.txt",
+   "ms": 365,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/does-not-exist-xyz",
+   "ms": 115,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/topics/nope-nope",
+   "ms": 553,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/day/99",
+   "ms": 76,
+   "status": 404
+  },
+  {
+   "url": "http://localhost:5000/totally-bogus",
+   "ms": 66,
+   "status": 404
+  }
+ ]
+}

@@ -1,0 +1,5 @@
+{"t": 20.26, "kind": "http", "level": "error", "msg": "500 GET http://localhost:5000/sprints/e0f93235-4dfc-49a6-89a0-d3b0e9268e97/generation"}
+{"t": 20.26, "kind": "console", "level": "error", "msg": "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"}
+{"t": 33.93, "kind": "http", "level": "error", "msg": "500 GET http://localhost:5000/sprints/e0f93235-4dfc-49a6-89a0-d3b0e9268e97"}
+{"t": 34.05, "kind": "console", "level": "error", "msg": "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"}
+{"t": 34.1, "kind": "nav", "level": "error", "msg": "500 on http://localhost:5000/sprints/e0f93235-4dfc-49a6-89a0-d3b0e9268e97/badge"}

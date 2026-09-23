@@ -1,0 +1,164 @@
+URL: http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750
+Freelance
+Launch
+Dashboard
+Mentor
+Profile
+Sign out
+COHORT #12 · ENDS 2026-08-23
+📧 Email Automation Sprint
+TRAINING LIVE
+5 ACTIVE JOBS
+$62/HR
+EMAIL AUTOMATION DEMAND
+SHIFT B · DAY 06/14
+Complete sprint
+YOUR NEXT STEP
+
+Work your Mock Contract — fulfill a real brief
+
+Open Mock Contract →
+New here? What the words on this page mean
+SHIFT A · DAYS 01–05
+IN PROGRESS
+Skill Acquisition
+
+Copy-Work: 3 replication projects + gap-fill
+
+1
+2
+3
+4
+5
+
+4/5 days punched
+
+SHIFT B · DAYS 06–10
+LOCKED
+Mock Contract
+
+Fulfill a real brief + case study
+
+6
+7
+8
+9
+10
+
+Unlocks when Phase A passes verification
+
+SHIFT C · DAYS 11–14
+LOCKED
+Send Proposals
+
+Proposals + First-Bid challenge
+
+11
+12
+13
+14
+
+Locked until Mock Contract passes
+
+Sprint Content
+4 / 14 DAYS GENERATED
+Day 1 · Setup
+Generation failed
+Day 2 · Copywork
+Generation failed
+✓ day complete
+Day 3 · Copywork
+Day 3 – Rebuild the Checkout Welcome Flow in Klaviyo
+✓ day complete
+Day 4 · Copywork
+Day 4 – Rebuild the Abandoned‑Cart Flow in Klaviyo
+✓ day complete
+Day 5 · Copywork
+Day 5 – Rebuild the Post-Purchase Upsell Flow in Klaviyo
+✓ day complete
+Day 6 · Contract
+Generation failed
+Day 7 · Contract
+Generation failed
+Day 8 · Contract
+Day 8 – Build & Deliver the Post‑Purchase Upsell Flow
+Day 9 · Case-study
+Generation failed
+Day 10 · Case-study
+Generation failed
+Day 11 · Proposal
+Pending generation
+Day 12 · Proposal
+Pending generation
+Day 13 · Proposal
+Pending generation
+Day 14 · Proposal
+Pending generation
+Job Unlock Meter
+
+Every day you finish opens more real job postings in your skill.
+
+0 of 5 real jobs unlocked
+
+0% of the live postings in your skill are now open to you — finish more days to unlock the rest.
+
+5/14 days punched · 0 postings unlocked
++0 POSTINGS UNLOCKED SO FAR
+HOW THIS BECOMES A PAID CONTRACT
+1 · Build the skill (Days 1–5)
+→
+2 · Pass verification (Days 6–10)
+→
+3 · Send proposals (Days 11–14)
+→
+4 · Land your first client
+Today · Day 06
+CONTRACT · PROJECT 1 OF 3
+
+Complete today's action to unlock the next batch of live job postings.
+
+Watch lesson
+Learn the flow anatomy (5 min)
+Replicate the project
+Rebuild from a blank canvas (~35 min)
+Check your build matches
+3 points (~10 min)
+Open Day 6 →
+Momentum
+Day streak
+4 days
+Confidence
+62 / 100
+Proposals sent
+0
+Contracts
+0
+
+NUDGE
+
+This mock contract is the closest thing to a real paycheck you'll feel this week. Ship the case study and you've got your first proof.
+
+Contracts & Earnings
+0 WON · $0 EARNED
+
+You'll send your first proposals in Phase C (Days 11–14). When a client says yes, log it here — earnings roll up on your sprint record.
+
+Log a contract you've won
+
+Add contract
+Live Job Feed
+
+Real postings in your skill — bid on them when you reach Phase C (Day 11).
+
+5 TOTAL
+JOB TITLE	SOURCE	SKILLS	POSTED
+Segment + campaign build
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-24
+Abandoned cart series
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-24
+Post-purchase upsell flow
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-23
+Email automation revamp
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-23
+Klaviyo flow setup for store
+Open posting →	MANUAL	KLAVIYO EMAIL AUTOMATION	2026-08-15

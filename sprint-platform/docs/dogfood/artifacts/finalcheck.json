@@ -1,0 +1,94 @@
+{
+ "complete_btn_on_day1": 0,
+ "meter_before": [],
+ "complete_day1_btn": 1,
+ "banner": [],
+ "meter_after": [
+  "1/5 days punched",
+  "15 of 127 real jobs unlocked",
+  "1/14 days punched \u00b7 15 postings unlocked",
+  "+15 POSTINGS UNLOCKED SO FAR"
+ ],
+ "day2": {
+  "checkboxes": 0,
+  "flash": "Tick off all three rubric items before submitting \u2014 your build only counts once you've self-checked it.",
+  "stamps": [
+   {
+    "label": "Build submitted",
+    "lit": false
+   },
+   {
+    "label": "Matches all points",
+    "lit": false
+   },
+   {
+    "label": "Verified",
+    "lit": false
+   }
+  ]
+ },
+ "day3": {
+  "checkboxes": 0,
+  "flash": "Tick off all three rubric items before submitting \u2014 your build only counts once you've self-checked it.",
+  "stamps": [
+   {
+    "label": "Build submitted",
+    "lit": false
+   },
+   {
+    "label": "Matches all points",
+    "lit": false
+   },
+   {
+    "label": "Verified",
+    "lit": false
+   }
+  ]
+ },
+ "day4": {
+  "checkboxes": 0,
+  "flash": "Tick off all three rubric items before submitting \u2014 your build only counts once you've self-checked it.",
+  "stamps": [
+   {
+    "label": "Build submitted",
+    "lit": false
+   },
+   {
+    "label": "Matches all points",
+    "lit": false
+   },
+   {
+    "label": "Verified",
+    "lit": false
+   }
+  ]
+ },
+ "day5": {
+  "checkboxes": 0,
+  "flash": "Tick off all three rubric items before submitting \u2014 your build only counts once you've self-checked it.",
+  "stamps": [
+   {
+    "label": "Build submitted",
+    "lit": false
+   },
+   {
+    "label": "Matches all points",
+    "lit": false
+   },
+   {
+    "label": "Verified",
+    "lit": false
+   }
+  ]
+ },
+ "phase": [
+  "SHIFT A \u00b7 DAY 02/14",
+  "SHIFT A \u00b7 DAYS 01\u201305",
+  "SHIFT B \u00b7 DAYS 06\u201310"
+ ],
+ "shiftA_state": [
+  "1/5 days punched",
+  "1/14 days punched \u00b7 15 postings unlocked"
+ ],
+ "shiftB_locked": true
+}

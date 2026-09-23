@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreelanceLaunch · After-Fix Preview (P0-P1)</title>
+<style>
+:root{--primary:#2563eb;--primary-dark:#1d4ed8;--accent:#f59e0b;--accent-soft:#fef3c7;--bg:#fff;--bg-alt:#f8fafc;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--success:#10b981;--success-soft:#d1fae5;--danger:#ef4444;--danger-soft:#fee2e2;--purple:#7c3aed;--purple-soft:#ede9fe;--teal:#0d9488;--teal-soft:#ccfbf1;--gradient:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);--shadow:0 10px 30px rgba(15,23,42,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);line-height:1.55;background:var(--bg-alt)}
+a{text-decoration:none;color:inherit}
+.chrome{position:sticky;top:0;z-index:100;background:#0f172a;color:#e2e8f0;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid #1e293b}
+.chrome b{color:#fff;font-size:13px}
+.chrome .hint{color:#94a3b8;font-size:11px}
+.navpills{display:flex;gap:6px;flex-wrap:wrap}
+.navpills button{background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:6px 12px;border-radius:999px;font-size:12px;cursor:pointer}
+.navpills button.on{background:var(--gradient);color:#fff;border-color:transparent;font-weight:600}
+.navpills button:hover{background:#334155}
+.stage{margin:8px 12px}
+.screen{display:none;max-width:1180px;margin:0 auto;padding:20px 0 60px}
+.screen.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:.15s;white-space:nowrap}
+.btn-p{background:var(--gradient);color:#fff}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(37,99,235,.35)}
+.btn-o{background:#fff;color:var(--primary);border:1px solid var(--border)}
+.btn-g{background:var(--success);color:#fff}
+.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:16px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600}
+.b-green{background:var(--success-soft);color:#047857}
+.b-amber{background:var(--accent-soft);color:#b45309}
+.b-purple{background:var(--purple-soft);color:#6d28d9}
+.b-slate{background:#f1f5f9;color:#475569}
+.b-red{background:var(--danger-soft);color:#b91c1c}
+.b-teal{background:var(--teal-soft);color:#0f766e}
+.muted{color:var(--muted)} .small{font-size:13px} .xs{font-size:12px}
+h2{font-size:26px;font-weight:800;letter-spacing:-.5px}
+h3{font-size:18px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.logo{font-size:22px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:#92400e;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px}
+.track{display:flex;gap:4px} .track>div{flex:1;height:12px;border-radius:4px}
+.t-done{background:var(--success)} .t-cur{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)} .t-lock{background:#e2e8f0}
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:14px}
+.kv:last-child{border:none}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
+.check-item.done{background:var(--success-soft);border-color:#a7f3d0}
+.check-item.warn{background:var(--accent-soft);border-color:#fde68a}
+.check-item .cbox{width:22px;height:22px;border-radius:6px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.check-item.done .cbox{background:var(--success);border-color:var(--success)}
+.provenance{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.prov-ok{background:var(--success-soft);color:#065f46;border:1px solid #a7f3d0}
+.prov-bad{background:var(--danger-soft);color:#991b1b;border:1px solid #fecaca}
+.prov-missing{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
+details{border:1px solid var(--border);border-radius:12px;padding:14px;background:#fff;margin-bottom:10px}
+details[open]{background:#fafbff;border-color:#dbeafe}
+details summary{cursor:pointer;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details summary::-webkit-details-marker{display:none}
+.quiz-q{padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:#fff}
+.quiz-q.correct{border-color:#a7f3d0;background:var(--success-soft)}
+.answer{margin-top:8px;padding:10px 12px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;font-size:13px}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ba{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
+.ba h4{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.ba.before{border-left:4px solid var(--danger)}
+.ba.after{border-left:4px solid var(--success)}
+@media(max-width:860px){.grid2,.before-after{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <b>◈ FreelanceLaunch · After-Fix Preview</b>
+  <span class="hint">P0-1 grounding · P0-2 Gate B · P1-1 mentor · P1-2 proposal proof · P1-3 quiz — vs before</span>
+  <div class="navpills" id="navpills">
+    <button data-s="overview" class="on">Overview</button>
+    <button data-s="lesson">Day Lesson + Quiz</button>
+    <button data-s="copywork">Copy-Work · Provenance</button>
+    <button data-s="gateb">Gate B · Mock Contract</button>
+    <button data-s="proposal">Proposal Builder</button>
+    <button data-s="mentor">AI Mentor</button>
+  </div>
+</div>
+<div class="stage">
+
+<!-- OVERVIEW -->
+<section class="screen on" id="overview">
+<div class="wrap">
+  <div style="padding:28px 0 14px">
+    <span class="chip">Will a customer pay for this?</span>
+    <h2 style="margin:14px 0 6px">From "LLM says so" → "verified to land a contract"</h2>
+    <p class="muted">Left = before (generic, unverified). Right = after the P0-P1 fixes. Inspired by daily-tech-study's <b>IRON LAW</b>: solutions must run, quiz answers accurate, never fabricate.</p>
+  </div>
+
+  <div class="card" style="border-left:5px solid var(--primary)">
+    <div class="grid2">
+      <div>
+        <h3 style="color:var(--danger)">Before — why churn/refund risk</h3>
+        <ul class="small" style="margin:10px 0 0 18px;color:#334155">
+          <li>Copy-work steps name "exact trigger" from model memory only — no tool docs → wrong block names.</li>
+          <li>Gate B passes on any URL + any case-study text → Demand-Validated badge hollow.</li>
+          <li>No quiz — no checkable mastery signal before pitching.</li>
+          <li>Mentor passes if answer contains 1 keyword, even if factually wrong.</li>
+          <li>Proposal "proof" cites abstract mock contract.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color:var(--success)">After — what fixes buy</h3>
+        <ul class="small" style="margin:10px 0 0 18px;color:#334155">
+          <li><b>P0-1</b> Every clone step carries <span class="provenance prov-ok">● Sourced</span> / <span class="provenance prov-bad">● Flagged</span> provenance from retrieved tool docs.</li>
+          <li><b>P0-2</b> Gate B parses deliverable for rubric artifacts — badge = real evidence.</li>
+          <li><b>P1-3</b> Each lesson ends with a 3-4Q quiz + explained answers, verified.</li>
+          <li><b>P1-1</b> Mentor answers checked against stored lesson/reference_spec + ≥2 terms.</li>
+          <li><b>P1-2</b> Proposal proof cites <i>your actual</i> submitted build URL.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>P0 → P1 build order (critique-approved)</h3>
+    <div class="kv"><span><b>1. P1-3 Quiz</b> — small, no migration</span><span class="badge b-green">next</span></div>
+    <div class="kv"><span><b>2. P0-2 Gate B content check</b> — small, migration 004</span><span class="badge b-amber">next</span></div>
+    <div class="kv"><span><b>3. P1-1 Mentor RAG</b> — medium, logic only</span><span class="badge b-slate">queue</span></div>
+    <div class="kv"><span><b>4. P1-2 Proposal proof</b> — medium, prompt+join</span><span class="badge b-slate">queue</span></div>
+    <div class="kv"><span><b>5. P0-1 Grounding spike</b> — large, doc corpus + retrieval (do last)</span><span class="badge b-purple">spike</span></div>
+  </div>
+</div>
+</section>
+
+<!-- LESSON + QUIZ -->
+<section class="screen" id="lesson">
+<div class="wrap">
+  <div style="padding:24px 0 6px">
+    <span class="chip">Day 4 · Email Automation · Klaviyo</span>
+    <h2 style="margin:12px 0 4px">Lesson — Checkout Recovery Flow <span class="badge b-teal" style="margin-left:8px">P1-3 quiz added</span></h2>
+    <p class="muted small">Lesson JSON now carries <code>quiz</code> + <code>quiz_answers</code> (verified, stored in <code>sprint_days.action_payload.lesson</code> JSONB).</p>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h3>🎬 Watch · Lesson</h3>
+        <div style="background:#0f172a;border-radius:12px;height:160px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:13px;margin:12px 0">▶ TwoPanel Remotion — kinetic text + edge-tts</div>
+        <div class="small" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px">
+          <b>Objective:</b> Rebuild a 2-step abandoned-cart flow that recovers revenue.<br>
+          <b>Key points:</b> Checkout Started trigger → 30m + 24h delays → Cart Summary dynamic block → 10% coupon at step 2.<br>
+          <b>Pitfall:</b> Using "Placed Order" trigger fires after purchase — too late to recover.
+        </div>
+        <div class="small" style="margin-top:12px;background:var(--teal-soft);border:1px solid #99f6e4;border-radius:10px;padding:12px">
+          <b>✨ New — Worked example (P2-1):</b><br>
+          <code style="background:#fff;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0">Event property: Items in cart → {{ item.name }} x {{ item.qty }}</code> → renders "Nike Air x 1 — $120" in preview.
+        </div>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--teal)">
+        <h3>📝 Quiz — check before you pitch</h3>
+        <p class="xs muted">3–4 Q per lesson: ≥60% recall, ≥20% application, ≥1 analysis. Answers explained & verified.</p>
+        <div style="margin-top:14px">
+          <div class="quiz-q correct">
+            <b>Q1 (recall)</b> Which trigger starts an abandoned-cart flow?<br>
+            <span class="small muted">A) Placed Order · B) Checkout Started ✓ · C) Subscribed to List</span>
+            <div class="answer"><b>Answer: B) Checkout Started</b> — fires when checkout begins; Placed Order fires after payment and misses the abandonment window.</div>
+          </div>
+          <div class="quiz-q correct">
+            <b>Q2 (application)</b> Your client wants the coupon only in the second email. Where do you place it?<br>
+            <span class="small muted">A) Step 1 · B) Step 2 ✓ · C) Both steps</span>
+            <div class="answer"><b>Answer: B) Step 2</b> — first email nudges; second incentivizes with 10% off, matching the rubric.</div>
+          </div>
+          <div class="quiz-q correct">
+            <b>Q3 (analysis)</b> A teammate used "Cart Value > $0" as trigger. Why will this misfire?<br>
+            <div class="answer"><b>Answer:</b> It fires for any cart creation, including browse carts that never entered checkout — noise vs intent. Checkout Started is intent-gated.</div>
+          </div>
+        </div>
+        <div class="xs" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-green">● Verified</span><span class="badge b-teal">mastery-map updated</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>📊 How daily-tech-study does it (baseline)</h3>
+        <p class="small muted">IRON LAW: every <code>practice/*.py</code> is executed, repaired or quarantined (<code>scripts/llm.py:126-150</code>). Lessons label "book says…" vs "general knowledge".</p>
+        <div class="before-after" style="margin-top:14px;grid-template-columns:1fr">
+          <div class="ba after" style="border-left-color:var(--teal)"><h4>Sprint-platform after P1-3</h4><p class="small">Quiz lives in <code>lesson.quiz</code> JSON, answers verified before storing — same rigor, but on freelance tasks, not book exercises. Learner proves mastery before sending proposals.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Self-check vs auto-check</h3>
+        <p class="small muted">Before: rubric was "auto-checkable" but system never checked content. After: quiz + rubric self-tick + Gate B parse = three check layers.</p>
+        <div class="check-item done"><div class="cbox">✓</div><div><b>Lesson watched</b><div class="xs muted">~5 min</div></div></div>
+        <div class="check-item done"><div class="cbox">✓</div><div><b>Quiz 3/3 passed</b><div class="xs muted">new — verified</div></div></div>
+        <div class="check-item"><div class="cbox"></div><div><b>Replicate project</b><div class="xs muted">~35 min</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- COPY-WORK PROVENANCE -->
+<section class="screen" id="copywork">
+<div class="wrap">
+  <div style="padding:24px 0 6px">
+    <span class="chip">Phase A · Project 2 · Klaviyo</span>
+    <h2 style="margin:12px 0 4px">Copy-Work — Abandoned-Cart Flow <span class="badge b-red" style="margin-left:8px">P0-1 provenance</span></h2>
+    <p class="muted small">Each step now carries provenance from retrieved tool docs (<code>step_provenance JSONB</code> per <code>db/migrations/005_copywork_provenance.sql</code>). Unverifiable steps are flagged, not silently shipped.</p>
+  </div>
+
+  <div class="before-after">
+    <div class="ba before">
+      <h4>Before — LLM says so</h4>
+      <ol class="small" style="margin-left:18px;color:#334155">
+        <li>Trigger on <b>Checkout Started</b> <span class="xs muted">— model recall, no source</span></li>
+        <li>Add 30 min + 24 hr delays — <span class="xs muted">no doc ref</span></li>
+        <li>Coupon at step 2 (10% off) — <span class="xs muted">no verification</span></li>
+        <li>Cart summary dynamic block — <span class="xs muted">hallucination risk</span></li>
+      </ol>
+      <p class="xs muted" style="margin-top:10px">Risk: learner hits non-existent "Delay" block, stuck.</p>
+    </div>
+    <div class="ba after">
+      <h4>After — sourced or flagged</h4>
+      <ol class="small" style="margin-left:18px;color:#334155">
+        <li>Trigger on <b>Checkout Started</b> <span class="provenance prov-ok">● Sourced · Klaviyo Docs / Triggers</span></li>
+        <li>2-step sequence: 30m + 24h delays <span class="provenance prov-ok">● Sourced · Flows / Time Delay</span></li>
+        <li>Cart summary dynamic block <code>Items in cart</code> <span class="provenance prov-ok">● Sourced</span></li>
+        <li>Coupon at step 2 (10% off) <span class="provenance prov-bad">● Flagged — Coupon block not in Klaviyo free tier docs; verified alternative: "Add Discount code in email body"</span></li>
+      </ol>
+      <p class="xs muted" style="margin-top:10px">Dev stores <code>grounded=true/false + doc_ref</code> per step; flagged steps show fix suggestion, never ship as "exact".</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>How it renders in Day view</h3>
+    <div class="check-item done"><div class="cbox">✓</div><div><b>Trigger: Checkout Started</b> <span class="provenance prov-ok">● Sourced</span><div class="xs muted">Docs: klaviyo.com → Events → Checkout Started · Verified 2026-08-27</div></div></div>
+    <div class="check-item done"><div class="cbox">✓</div><div><b>Delay: 30 min</b> <span class="provenance prov-ok">● Sourced</span><div class="xs muted">Flows → Time Delay block · exact label "Time delay"</div></div></div>
+    <div class="check-item warn"><div class="cbox">!</div><div><b>Coupon block at step 2</b> <span class="provenance prov-bad">● Flagged — rewrite: add coupon code inline</span><div class="xs muted">No "Coupon" block in free tier; validated rewrite stored.</div></div></div>
+    <div class="check-item"><div class="cbox"></div><div><b>Reference spec — screen-by-screen</b><div class="xs muted">Flow canvas: Trigger → Delay → Email 1 (cart block) → Delay → Email 2 (cart + code) · grounded=true</div></div></div>
+  </div>
+</div>
+</section>
+
+<!-- GATE B -->
+<section class="screen" id="gateb">
+<div class="wrap">
+  <div style="padding:24px 0 6px">
+    <span class="chip">Phase B · Mock Contract</span>
+    <h2 style="margin:12px 0 4px">Gate B — from "any URL" to "rubric artifacts present"</h2>
+    <p class="muted small">Before: <code>auto_check_gate_b</code> checked URL format + case-study row exists. After: parses deliverable for rubric-named observables + structured self-check (<code>gate_b_evidence JSONB</code> in <code>004_gate_b_content.sql</code>).</p>
+  </div>
+
+  <div class="before-after">
+    <div class="ba before">
+      <h4>Before — hollow badge</h4>
+      <p class="small">Submit <code>https://me.dev/flow</code> (any URL) + any case-study text → <b>Gate B passes</b> → badge issued. Client filtering "Completed sprint" gets unverified supply.</p>
+      <div class="check-item"><div class="cbox"></div><div><b>Deliverable URL valid</b><div class="xs muted">https://me.dev/flow ✓ format only</div></div></div>
+      <div class="check-item"><div class="cbox"></div><div><b>Case study saved</b><div class="xs muted">any text ✓</div></div></div>
+      <span class="badge b-red">Badge issued on weak proof → kills B2B pay</span>
+    </div>
+    <div class="ba after">
+      <h4>After — content-aware</h4>
+      <p class="small">Gate B parses deliverable for <b>rubric-named artifacts</b> (like Gate A self-tick <code>verification_service.py:65-72</code>), plus case-study checklist.</p>
+      <div class="check-item done"><div class="cbox">✓</div><div><b>Deliverable contains "dynamic summary block"</b><div class="xs muted">parsed: found <code>{{ item.name }}</code> in email HTML ✓</div></div></div>
+      <div class="check-item done"><div class="cbox">✓</div><div><b>Deliverable contains "10% coupon in step 2"</b><div class="xs muted">parsed: discount code present ✓</div></div></div>
+      <div class="check-item done"><div class="cbox">✓</div><div><b>Case study: Problem/Solution/Result self-checked</b><div class="xs muted">3 sections ticked ✓</div></div></div>
+      <span class="badge b-green">Badge = verified evidence</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Deliverable submit (new)</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input style="flex:1;min-width:240px;padding:11px 12px;border:1px solid var(--border);border-radius:10px" value="https://me.dev/my-klaviyo-flow">
+      <button class="btn btn-p btn-sm">Submit for verification</button>
+      <span class="badge b-green">● Gate B will parse before passing</span>
+    </div>
+    <p class="xs muted" style="margin-top:8px">If artifacts missing, Gate B stays locked and shows exactly which rubric item failed (like daily-tech-study quarantine: <code>.broken</code>).</p>
+  </div>
+</div>
+</section>
+
+<!-- PROPOSAL -->
+<section class="screen" id="proposal">
+<div class="wrap">
+  <div style="padding:24px 0 6px">
+    <span class="chip">Phase C · First-Bid Challenge 0/5</span>
+    <h2 style="margin:12px 0 4px">Proposal Builder — proof from <i>your</i> build</h2>
+    <p class="muted small"><b>P1-2 fix:</b> proof sentence cites your Gate-A-passed build URL + ticked rubric items, not abstract mock contract.</p>
+  </div>
+
+  <div class="before-after">
+    <div class="ba before">
+      <h4>Before — generic proof</h4>
+      <div class="small" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px">
+        "I see you need a Klaviyo flow that recovers abandoned carts — <b>I just fulfilled a mock contract for a client in your niche</b>. Happy to scope this week."
+      </div>
+      <p class="xs muted" style="margin-top:8px">Reads invented; Upwork client flags as template.</p>
+    </div>
+    <div class="ba after">
+      <h4>After — grounded in your artifact</h4>
+      <div class="small" style="background:var(--success-soft);border:1px solid #a7f3d0;border-radius:10px;padding:14px">
+        "I see you need a Klaviyo flow that recovers abandoned carts — <b>I rebuilt that exact flow (Checkout Started → cart summary block)</b> — see my build at <a href="#" style="color:var(--primary);text-decoration:underline">https://me.dev/p1-abandoned-cart</a> which passed 3/3 rubric checks. I can have your version live in 3 days."
+      </div>
+      <p class="xs muted" style="margin-top:8px">Source: <code>copywork_projects.submitted_url</code> + <code>rubric_checked</code> (Gate A) + <code>reference_spec</code> title.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- MENTOR -->
+<section class="screen" id="mentor">
+<div class="wrap">
+  <div style="padding:24px 0 6px">
+    <span class="chip">AI Mentor · grounded</span>
+    <h2 style="margin:12px 0 4px">Mentor — from keyword gate to RAG + contradiction check</h2>
+    <p class="muted small"><b>P1-1 fix:</b> answers RAG over stored lesson + <code>reference_spec</code>, must contain ≥2 distinct job terms and not contradict clone steps. Before: passed with 1 term even if factually wrong.</p>
+  </div>
+
+  <div class="card" style="border-left:4px solid var(--primary)">
+    <div class="check-item done"><div class="cbox">✓</div><div><b>Context:</b> job #1042 · Klaviyo · checkout recovery · stored step = "Trigger: Checkout Started" <span class="badge b-green">● Grounded in sprint content</span></div></div>
+    <div class="check-item" style="background:#f8fafc"><div class="cbox">🧑</div><div><b>You:</b> "Should I use Purchase Completed trigger?"<div class="xs muted">Wrong trigger for abandoned cart — would miss abandoners</div></div></div>
+    <div class="before-after" style="margin-top:12px">
+      <div class="ba before"><h4>Before — keyword gate passes</h4><p class="small">Mentor sees 1 term "Purchase" → passes, even though it contradicts stored clone step "Checkout Started". Risk: teaches misconception.</p></div>
+      <div class="ba after"><h4>After — contradiction blocked</h4><p class="small"><b>Mentor:</b> "Checkout Started is correct for abandoned-cart — it fires at intent. Purchase Completed fires after payment. Your stored Project 2 says Checkout Started; stick with that and map Items in cart."</p><span class="badge b-green">● No contradiction vs stored clone_steps</span></div>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+<script>
+  var btns=document.querySelectorAll('#navpills button');
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      btns.forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+      var t=document.getElementById(b.dataset.s);
+      if(t){t.classList.add('on');window.scrollTo({top:0,behavior:'smooth'});}
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+URL: http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/3
+
+Freelance
+Launch
+← Dashboard
+SHIFT A · DAY 03 · COPYWORK
+Project 1 — Rebuild the Checkout Welcome Flow
+
+Replicate a real, high-performing flow from scratch. Copy builds muscle memory faster than passive watching.
+
+DAY COMPLETE — +0 POSTINGS UNLOCKED
+
+You unlocked +0 more job postings → 0 of 5 active jobs in your cluster are now open to you.
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+0% of your cluster unlocked
+Lesson
+Task
+Watch · Lesson
+TwoPanel video · Hook → Lesson → Key points → Outro
+Turn a single Klaviyo flow into a $2k+ checkout‑recovery gig — clients pay for the exact Started Checkout automation you’ll master today.
+Today you'll learn
+Select the Started Checkout metric trigger
+Add conditional splits for first‑time buyers and purchasers
+Write three personalized emails with Klaviyo dynamic tags
+Test end‑to‑end with Preview and Track API before going live
+Why this matters for your freelance career
+
+The live job posting asks for “checkout recovery + segmentation” using Klaviyo. Clients specifically look for freelancers who can wire the Started Checkout metric, branch on first‑time vs. repeat buyers, and inject {{ event.extra.checkout_url }} and product‑level tags into timed emails. Demonstrating you can build, test, and launch that exact flow makes you the go‑to specialist for high‑value e‑commerce automation contracts.
+
+Before you watch — quick check
+
+Guess first, then watch the lesson to confirm.
+
+1. Which Klaviyo event fires the moment a shopper begins the checkout process?
+Show answer
+VOICEOVER LIVE
+00:00
+DAY 03 · SHIFT A · COPYWORK
+TurnasingleKlaviyoflowintoa$2k+checkout‑recoverygig—clientspayforthe
+exactStartedCheckoutautomationyou’llmastertoday.
+≈ 2 MIN
+VOICEOVER + TRANSCRIPT
+6 KEY POINTS
+0:00 / 1:36
+Day 3 – Rebuild the Checkout Welcome Flow in Klaviyo
+
+Objective: Configure a Klaviyo flow that triggers on the Started Checkout metric, adds conditional splits, personalized emails with dynamic content, time delays, and a recovery email, then test it end‑to‑end before publishing.
+
+Imagine a new client hands you a Shopify store that loses 30 % of revenue at checkout. You open Klaviyo, create a new flow, and select the “Started Checkout” metric as the trigger — this fires the moment a shopper clicks “Continue to payment.” Next you drag a Conditional Split block and set the rule “Profile property ‘Number of Orders’ equals 0” so only first‑time buyers enter the welcome branch. Inside that branch you add an Email block titled “Welcome to [Brand]!” and insert {{ person.first_name }} and {{ event.extra.line_items.0.title }} to greet the shopper and show the exact product they just added. After the email you place a Time Delay block set to 1 hour. Then a second Email block “You might love these…”, using {{ event.extra.line_items.0.product_title }} for a personalized recommendation. A second Conditional Split checks the “Placed Order” metric within the last 24 hours; if false, the flow continues to a final Email block “Complete your purchase” with {{ event.extra.checkout_url }} so the shopper can return to their cart. Finally you hit “Preview” → “Send Test Email” to your own inbox, simulate a Started Checkout event via the “Track API” test payload, verify every dynamic tag renders, and only then switch the flow to Live. This click‑by‑click build gives you a ready‑to‑sell checkout recovery automation that clients explicitly request.
+
+Trigger = Klaviyo Metric “Started Checkout”
+Conditional Split on profile property “Number of Orders = 0”
+Email dynamic syntax: {{ person.first_name }}, {{ event.extra.line_items.0.title }}, {{ event.extra.checkout_url }}
+Time Delay block = 1 hour
+Second Conditional Split on metric “Placed Order” within 24h
+Test using Preview → Send Test Email + Track API test event
+
+Common pitfalls
+
+Using “Placed Order” as the trigger instead of “Started Checkout” – the flow fires too late
+Forgetting to escape line_items index (must be .0) causing blank product names
+Skipping the 24‑hour Placed Order split, so purchasers still receive abandonment email
+Publishing without a test event – live flow sends to real customers with broken links
+Knowledge Check
+
+Test yourself on what you just learned.
+
+1. What is the exact Klaviyo metric name you must select as the flow trigger for a checkout welcome flow?
+Show answer
+2. Which dynamic‑content syntax inserts the shopper’s first name into an email?
+Show answer
+3. What block type and setting comes immediately after the first Email block in the flow you built?
+Show answer
+4. Describe the two‑step test you perform before setting the flow Live.
+Show answer
+Mark lesson watched
+~5 min

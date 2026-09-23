@@ -1,0 +1,77 @@
+{
+ "day3": {
+  "chars": 4603,
+  "generating": false,
+  "failed": false,
+  "lesson_extracted": "",
+  "quiz": null,
+  "player": {
+   "canvas": 0,
+   "video": 0,
+   "audio": 5,
+   "playerDiv": false
+  },
+  "has_key_points": true,
+  "has_pitfalls": true
+ },
+ "day4": {
+  "chars": 4868,
+  "generating": false,
+  "failed": false,
+  "lesson_extracted": "",
+  "quiz": null,
+  "player": {
+   "canvas": 0,
+   "video": 0,
+   "audio": 5,
+   "playerDiv": false
+  },
+  "has_key_points": true,
+  "has_pitfalls": true
+ },
+ "day5": {
+  "chars": 4664,
+  "generating": false,
+  "failed": false,
+  "lesson_extracted": "",
+  "quiz": null,
+  "player": {
+   "canvas": 0,
+   "video": 0,
+   "audio": 5,
+   "playerDiv": false
+  },
+  "has_key_points": true,
+  "has_pitfalls": true
+ },
+ "day8": {
+  "chars": 4386,
+  "generating": false,
+  "failed": false,
+  "lesson_extracted": "",
+  "quiz": null,
+  "player": {
+   "canvas": 0,
+   "video": 0,
+   "audio": 5,
+   "playerDiv": false
+  },
+  "has_key_points": true,
+  "has_pitfalls": true
+ },
+ "day11": {
+  "chars": 3901,
+  "generating": false,
+  "failed": false,
+  "lesson_extracted": "",
+  "quiz": null,
+  "player": {
+   "canvas": 0,
+   "video": 0,
+   "audio": 5,
+   "playerDiv": false
+  },
+  "has_key_points": true,
+  "has_pitfalls": true
+ }
+}

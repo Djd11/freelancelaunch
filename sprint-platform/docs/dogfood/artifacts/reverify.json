@@ -1,0 +1,183 @@
+{
+ "steps": [
+  {
+   "name": "enroll latency",
+   "ms": 8022
+  },
+  {
+   "name": "dashboard",
+   "cohort": [
+    "COHORT #12 \u00b7 ENDS 2026-08-23"
+   ],
+   "demand_chip": [
+    "127 ACTIVE JOBS",
+    "$92/HR"
+   ],
+   "generating": false,
+   "meter": [
+    "0 of 127 real jobs unlocked",
+    "0/14 days punched \u00b7 0 postings unlocked",
+    "+0 POSTINGS UNLOCKED SO FAR"
+   ]
+  },
+  {
+   "name": "parallel polls",
+   "codes": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    500,
+    200,
+    500,
+    200,
+    200,
+    200,
+    200
+   ],
+   "non200": 2
+  },
+  {
+   "name": "day1 lesson",
+   "failed": false,
+   "generating": true,
+   "eyebrow": [
+    "SHIFT A \u00b7 DAY 01 \u00b7 SETUP"
+   ],
+   "project_label": []
+  },
+  {
+   "name": "day1 task",
+   "checkboxes": 0,
+   "steps": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "stamps": [
+    {
+     "label": "BUILD SUBMITTED",
+     "lit": false
+    },
+    {
+     "label": "MATCHES ALL POINTS",
+     "lit": false
+    },
+    {
+     "label": "VERIFIED",
+     "lit": false
+    }
+   ]
+  },
+  {
+   "name": "day1 submit",
+   "flash": "(NO MESSAGE)",
+   "stamps": [
+    {
+     "label": "Build submitted",
+     "lit": false
+    },
+    {
+     "label": "Matches all points",
+     "lit": false
+    },
+    {
+     "label": "Verified",
+     "lit": false
+    }
+   ]
+  },
+  {
+   "name": "meter after day1",
+   "lines": [
+    "0/5 days punched",
+    "0 of 127 real jobs unlocked",
+    "0% of the live postings in your skill are now open to you \u2014 finish more days to unlock the rest.",
+    "0/14 days punched \u00b7 0 postings unlocked",
+    "+0 POSTINGS UNLOCKED SO FAR"
+   ]
+  },
+  {
+   "name": "day2 rubric",
+   "checkboxes": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "lesson_failed": false
+  },
+  {
+   "name": "day3 rubric",
+   "checkboxes": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "lesson_failed": false
+  },
+  {
+   "name": "day4 rubric",
+   "checkboxes": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "lesson_failed": false
+  },
+  {
+   "name": "day5 rubric",
+   "checkboxes": 0,
+   "copy": [
+    "When all 0 points are ticked and your link is in, this project counts as done."
+   ],
+   "lesson_failed": false
+  },
+  {
+   "name": "contract on day 1",
+   "status": 200,
+   "locked": false,
+   "open_page": true,
+   "site_error": false,
+   "requirements": [],
+   "brief": [
+    "Client Brief \u00b7 \"Lifecycle / Email Personalization Expert - Paid Platform Review (Ongoing Panel)\""
+   ]
+  },
+  {
+   "name": "proposals",
+   "status": 200,
+   "locked": true
+  },
+  {
+   "name": "mentor immediate",
+   "echoed": true,
+   "thinking": true,
+   "delta": 119
+  },
+  {
+   "name": "mentor reply",
+   "got": false,
+   "secs_waited": 60,
+   "chars": 744
+  },
+  {
+   "name": "profile",
+   "status": 200,
+   "url": "/profile/reverify",
+   "none_literal": false,
+   "lines": [
+    "Freelance",
+    "Launch",
+    "Dashboard",
+    "Mentor",
+    "For clients",
+    "YOUR PUBLIC PROFILE \u2014 WHAT CLIENTS SEE",
+    "Reverify",
+    "None",
+    "Demand-Validated Badges",
+    "No demand-validated badges yet \u2014 badges are issued only when the Mock Contract passes verification."
+   ]
+  },
+  {
+   "name": "button present on day 1",
+   "n": 0
+  }
+ ]
+}

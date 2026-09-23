@@ -1,0 +1,103 @@
+{
+  "summary": {
+    "total": 10,
+    "pass": 9,
+    "fail": 0,
+    "skip_or_gap": 1
+  },
+  "purge_list": [
+    "uat-otp-a5@example.com"
+  ],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "P1",
+      "claim": "test tree identity",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "toplevel=/home/dhruba/Documents/exp_money/daily_learning_freelance HEAD=e89e740 expect=e89e740 is-ancestor OK fingerprint=3c47a85f6afb",
+      "ts": "2026-09-16 11:29:31"
+    },
+    {
+      "area": "P1",
+      "claim": "signup collision auto-login deleted (static)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:29:31"
+    },
+    {
+      "area": "P1",
+      "claim": "auth client factory present",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "get_auth_supabase",
+      "ts": "2026-09-16 11:29:31"
+    },
+    {
+      "area": "P1",
+      "claim": "an OTP surface exists in the template tree",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "_auth_panel.html,signup.html",
+      "ts": "2026-09-16 11:29:31"
+    },
+    {
+      "area": "A1",
+      "claim": "code-entry length limit is not hardcoded to 6",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "length hints [] \u2014 none in source (otp_length comes from config); the browser pass must confirm 8 digits are typeable",
+      "ts": "2026-09-16 11:29:31"
+    },
+    {
+      "area": "A1",
+      "claim": "/auth/login and /auth/signup expose the same OTP form + provider buttons",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "actions/forms google=True/facebook=True vs True/True",
+      "ts": "2026-09-16 11:29:44"
+    },
+    {
+      "area": "RULE",
+      "claim": "my tooling makes no delete/drop/purge call (create-only)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "2 files parsed via ast",
+      "ts": "2026-09-16 11:29:44"
+    },
+    {
+      "area": "RULE",
+      "claim": "no live dependency on the two deleted husk accounts (tests/, templates/)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "my A12 baseline is unaffected; fresh uat-otp-* identities at run time",
+      "ts": "2026-09-16 11:29:44"
+    },
+    {
+      "area": "RULE",
+      "claim": "user cap headroom: 1 spent + 5 to mint <= cap 8",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "spent=['uat-otp-a5@example.com'] projected 6/8",
+      "ts": "2026-09-16 11:29:44"
+    },
+    {
+      "area": "RULE",
+      "claim": "live SMTP sends in the last hour: 0/2",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "only step 2 (A2) may spend slots; the ledger refuses more",
+      "ts": "2026-09-16 11:29:44"
+    }
+  ]
+}

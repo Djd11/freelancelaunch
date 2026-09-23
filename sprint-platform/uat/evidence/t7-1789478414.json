@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "total": 6,
+    "pass": 4,
+    "fail": 1,
+    "skip_or_gap": 1
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "P1",
+      "claim": "test tree identity",
+      "class": "STATIC",
+      "pass": null,
+      "detail": "toplevel=/home/dhruba/Documents/exp_money/daily_learning_freelance HEAD=b27ba5c expect=b27ba5c is-ancestor OK",
+      "ts": "2026-09-15 18:50:14"
+    },
+    {
+      "area": "P1",
+      "claim": "signup collision auto-login deleted (static)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 18:50:14"
+    },
+    {
+      "area": "P1",
+      "claim": "auth client factory present",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "get_auth_supabase",
+      "ts": "2026-09-15 18:50:14"
+    },
+    {
+      "area": "P1",
+      "claim": "login.html renders OTP surface",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-15 18:50:14"
+    },
+    {
+      "area": "A1",
+      "claim": "login.html: code-entry length limit is not 6 (real codes are 8)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "found length hints [] \u2014 no maxlength/pattern on the form; confirm the code input accepts 8 digits in the browser pass",
+      "ts": "2026-09-15 18:50:14"
+    },
+    {
+      "area": "P1",
+      "claim": "signup.html renders OTP surface",
+      "class": "STATIC",
+      "pass": false,
+      "detail": "no 'otp' reference",
+      "ts": "2026-09-15 18:50:14"
+    }
+  ]
+}

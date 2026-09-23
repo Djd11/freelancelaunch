@@ -1,0 +1,215 @@
+{
+  "summary": {
+    "total": 24,
+    "pass": 24,
+    "fail": 0,
+    "skip_or_gap": 0
+  },
+  "purge_list": [
+    "uat-otp-a5@example.com"
+  ],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A5",
+      "claim": "wrong 8-digit rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:14"
+    },
+    {
+      "area": "A5",
+      "claim": "wrong 8-digit: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:14"
+    },
+    {
+      "area": "A5",
+      "claim": "too short rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:17"
+    },
+    {
+      "area": "A5",
+      "claim": "too short: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:17"
+    },
+    {
+      "area": "A5",
+      "claim": "non-numeric rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:21"
+    },
+    {
+      "area": "A5",
+      "claim": "non-numeric: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:21"
+    },
+    {
+      "area": "A5",
+      "claim": "empty rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:27"
+    },
+    {
+      "area": "A5",
+      "claim": "empty: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:27"
+    },
+    {
+      "area": "A5",
+      "claim": "oversized rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:33"
+    },
+    {
+      "area": "A5",
+      "claim": "oversized: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:33"
+    },
+    {
+      "area": "A5",
+      "claim": "sqli/xss string rejected without session or 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "status=200 session=False",
+      "ts": "2026-09-16 11:15:37"
+    },
+    {
+      "area": "A5",
+      "claim": "sqli/xss string: no GoTrue internals leaked to HTML",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:15:37"
+    },
+    {
+      "area": "A5",
+      "claim": "unknown address at verify = generic error, no 5xx",
+      "class": "LIVE",
+      "pass": true,
+      "detail": "That code didn&#39;t work \u2014 request a new one.",
+      "ts": "2026-09-16 11:15:44"
+    },
+    {
+      "area": "A5",
+      "claim": "'00000000' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"00000000\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:15:48"
+    },
+    {
+      "area": "A5",
+      "claim": "'07368987' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"07368987\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:15:51"
+    },
+    {
+      "area": "A5",
+      "claim": "'45480348' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"45480348\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:15:54"
+    },
+    {
+      "area": "A5",
+      "claim": "'7368987' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:15:57"
+    },
+    {
+      "area": "A5",
+      "claim": "'073689870' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:15:59"
+    },
+    {
+      "area": "A5",
+      "claim": "'abcdefgh' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:02"
+    },
+    {
+      "area": "A5",
+      "claim": "'\u00b20245678' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:05"
+    },
+    {
+      "area": "A5",
+      "claim": "'\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:08"
+    },
+    {
+      "area": "A5",
+      "claim": "'1' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:12"
+    },
+    {
+      "area": "A5",
+      "claim": "'07368 987' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:16"
+    },
+    {
+      "area": "A5",
+      "claim": "'0abc-def' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:16:20"
+    }
+  ]
+}

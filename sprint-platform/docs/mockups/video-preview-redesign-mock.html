@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Preview Redesign — Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Trades Desk Light (matches the app) */
+  --v-bg:#E8EAE6; --v-surface:#FDFDFB; --v-surface2:#F0F2EE;
+  --v-ink:#20241F; --v-ink2:#3C423B; --v-muted:#5D645C;
+  --v-accent:#D95B08; --v-accent-ink:#A84505; --v-accent-soft:#FCEADB;
+  --v-green:#2E6B3A; --v-green-ink:#20492A; --v-green-soft:#E4EFE3;
+  --v-steel:#2E5E73; --v-steel-soft:#E2EDF1;
+  --v-hairline:#CDD2CB; --v-hairline2:#B4BBB1;
+}
+body.dark{
+  /* Studio Dark variant */
+  --v-bg:#14171A; --v-surface:#1D2226; --v-surface2:#242B31;
+  --v-ink:#F2F4F1; --v-ink2:#D7DCD8; --v-muted:#9BA39C;
+  --v-accent:#E8680E; --v-accent-ink:#F08A47; --v-accent-soft:#3A2413;
+  --v-green:#4C9A5E; --v-green-ink:#7FCB90; --v-green-soft:#1B2E20;
+  --v-steel:#5FA5C2; --v-steel-soft:#16242C;
+  --v-hairline:#39424A; --v-hairline2:#4A545D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Barlow",system-ui,sans-serif;background:#20241F;color:#E8EAE6;padding:32px 20px;line-height:1.5}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.cond{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+.page{max-width:1080px;margin:0 auto}
+h1{font-family:"Barlow Condensed";font-size:34px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px;color:#fff}
+.sub{color:#9BA39C;font-size:14.5px;max-width:760px;margin-bottom:22px}
+
+/* ── Mock chrome (not part of the video) ── */
+.mockbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.mockbar .btn{background:#FDFDFB;color:#20241F;border:0;border-radius:8px;padding:9px 16px;font:600 13.5px "Barlow";cursor:pointer}
+.mockbar .btn:hover{background:#fff}
+.mockbar .btn.on{background:#D95B08;color:#000}
+.mockbar label.switch{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#C9CFC8;cursor:pointer}
+.note{font-size:12.5px;color:#8A9188;margin-top:10px}
+
+/* ── The simulated player ── */
+.player{position:relative;width:100%;aspect-ratio:16/9;background:var(--v-bg);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);transition:background .4s}
+.stage{position:absolute;inset:0}
+
+/* top chrome */
+.topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:18px 26px;z-index:5}
+.eyebrow{font-family:"IBM Plex Mono";font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--v-muted)}
+.timecode{font-family:"IBM Plex Mono";font-size:12px;font-weight:500;color:var(--v-muted)}
+.livechip{display:inline-flex;align-items:center;gap:7px;color:var(--v-green-ink);font-weight:600}
+.livechip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--v-green);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* SCENE 1 — HOOK */
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 8%;opacity:0;pointer-events:none}
+.hook{align-items:flex-start}
+.hook .kicker{font-family:"IBM Plex Mono";font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--v-accent-ink);margin-bottom:18px;opacity:0;transform:translateY(12px)}
+.hook h2{font-family:"Barlow Condensed";font-size:88px;font-weight:700;line-height:1.02;letter-spacing:-.01em;color:var(--v-ink);max-width:15ch}
+.hook h2 .w{display:inline-block;opacity:0;transform:translateY(30px) scale(.96)}
+.hook h2 .hl{position:relative;color:var(--v-ink)}
+.hook h2 .hl svg{position:absolute;left:-2%;bottom:-4px;width:104%;height:26px;overflow:visible}
+.hook h2 .hl path{fill:none;stroke:var(--v-accent);stroke-width:7;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.hook .meta{margin-top:26px;display:flex;gap:10px;opacity:0;transform:translateY(10px)}
+.hook .chip{font-family:"IBM Plex Mono";font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--v-ink2);border:1px solid var(--v-hairline2);border-radius:4px;padding:6px 12px;background:var(--v-surface)}
+
+/* SCENE 2 — LESSON (kinetic script) */
+.lesson{justify-content:center}
+.lesson .lessonhead{display:flex;align-items:baseline;gap:16px;margin-bottom:26px}
+.lesson .lessonhead .t{font-family:"Barlow Condensed";font-size:34px;font-weight:600;color:var(--v-ink)}
+.lesson .lessonhead .badge{font-family:"IBM Plex Mono";font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--v-steel);border:1px solid var(--v-hairline2);padding:3px 9px;border-radius:4px;background:var(--v-surface)}
+.lesson .scriptbox{max-width:56ch;font-size:29px;line-height:1.62;color:var(--v-muted);transform-origin:left center}
+.lesson .scriptbox .w{opacity:0;display:inline-block}
+.lesson .scriptbox .w.said{opacity:.75;color:var(--v-ink2)}
+.lesson .scriptbox .w.now{opacity:1;color:var(--v-ink);background:var(--v-accent-soft);border-radius:6px;padding:0 6px;margin:0 -2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.lesson .bignum{position:absolute;right:7%;top:50%;transform:translateY(-50%);text-align:right;opacity:0}
+.lesson .bignum .n{font-family:"Barlow Condensed";font-size:150px;font-weight:700;line-height:1;color:var(--v-accent)}
+.lesson .bignum .l{font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--v-muted);margin-top:6px}
+
+/* SCENE 3 — KEY POINTS */
+.points{padding:0 8%}
+.points .head{font-family:"Barlow Condensed";font-size:34px;font-weight:600;color:var(--v-ink);margin-bottom:8px;opacity:0;transform:translateY(14px)}
+.points .subhead{font-family:"IBM Plex Mono";font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--v-muted);margin-bottom:30px;opacity:0}
+.kpcards{display:flex;gap:26px}
+.kp{flex:1;background:var(--v-surface);border:1.5px solid var(--v-hairline2);border-radius:14px;padding:26px;opacity:0;transform:translateY(44px) scale(.97);position:relative}
+.kp .kpnum{font-family:"IBM Plex Mono";font-size:12px;font-weight:600;color:var(--v-accent-ink);letter-spacing:.08em;margin-bottom:12px}
+.kp .kpt{font-family:"Barlow Condensed";font-size:27px;font-weight:600;color:var(--v-ink);line-height:1.15;position:relative;display:inline-block}
+.kp .kpt svg{position:absolute;left:-3%;bottom:-7px;width:106%;height:16px;overflow:visible}
+.kp .kpt path{fill:none;stroke:var(--v-accent);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.kp .kpd{font-size:15.5px;color:var(--v-muted);margin-top:14px;line-height:1.55}
+.kp.done{border-color:var(--v-green)}
+.kp .check{position:absolute;top:-14px;right:-14px;width:34px;height:34px;border-radius:50%;background:var(--v-green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;opacity:0;transform:scale(.4) rotate(-30deg)}
+
+/* SCENE 4 — OUTRO */
+.outro{align-items:center;text-align:center}
+.outro .stamp{font-family:"IBM Plex Mono";font-size:13px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--v-green-ink);border:2px solid currentColor;border-radius:5px;padding:6px 14px;transform:rotate(-2deg) scale(1);opacity:0;margin-bottom:26px;background:var(--v-surface)}
+.outro h2{font-family:"Barlow Condensed";font-size:56px;font-weight:700;color:var(--v-ink);line-height:1.05;opacity:0;transform:translateY(18px)}
+.outro .punch{display:flex;gap:6px;margin-top:34px;opacity:0;transform:translateY(14px)}
+.outro .slot{width:46px;height:46px;border:1.5px solid var(--v-hairline2);border-radius:7px;position:relative;font-family:"IBM Plex Mono";font-size:12px;color:var(--v-muted);display:flex;justify-content:center;padding-top:5px;background:var(--v-surface)}
+.outro .slot.punched{border-color:var(--v-green)}
+.outro .slot.punched::after{content:"";position:absolute;left:50%;top:60%;width:15px;height:15px;transform:translate(-50%,-50%);border-radius:50%;background:var(--v-bg);border:2.5px solid var(--v-green);box-shadow:inset 0 1px 2px rgba(0,0,0,.28)}
+.outro .slot.now{border-color:var(--v-accent);color:var(--v-ink);box-shadow:0 0 0 3px var(--v-accent-soft)}
+.outro .caption{margin-top:22px;font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--v-muted);opacity:0}
+
+/* bottom chrome: waveform + chapters + captions */
+.bottom{position:absolute;left:0;right:0;bottom:0;padding:0 26px 16px;z-index:5;background:linear-gradient(transparent, color-mix(in srgb, var(--v-bg) 82%, transparent) 55%)}
+.wave{display:flex;align-items:flex-end;gap:3px;height:26px;margin-bottom:10px}
+.wave i{flex:1;width:100%;max-width:7px;background:var(--v-accent);opacity:.85;border-radius:2px;transform-origin:bottom;transform:scaleY(.15)}
+.chapters{display:flex;gap:4px;height:6px;border-radius:3px;overflow:hidden;background:var(--v-hairline);margin-bottom:12px}
+.chapters i{flex:1;position:relative}
+.chapters i.done::before{content:"";position:absolute;inset:0;background:var(--v-green);border-radius:3px}
+.chapters i.now::before{content:"";position:absolute;inset:0;background:var(--v-accent);border-radius:3px;animation:pulse 1.6s infinite}
+.capbar{min-height:44px;display:flex;justify-content:center;align-items:flex-end}
+.cap{font-size:19px;font-weight:600;color:var(--v-ink);background:var(--v-surface);border:1px solid var(--v-hairline2);border-radius:8px;padding:7px 16px;opacity:0;transform:translateY(8px)}
+.cap b{color:var(--v-accent-ink)}
+
+/* annotation tags */
+.tag{position:absolute;z-index:6;font-family:"IBM Plex Mono";font-size:10.5px;font-weight:600;letter-spacing:.04em;color:#fff;background:#20241FE6;border:1px solid #ffffff33;border-radius:5px;padding:3px 8px;pointer-events:none;opacity:0;white-space:nowrap}
+body.showtags .tag{opacity:1}
+
+/* play overlay */
+.playbtn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:9;background:rgba(20,23,26,.55);backdrop-filter:blur(3px);cursor:pointer;border:0}
+.playbtn .ic{width:88px;height:88px;border-radius:50%;background:#D95B08;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.playbtn .ic::after{content:"";border-left:26px solid #14171A;border-top:16px solid transparent;border-bottom:16px solid transparent;margin-left:7px}
+
+/* decisions panel */
+.decisions{margin-top:30px;background:#262B26;border:1px solid #39423A;border-radius:12px;padding:24px}
+.decisions h3{font-family:"Barlow Condensed";font-size:24px;color:#fff;margin-bottom:6px}
+.decisions p{color:#9BA39C;font-size:14px;margin-bottom:16px}
+.decisions ol{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.decisions li{background:#1D221D;border:1px solid #39423A;border-radius:9px;padding:14px 16px;font-size:13.5px;color:#D7DCD8}
+.decisions li b{display:block;color:#F0854A;font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.decisions li .opt{display:block;color:#8A9188;font-size:12.5px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Lesson video preview — redesigned mock</h1>
+  <p class="sub">A visual simulation of the proposed Remotion composition. Everything you see animating maps to a real Remotion API (toggle “API tags” to see them pinned on the frame). Same lesson data as today — title, script, key points, voiceover — restructured into scenes with springs, word-synced captions, an audio-reactive waveform, hand-drawn marker highlights, and a punch-card outro that ties the video to the product's design language.</p>
+
+  <div class="mockbar">
+    <button class="btn" id="replay">↻ Replay</button>
+    <button class="btn on" id="variant">☀ Light — Trades Desk</button>
+    <label class="switch"><input type="checkbox" id="tags" checked> API tags</label>
+  </div>
+
+  <div class="player" id="player">
+    <button class="playbtn" id="play"><span class="ic"></span></button>
+    <div class="stage">
+
+      <!-- top chrome -->
+      <div class="topbar">
+        <span class="eyebrow"><span class="livechip">Voiceover live</span></span>
+        <span class="timecode mono" id="tc">00:00</span>
+      </div>
+      <div class="tag" style="top:14px;right:26px">useCurrentFrame() → timecode</div>
+      <div class="tag" style="top:44px;right:26px">@remotion/media-utils · getAudioData()</div>
+
+      <!-- SCENE 1 · HOOK -->
+      <div class="scene hook" id="s1">
+        <div class="kicker" id="kick">Day 02 · Shift A · Skill Acquisition</div>
+        <h2 id="hook-h"></h2>
+        <div class="meta" id="hook-meta">
+          <span class="chip">≈ 5 min</span>
+          <span class="chip">Voiceover + transcript</span>
+          <span class="chip">3 key points</span>
+        </div>
+      </div>
+      <div class="tag" style="left:8%;top:24%">&lt;Sequence from={0}&gt; — scene 1 · HOOK</div>
+      <div class="tag" style="left:8%;top:58%">spring() · damping 12 → overshoot</div>
+      <div class="tag" style="left:8%;top:72%">@remotion/rough-notation · underline draw</div>
+
+      <!-- SCENE 2 · LESSON -->
+      <div class="scene lesson" id="s2">
+        <div class="lessonhead">
+          <div class="t" id="lesson-title">Anatomy of an abandoned-cart flow</div>
+          <span class="badge">Transcript</span>
+        </div>
+        <div class="scriptbox" id="script"></div>
+        <div class="bignum" id="bignum">
+          <div class="n">68%</div>
+          <div class="l">of carts abandon<br>at shipping</div>
+        </div>
+      </div>
+      <div class="tag" style="left:8%;top:20%">&lt;Sequence from={96}&gt; — scene 2 · LESSON</div>
+      <div class="tag" style="left:8%;top:64%">@remotion/captions · whisper word-stamps → karaoke</div>
+      <div class="tag" style="left:8%;top:74%">@remotion/layout-utils · measureText() wrap</div>
+      <div class="tag" style="right:7%;top:12%">interpolate() · camera drift 1.00→1.03</div>
+
+      <!-- SCENE 3 · KEY POINTS -->
+      <div class="scene points" id="s3">
+        <div class="head" id="pts-head">Three things separate pros from tinkerers</div>
+        <div class="subhead">Key points · verified at Gate A</div>
+        <div class="kpcards" id="cards"></div>
+      </div>
+      <div class="tag" style="left:8%;top:18%">&lt;Series&gt; — scene 3 · KEY POINTS</div>
+      <div class="tag" style="left:8%;top:66%">spring() stagger ×12fps + @remotion/paths · evolvePath()</div>
+      <div class="tag" style="left:8%;top:78%">getWaveform() → amplitude gates the draw-on</div>
+
+      <!-- SCENE 4 · OUTRO -->
+      <div class="scene outro" id="s4">
+        <div class="stamp" id="stamp">Lesson complete</div>
+        <h2>Now replicate the flow yourself.</h2>
+        <div class="punch" id="punch"></div>
+        <div class="caption">Day 02 punched · 12 days to go · +6 postings unlocked</div>
+      </div>
+      <div class="tag" style="left:50%;top:16%;transform:translateX(-50%)">&lt;Sequence&gt; — scene 4 · OUTRO</div>
+      <div class="tag" style="left:50%;top:68%;transform:translateX(-50%)">Product signature: punch-card = sprint progress</div>
+
+      <!-- bottom chrome -->
+      <div class="bottom">
+        <div class="wave" id="wave"></div>
+        <div class="chapters" id="chapters">
+          <i></i><i></i><i></i><i></i>
+        </div>
+        <div class="capbar"><div class="cap" id="cap"></div></div>
+      </div>
+      <div class="tag" style="bottom:74px;right:26px">@remotion/media-utils · waveform</div>
+      <div class="tag" style="bottom:44px;right:26px">Player · premounting + buffer state</div>
+
+    </div>
+  </div>
+  <p class="note">Simulation runs ~26 s per loop at 30 fps equivalence. In production this exact timeline is data-driven from the day's lesson payload (title · script · key_points · voiceover), rendered by the pre-built Player bundle — no MP4, same as today.</p>
+
+  <div class="decisions">
+    <h3>Decide before we build</h3>
+    <p>Five open choices. My recommendation is starred (★).</p>
+    <ol>
+      <li><b>1 · Variant</b> Light “Trades Desk” (matches the new app) ★ <span class="opt">or Dark “Studio” — toggle above to compare both live.</span></li>
+      <li><b>2 · Word sync</b> Karaoke captions from whisper word-timestamps, generated once per lesson ★ <span class="opt">or keep count-based pacing (zero pipeline cost, weaker sync).</span></li>
+      <li><b>3 · Marker highlights</b> Hand-drawn underlines on key phrases (@remotion/rough-notation) ★ <span class="opt">or clean geometric bars only.</span></li>
+      <li><b>4 · Waveform</b> Keep the voiceover-reactive strip ★ <span class="opt">or drop it for a quieter frame.</span></li>
+      <li><b>5 · Outro punch-card</b> Show sprint-day progress at the end ★ <span class="opt">or end on a plain CTA card.</span></li>
+    </ol>
+  </div>
+</div>
+
+<script>
+/* ═══════ mock timeline engine — mirrors the proposed Remotion composition ═══════
+   scenes:  HOOK 0–3.2s · LESSON 3.2–14.5s · POINTS 14.5–22.5s · OUTRO 22.5–26s  */
+const FPS = 30, LOOP = 26;
+const SC = { hook:[0,3.2], lesson:[3.2,14.5], points:[14.5,22.5], outro:[22.5,26] };
+
+const scriptWords = ("Most abandoned carts die on the shipping step — not the pitch. The flow that recovers them is always the same shape: a trigger that fires on exit, a delay that feels human, and one message that names the objection.").split(" ");
+const caps = [
+  "Carts die at <b>shipping</b>, not the pitch.",
+  "The recovery flow has <b>three parts</b>.",
+  "Trigger → delay → one message that <b>names the objection</b>."
+];
+const kps = [
+  { n:"01", t:"Exit-intent trigger", d:"Fire the first message the moment intent breaks — not on a schedule." },
+  { n:"02", t:"A delay that feels human", d:"12–24 h beats instant. Pros mimic how a real store follows up." },
+  { n:"03", t:"Name the objection", d:"Shipping cost is the objection. The message must say so out loud." }
+];
+const hookWords = ["Why","carts","abandon","—","and","how","pros","win","them","back"];
+
+const $ = id => document.getElementById(id);
+let raf=null, t0=0, playing=false;
+
+/* build static bits */
+(function(){
+  const h = $("hook-h");
+  hookWords.forEach((w,i)=>{
+    if(i===6){ const s=document.createElement("span"); s.className="hl"; s.innerHTML="pros <svg viewBox='0 0 100 20' preserveAspectRatio='none'><path d='M2 14 Q 26 6 52 11 T 98 8'/></svg>"; h.appendChild(s); }
+    else { const s=document.createElement("span"); s.className="w"; s.textContent=w; h.appendChild(s); }
+  });
+  const c = $("cards");
+  kps.forEach((k,i)=>{
+    const el=document.createElement("div"); el.className="kp"; el.dataset.i=i;
+    el.innerHTML=`<div class="kpnum">KP ${k.n}</div><div class="kpt">${k.t}<svg viewBox='0 0 100 20' preserveAspectRatio='none'><path d='M2 12 Q 30 6 60 12 T 98 9'/></svg></div><div class="kpd">${k.d}</div><div class="check">✓</div>`;
+    c.appendChild(el);
+  });
+  const w=$("wave"); for(let i=0;i<48;i++){ w.appendChild(document.createElement("i")); }
+  const p=$("punch"); for(let i=1;i<=14;i++){ const s=document.createElement("div"); s.className="slot"+(i<3?" punched":i===3?" now":""); s.textContent=String(i).padStart(2,"0"); p.appendChild(s); }
+  const sc=$("script"); sc.innerHTML = scriptWords.map(w=>`<span class="w">${w}</span>`).join(" ");
+})();
+
+/* spring helper (visual stand-in for spring()) */
+function springOn(el, dir, ms){
+  el.style.transition=`transform ${ms}ms cubic-bezier(.22,1.36,.36,1), opacity ${ms}ms ease`;
+  el.style.opacity=1;
+  el.style.transform=dir==="up"?"translateY(0)":"none";
+  if(el.classList.contains("w")||true){ el.style.transform = dir==="up" ? "translateY(0) scale(1)" : "scale(1)"; }
+}
+function setScene(on, el){ el.style.opacity=on?1:0; el.style.pointerEvents=on?"auto":"none"; }
+
+let lastCap=-1;
+function frame(now){
+  if(!playing) return;
+  const t = ((now - t0)/1000) % LOOP;
+  $("tc").textContent = "00:" + String(Math.floor(t)).padStart(2,"0");
+
+  /* scenes */
+  setScene(t>=SC.hook[0] && t<SC.hook[1], $("s1"));
+  setScene(t>=SC.lesson[0] && t<SC.lesson[1], $("s2"));
+  setScene(t>=SC.points[0] && t<SC.points[1], $("s3"));
+  setScene(t>=SC.outro[0], $("s4"));
+
+  /* HOOK */
+  if(t>=SC.hook[0]){
+    if(t>0.15) springOn($("kick"),"up",600);
+    document.querySelectorAll("#hook-h .w, #hook-h .hl").forEach((el,i)=>{
+      const at=0.35+i*0.13;
+      if(t>at) el.style.cssText=`opacity:1;transform:none;transition:transform 500ms cubic-bezier(.22,1.36,.36,1),opacity 300ms`;
+    });
+    if(t>0.35+6*0.13){ const p=document.querySelector("#hook-h .hl path"); if(p){ p.style.transition="stroke-dashoffset .7s cubic-bezier(.3,0,.2,1)"; p.style.strokeDashoffset=0; } }
+    if(t>1.9) ["hook-meta"].forEach(id=>springOn($(id),"up",500));
+  }
+
+  /* LESSON — karaoke words */
+  if(t>=SC.lesson[0]){
+    const lt=t-SC.lesson[0], words=[...document.querySelectorAll("#script .w")];
+    const per=0.24, visible=Math.min(words.length, Math.floor(lt/per));
+    words.forEach((w,i)=>{
+      if(i<visible) w.classList.add("said");
+      w.classList.toggle("now", i===visible-1);
+    });
+    if(lt>1.6) springOn($("bignum"),"none",700);
+  }
+
+  /* POINTS */
+  if(t>=SC.points[0]){
+    const pt=t-SC.points[0];
+    if(pt>0.1){ springOn($("pts-head"),"up",600); }
+    if(pt>0.3){ const sh=document.querySelector("#s3 .subhead"); sh.style.transition="opacity .5s"; sh.style.opacity=1; }
+    document.querySelectorAll(".kp").forEach((el,i)=>{
+      const at=0.55+i*1.9;
+      if(pt>at) springOn(el,"up",650);
+      const path=el.querySelector(".kpt path"), done=pt>at+1.5;
+      if(pt>at+0.5 && path){ path.style.transition="stroke-dashoffset .55s ease-out"; path.style.strokeDashoffset=0; }
+      if(done){ el.classList.add("done"); const c=el.querySelector(".check"); c.style.transition="all .45s cubic-bezier(.22,1.6,.36,1)"; c.style.opacity=1; c.style.transform="scale(1) rotate(0deg)"; }
+    });
+  }
+
+  /* OUTRO */
+  if(t>=SC.outro[0]){
+    const ot=t-SC.outro[0];
+    if(ot>0.1){ const s=$("stamp"); s.style.transition="all .5s cubic-bezier(.22,1.5,.36,1)"; s.style.opacity=1; s.style.transform="rotate(-2deg) scale(1)"; }
+    if(ot>0.4) springOn(document.querySelector("#s4 h2"),"up",600);
+    if(ot>0.7) springOn($("punch"),"up",600);
+    if(ot>1.0){ const c=document.querySelector("#s4 .caption"); c.style.transition="opacity .5s"; c.style.opacity=1; }
+  }
+
+  /* chapters + caption */
+  const chEls=[...document.querySelectorAll("#chapters i")];
+  const bounds=[[0,SC.hook[1]],[SC.lesson[0],SC.lesson[1]],[SC.points[0],SC.points[1]],[SC.outro[0],LOOP]];
+  chEls.forEach((el,i)=>{ el.classList.toggle("done", t>=bounds[i][1]); el.classList.toggle("now", t>=bounds[i][0]&&t<bounds[i][1]); });
+
+  const capIdx = t<SC.lesson[1] ? (t<SC.lesson[0]+2.5?0:(t<SC.lesson[0]+8?1:2)) : (t<SC.points[1]?2:0);
+  const cap=$("cap");
+  if(t<SC.outro[0]){
+    if(capIdx!==lastCap){ lastCap=capIdx; cap.style.transition="none"; cap.style.opacity=0; cap.style.transform="translateY(8px)";
+      requestAnimationFrame(()=>{ cap.innerHTML=caps[capIdx]||caps[0]; cap.style.transition="all .35s ease"; cap.style.opacity=1; cap.style.transform="translateY(0)"; });
+    }
+  } else { cap.style.opacity=0; }
+
+  /* waveform — simulated audio reactivity */
+  const bars=[...document.querySelectorAll("#wave i")];
+  bars.forEach((b,i)=>{
+    const energy = playing ? (0.25 + 0.75*Math.abs(Math.sin(t*7 + i*0.55)) * (0.5+0.5*Math.sin(t*2.1+i*0.21))) : 0.1;
+    b.style.transform=`scaleY(${Math.max(.08,energy)})`;
+  });
+
+  raf=requestAnimationFrame(frame);
+}
+
+function play(){
+  playing=true; $("play").style.display="none";
+  t0=performance.now(); lastCap=-1;
+  raf=requestAnimationFrame(frame);
+}
+$("play").addEventListener("click", play);
+$("replay").addEventListener("click", ()=>{ if(!playing) play(); else { t0=performance.now(); } });
+$("variant").addEventListener("click", function(){
+  const dark=document.body.classList.toggle("dark");
+  this.textContent = dark ? "🌙 Dark — Studio" : "☀ Light — Trades Desk";
+  this.classList.toggle("on", !dark);
+});
+$("tags").addEventListener("change", function(){ document.body.classList.toggle("showtags", this.checked); });
+document.body.classList.add("showtags");
+
+/* pause when tab hidden */
+document.addEventListener("visibilitychange",()=>{ if(document.hidden && playing){ playing=false; cancelAnimationFrame(raf); $("play").style.display="flex"; } });
+</script>
+</body>
+</html>

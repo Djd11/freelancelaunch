@@ -1,0 +1,2 @@
+{"t": 100.34, "kind": "http", "level": "error", "msg": "500 GET http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/generation"}
+{"t": 100.34, "kind": "console", "level": "error", "msg": "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"}

@@ -1,0 +1,141 @@
+{
+  "summary": {
+    "total": 15,
+    "pass": 15,
+    "fail": 0,
+    "skip_or_gap": 0
+  },
+  "purge_list": [],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google,facebook' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google' -> ['google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='GOOGLE,Facebook' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='google,facebook,github' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='' -> []",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OAUTH_PROVIDERS='  google , facebook ' -> ['facebook', 'google']",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "unset OAUTH_PROVIDERS defaults to google,facebook (Render has no such var yet)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "{'google', 'facebook'}",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_CODE_LENGTH == 8",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "8",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_RESEND_COOLDOWN_SECONDS == 60",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "60",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='false' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='0' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='garbage' -> False",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "OTP_EMAIL_ENABLED='true' -> True",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "false-y values must all read False; truthy default is what Render inherits",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": ".env.example documents OAUTH_PROVIDERS + OTP_EMAIL_ENABLED",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    },
+    {
+      "area": "A11",
+      "claim": "render.yaml untouched (spec \u00a75.3: no new secrets)",
+      "class": "STATIC",
+      "pass": true,
+      "detail": "",
+      "ts": "2026-09-16 11:09:57"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+=== t2 evidence: corrupted uat/scripts/run_t7_uat.py ===
+sha256: 07752965818ff9ad953701b172e125d7f58603c371c3b76278620f2a0103ef97
+bytes=196730198 lines=3108310 mtime=2026-09-16 12:51:53.861804090 +0530
+
+=== HEAD (first 5000 bytes) ===
+def step1_p0_roundtrip(args) -> bool:
+    """P0, as redefined by the captain (message 3): map which codes OUR shipped verify accepts.
+
+    Two rulings shape this step. (1) `generate_link` does NOT reproduce what our `/otp/send` mints
+    (we don't choose the type there), so a pass here is evidence that "the shipped literal redeems a
+    validly-issued code", **not** end-to-end email-OTP proof — that stays G1 until the operator sets
+    `{{ .Token }}` + custom SMTP. (2) The claim that must hold is that the single pinned literal
+    `"email"` redeems BOTH account states: a first-ever address (signup-family token) and an
+    existing one (magiclink-family token). T1 proved that at the client; only a round-trip through
+    our route proves the shipped path. `magiclink`/`recovery` break the new half and `signup` breaks
+    the existing half, which is why `"email"` is the narrow correct choice.
+    If a validly-issued code is rejected: STOP, print GoTrue's payload, escalate — the fallbacks are
+    for the fix, never for the test.
+    """
+    from app import create_app
+    fresh = f"uat-otp-p0@{args.domain}"
+    legacy = f"uat-otp-p0legacy@{args.domain}"
+    if not H.user_id(legacy):
+        H.mint_user(legacy)                    # create it now, so the later mint is the EXISTING case
+    matrix = [(fresh, "signup", "first-ever address"), (legacy, "magiclink", "existing address")]
+    all_ok = True
+    for email, link_type, label in matrix:
+        tok = H._admin_link(email, link_type)   # fresh token per case (spike trap #3: codes are single-use)
+        code = tok.get("email_otp")
+        c = create_app().test_client()          # REAL transport, 0 SMTP slots
+        r = H.post_form(c, "/auth/otp/verify", {"email": email, "token": code}, follow_redirects=False)
+        body = r.get_data(as_text=True)
+        with c.session_transaction() as s:
+            uid = s.get("user_id")
+        ok = r.status_code == 302 and uid == tok["id"]
+        all_ok = all_ok and ok
+        rec("P0", f"verify accepts a {link_type}-family code for the {label}", "LIVE", ok,
+            f"email={email} code_len={len(code or '')} status={r.status_code} "
+            f"session_uid={uid} minted={tok['id']} confirmed_at={tok.get('email_confirmed_at')} "
+            f"flash={_flash(body)!r}")
+        if not ok:
+            print("\n*** P0 FAILED — ESCALATE TO THE CAPTAIN with this payload; do NOT substitute a "
+                  "different literal or token_hash. ***")
+            print(json.dumps({"email": email, "link_type": link_type, "http_status": r.status_code,
+                              "flash": _flash(body), "minted": {k: v for k, v in tok.items()
+                                                                if k != "email_otp"}}, indent=2))
+    if all_ok:
+        rows = H.profile_rows(fresh)
+        rec("P0", "_complete_auth provisioned exactly one user_profiles row", "LIVE", len(rows) == 1,
+            f"rows={len(rows)} names={[r.get('display_name') for r in rows]}")
+        rp = c.get("/sprints", follow_redirects=False)
+        rec("P0", "the minted session is a normal session (/sprints 200)", "LIVE",
+            rp.status_code == 200, f"status={rp.status_code}")
+    return all_ok
+
+
+"def step1_p0_roundtrip(args) -> bool:
+    """P0, as redefined by the captain (message 3): map which codes OUR shipped verify accepts.
+
+    Two rulings shape this step. (1) `generate_link` does NOT reproduce what our `/otp/send` mints
+    (we don't choose the type there), so a pass here is evidence that "the shipped literal redeems a
+    validly-issued code", **not** end-to-end email-OTP proof — that stays G1 until the operator sets
+    `{{ .Token }}` + custom SMTP. (2) The claim that must hold is that the single pinned literal
+    `"email"` redeems BOTH account states: a first-ever address (signup-family token) and an
+    existing one (magiclink-family token). T1 proved that at the client; only a round-trip through
+    our route proves the shipped path. `magiclink`/`recovery` break the new half and `signup` breaks
+    the existing half, which is why `"email"` is the narrow correct choice.
+    If a validly-issued code is rejected: STOP, print GoTrue's payload, escalate — the fallbacks are
+    for the fix, never for the test.
+    """
+    from app import create_app
+    fresh = f"uat-otp-p0@{args.domain}"
+    legacy = f"uat-otp-p0legacy@{args.domain}"
+    if not H.user_id(legacy):
+        H.mint_user(legacy)                    # create it now, so the later mint is the EXISTING case
+    matrix = [(fresh, "signup", "first-ever address"), (legacy, "magiclink", "existing address")]
+    all_ok = True
+    for email, link_type, label in matrix:
+        tok = H._admin_link(email, link_type)   # fresh token per case (spike trap #3: codes are single-use)
+        code = tok.get("email_otp")
+        c = create_app().test_client()          # REAL transport, 0 SMTP slots
+        r = H.post_form(c, "/auth/otp/verify", {"email": email, "token": code}, follo
+=== TAIL (last 5000 bytes) ===
+rix:
+        tok = H._admin_link(email, link_type)   # fresh token per case (spike trap #3: codes are single-use)
+        code = tok.get("email_otp")
+        c = create_app().test_client()          # REAL transport, 0 SMTP slots
+        r = H.post_form(c, "/auth/otp/verify", {"email": email, "token": code}, follow_redirects=False)
+        body = r.get_data(as_text=True)
+        with c.session_transaction() as s:
+            uid = s.get("user_id")
+        ok = r.status_code == 302 and uid == tok["id"]
+        all_ok = all_ok and ok
+        rec("P0", f"verify accepts a {link_type}-family code for the {label}", "LIVE", ok,
+            f"email={email} code_len={len(code or '')} status={r.status_code} "
+            f"session_uid={uid} minted={tok['id']} confirmed_at={tok.get('email_confirmed_at')} "
+            f"flash={_flash(body)!r}")
+        if not ok:
+            print("\n*** P0 FAILED — ESCALATE TO THE CAPTAIN with this payload; do NOT substitute a "
+                  "different literal or token_hash. ***")
+            print(json.dumps({"email": email, "link_type": link_type, "http_status": r.status_code,
+                              "flash": _flash(body), "minted": {k: v for k, v in tok.items()
+                                                                if k != "email_otp"}}, indent=2))
+    if all_ok:
+        rows = H.profile_rows(fresh)
+        rec("P0", "_complete_auth provisioned exactly one user_profiles row", "LIVE", len(rows) == 1,
+            f"rows={len(rows)} names={[r.get('display_name') for r in rows]}")
+        rp = c.get("/sprints", follow_redirects=False)
+        rec("P0", "the minted session is a normal session (/sprints 200)", "LIVE",
+            rp.status_code == 200, f"status={rp.status_code}")
+    return all_ok
+
+
+
+def step1_p0_roundtrip(args) -> bool:
+    """P0, as redefined by the captain (message 3): map which codes OUR shipped verify accepts.
+
+    Two rulings shape this step. (1) `generate_link` does NOT reproduce what our `/otp/send` mints
+    (we don't choose the type there), so a pass here is evidence that "the shipped literal redeems a
+    validly-issued code", **not** end-to-end email-OTP proof — that stays G1 until the operator sets
+    `{{ .Token }}` + custom SMTP. (2) The claim that must hold is that the single pinned literal
+    `"email"` redeems BOTH account states: a first-ever address (signup-family token) and an
+    existing one (magiclink-family token). T1 proved that at the client; only a round-trip through
+    our route proves the shipped path. `magiclink`/`recovery` break the new half and `signup` breaks
+    the existing half, which is why `"email"` is the narrow correct choice.
+    If a validly-issued code is rejected: STOP, print GoTrue's payload, escalate — the fallbacks are
+    for the fix, never for the test.
+    """
+    from app import create_app
+    fresh = f"uat-otp-p0@{args.domain}"
+    legacy = f"uat-otp-p0legacy@{args.domain}"
+    if not H.user_id(legacy):
+        H.mint_user(legacy)                    # create it now, so the later mint is the EXISTING case
+    matrix = [(fresh, "signup", "first-ever address"), (legacy, "magiclink", "existing address")]
+    all_ok = True
+    for email, link_type, label in matrix:
+        tok = H._admin_link(email, link_type)   # fresh token per case (spike trap #3: codes are single-use)
+        code = tok.get("email_otp")
+        c = create_app().test_client()          # REAL transport, 0 SMTP slots
+        r = H.post_form(c, "/auth/otp/verify", {"email": email, "token": code}, follow_redirects=False)
+        body = r.get_data(as_text=True)
+        with c.session_transaction() as s:
+            uid = s.get("user_id")
+        ok = r.status_code == 302 and uid == tok["id"]
+        all_ok = all_ok and ok
+        rec("P0", f"verify accepts a {link_type}-family code for the {label}", "LIVE", ok,
+            f"email={email} code_len={len(code or '')} status={r.status_code} "
+            f"session_uid={uid} minted={tok['id']} confirmed_at={tok.get('email_confirmed_at')} "
+            f"flash={_flash(body)!r}")
+        if not ok:
+            print("\n*** P0 FAILED — ESCALATE TO THE CAPTAIN with this payload; do NOT substitute a "
+                  "different literal or token_hash. ***")
+            print(json.dumps({"email": email, "link_type": link_type, "http_status": r.status_code,
+                              "flash": _flash(body), "minted": {k: v for k, v in tok.items()
+                                                                if k != "email_otp"}}, indent=2))
+    if all_ok:
+        rows = H.profile_rows(fresh)
+        rec("P0", "_complete_auth provisioned exactly one user_profiles row", "LIVE", len(rows) == 1,
+            f"rows={len(rows)} names={[r.get('display_name') for r in rows]}")
+        rp = c.get("/sprints", follow_redirects=False)
+        rec("P0", "the minted session is a normal session (/sprints 200)", "LIVE",
+            rp.status_code == 200, f"status={rp.status_code}")
+    return all_ok
+
+

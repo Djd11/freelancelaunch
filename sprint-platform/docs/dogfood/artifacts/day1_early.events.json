@@ -1,0 +1,15 @@
+{
+ "events": [],
+ "timings": [
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "ms": 5389,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/1",
+   "ms": 2026,
+   "status": 200
+  }
+ ]
+}

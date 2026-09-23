@@ -1,0 +1,53 @@
+{
+ "email": "dogfood.1788519503@example.com",
+ "name": "Dana",
+ "sprint_id": "2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+ "sprint_url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+ "signup_ms": 2020,
+ "enroll_ms": 8474,
+ "findings": [
+  {
+   "check": "signup lands in the product (not an error page)",
+   "ok": true,
+   "detail": "http://localhost:5000/sprints"
+  },
+  {
+   "check": "welcome message shown",
+   "ok": true,
+   "detail": " Welcome! Pick a skill to see live demand and start Day 1 free.\nFreelance\nLaunch\nSprints\nPricing\nMentor\nSign out\nDEMAND-"
+  },
+  {
+   "check": "picker lists sprint cards",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "cards have a real Start action",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "enroll round-trip under 3s",
+   "ok": false,
+   "detail": "8474ms"
+  },
+  {
+   "check": "landed on a sprint dashboard",
+   "ok": true,
+   "detail": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750"
+  }
+ ],
+ "timings": [
+  {
+   "url": "http://localhost:5000/auth/signup",
+   "ms": 99,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750",
+   "ms": 3209,
+   "status": 200
+  }
+ ],
+ "errors": []
+}

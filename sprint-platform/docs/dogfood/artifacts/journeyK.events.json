@@ -1,0 +1,113 @@
+{
+ "events": [
+  {
+   "t": 100.34,
+   "kind": "http",
+   "level": "error",
+   "msg": "500 GET http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/generation"
+  },
+  {
+   "t": 100.34,
+   "kind": "console",
+   "level": "error",
+   "msg": "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"
+  }
+ ],
+ "timings": [
+  {
+   "url": "http://localhost:5000/",
+   "ms": 611,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 939,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/topics",
+   "ms": 466,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/topics/email-automation",
+   "ms": 463,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/pricing",
+   "ms": 269,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/clients/freelancers",
+   "ms": 612,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/",
+   "ms": 598,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints",
+   "ms": 672,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/auth/signup",
+   "ms": 260,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/1",
+   "ms": 2575,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/3",
+   "ms": 1858,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/1",
+   "ms": 1814,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/1",
+   "ms": 1972,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/day/1",
+   "ms": 1652,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be",
+   "ms": 3494,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/contract",
+   "ms": 1564,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/sprints/a49c13f4-b61d-40f2-9f9d-804ee2c1d1be/proposals",
+   "ms": 884,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/profile/me",
+   "ms": 2353,
+   "status": 200
+  },
+  {
+   "url": "http://localhost:5000/mentor",
+   "ms": 1846,
+   "status": 200
+  }
+ ]
+}

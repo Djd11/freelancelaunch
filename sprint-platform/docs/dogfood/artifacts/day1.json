@@ -1,0 +1,106 @@
+{
+ "steps": [
+  {
+   "name": "visible controls",
+   "tabs": [
+    "Lesson",
+    "Mark day 1 complete \u2192",
+    "Mark lesson watched\n~5 min",
+    "Send",
+    "Task",
+    "\u2190 Dashboard"
+   ]
+  },
+  {
+   "name": "task tab clicked",
+   "ok": true
+  },
+  {
+   "name": "forms",
+   "forms": [
+    {
+     "action": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/1/watched",
+     "method": "POST",
+     "fields": [
+      {
+       "tag": "input",
+       "name": "csrf_token",
+       "type": "hidden",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      },
+      {
+       "tag": "button",
+       "name": null,
+       "type": "submit",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      }
+     ]
+    },
+    {
+     "action": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/1/copywork",
+     "method": "POST",
+     "fields": [
+      {
+       "tag": "input",
+       "name": "csrf_token",
+       "type": "hidden",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      },
+      {
+       "tag": "input",
+       "name": "rubric_url",
+       "type": "url",
+       "id": "rubric_url",
+       "required": true,
+       "placeholder": "https://github.com/you/flow"
+      },
+      {
+       "tag": "button",
+       "name": null,
+       "type": "submit",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      }
+     ]
+    },
+    {
+     "action": "/sprints/2e2566d8-ac2e-4a58-935d-e71c26a3c750/day/1/complete",
+     "method": "POST",
+     "fields": [
+      {
+       "tag": "input",
+       "name": "csrf_token",
+       "type": "hidden",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      },
+      {
+       "tag": "button",
+       "name": null,
+       "type": "submit",
+       "id": null,
+       "required": false,
+       "placeholder": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "mark watched button count",
+   "n": 1
+  },
+  {
+   "name": "mark watched error",
+   "err": "Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"button:has-text(\\\"Mark lesson watched\\\"), a:has-text(\\\"Mark lesson watched\\\")\").first\n    - locator resolved to <button type=\"submit\" class=\"check-item\">\u2026</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be"
+  }
+ ]
+}

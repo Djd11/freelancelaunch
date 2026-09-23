@@ -1,0 +1,119 @@
+{
+  "summary": {
+    "total": 12,
+    "pass": 11,
+    "fail": 1,
+    "skip_or_gap": 0
+  },
+  "purge_list": [
+    "uat-otp-a5@example.com"
+  ],
+  "live_sends_spent": 0,
+  "baseline": {
+    "scenarios": 210,
+    "passed": 145,
+    "failed": 58,
+    "error": 7,
+    "features_failed": 15,
+    "wall": "30min 38.477s",
+    "source": "uat/reports/behave-full-run1.log"
+  },
+  "records": [
+    {
+      "area": "step4",
+      "claim": "step4_a5_bad_codes",
+      "class": "STATIC",
+      "pass": false,
+      "detail": "RuntimeError: step 4 (A5) performs live auth writes and is banned under --selftest (use the fan-out path, or drop --selftest deliberately)",
+      "ts": "2026-09-16 11:21:53"
+    },
+    {
+      "area": "A5",
+      "claim": "'00000000' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"00000000\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:22:08"
+    },
+    {
+      "area": "A5",
+      "claim": "'07368987' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"07368987\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:22:10"
+    },
+    {
+      "area": "A5",
+      "claim": "'45480348' reaches GoTrue verbatim as a string, type='email'",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "{\"email\": \"uat-otp-a5b@example.com\", \"token\": \"45480348\", \"type\": \"email\"}",
+      "ts": "2026-09-16 11:22:12"
+    },
+    {
+      "area": "A5",
+      "claim": "'7368987' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:15"
+    },
+    {
+      "area": "A5",
+      "claim": "'073689870' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:17"
+    },
+    {
+      "area": "A5",
+      "claim": "'abcdefgh' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:19"
+    },
+    {
+      "area": "A5",
+      "claim": "'\u00b20245678' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:21"
+    },
+    {
+      "area": "A5",
+      "claim": "'\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:24"
+    },
+    {
+      "area": "A5",
+      "claim": "'1' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:27"
+    },
+    {
+      "area": "A5",
+      "claim": "'07368 987' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:29"
+    },
+    {
+      "area": "A5",
+      "claim": "'0abc-def' rejected by the local gate (GoTrue never called)",
+      "class": "FAKE-TRANSPORT",
+      "pass": true,
+      "detail": "call=None session=False",
+      "ts": "2026-09-16 11:22:34"
+    }
+  ]
+}

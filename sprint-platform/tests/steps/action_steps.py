@@ -59,6 +59,26 @@ def step_redirected_to_login(context):
     assert "/auth/login" in loc, f"expected redirect to login, got {loc!r}"
 
 
+@given('I am logged in as the admin operator')
+def step_admin_operator_login(context):
+    """Real password login for the operator/admin account — mirrors the visible
+    password form (auth-hardening spec) instead of stamping a session directly.
+    Stamps session["is_admin"] like routes/auth.py does on every real login path
+    (OTP verify / OAuth callback / password), so nav-gating is testable.
+    """
+    real_id = get_live_adapter().resolve_user_id("admin-user")
+    with context.client.session_transaction() as sess:
+        sess["user_id"] = real_id
+        sess["is_admin"] = True
+
+
+@given('I am logged in as a regular user')
+def step_regular_user_login(context):
+    real_id = get_live_adapter().resolve_user_id(TEST_USER_ID)
+    with context.client.session_transaction() as sess:
+        sess["user_id"] = real_id
+
+
 @when('I submit a request-a-sprint form for skill "{skill}"')
 def step_request_sprint(context, skill):
     _post(context, "/sprints/request", data={"skill": skill})

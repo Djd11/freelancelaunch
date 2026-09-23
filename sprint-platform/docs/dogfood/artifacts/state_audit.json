@@ -1,0 +1,282 @@
+{
+ "clusters_vs_feed": {
+  "email-automation": {
+   "cluster_job_count_claimed": 127,
+   "job_feed_rows": 127,
+   "job_feed_active_rows": 127,
+   "sources": [
+    "freelancer"
+   ],
+   "unlock_days": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ]
+  },
+  "web-scraping": {
+   "cluster_job_count_claimed": 105,
+   "job_feed_rows": 105,
+   "job_feed_active_rows": 105,
+   "sources": [
+    "freelancer"
+   ],
+   "unlock_days": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ]
+  },
+  "ai-chatbots": {
+   "cluster_job_count_claimed": 50,
+   "job_feed_rows": 50,
+   "job_feed_active_rows": 50,
+   "sources": [
+    "freelancer",
+    "rss"
+   ],
+   "unlock_days": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ]
+  }
+ },
+ "cohorts": [
+  {
+   "id": "00ffda88-a21c-4b37-8d90-170fca6e3a74",
+   "cluster_key": "web-scraping",
+   "name": "Cohort #1",
+   "start_date": "2026-08-25",
+   "end_date": "2026-09-07",
+   "status": "active"
+  },
+  {
+   "id": "6c6a48c8-e88b-493b-8ba7-0ecc3c556928",
+   "cluster_key": "ai-chatbots",
+   "name": "Cohort #1",
+   "start_date": "2026-08-25",
+   "end_date": "2026-09-07",
+   "status": "active"
+  },
+  {
+   "id": "af5ca3df-badd-57ec-a92e-d176cbbf1fb5",
+   "cluster_key": "email-automation",
+   "name": "Cohort #12",
+   "start_date": "2026-08-10",
+   "end_date": "2026-08-23",
+   "status": "active"
+  }
+ ],
+ "sprint": {
+  "id": "2a719493-1ce1-4bcf-bca0-0b5234dd9c0b",
+  "user_id": "39145c14-925e-4e54-ada9-381646d783b5",
+  "cohort_id": "af5ca3df-badd-57ec-a92e-d176cbbf1fb5",
+  "cluster_key": "email-automation",
+  "phase": "A",
+  "current_day": 2,
+  "status": "completed",
+  "badge_id": null,
+  "proposals_sent": 0,
+  "responses_received": 0,
+  "interviews_held": 0,
+  "offers_received": 0,
+  "contracts_won": 0,
+  "contracts_completed": 0,
+  "total_earned": 0,
+  "avg_contract_value": null,
+  "first_contract_at": null,
+  "repeat_clients": 0,
+  "is_actively_seeking": true,
+  "started_at": "2026-09-04T16:04:38.360724+00:00",
+  "completed_at": "2026-09-04T16:11:37.150225+00:00"
+ },
+ "gates": [
+  {
+   "id": "7531b903-40d0-4cf6-8781-2db584bcf644",
+   "sprint_id": "2a719493-1ce1-4bcf-bca0-0b5234dd9c0b",
+   "gate": "A",
+   "status": "pending",
+   "verification_type": "auto",
+   "submitted_url": "https://github.com/example/v-day5",
+   "reviewer_id": null,
+   "feedback": null,
+   "reviewed_at": null,
+   "gate_b_evidence": null
+  }
+ ],
+ "projects": [
+  {
+   "project_index": 1,
+   "title": "Rebuild the Checkout Welcome Flow",
+   "done": false,
+   "submitted_url": "https://github.com/example/v-day3",
+   "gap_fill_topic": null,
+   "rubric_points": 0,
+   "clone_steps_n": 0
+  },
+  {
+   "project_index": 2,
+   "title": "Rebuild the Abandoned-Cart Flow",
+   "done": false,
+   "submitted_url": "https://github.com/example/v-day4",
+   "gap_fill_topic": "mobile responsiveness",
+   "rubric_points": 0,
+   "clone_steps_n": 0
+  },
+  {
+   "project_index": 3,
+   "title": "Rebuild the Post-Purchase Upsell Flow",
+   "done": false,
+   "submitted_url": "https://github.com/example/v-day5",
+   "gap_fill_topic": null,
+   "rubric_points": 0,
+   "clone_steps_n": 0
+  }
+ ],
+ "days": [
+  {
+   "day": 1,
+   "action": "setup",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": "Generation failed: No LLM provider answered for the day's lesson"
+  },
+  {
+   "day": 2,
+   "action": "copywork",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 3,
+   "action": "copywork",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 4,
+   "action": "copywork",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 5,
+   "action": "copywork",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 6,
+   "action": "contract",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 7,
+   "action": "contract",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 8,
+   "action": "contract",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 9,
+   "action": "case-study",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 10,
+   "action": "case-study",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 11,
+   "action": "proposal",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 12,
+   "action": "proposal",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 13,
+   "action": "proposal",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  },
+  {
+   "day": 14,
+   "action": "proposal",
+   "completed": false,
+   "has_lesson": false,
+   "gen_error": null
+  }
+ ],
+ "meter": [
+  {
+   "id": "64fff58c-465a-4903-a762-47cf7b9fd44f",
+   "sprint_id": "2a719493-1ce1-4bcf-bca0-0b5234dd9c0b",
+   "user_id": "39145c14-925e-4e54-ada9-381646d783b5",
+   "completed_days": 1,
+   "unlocked_count": 15,
+   "total_in_cluster": 127,
+   "last_delta": 15,
+   "updated_at": "2026-09-04T16:04:41.399079+00:00"
+  }
+ ],
+ "proposals_n": 0
+}

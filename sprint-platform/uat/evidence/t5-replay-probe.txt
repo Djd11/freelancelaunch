@@ -1,0 +1,9 @@
+# t5 replay copy re-check (0-cost probe: admin magiclink on EXISTING uat-otp-p0legacy@..., no user slot, no SMTP)
+# run 2026-09-16 ~14:06 via /tmp/t5_replay_probe.py against live server on 127.0.0.1:5000 (released after)
+
+first use: 302 /sprints
+replay status: 200
+replay flashes: ["That code didn't work — request a new one."]
+generic copy present: True
+replay-client GET /sprints: 302 /auth/login
+probe done; port-5000 procs left: none
