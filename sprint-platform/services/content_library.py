@@ -327,7 +327,7 @@ def seed_from_sprint(sb, cluster_key, sprint_id, overwrite=False):
         copied["days"] += 1
 
     projects = sb.table("copywork_projects").select("project_index,title,clone_steps,"
-                                                    "rubric,reference_spec,gap_fill_topic") \
+                                                    "rubric,gap_fill_topic") \
         .eq("sprint_id", sprint_id).order("project_index").execute().data or []
     for p in projects:
         index = p.get("project_index")
@@ -335,12 +335,14 @@ def seed_from_sprint(sb, cluster_key, sprint_id, overwrite=False):
             continue
         if index in existing_projects and not overwrite:
             continue
+        content = {k: p.get(k) for k in
+                    ("title", "clone_steps", "rubric", "gap_fill_topic") if p.get(k)}
+        if p.get("reference_spec"):
+            content["reference_spec"] = p["reference_spec"]
         sb.table("cluster_content_library").upsert({
             "cluster_key": cluster_key, "kind": "project",
             "day_no": 0, "project_index": index,
-            "content": {k: p.get(k) for k in
-                        ("title", "clone_steps", "rubric", "reference_spec", "gap_fill_topic")},
-            "origin": "edited",
+            "content": content, "origin": "edited",
         }, on_conflict="cluster_key,kind,day_no,project_index").execute()
         copied["projects"] += 1
     return copied
